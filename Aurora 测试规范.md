@@ -1,9 +1,35 @@
+---
+title: Aurora 测试规范
+status: approved
+owner: quality
+initial-reviewed: 2026-07-27
+applies-to: Aurora SDK、公共协议、服务端、管理平台及示例项目
+related:
+  - AURORA_RULES.md
+  - Auroa-PRD-业务逻辑汇总-v2.1-核心业务定稿版.md
+  - "Aurora 架构规范.md"
+  - "Aurora 代码规范.md"
+  - "Aurora 文档规范.md"
+  - "Aurora ADR 规范.md"
+supersedes: none
+maintenance: append-only
+---
+
 # 4. 测试规范
 
 > 规则类别：`TEST`  
 > 适用范围：Aurora SDK、公共协议、服务端、管理平台及示例项目  
 > 状态：已批准  
 > 目标：通过分层测试保障 SDK 稳定性、协议兼容性和核心业务链路，同时控制测试维护成本
+
+## 关联文档
+
+- [项目规则总入口](AURORA_RULES.md)
+- [核心业务 PRD](Auroa-PRD-业务逻辑汇总-v2.1-核心业务定稿版.md)
+- [架构规范](<Aurora 架构规范.md>)
+- [代码规范](<Aurora 代码规范.md>)
+- [文档规范](<Aurora 文档规范.md>)
+- [ADR 规范](<Aurora ADR 规范.md>)
 
 ## 4.1 基本原则
 
@@ -401,3 +427,18 @@ Bug 修复原则上增加回归测试，关键模块采用较高覆盖率基线�
 ### TEST-006 v1：分级 CI 阻断
 
 核心检查必须在 PR 阶段通过，完整兼容性、稳定性和性能测试在发布前通过。
+
+## 规则维护与追加记录
+
+### RULE-BASELINE-20260727：测试规范长期维护基线
+
+- 状态：approved
+- 生效日期：2026-07-27
+- Owner：quality
+- 影响范围：Aurora 全部测试、覆盖率、CI 和发布验证
+- supersedes：none
+- 维护方式：append-only
+- 基线说明：本文件现有 TEST 规则构成 Aurora 初始测试基线。
+- 本次校正：增加稳定元数据和关联文档；未改变既有测试原则。
+- 历史保护：后续不得删除、覆盖或静默改写历史测试原则。新增、废弃或替代规则必须追加到本节之后。
+- 验证方式：测试分层检查、覆盖率门槛、真实浏览器测试和 CI 阻断。

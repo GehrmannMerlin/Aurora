@@ -1,9 +1,35 @@
+---
+title: Aurora 代码规范
+status: approved
+owner: engineering
+initial-reviewed: 2026-07-27
+applies-to: Aurora SDK、服务端、管理平台、公共协议包及工程工具
+related:
+  - AURORA_RULES.md
+  - Auroa-PRD-业务逻辑汇总-v2.1-核心业务定稿版.md
+  - "Aurora 架构规范.md"
+  - "Aurora 测试规范.md"
+  - "Aurora 文档规范.md"
+  - "Aurora ADR 规范.md"
+supersedes: none
+maintenance: append-only
+---
+
 # 3. 代码规范
 
 > 规则类别：`CODE`  
 > 适用范围：Aurora SDK、服务端、管理平台、公共协议包及工程工具  
 > 状态：已批准  
 > 目标：保证代码类型安全、职责清晰、容易维护，并确保 Aurora SDK 不影响接入方业务页面
+
+## 关联文档
+
+- [项目规则总入口](AURORA_RULES.md)
+- [核心业务 PRD](Auroa-PRD-业务逻辑汇总-v2.1-核心业务定稿版.md)
+- [架构规范](<Aurora 架构规范.md>)
+- [测试规范](<Aurora 测试规范.md>)
+- [文档规范](<Aurora 文档规范.md>)
+- [ADR 规范](<Aurora ADR 规范.md>)
 
 ## 3.1 基本原则
 
@@ -490,3 +516,18 @@ Aurora 公共 API 必须保持最小化、类型明确，并遵守兼容性和�
 ### CODE-006 v1：SDK 编码禁区
 
 SDK 禁止破坏宿主环境、阻塞主线程、不受控采集数据、无限重试或绕过统一事件处理流程。
+
+## 规则维护与追加记录
+
+### RULE-BASELINE-20260727：代码规范长期维护基线
+
+- 状态：approved
+- 生效日期：2026-07-27
+- Owner：engineering
+- 影响范围：Aurora 全部代码、公共 API 和 SDK 运行行为
+- supersedes：none
+- 维护方式：append-only
+- 基线说明：本文件现有 CODE 规则构成 Aurora 初始代码基线。
+- 本次校正：增加稳定元数据和关联文档；未改变既有代码原则。
+- 历史保护：后续不得删除、覆盖或静默改写历史代码原则。新增、废弃或替代规则必须追加到本节之后。
+- 验证方式：TypeScript、Lint、单元测试、集成测试和代码评审。

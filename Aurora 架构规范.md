@@ -1,9 +1,37 @@
+---
+title: Aurora 架构规范
+status: approved
+owner: architecture
+initial-reviewed: 2026-07-27
+applies-to: Aurora Monorepo、SDK、服务端、管理平台及公共协议
+related:
+  - AURORA_RULES.md
+  - Auroa-PRD-业务逻辑汇总-v2.1-核心业务定稿版.md
+  - "Aurora 代码规范.md"
+  - "Aurora 测试规范.md"
+  - "Aurora 文档规范.md"
+  - "Aurora ADR 规范.md"
+  - docs/adr/README.md
+supersedes: none
+maintenance: append-only
+---
+
 # 2. 架构规范
 
 > 规则类别：`ARCH`  
 > 适用范围：Aurora Monorepo、SDK、数据接入、数据处理、管理平台及公共协议  
 > 状态：已批准  
 > 目标：明确系统边界、模块职责和依赖方向，防止项目随着功能增长形成循环依赖和职责混乱
+
+## 关联文档
+
+- [项目规则总入口](AURORA_RULES.md)
+- [核心业务 PRD](Auroa-PRD-业务逻辑汇总-v2.1-核心业务定稿版.md)
+- [代码规范](<Aurora 代码规范.md>)
+- [测试规范](<Aurora 测试规范.md>)
+- [文档规范](<Aurora 文档规范.md>)
+- [ADR 规范](<Aurora ADR 规范.md>)
+- [初始 ADR 提案索引](docs/adr/README.md)
 
 ## 2.1 架构原则
 
@@ -547,3 +575,24 @@ SDK 必须采用 Core、Browser、采集插件和框架适配分层。
 ### ARCH-006 v1：单向依赖和自动限制
 
 模块依赖必须保持单向，并通过自动化工具阻止循环依赖、反向依赖和私有文件引用。
+
+## 2.14 初始 ADR 提案索引
+
+ARCH-001 至 ARCH-006 已分别形成可独立评审的 ADR 提案，见 [初始 ADR 提案索引](docs/adr/README.md)。
+
+这些 ADR 的决策状态均为 `proposed`、实施状态均为 `not-started`。在完成正式评审并变更为 `accepted` 前，它们只用于记录候选方案和取舍，不构成新的实施批准，也不替代本架构规范。
+
+## 规则维护与追加记录
+
+### RULE-BASELINE-20260727：架构规范长期维护基线
+
+- 状态：approved
+- 生效日期：2026-07-27
+- Owner：architecture
+- 影响范围：Aurora 全部系统边界、模块职责和依赖方向
+- supersedes：none
+- 维护方式：append-only
+- 基线说明：本文件现有 ARCH 规则构成 Aurora 初始架构基线。
+- 本次校正：增加稳定元数据、关联文档和初始 ADR 提案索引；未改变既有架构原则。
+- 历史保护：后续不得删除、覆盖或静默改写历史架构原则。新增、废弃或替代规则必须追加到本节之后。
+- 验证方式：依赖检查、Schema 契约测试、架构检查和文档链接检查。

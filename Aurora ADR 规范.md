@@ -1,9 +1,37 @@
+---
+title: Aurora ADR 规范
+status: approved
+owner: architecture
+initial-reviewed: 2026-07-27
+applies-to: Aurora 重大架构、公共协议、公共 API、基础设施、安全隐私及长期技术决策
+related:
+  - AURORA_RULES.md
+  - Auroa-PRD-业务逻辑汇总-v2.1-核心业务定稿版.md
+  - "Aurora 架构规范.md"
+  - "Aurora 代码规范.md"
+  - "Aurora 测试规范.md"
+  - "Aurora 文档规范.md"
+  - docs/adr/README.md
+supersedes: none
+maintenance: append-only
+---
+
 # 7. ADR 规范
 
 > 规则类别：`ADR`  
 > 适用范围：Aurora 的重大架构、公共协议、公共 API、基础设施、安全隐私及长期技术决策  
 > 状态：已批准  
 > 目标：记录重要技术决策的背景、方案取舍、实施约束和演进过程，使后续开发者能够理解 Aurora 为什么采用当前设计
+
+## 关联文档
+
+- [项目规则总入口](AURORA_RULES.md)
+- [核心业务 PRD](Auroa-PRD-业务逻辑汇总-v2.1-核心业务定稿版.md)
+- [架构规范](<Aurora 架构规范.md>)
+- [代码规范](<Aurora 代码规范.md>)
+- [测试规范](<Aurora 测试规范.md>)
+- [文档规范](<Aurora 文档规范.md>)
+- [初始 ADR 提案索引](docs/adr/README.md)
 
 ## 7.1 基本原则
 
@@ -522,3 +550,19 @@ ADR 必须记录背景、候选方案、最终决策、影响、实施约束、�
 ### ADR-005 v1：决策实施验证闭环
 
 每份已批准 ADR 必须关联实施任务和 PR，并将关键约束落实为代码、测试、自动检查或发布门槛。
+
+## 规则维护与追加记录
+
+### RULE-BASELINE-20260727：ADR 规范长期维护基线
+
+- 状态：approved
+- 生效日期：2026-07-27
+- Owner：architecture
+- 影响范围：Aurora 全部重大长期技术决策
+- supersedes：none
+- 维护方式：append-only
+- 基线说明：本文件现有 ADR 规则构成 Aurora 初始决策治理基线。
+- 本次校正：增加稳定元数据、关联文档和初始提案索引；未改变既有 ADR 原则。
+- 实施门禁：`proposed` ADR 只用于讨论和评审，不得约束正式实现；只有 `accepted` ADR 才是正式决策。
+- 历史保护：后续不得删除、覆盖或静默改写历史 ADR 原则。新增、废弃或替代规则必须追加到本节之后。
+- 验证方式：ADR 状态、评审、候选方案、实现关联和验证闭环检查。
