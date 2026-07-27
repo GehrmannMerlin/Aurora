@@ -2,7 +2,7 @@
 title: Aurora ADR 规范
 status: approved
 owner: architecture
-initial-reviewed: 2026-07-27
+last-reviewed: 2026-07-27
 applies-to: Aurora 重大架构、公共协议、公共 API、基础设施、安全隐私及长期技术决策
 related:
   - AURORA_RULES.md
@@ -566,3 +566,29 @@ ADR 必须记录背景、候选方案、最终决策、影响、实施约束、�
 - 实施门禁：`proposed` ADR 只用于讨论和评审，不得约束正式实现；只有 `accepted` ADR 才是正式决策。
 - 历史保护：后续不得删除、覆盖或静默改写历史 ADR 原则。新增、废弃或替代规则必须追加到本节之后。
 - 验证方式：ADR 状态、评审、候选方案、实现关联和验证闭环检查。
+
+### RULE-CORRECTION-20260727-001：复查元数据字段规范化
+
+- 状态：approved
+- 生效日期：2026-07-27
+- Owner：architecture
+- 影响范围：本文档元数据
+- supersedes：none
+- 变更原因：初始整理使用了文档规范未定义的 `initial-reviewed` 字段。
+- 校正内容：字段名规范化为 `last-reviewed`，日期保持 2026-07-27。
+- 语义影响：none；不改变任何 ADR 原则。
+- 验证方式：文档元数据检查必须识别 `last-reviewed`。
+
+### ADR-RULE-20260727-001：实施状态独立于决策状态
+
+- 状态：approved
+- 生效日期：2026-07-27
+- Owner：architecture
+- 影响范围：第 7.10 节实施状态定义和全部 ADR
+- 关联规则：ADR-004 v1、ADR-005 v1
+- supersedes：第 7.10 节表格中将 `not-started` 限定为“已批准，尚未开始实施”的定义；原表格作为历史基线继续保留。
+- 变更原因：决策状态和实施状态是两个正交维度，`proposed` ADR 同样需要表达尚未开始正式实施。
+- 新增规则：`not-started` 表示“该 ADR 描述的正式实施尚未开始”，可与 `proposed` 或 `accepted` 决策状态组合。
+- 实施门禁：`proposed / not-started` 表示提案正在评审且正式实施未开始；`accepted / not-started` 表示决策已批准但实施未开始。
+- 兼容与迁移说明：现有六份初始 ADR 保持 `proposed / not-started`，无需修改状态。调研、性能实验和明确标记的原型不视为正式实施。
+- 验证方式：ADR 检查必须分别验证决策状态和实施状态，不得因 `proposed / not-started` 组合报错。

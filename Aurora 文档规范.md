@@ -2,7 +2,7 @@
 title: Aurora 文档规范
 status: approved
 owner: documentation
-initial-reviewed: 2026-07-27
+last-reviewed: 2026-07-27
 applies-to: Aurora 规则文件、PRD、架构、ADR、README、SDK、API、协议、测试、发布与运维文档
 related:
   - AURORA_RULES.md
@@ -846,3 +846,15 @@ SDK、服务端 API 和事件协议必须完整记录公开行为、限制、兼
 - 本次校正：增加稳定元数据和关联文档；修复公共 SDK API 示例、5.7 至 5.10 标题缩进和代码围栏；追加固定路径与规则维护协议。
 - 历史保护：后续不得删除、覆盖或静默改写历史文档原则。新增、废弃或替代规则必须追加到本节之后。
 - 验证方式：Markdown 结构、内部链接、元数据、固定路径和追加记录检查。
+
+### RULE-CORRECTION-20260727-001：复查元数据字段规范化
+
+- 状态：approved
+- 生效日期：2026-07-27
+- Owner：documentation
+- 影响范围：本文档元数据
+- supersedes：none
+- 变更原因：初始整理使用了本规范未定义的 `initial-reviewed` 字段。
+- 校正内容：字段名规范化为 `last-reviewed`，日期保持 2026-07-27。
+- 语义影响：none；不改变任何文档原则。
+- 验证方式：正式文档元数据检查必须识别 `last-reviewed`，不得继续生成 `initial-reviewed`。

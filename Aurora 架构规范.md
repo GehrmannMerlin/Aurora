@@ -2,7 +2,7 @@
 title: Aurora 架构规范
 status: approved
 owner: architecture
-initial-reviewed: 2026-07-27
+last-reviewed: 2026-07-27
 applies-to: Aurora Monorepo、SDK、服务端、管理平台及公共协议
 related:
   - AURORA_RULES.md
@@ -596,3 +596,15 @@ ARCH-001 至 ARCH-006 已分别形成可独立评审的 ADR 提案，见 [初始
 - 本次校正：增加稳定元数据、关联文档和初始 ADR 提案索引；未改变既有架构原则。
 - 历史保护：后续不得删除、覆盖或静默改写历史架构原则。新增、废弃或替代规则必须追加到本节之后。
 - 验证方式：依赖检查、Schema 契约测试、架构检查和文档链接检查。
+
+### RULE-CORRECTION-20260727-001：复查元数据字段规范化
+
+- 状态：approved
+- 生效日期：2026-07-27
+- Owner：architecture
+- 影响范围：本文档元数据
+- supersedes：none
+- 变更原因：初始整理使用了文档规范未定义的 `initial-reviewed` 字段。
+- 校正内容：字段名规范化为 `last-reviewed`，日期保持 2026-07-27。
+- 语义影响：none；不改变任何架构规则。
+- 验证方式：文档元数据检查必须识别 `last-reviewed`。

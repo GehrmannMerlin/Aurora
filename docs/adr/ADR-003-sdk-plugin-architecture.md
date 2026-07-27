@@ -4,6 +4,7 @@ status: proposed
 implementation-status: not-started
 owner: sdk
 date: 2026-07-27
+last-reviewed: 2026-07-27
 applies-to: Aurora SDK Core、Browser、采集插件和框架适配
 related:
   - ../../AURORA_RULES.md

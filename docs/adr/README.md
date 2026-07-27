@@ -2,7 +2,7 @@
 title: Aurora ADR 索引
 status: approved
 owner: architecture
-initial-reviewed: 2026-07-27
+last-reviewed: 2026-07-27
 applies-to: Aurora 全部重大技术决策
 related:
   - ../../AURORA_RULES.md
@@ -63,3 +63,13 @@ ADR 从 proposed 变为 accepted 前必须：
 - 维护方式：append-only
 - 说明：创建 ARCH-001—ARCH-006 对应的六份 proposed、not-started ADR 提案。
 - 历史保护：后续不得删除历史 ADR 条目；状态和替代关系必须追加记录。
+
+### ADR-INDEX-RULE-20260727-001：决策与实施双状态
+
+- 状态：approved
+- 生效日期：2026-07-27
+- Owner：architecture
+- supersedes：none
+- 新增规则：决策状态和实施状态分别记录。not-started 表示正式实施尚未开始，可与 proposed 或 accepted 组合。
+- 当前解释：本索引中的 proposed / not-started 表示六项决策仍在评审，且没有开始正式实施。
+- 验证方式：分别校验两列，不把 proposed / not-started 视为状态冲突。

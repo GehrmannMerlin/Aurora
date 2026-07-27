@@ -4,6 +4,7 @@ status: proposed
 implementation-status: not-started
 owner: architecture
 date: 2026-07-27
+last-reviewed: 2026-07-27
 applies-to: Aurora 全部代码、文档、示例和工程工具
 related:
   - ../../AURORA_RULES.md

@@ -4,6 +4,7 @@ status: proposed
 implementation-status: not-started
 owner: architecture
 date: 2026-07-27
+last-reviewed: 2026-07-27
 applies-to: Aurora Monorepo 全部应用和包
 related:
   - ../../AURORA_RULES.md

@@ -4,6 +4,7 @@ status: proposed
 implementation-status: not-started
 owner: protocol
 date: 2026-07-27
+last-reviewed: 2026-07-27
 applies-to: Aurora SDK、数据接入、数据处理、查询和管理平台
 related:
   - ../../AURORA_RULES.md

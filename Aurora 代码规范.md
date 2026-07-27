@@ -2,7 +2,7 @@
 title: Aurora 代码规范
 status: approved
 owner: engineering
-initial-reviewed: 2026-07-27
+last-reviewed: 2026-07-27
 applies-to: Aurora SDK、服务端、管理平台、公共协议包及工程工具
 related:
   - AURORA_RULES.md
@@ -531,3 +531,15 @@ SDK 禁止破坏宿主环境、阻塞主线程、不受控采集数据、无限�
 - 本次校正：增加稳定元数据和关联文档；未改变既有代码原则。
 - 历史保护：后续不得删除、覆盖或静默改写历史代码原则。新增、废弃或替代规则必须追加到本节之后。
 - 验证方式：TypeScript、Lint、单元测试、集成测试和代码评审。
+
+### RULE-CORRECTION-20260727-001：复查元数据字段规范化
+
+- 状态：approved
+- 生效日期：2026-07-27
+- Owner：engineering
+- 影响范围：本文档元数据
+- supersedes：none
+- 变更原因：初始整理使用了文档规范未定义的 `initial-reviewed` 字段。
+- 校正内容：字段名规范化为 `last-reviewed`，日期保持 2026-07-27。
+- 语义影响：none；不改变任何代码规则。
+- 验证方式：文档元数据检查必须识别 `last-reviewed`。

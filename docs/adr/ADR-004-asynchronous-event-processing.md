@@ -4,6 +4,7 @@ status: proposed
 implementation-status: not-started
 owner: backend
 date: 2026-07-27
+last-reviewed: 2026-07-27
 applies-to: Aurora SDK 上报、数据接入、事件处理、存储和告警
 related:
   - ../../AURORA_RULES.md

@@ -2,7 +2,7 @@
 title: Aurora 项目规则与开发上下文
 status: approved
 owner: architecture
-initial-reviewed: 2026-07-27
+last-reviewed: 2026-07-27
 applies-to: Aurora 仓库全部 Agent、代码、测试、文档与技术决策
 related:
   - AGENTS.md
@@ -709,3 +709,28 @@ Agent 不得把诊断请求扩展成修复，也不得把局部修改扩展成�
 - 权威边界：本文件是最高级入口，但六份长期规范继续作为各自领域的详细权威来源。
 - 历史保护：后续不得删除、覆盖或静默改写本基线。新增、废弃或替代规则必须追加到本节之后。
 - 验证方式：按照本文件第 11 节完成定义以及文档规范的链接、状态和追加记录要求执行。
+
+### RULE-CORRECTION-20260727-001：复查元数据字段规范化
+
+- 状态：approved
+- 生效日期：2026-07-27
+- Owner：architecture
+- 影响范围：本文件元数据
+- supersedes：none
+- 变更原因：初始整理使用了文档规范未定义的 `initial-reviewed` 字段。
+- 校正内容：字段名规范化为 `last-reviewed`，日期保持 2026-07-27。
+- 语义影响：none；不改变任何项目规则或 Agent 开发流程。
+- 验证方式：文档元数据检查必须识别 `last-reviewed`。
+
+### RULE-20260727-002：ADR 决策状态与实施状态正交
+
+- 状态：approved
+- 生效日期：2026-07-27
+- Owner：architecture
+- 影响范围：本文件第 8.3、9.3、13 节及全部 ADR
+- 关联规则：`Aurora ADR 规范.md` 的 ADR-RULE-20260727-001
+- supersedes：none
+- 新增规则：`not-started` 只表示正式实施尚未开始，不要求 ADR 已经 accepted；因此 `proposed / not-started` 是合法组合。
+- 实施门禁：只有 accepted ADR 才能授权正式实施。proposed ADR 即使标记 not-started，也只能用于讨论、调研和明确标记的原型。
+- 兼容与迁移说明：六份初始 ADR 状态保持不变。
+- 验证方式：分别检查决策状态和实施状态，并确认 proposed ADR 没有被当作实施批准。

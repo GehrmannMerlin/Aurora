@@ -2,7 +2,7 @@
 title: Aurora 前端监控 SaaS PRD：业务逻辑汇总
 status: approved
 owner: product
-initial-reviewed: 2026-07-27
+last-reviewed: 2026-07-27
 applies-to: Aurora 第一版核心业务
 related:
   - AURORA_RULES.md
@@ -3164,3 +3164,15 @@ Aurora 第一版的成功标准不是功能数量，而是用户能否稳定完�
 - 本次校正：产品正式名称统一为 Aurora；保留历史文件名；统一文档状态；修复章节编号；明确同步可靠接收与异步处理语义；增加关联文档。
 - 历史保护：后续不得删除、覆盖或静默改写本基线中的历史原则。新增、废弃或替代规则必须追加到本节之后，并保留旧规则原文。
 - 验证方式：按照 `AURORA_RULES.md` 的规则维护检查表和 `Aurora 文档规范.md` 执行。
+
+### RULE-CORRECTION-20260727-001：复查元数据字段规范化
+
+- 状态：approved
+- 生效日期：2026-07-27
+- Owner：product
+- 影响范围：本文档元数据
+- supersedes：none
+- 变更原因：初始整理使用了文档规范未定义的 `initial-reviewed` 字段。
+- 校正内容：字段名规范化为 `last-reviewed`，日期保持 2026-07-27。
+- 语义影响：none；不改变任何产品规则。
+- 验证方式：文档元数据检查必须识别 `last-reviewed`。

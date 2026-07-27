@@ -379,3 +379,15 @@ Bug 修复原则上必须：
 - 基线说明：本文件首次建立 Agent 强制读取、范围门禁、ADR 门禁、架构、SDK、安全、代码、测试、验证、文档和 Git 行为约束。
 - 历史保护：后续规则只能追加，不得删除、覆盖或静默改写本基线。
 - 同步要求：Agent 规则变化必须先追加到对应长期规范，再同步 AURORA_RULES.md 和本文件。
+
+### AGENT-RULE-20260727-001：ADR 双状态检查
+
+- 状态：approved
+- 生效日期：2026-07-27
+- Owner：architecture
+- 影响范围：第 6.3、12、16 节
+- 关联规则：Aurora ADR 规范中的 ADR-RULE-20260727-001
+- supersedes：none
+- 新增规则：Agent 必须分别检查 ADR 的决策状态和实施状态；not-started 表示正式实施尚未开始，可与 proposed 或 accepted 组合。
+- 实施门禁：proposed / not-started 不授权正式实施；只有 accepted 决策才能进入正式实现，之后再更新独立实施状态。
+- 验证方式：检查 ADR 状态组合时不得把 proposed / not-started 误报为冲突。

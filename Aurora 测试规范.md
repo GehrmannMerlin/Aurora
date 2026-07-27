@@ -2,7 +2,7 @@
 title: Aurora 测试规范
 status: approved
 owner: quality
-initial-reviewed: 2026-07-27
+last-reviewed: 2026-07-27
 applies-to: Aurora SDK、公共协议、服务端、管理平台及示例项目
 related:
   - AURORA_RULES.md
@@ -442,3 +442,15 @@ Bug 修复原则上增加回归测试，关键模块采用较高覆盖率基线�
 - 本次校正：增加稳定元数据和关联文档；未改变既有测试原则。
 - 历史保护：后续不得删除、覆盖或静默改写历史测试原则。新增、废弃或替代规则必须追加到本节之后。
 - 验证方式：测试分层检查、覆盖率门槛、真实浏览器测试和 CI 阻断。
+
+### RULE-CORRECTION-20260727-001：复查元数据字段规范化
+
+- 状态：approved
+- 生效日期：2026-07-27
+- Owner：quality
+- 影响范围：本文档元数据
+- supersedes：none
+- 变更原因：初始整理使用了文档规范未定义的 `initial-reviewed` 字段。
+- 校正内容：字段名规范化为 `last-reviewed`，日期保持 2026-07-27。
+- 语义影响：none；不改变任何测试规则。
+- 验证方式：文档元数据检查必须识别 `last-reviewed`。

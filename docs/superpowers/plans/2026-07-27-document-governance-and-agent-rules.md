@@ -265,3 +265,20 @@ git log --oneline --decorate -2
 ```
 
 Expected: GitHub 默认分支为 main，本地工作区干净，最近两次提交分别为原始基线和文档治理提交。
+
+---
+
+## 执行追加记录
+
+### PLAN-EXECUTION-20260727-001：本地实施与验证
+
+- 状态：completed
+- 记录日期：2026-07-27
+- 基线提交：`ec3cefc chore: establish Aurora documentation baseline`
+- 治理提交：`7458f32 docs: establish Aurora agent development governance`
+- 文件保护：六份原始规范路径全部存在，没有删除、移动或重命名。
+- 文档结果：创建 `AURORA_RULES.md`、`AGENTS.md`、ADR 索引和六份 `proposed / not-started` ADR。
+- 验证结果：17 份 Markdown 的相对链接、围栏、维护基线、PRD 编号和 ADR 状态检查通过；`git diff --check` 通过。
+- 独立审查：未发现 Critical；审查提出的元数据、设计状态和 ADR 实施状态语义问题在后续追加记录中修复。
+- 发布约束：最终普通推送到 `GehrmannMerlin/Aurora`；禁止强推。
+- 维护说明：原计划检查项不回填或覆盖，本节作为追加式执行证据。

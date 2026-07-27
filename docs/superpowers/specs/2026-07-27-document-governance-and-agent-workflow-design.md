@@ -272,3 +272,18 @@ Agent 发现不同文件存在真实冲突时，不得自行选择最方便的�
 ## 10. 非目标
 
 本次不实施业务代码，不选择框架、数据库、队列或部署平台，不将任何 `proposed` ADR 提升为 `accepted`，也不新增 PRD 第一版之外的产品能力。
+
+## 11. 实施与环境追加记录
+
+### DESIGN-STATUS-20260727-001：Git 环境与本地实施状态
+
+- 状态：approved
+- 记录日期：2026-07-27
+- Owner：architecture
+- 关联设计：本文第 1 至 10 节
+- supersedes：第 9 节末尾关于“当前目录不是 Git 工作区”的当前状态判断；原文作为设计编写时的历史环境事实继续保留。
+- 当前环境：`D:\Develop\SDK\Aurora` 已初始化为普通 Git 仓库，当前分支为 `main`，远端 `origin` 指向 `https://github.com/GehrmannMerlin/Aurora.git`。
+- 基线提交：`ec3cefc chore: establish Aurora documentation baseline`，保存六份原始规范及设计、计划。
+- 治理提交：`7458f32 docs: establish Aurora agent development governance`，实现六份规范原位校正、`AURORA_RULES.md`、`AGENTS.md` 和六份 ADR 提案。
+- 发布约束：目标远端在初始化检查时为空；最终发布必须在完整验证和审查修复后执行普通推送，禁止强推。
+- 语义影响：本记录只更新实施和环境状态，不改变第 1 至 10 节的设计目标、六份规范保护或 ADR 状态要求。
