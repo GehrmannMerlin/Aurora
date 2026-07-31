@@ -1,15 +1,20 @@
 ---
 title: ADR-004：采用可靠接收与异步事件处理
-status: proposed
+status: accepted
 implementation-status: not-started
 owner: backend
 date: 2026-07-27
-last-reviewed: 2026-07-27
+last-reviewed: 2026-07-29
 applies-to: Aurora SDK 上报、数据接入、事件处理、存储和告警
 related:
   - ../../AURORA_RULES.md
   - ../../Auroa-PRD-业务逻辑汇总-v2.1-核心业务定稿版.md
   - "../../Aurora 架构规范.md"
+  - ../architecture/system-overview.md
+  - ../architecture/platform-backend.md
+  - ../architecture/deployment.md
+  - ../testing/test-strategy.md
+  - ../operations/backup-and-recovery.md
 supersedes: none
 superseded-by: none
 ---
@@ -18,7 +23,7 @@ superseded-by: none
 
 ## 元数据
 
-- 状态：proposed
+- 状态：accepted
 - 日期：2026-07-27
 - Owner：backend
 - 适用范围：数据接入、可靠缓冲、异步处理、存储、聚合、Source Map 和告警
@@ -29,7 +34,7 @@ superseded-by: none
 - 替代 ADR：none
 - 被替代 ADR：none
 - 实施状态：not-started
-- 评审状态：等待非作者、服务端和基础设施领域评审
+- 评审状态：非作者及所需领域评审已通过
 
 ## 背景
 
@@ -102,9 +107,9 @@ superseded-by: none
 
 ## 最终决策
 
-提议选择方案 A：同步必要校验和可靠接收，复杂处理异步执行。
+决定选择方案 A：同步必要校验和可靠接收，复杂处理异步执行。
 
-在 ADR accepted 前，本节只是建议。可靠缓冲可以在第一版使用数据库任务表、带持久化的进程队列或轻量消息队列，具体技术需要独立评审。
+本决策只接受“同步必要校验并可靠缓冲、复杂处理异步执行”的行为语义。数据接入与处理的物理缓冲技术仍需独立评审；管理平台已批准的 PostgreSQL Outbox＋Redis/BullMQ 不自动适用于该边界。
 
 ## 结果与影响
 
@@ -171,3 +176,25 @@ ADR accepted 后先定义接收结果、事件状态和幂等编号，再选择�
 ## 追加记录
 
 本 ADR 的评审、状态、实施和替代变化只能追加在本节之后。
+
+### 2026-07-29：正式化复审输入
+
+- 状态保持 `proposed / not-started`；当前没有可靠缓冲、消费者、死信设施或容量测试；
+- 背景输入补充：[系统架构与模块边界](../architecture/system-overview.md)明确“可靠接收”不等于“业务处理完成”，[平台后端架构](../architecture/platform-backend.md)记录事务、Outbox、任务和幂等的设计边界，[部署架构](../architecture/deployment.md)与[备份和恢复](../operations/backup-and-recovery.md)提供故障恢复输入；
+- 候选方案复审：方案 A 的同步必要校验＋可靠缓冲＋异步处理继续作为语义提案；方案 B 的同步全处理扩大接入失败面，方案 C 的易失队列不满足已接收不丢失。已批准的 PostgreSQL Outbox＋Redis/BullMQ 只适用于管理平台异步任务，不能外推为数据接入或处理缓冲选型；接入/处理的物理缓冲仍未决定，必须由独立 ADR 与容量证据确定；
+- 实施约束补充：接收结果必须区分拒绝、可靠接收和后续处理状态；消费至少一次时必须配合幂等事实；重试有界、永久失败可追踪、积压可观测，恢复和重放不得破坏 A5 注销事实；
+- 验证输入补充：正式审批应覆盖进程终止、重复交付、顺序变化、积压、死信、下游降级、重放和跨区域恢复场景；吞吐、延迟、批量大小和扩容阈值标记为 `requires-benchmark`；
+- 进入 `accepted` 前仍需非作者、SDK、接入、处理、数据可靠性、安全、性能、基础设施和运维领域评审；物理缓冲选型、容量与告警阈值必须由后续 ADR/基准补齐。
+
+### 2026-07-29：独立评审发现并修正范围问题
+
+- 隔离审查上下文 `adr_004_006_review` 指出原复审输入把平台域 PostgreSQL Outbox＋Redis/BullMQ 错误描述为接入/处理物理候选；
+- 文档已修正为该组合只适用于管理平台异步任务，ingestion/processing 缓冲继续由独立 ADR 与容量证据决定；
+- 同次修正补齐非作者、SDK、接入、处理、可靠性、安全、性能、基础设施和运维评审角色；修正不改变方案 A 的核心语义。
+
+### 2026-07-29：接受决策
+
+- 决策状态更新为 `accepted`，实施状态保持 `not-started`；
+- `adr_004_006_review` 在修正后完成独立复审并确认无剩余阻断，覆盖全部所需领域视角；
+- 评审确认三项候选真实，接收/处理状态、幂等、重试、死信、积压、恢复、A5 删除事实和 SDK 可见语义边界完整；
+- 当前没有可靠缓冲、消费者、死信、物理选型、容量/性能证据、Issue、实现 PR 或测试结果，本次接受不得解释为处理链路已实现。

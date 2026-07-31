@@ -1,15 +1,24 @@
 ---
 title: ADR-002：划分五大系统边界
-status: proposed
+status: accepted
 implementation-status: not-started
 owner: architecture
 date: 2026-07-27
-last-reviewed: 2026-07-27
+last-reviewed: 2026-07-29
 applies-to: Aurora 全部一级系统
 related:
   - ../../AURORA_RULES.md
   - ../../Auroa-PRD-业务逻辑汇总-v2.1-核心业务定稿版.md
   - "../../Aurora 架构规范.md"
+  - ../README.md
+  - ../architecture/system-overview.md
+  - ../architecture/sdk-architecture.md
+  - ../architecture/platform-frontend.md
+  - ../architecture/platform-backend.md
+  - ../architecture/deployment.md
+  - ADR-004-asynchronous-event-processing.md
+  - ADR-005-event-schema-source-of-truth.md
+  - ADR-006-one-way-dependencies.md
 supersedes: none
 superseded-by: none
 ---
@@ -18,7 +27,7 @@ superseded-by: none
 
 ## 元数据
 
-- 状态：proposed
+- 状态：accepted
 - 日期：2026-07-27
 - Owner：architecture
 - 适用范围：Aurora SDK、数据接入、数据处理与存储、管理平台、公共协议
@@ -29,7 +38,7 @@ superseded-by: none
 - 替代 ADR：none
 - 被替代 ADR：none
 - 实施状态：not-started
-- 评审状态：等待非作者、SDK、服务端和平台领域评审
+- 评审状态：非作者及所需领域评审已通过
 
 ## 背景
 
@@ -101,9 +110,9 @@ Aurora 从浏览器捕获事件，到服务端接收、异步处理、查询和�
 
 ## 最终决策
 
-提议选择方案 A：五大职责系统。
+决定选择方案 A：五大职责系统。
 
-本节在 ADR accepted 前只是建议。五大系统是逻辑和代码边界，不要求第一版立即拆成五个独立部署单元。
+五大系统是逻辑和代码边界，不要求第一版立即拆成五个独立部署单元，也不选择具体队列、数据库、缓存、搜索或物理服务拓扑。
 
 ## 结果与影响
 
@@ -138,6 +147,7 @@ Aurora 从浏览器捕获事件，到服务端接收、异步处理、查询和�
 - 公共协议不依赖业务系统；
 - 同部署不允许跨越公开接口直接访问其他系统内部实现；
 - 每个模块 README 声明职责、非职责、输入、输出和依赖。
+- 跨系统删除、保留与秘密传播必须有明确 Owner、可追踪状态和逐系统完成确认，不能把局部成功描述为全局完成。
 
 ## 迁移方案
 
@@ -167,3 +177,20 @@ ADR accepted 后，在 Monorepo 中为五大系统建立明确模块或目录。
 ## 追加记录
 
 本 ADR 的评审、状态、实施和替代变化只能追加在本节之后。
+
+### 2026-07-29：正式化复审输入
+
+- 状态保持 `proposed / not-started`；本次没有产生评审批准或实施证据；
+- 背景输入补充：[系统架构与模块边界](../architecture/system-overview.md)已经把 SDK、数据接入、数据处理与存储、管理平台和公共协议作为稳定职责边界正式承载；[SDK 架构](../architecture/sdk-architecture.md)、[平台前端架构](../architecture/platform-frontend.md)和[平台后端架构](../architecture/platform-backend.md)进一步证明各边界的运行环境、输入输出与失败语义不同；
+- 候选方案复审：方案 A 继续作为提案；方案 B 会把接入、异步处理和协议重新耦合，方案 C 则在没有容量与团队证据时预设微服务。已批准的 AWS 拓扑只提供部署输入，不等于把五个逻辑系统一一部署成五个服务；
+- 实施约束补充：管理平台只消费公开 API，公共协议不依赖业务系统，接入成功与处理完成必须分离，逻辑边界不得因模块化单体或共享运行时而失效；
+- 验证输入补充：正式审批应以端到端事件链路、权限查询链路、Source Map/告警异步链路和部署拓扑逐项检查所有权、依赖方向与故障隔离；物理拆分阈值标记为 `requires-benchmark`；
+- 进入 `accepted` 前仍需非作者、SDK、服务端、平台和基础设施领域评审，并确认本 ADR 不选择具体队列、数据库、缓存或搜索技术。
+
+### 2026-07-29：接受决策
+
+- 决策状态更新为 `accepted`，实施状态保持 `not-started`；
+- 独立非作者评审由隔离审查上下文 `adr_001_003_review` 完成，覆盖 architecture、SDK、ingestion、processing、platform、security 和 infrastructure 视角；
+- 评审确认五大职责、按部署应用和首日微服务三项候选真实，逻辑边界与部署拓扑、可靠接收、协议来源和依赖约束的职责拆分清楚；
+- 安全与隐私复核确认管理平台只经公开 API，跨系统删除、保留和秘密传播需要显式 Owner 与逐系统确认；
+- 当前没有真实模块、公开接口、部署单元、Issue、实现 PR 或测试结果，本次接受不得解释为五个系统已实现或已物理拆分。

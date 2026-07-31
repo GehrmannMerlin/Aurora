@@ -1,0 +1,38 @@
+{
+  "name": "@aurora/browser",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Aurora browser environment and page lifecycle foundation",
+  "sideEffects": false,
+  "engines": {
+    "node": ">=24.18.0 <25"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run --exclude test/package-entry.test.ts",
+    "test:coverage": "vitest run --coverage --exclude test/package-entry.test.ts",
+    "test:package": "pnpm build && vitest run test/package-entry.test.ts",
+    "test:browser": "pnpm build && playwright test --config playwright.config.ts"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.62.0",
+    "@types/node": "24.13.3",
+    "@vitest/coverage-v8": "4.1.10",
+    "typescript": "6.0.3",
+    "vitest": "4.1.10"
+  },
+  "aurora": {
+    "layer": "sdk-browser"
+  }
+}

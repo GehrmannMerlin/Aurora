@@ -1,16 +1,21 @@
 ---
 title: ADR-001：使用统一 Monorepo
-status: proposed
-implementation-status: not-started
+status: accepted
+implementation-status: in-progress
 owner: architecture
 date: 2026-07-27
-last-reviewed: 2026-07-27
+last-reviewed: 2026-07-29
 applies-to: Aurora 全部代码、文档、示例和工程工具
 related:
   - ../../AURORA_RULES.md
   - ../../Auroa-PRD-业务逻辑汇总-v2.1-核心业务定稿版.md
   - "../../Aurora 架构规范.md"
   - "../../Aurora ADR 规范.md"
+  - ../README.md
+  - ../architecture/system-overview.md
+  - ../architecture/deployment.md
+  - ../releases/release-migration-and-rollback.md
+  - ../testing/test-strategy.md
 supersedes: none
 superseded-by: none
 ---
@@ -19,7 +24,7 @@ superseded-by: none
 
 ## 元数据
 
-- 状态：proposed
+- 状态：accepted
 - 日期：2026-07-27
 - Owner：architecture
 - 适用范围：Aurora SDK、服务端、管理平台、公共协议、示例、文档和工程工具
@@ -30,7 +35,7 @@ superseded-by: none
 - 替代 ADR：none
 - 被替代 ADR：none
 - 实施状态：not-started
-- 评审状态：等待非作者及工程领域评审
+- 评审状态：非作者及所需领域评审已通过
 
 ## 背景
 
@@ -47,6 +52,8 @@ Aurora 第一版同时包含浏览器 SDK、框架适配、数据接入、异步
 - 第一版团队规模和部署复杂度有限；
 - 六份长期规范必须保持固定根路径；
 - 后续仍应允许应用独立构建和发布。
+
+这里的“独立构建和发布”是制品与验证边界，不决定统一版本、独立版本或发布列车策略；版本与发布方式必须另行决策。
 
 ## 候选方案
 
@@ -105,9 +112,9 @@ SDK、插件和协议在一个仓库，服务端和管理平台在另一个仓�
 
 ## 最终决策
 
-提议选择方案 A：统一 Monorepo。
+决定选择方案 A：统一 Monorepo。
 
-本节在 ADR 变为 accepted 前只是建议，不构成新的实施批准。选择依据是 Aurora 第一版跨模块协议协作频繁，而团队和仓库规模尚未证明需要物理拆分。
+选择依据是 Aurora 第一版跨模块协议协作频繁，而团队和仓库规模尚未证明需要物理拆分。本决策不批准具体包管理器、任务编排器、缓存或版本发布策略，也不表示 Monorepo 已经建立。
 
 六份长期规范继续保留在仓库根目录，作为 Monorepo 目录规则的明确例外。
 
@@ -172,3 +179,34 @@ SDK、插件和协议在一个仓库，服务端和管理平台在另一个仓�
 ## 追加记录
 
 本 ADR 的评审、状态、实施和替代变化只能追加在本节之后。
+
+### 2026-07-29：正式化复审输入
+
+- 状态保持 `proposed / not-started`；本次仅补充已批准设计证据，不视为非作者或领域评审；
+- 背景输入补充：[正式文档索引](../README.md)、[系统架构与模块边界](../architecture/system-overview.md)、[部署架构](../architecture/deployment.md)、[发布、Migration 与回滚](../releases/release-migration-and-rollback.md)和[测试策略](../testing/test-strategy.md)已确认公共协议、SDK、服务端、平台、测试和发布需要原子追踪，但这些文档不证明任何工作区工具已经存在；
+- 候选方案复审：方案 A 仍能最直接满足跨模块原子变更与统一追踪；方案 B/C 的协议漂移和发布编排代价仍成立。包管理器、任务编排器、缓存工具与版本策略不属于本 ADR 的自动派生结论，应由独立候选 ADR 或普通工程文档承载；
+- 实施约束补充：若本 ADR 获接受，仓库布局不得把五个逻辑系统误写为五个强制部署单元，且模块公开入口、依赖方向、独立构建/测试/发布边界必须可自动检查；
+- 验证输入补充：正式审批应核对原子协议变更场景、受影响构建边界、独立制品发布需求、私有导入阻断能力和六份根规范固定路径；真实工具命令、缓存命中率与构建耗时留作 `requires-benchmark`；
+- 进入 `accepted` 前仍需非作者、工程工具和发布领域评审，并明确本 ADR 只决定仓库形态，不预先批准具体工具或版本方案。
+
+### 2026-07-29：接受决策
+
+- 决策状态更新为 `accepted`，实施状态保持 `not-started`；
+- 独立非作者评审由隔离审查上下文 `adr_001_003_review` 完成，覆盖 architecture、tooling、release 以及 SDK/backend 消费方视角；
+- 评审确认三项候选真实，长期代价、迁移、回滚、验证和重新评估条件充分，与架构、测试和发布正式文档无冲突；
+- 评审同时确认“独立发布”仅指独立制品和验证边界，不决定版本策略；
+- 当前没有 Workspace、包、构建、缓存、CI、Issue、实现 PR 或测试结果，本次接受不得解释为已实施。
+
+### 2026-07-29：首模块实施证据
+
+- 实施状态更新为 `in-progress`；统一 Workspace 已存在但 Aurora 的真实应用/包目录尚未建立；
+- 实施 Commit：none（未提交）
+- 验证命令与结果：
+  - `node --version`: v24.18.0
+  - `pnpm --version`: 11.17.0
+  - `pnpm install --frozen-lockfile`: 通过（锁文件 SHA256: aed909b5d4138af350c3ee1a6c01987525ec087ce9856016ae83c8e9e70f2a27）
+  - `pnpm check:ci`: 通过（format:check、lint、typecheck、test、check:boundaries、build 均 exit 0）
+- 证据路径：`pnpm-workspace.yaml`、`pnpm-lock.yaml`、`tooling/workspace-policy/`
+- Issue/PR：none
+- 性能结果：不存在
+- 本 ADR 的 `implemented` 状态需待所有 apps/* 和 packages/* 真实模块建立后方可更改

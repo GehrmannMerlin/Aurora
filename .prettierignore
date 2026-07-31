@@ -1,0 +1,13 @@
+node_modules
+dist
+coverage
+docs/superpowers/specs
+docs/superpowers/plans
+AGENTS.md
+AURORA_RULES.md
+Aurora 架构规范.md
+Aurora 代码规范.md
+Aurora 测试规范.md
+Aurora 文档规范.md
+Aurora ADR 规范.md
+Auroa-PRD-业务逻辑汇总-v2.1-核心业务定稿版.md

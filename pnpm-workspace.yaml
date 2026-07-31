@@ -1,0 +1,23 @@
+packages:
+  - apps/*
+  - packages/*
+  - examples/*
+  - tooling/*
+
+nodeVersion: 24.18.0
+engineStrict: true
+strictPeerDependencies: true
+strictDepBuilds: true
+allowBuilds:
+  esbuild: true
+minimumReleaseAge: 1440
+minimumReleaseAgeStrict: true
+minimumReleaseAgeIgnoreMissingTime: false
+blockExoticSubdeps: true
+trustLockfile: false
+verifyDepsBeforeRun: error
+linkWorkspacePackages: false
+disallowWorkspaceCycles: true
+overrides:
+  '@emnapi/core': 2.0.0-alpha.3
+  '@emnapi/runtime': 2.0.0-alpha.3

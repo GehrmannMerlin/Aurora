@@ -1,0 +1,28 @@
+{
+  "name": "@aurora/root",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@11.17.0",
+  "engines": {
+    "node": ">=24.18.0 <25"
+  },
+  "scripts": {
+    "format:check": "prettier --check package.json pnpm-workspace.yaml tsconfig.base.json eslint.config.mjs .prettierrc.json tooling/workspace-policy/package.json tooling/workspace-policy/tsconfig.json tooling/workspace-policy/tsconfig.build.json packages/event-schema/package.json packages/event-schema/tsconfig.json packages/event-schema/tsconfig.build.json packages/event-schema/vitest.config.ts packages/core/package.json packages/core/tsconfig.json packages/core/tsconfig.build.json packages/core/tsconfig.no-dom.json packages/core/vitest.config.ts packages/browser/package.json packages/browser/tsconfig.json packages/browser/tsconfig.build.json packages/browser/vitest.config.ts packages/browser/playwright.config.ts \"tooling/workspace-policy/src/**/*.ts\" \"tooling/workspace-policy/test/**/*.ts\" \"packages/event-schema/src/**/*.ts\" \"packages/event-schema/test/**/*.ts\" \"packages/core/src/**/*.ts\" \"packages/core/test/**/*.ts\" \"packages/browser/src/**/*.ts\" \"packages/browser/test/**/*.ts\" \"packages/browser/test-browser/**/*.ts\" tooling/workspace-policy/README.md packages/event-schema/README.md packages/core/README.md packages/browser/README.md README.md AGENTS.md AURORA_RULES.md docs/architecture/system-overview.md docs/architecture/sdk-architecture.md docs/architecture/monorepo-and-build.md docs/architecture/formalization-readiness.md docs/protocol/event-schema-foundation.md docs/protocol/event-envelope-v1.md docs/sdk/sdk-core-foundation.md docs/sdk/browser-environment-foundation.md docs/testing/test-strategy.md docs/adr/ADR-003-sdk-plugin-architecture.md docs/adr/ADR-006-one-way-dependencies.md",
+    "lint": "eslint tooling/workspace-policy/src tooling/workspace-policy/test packages/event-schema/src packages/event-schema/test packages/event-schema/vitest.config.ts packages/core/src packages/core/test packages/core/vitest.config.ts packages/browser/src packages/browser/test packages/browser/test-browser packages/browser/vitest.config.ts packages/browser/playwright.config.ts",
+    "typecheck": "pnpm -r --if-present typecheck",
+    "test": "pnpm -r --if-present test",
+    "test:coverage": "pnpm --filter @aurora/event-schema test:coverage && pnpm --filter @aurora/core test:coverage && pnpm --filter @aurora/browser test:coverage",
+    "check:boundaries": "tsx tooling/workspace-policy/src/cli.ts --root .",
+    "build": "pnpm -r --if-present build",
+    "check": "pnpm format:check && pnpm lint && pnpm typecheck && pnpm test && pnpm test:coverage && pnpm check:boundaries && pnpm build && pnpm --filter @aurora/event-schema test:package && pnpm --filter @aurora/core test:package && pnpm --filter @aurora/browser test:package && pnpm --filter @aurora/browser test:browser",
+    "check:ci": "pnpm check"
+  },
+  "devDependencies": {
+    "@eslint/js": "10.0.1",
+    "eslint": "10.8.0",
+    "prettier": "3.9.6",
+    "tsx": "4.23.1",
+    "typescript-eslint": "8.65.0"
+  }
+}

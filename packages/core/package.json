@@ -1,0 +1,40 @@
+{
+  "name": "@aurora/core",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Aurora environment-neutral SDK Core foundation",
+  "sideEffects": false,
+  "engines": {
+    "node": ">=24.18.0 <25"
+  },
+  "aurora": {
+    "layer": "sdk-core"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "test": "vitest run --exclude test/package-entry.test.ts",
+    "test:coverage": "vitest run --coverage --exclude test/package-entry.test.ts",
+    "test:package": "pnpm build && vitest run test/package-entry.test.ts",
+    "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p tsconfig.no-dom.json --noEmit"
+  },
+  "dependencies": {
+    "@aurora/event-schema": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "24.13.3",
+    "@vitest/coverage-v8": "4.1.10",
+    "typescript": "6.0.3",
+    "vitest": "4.1.10"
+  }
+}
