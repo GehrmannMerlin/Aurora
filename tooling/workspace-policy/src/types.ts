@@ -8,7 +8,8 @@ export type WorkspaceViolationCode =
   | 'forbidden-layer-dependency'
   | 'forbidden-runtime-global'
   | 'mutable-module-state'
-  | 'forbidden-host-mutation';
+  | 'forbidden-host-mutation'
+  | 'forbidden-host-event-control';
 
 export interface WorkspaceViolation {
   readonly code: WorkspaceViolationCode;

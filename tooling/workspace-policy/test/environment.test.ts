@@ -22,6 +22,22 @@ async function createBrowserSource(source: string): Promise<WorkspaceFixture> {
   ]);
 }
 
+async function createProtocolSource(source: string): Promise<WorkspaceFixture> {
+  const protocol = validManifest('@aurora/event-schema');
+  protocol.aurora = { layer: 'protocol' };
+  return createWorkspaceFixture([
+    { directory: 'packages/event-schema', manifest: protocol, files: { 'src/index.ts': source } },
+  ]);
+}
+
+async function createPluginSource(source: string): Promise<WorkspaceFixture> {
+  const plugin = validManifest('@aurora/plugin-error');
+  plugin.aurora = { layer: 'sdk-plugin' };
+  return createWorkspaceFixture([
+    { directory: 'packages/plugin-error', manifest: plugin, files: { 'src/index.ts': source } },
+  ]);
+}
+
 describe('sdk-core source policy', () => {
   it('accepts immutable module constants and per-factory mutable state', async () => {
     fixture = await createCoreSource(
@@ -56,6 +72,21 @@ describe('sdk-core source policy', () => {
     const result = await checkWorkspace(fixture.rootDir);
     expect(result.violations).toEqual(
       expect.arrayContaining([expect.objectContaining({ code: 'forbidden-runtime-global' })]),
+    );
+  });
+
+  it.each([
+    "import { randomUUID } from 'node:crypto'; export const id = randomUUID();",
+    "import process from 'node:process'; export const id = process.pid;",
+    "export const id = Buffer.from('x').toString();",
+    'export const id = process.hrtime.bigint();',
+  ])('rejects sdk-core Node runtime API: %s', async (source) => {
+    fixture = await createCoreSource(source);
+    const result = await checkWorkspace(fixture.rootDir);
+    expect(result.violations).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ code: 'forbidden-runtime-global', packageName: '@aurora/core' }),
+      ]),
     );
   });
 
@@ -101,5 +132,91 @@ describe('sdk-browser source policy', () => {
     expect(result.violations).toEqual(
       expect.arrayContaining([expect.objectContaining({ code: 'forbidden-host-mutation' })]),
     );
+  });
+
+  it.each([
+    'event.preventDefault();',
+    'event.stopPropagation();',
+    'event.stopImmediatePropagation();',
+  ])('rejects sdk-browser event control: %s', async (statement) => {
+    fixture = await createBrowserSource(
+      `export function handle(event: Event): void { ${statement} }`,
+    );
+    const result = await checkWorkspace(fixture.rootDir);
+    expect(result.violations).toEqual(
+      expect.arrayContaining([expect.objectContaining({ code: 'forbidden-host-event-control' })]),
+    );
+  });
+});
+
+describe('protocol source policy', () => {
+  it.each([
+    'export const leaked = window;',
+    'export const leaked = document;',
+    'export const leaked = navigator;',
+    'export const leaked = fetch;',
+    'export const leaked = process;',
+    'export const leaked = Buffer;',
+    "import { readFile } from 'node:fs/promises'; export { readFile };",
+  ])('rejects environment-specific protocol source: %s', async (source) => {
+    fixture = await createProtocolSource(source);
+    const result = await checkWorkspace(fixture.rootDir);
+    expect(result.violations).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          code: 'forbidden-runtime-global',
+          packageName: '@aurora/event-schema',
+        }),
+      ]),
+    );
+  });
+
+  it('accepts environment-neutral protocol constants and pure functions', async () => {
+    fixture = await createProtocolSource(
+      "export const kind = 'error' as const; export function parse(input: unknown): boolean { return typeof input === 'string'; }",
+    );
+    await expect(checkWorkspace(fixture.rootDir)).resolves.toEqual({
+      ok: true,
+      violations: [],
+    });
+  });
+});
+
+describe('sdk-plugin source policy', () => {
+  it.each([
+    'export const leaked = window;',
+    'export const leaked = document;',
+    'export const leaked = navigator;',
+    'export const leaked = globalThis;',
+    "import { randomUUID } from 'node:crypto'; export const id = randomUUID();",
+  ])('rejects direct environment access: %s', async (source) => {
+    fixture = await createPluginSource(source);
+    const result = await checkWorkspace(fixture.rootDir);
+    expect(result.violations).toEqual(
+      expect.arrayContaining([expect.objectContaining({ code: 'forbidden-runtime-global' })]),
+    );
+  });
+
+  it.each([
+    'let active = false; export const read = (): boolean => active;',
+    'const entries: string[] = []; export const read = (): number => entries.length;',
+    'const listeners = new Set<string>(); export const read = (): number => listeners.size;',
+  ])('rejects module-level mutable state: %s', async (source) => {
+    fixture = await createPluginSource(source);
+    const result = await checkWorkspace(fixture.rootDir);
+    expect(result.violations).toEqual(
+      expect.arrayContaining([expect.objectContaining({ code: 'mutable-module-state' })]),
+    );
+  });
+
+  it.each([
+    'window.onerror = null;',
+    'event.preventDefault();',
+    'event.stopPropagation();',
+    'event.stopImmediatePropagation();',
+  ])('rejects host mutation or event control: %s', async (statement) => {
+    fixture = await createPluginSource(`export function run(event: Event): void { ${statement} }`);
+    const result = await checkWorkspace(fixture.rootDir);
+    expect(result.ok).toBe(false);
   });
 });

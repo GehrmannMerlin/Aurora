@@ -253,3 +253,92 @@ ADR accepted 后先建立允许依赖矩阵和包公开出口，再选择工具�
 - 实施 Commit：none（未提交）
 - Issue/PR：none
 - 剩余工作：插件/框架只依赖公开接口、服务端不依赖 SDK 内部、管理平台不依赖数据库模型/服务端私有模块等层级规则仍需各自真实模块加入后验证。
+
+### 2026-07-31：协议层 DOM/Node 运行时边界与错误契约入口证据
+
+- 实施状态保持 `in-progress`；本轮为 `@aurora/event-schema`（`aurora.layer: protocol`）补齐协议源码 DOM/Node 运行时禁用扫描、错误契约公共/私有入口与 ES-only 构建证据，Core、Browser、插件、框架适配、服务端和管理平台层级规则仍待真实模块验证。
+- 环境扫描扩展：`tooling/workspace-policy/src/environment.ts` 的 `inspectSource` 层级参数从 `'sdk-core' | 'sdk-browser'` 扩展为 `'protocol' | 'sdk-core' | 'sdk-browser'`；新增 `forbiddenProtocolRuntimeNames`（`window`、`document`、`navigator`、`location`、`fetch`、`XMLHttpRequest`、`localStorage`、`sessionStorage`、`process`、`Buffer`、`require`、`module`、`__dirname`、`__filename`）与 `isNodeRuntimeImport`（`node:` 前缀导入/导出）；`findEnvironmentViolations` 早期门控加入 `protocol`；协议层只检查 `forbidden-runtime-global`，不对 `as const` 冻结的对象/数组常量强制 `mutable-module-state`（该规则仍只约束 `sdk-core`/`sdk-browser`）。
+- 协议环境负例证据：`tooling/workspace-policy/test/environment.test.ts` 新增 `protocol source policy` 用例，证明 `window`/`document`/`navigator`/`fetch`/`process`/`Buffer` 与 `node:fs/promises` 导入均返回 `forbidden-runtime-global`（`packageName: '@aurora/event-schema'`），而纯协议常量与纯函数通过；既有 Core/Browser 用例保持绿色。
+- 协议零本地依赖证据：`@aurora/event-schema` 无 `dependencies`、无 `workspace:` 范围；`pnpm check:boundaries` 通过（exit 0，无违规）；`packages/event-schema/test/architecture-boundary.test.ts` 证明 manifest 无 `dependencies`、仅两个公共入口、`tsconfig.build.json` 为 `types: []` 的 ES-only 构建，源码不含 `@aurora/core`/`@aurora/browser`/`@aurora/plugin-`/`node:`/`window.`/`document.`/`navigator.`/`process.`/`Buffer.`/`console.`/`/src/`/`/internal/`。
+- 公共/私有入口证据：`packages/event-schema/test/package-entry.test.ts` 证明 Node 可加载 `@aurora/event-schema`（含 `ErrorCategory`、`ErrorResourceType`、`PromiseRejectionReasonKind`、`ERROR_EVENT_LIMITS`、`parseErrorEventBody`、`parseErrorEventEnvelope`）与 `@aurora/event-schema/contract-testkit`（含 `validErrorEventSamples`、`invalidErrorEventSamples`、`boundaryErrorEventSamples`），并以 `ERR_PACKAGE_PATH_NOT_EXPORTED` 拒绝 `@aurora/event-schema/error-event-body`、`@aurora/event-schema/error-event-envelope`、`@aurora/event-schema/resource-error-event` 等私有路径。
+- 验证命令与结果：`pnpm --filter @aurora/workspace-policy exec vitest run test/environment.test.ts test/dependency-policy.test.ts test/event-schema-package-contract.test.ts` 通过（exit 0，57 个测试）、`pnpm --filter @aurora/event-schema test:package` 通过（exit 0，3 个测试）、`pnpm --filter @aurora/event-schema exec vitest run test/architecture-boundary.test.ts` 通过（exit 0，3 个测试）、`pnpm check:boundaries` 通过（exit 0）、`pnpm check:ci` 通过（exit 0）。
+- 实施 Commit：none（未提交）
+- Issue/PR：none
+- 剩余工作：SDK Core 不依赖 Browser/插件/框架、Browser 只依赖 Core 与 event-schema、插件/框架只依赖公开接口、服务端不依赖 SDK 内部、管理平台不依赖数据库模型/服务端私有模块等层级规则仍需各自真实模块加入后验证。
+
+### 2026-07-31：Browser 错误源宿主事件控制门禁与 sdk-browser 层级证据
+
+- 实施状态保持 `in-progress`；本轮为 `@aurora/browser` 的 `sdk-browser` 层补齐 `forbidden-host-event-control` 自动门禁——拒绝 Browser 生产源码中调用 `preventDefault()`、`stopPropagation()`、`stopImmediatePropagation()`，以及 Browser 错误源订阅能力的零本地运行时依赖、公共/私有入口证据与 Chromium 真实浏览器证据。
+- `WorkspaceViolationCode` 新增 `forbidden-host-event-control`：`tooling/workspace-policy/src/types.ts` 扩展违规码，`tooling/workspace-policy/src/environment.ts` 新增 `forbiddenEventControlMethods` 集合与 `isHostEventControl` AST 谓词；`tooling/workspace-policy/test/environment.test.ts` 证明三类事件控制调用均返回新违规码。
+- 层级依赖证据：`@aurora/browser` 保持零 Aurora 本地运行时依赖、`sideEffects: false`、单一根出口、`aurora.layer: sdk-browser`；`pnpm check:boundaries` 通过（exit 0）；`packages/browser/test/package-entry.test.ts` 证明根入口含 `BrowserErrorSourceEventType`，`@aurora/browser/error-source` 私有路径拒绝；`packages/browser/test/import-safety.test.ts` 证明零副作用导入。
+- 宿主安全证据：Browser 源码无 `preventDefault`/`stopPropagation`/`stopImmediatePropagation`/`window.onerror=/`/`window.onunhandledrejection=/`/`fetch=/`/`XMLHttpRequest=/`/`history.`/`@aurora/core`/`@aurora/event-schema`/`document.cookie`/`localStorage`/`sessionStorage`/`console.` 匹配，无 `/src/`/`/internal/` 跨包私导。
+- 验证命令与结果：`pnpm check:boundaries` 通过（exit 0）、`pnpm --filter @aurora/workspace-policy exec vitest run test/environment.test.ts test/dependency-policy.test.ts` 通过（exit 0，60 个测试）、`pnpm --filter @aurora/browser test:browser` 通过（exit 0，8 个 Chromium 测试）、`pnpm check:ci` 通过（exit 0）。
+- 实施 Commit：none（未提交）
+- Issue/PR：none
+- 剩余工作：插件/框架只依赖公开接口、服务端不依赖 SDK 内部、管理平台不依赖数据库模型/服务端私有模块等层级规则仍需各自真实模块加入后验证。
+
+### 2026-07-31：sdk-plugin 单向依赖与环境边界实施证据
+
+- 决策状态保持 `accepted`，实施状态保持 `in-progress`。
+- Workspace Policy 增加 `sdk-plugin -> sdk-core | sdk-browser | protocol`；反向依赖、插件间依赖、framework/tooling 依赖、循环、未声明依赖和跨包私有路径负例均被拒绝。
+- sdk-plugin 生产源码的 DOM/宿主全局、Node 运行时、模块级可变状态、宿主修改和事件控制负例均生效；`tsconfig.no-dom.json`、ESLint、包根入口和私有子路径拒绝均通过。
+- `@aurora/plugin-error` 实际只声明三个批准的 Workspace 根依赖，三个上游包均无反向依赖。
+- 验证命令：Workspace Policy 定向测试、`pnpm check:boundaries`、plugin typecheck/package/Chromium 与根 `pnpm check:ci`，全部 exit 0。
+- 实施 Commit：none（如本轮产生真实 Commit，则只把该真实哈希写入本行）
+- Issue/PR：none
+
+### 2026-07-31：Browser 请求观测 sdk-browser 边界实施证据
+
+- 决策状态保持 `accepted`，实施状态保持 `in-progress`。
+- `@aurora/browser` 请求观测能力继续由 `sdk-browser` 层承载，包保持零 Aurora 本地运行时依赖、`sideEffects: false`、单一根出口；新增请求源类型/常量/能力与 `subscribeRequests`，不增加第二子路径。
+- 请求观测生产源码不导入 `@aurora/event-schema` 或 `@aurora/core`，不访问 DOM/Cookie/Storage，不读取请求/响应正文或敏感 Headers，不修改 `XMLHttpRequest.prototype`；按 ADR-003 有意赋值 `window.fetch`/`window.XMLHttpRequest` 的窄范围放行已加入 Workspace Policy/ESLint 门禁（仅 `request-observer.ts`，其余宿主修改与原型修改仍全禁）。
+- 验证命令：`pnpm --filter @aurora/browser typecheck/test/test:package/test:browser`、`pnpm check:boundaries`、`pnpm check:ci`，全部 exit 0。
+- 实施 Commit：none（如本轮产生真实 Commit，则只把该真实哈希写入本行）
+- Issue/PR：none
+
+### 2026-07-31：请求事件契约协议层边界实施证据
+
+- 决策状态保持 `accepted`，实施状态保持 `in-progress`。
+- 请求事件正文继续由 `@aurora/event-schema`（`aurora.layer: protocol`）唯一承载；包保持零运行时依赖、零本地 Workspace 依赖、`sideEffects: false`、恰好两个公共入口。
+- 请求解析器、请求样本和共享字段/URL 助手均不进入根出口之外的新子路径；`request-event-body`、`request-event-envelope`、`request-event-types`、`field-validation`、`safe-url` 全部以 `ERR_PACKAGE_PATH_NOT_EXPORTED` 拒绝。
+- 生产源码不含 DOM/宿主全局、Node 运行时、Core/Browser/插件依赖或 console 输出；`pnpm check:boundaries` 通过。
+- 验证命令：`pnpm --filter @aurora/event-schema typecheck/test/test:package`、`pnpm check:boundaries`、`pnpm check:ci`，全部 exit 0。
+- 实施 Commit：none（如本轮产生真实 Commit，则只把该真实哈希写入本行）
+- Issue/PR：none
+
+### 2026-07-31：请求插件 sdk-plugin 依赖边界实施证据
+
+- 决策状态保持 `accepted`，实施状态保持 `in-progress`。
+- `@aurora/plugin-request`（`aurora.layer: sdk-plugin`）声明 `@aurora/core`、`@aurora/browser`、`@aurora/event-schema` 三个 `workspace:*` 依赖，反向、插件间、framework/tooling、循环、未声明依赖和跨包私有路径负例均被拒绝。
+- 插件生产源码的 DOM/宿主全局、Node 运行时、模块级可变状态、宿主修改和事件控制负例均生效；`tsconfig.no-dom.json`、ESLint、包根入口和私有子路径拒绝均通过。
+- 验证命令：`pnpm check:boundaries`、plugin typecheck/package 与根 `pnpm check:ci`，全部 exit 0。
+- 实施 Commit：none（如本轮产生真实 Commit，则只把该真实哈希写入本行）
+- Issue/PR：none
+
+### 2026-07-31：性能事件契约协议层边界实施证据
+
+- 决策状态保持 `accepted`，实施状态保持 `in-progress`。
+- 性能事件正文继续由 `@aurora/event-schema`（`aurora.layer: protocol`）唯一承载；包保持零运行时依赖、零本地 Workspace 依赖、`sideEffects: false`、恰好两个公共入口。
+- 性能解析器、性能样本和共享字段/数值助手均不进入根出口之外的新子路径；`performance-event-body`、`performance-event-envelope`、`performance-event-types` 全部以 `ERR_PACKAGE_PATH_NOT_EXPORTED` 拒绝。
+- 生产源码不含 DOM/宿主全局、`PerformanceObserver`、`performance.*`、Node 运行时、Core/Browser/插件依赖或 console 输出；`pnpm check:boundaries` 通过。
+- 验证命令：`pnpm --filter @aurora/event-schema typecheck/test/test:package`、`pnpm check:boundaries`、`pnpm check:ci`，全部 exit 0。
+- 实施 Commit：none（如本轮产生真实 Commit，则只把该真实哈希写入本行）
+- Issue/PR：none
+
+### 2026-08-01：Browser 性能观测 sdk-browser 边界实施证据
+
+- 决策状态保持 `accepted`，实施状态保持 `in-progress`。
+- `@aurora/browser` 性能事实观测能力继续由 `sdk-browser` 层承载，包保持零 Aurora 本地运行时依赖、`sideEffects: false`、单一根出口；新增性能事实类型/常量/能力与 `subscribePerformance`，不增加第二子路径。
+- 性能观测生产源码不导入 `@aurora/event-schema` 或 `@aurora/core`，不访问 DOM/Cookie/Storage，不读取 `PerformanceEntry` 的 `element`/`url`/`sources`/`target`，不修改 `PerformanceObserver`/`performance`/原生 prototype；`performance-source.ts` 与 `performance-source-types.ts` 均以 `ERR_PACKAGE_PATH_NOT_EXPORTED` 拒绝。
+- 验证命令：`pnpm --filter @aurora/browser typecheck/test/test:package/test:browser`、`pnpm check:boundaries`、`pnpm check:ci`，全部 exit 0。
+- 实施 Commit：none（如本轮产生真实 Commit，则只把该真实哈希写入本行）
+- Issue/PR：none
+
+### 2026-08-01：性能插件 sdk-plugin 依赖边界实施证据
+
+- 决策状态保持 `accepted`，实施状态保持 `in-progress`。
+- `@aurora/plugin-performance`（`aurora.layer: sdk-plugin`）声明 `@aurora/core`、`@aurora/browser`、`@aurora/event-schema` 三个 `workspace:*` 依赖，不依赖 plugin-error/plugin-request；反向、插件间、framework/tooling、循环、未声明依赖和跨包私有路径负例均被拒绝。
+- 插件生产源码的 DOM/宿主全局、Node 运行时、模块级可变状态、宿主修改和事件控制负例均生效；`tsconfig.no-dom.json`、ESLint、包根入口和私有子路径拒绝均通过。
+- 验证命令：`pnpm check:boundaries`、plugin typecheck/package 与根 `pnpm check:ci`，全部 exit 0。
+- 实施 Commit：none（如本轮产生真实 Commit，则只把该真实哈希写入本行）
+- Issue/PR：none

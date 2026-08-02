@@ -14,6 +14,9 @@ export const BrowserCapabilityName = Object.freeze({
   UserAgent: 'user_agent',
   Visibility: 'visibility',
   PageLifecycle: 'page_lifecycle',
+  ErrorSource: 'error_source',
+  RequestSource: 'request_source',
+  PerformanceSource: 'performance_source',
 } as const);
 export type BrowserCapabilityName =
   (typeof BrowserCapabilityName)[keyof typeof BrowserCapabilityName];
@@ -27,6 +30,9 @@ export interface BrowserCapabilities {
   readonly canReadUserAgent: boolean;
   readonly canReadVisibility: boolean;
   readonly canObservePageLifecycle: boolean;
+  readonly canObserveErrorSources: boolean;
+  readonly canObserveRequests: boolean;
+  readonly canObservePerformance: boolean;
 }
 export interface BrowserHostContext {
   readonly windowTarget: unknown;
@@ -59,7 +65,14 @@ export function captureBrowserHost(diagnostics: BrowserDiagnosticStore): Browser
   });
 }
 
-function hasListenerPair(target: unknown, diagnostics: BrowserDiagnosticStore): boolean {
+function hasListenerPair(
+  target: unknown,
+  diagnostics: BrowserDiagnosticStore,
+  capability:
+    | typeof BrowserCapabilityName.PageLifecycle
+    | typeof BrowserCapabilityName.ErrorSource
+    | typeof BrowserCapabilityName.RequestSource,
+): boolean {
   const add = readMethod(target, 'addEventListener');
   const remove = readMethod(target, 'removeEventListener');
   for (const result of [add, remove]) {
@@ -67,10 +80,63 @@ function hasListenerPair(target: unknown, diagnostics: BrowserDiagnosticStore): 
       diagnostics.append({
         code: BrowserDiagnosticCode.PropertyReadFailed,
         operation: BrowserDiagnosticOperation.ReadCapabilities,
-        capability: BrowserCapabilityName.PageLifecycle,
+        capability,
       });
   }
   return add.ok && remove.ok;
+}
+
+function canObserveRequests(
+  host: BrowserHostContext,
+  diagnostics: BrowserDiagnosticStore,
+): boolean {
+  const fetchMethod = readMethod(host.windowTarget, 'fetch');
+  const xhr = readProperty(host.windowTarget, 'XMLHttpRequest');
+  for (const [result, name] of [
+    [fetchMethod, BrowserCapabilityName.RequestSource],
+    [xhr, BrowserCapabilityName.RequestSource],
+  ] as const) {
+    if (!result.ok && result.reason === 'threw')
+      diagnostics.append({
+        code: BrowserDiagnosticCode.PropertyReadFailed,
+        operation: BrowserDiagnosticOperation.ReadCapabilities,
+        capability: name,
+      });
+  }
+  return (
+    fetchMethod.ok &&
+    xhr.ok &&
+    typeof xhr.value === 'function' &&
+    typeof (xhr.value as { prototype?: unknown }).prototype === 'object'
+  );
+}
+
+function canObservePerformance(
+  host: BrowserHostContext,
+  diagnostics: BrowserDiagnosticStore,
+): boolean {
+  const getEntriesByType = readMethod(host.performanceTarget, 'getEntriesByType');
+  const getEntries = readMethod(host.performanceTarget, 'getEntries');
+  const perfObserver = readProperty(host.windowTarget, 'PerformanceObserver');
+  for (const [result, name] of [
+    [getEntriesByType, BrowserCapabilityName.PerformanceSource],
+    [getEntries, BrowserCapabilityName.PerformanceSource],
+    [perfObserver, BrowserCapabilityName.PerformanceSource],
+  ] as const) {
+    if (!result.ok && result.reason === 'threw')
+      diagnostics.append({
+        code: BrowserDiagnosticCode.PropertyReadFailed,
+        operation: BrowserDiagnosticOperation.ReadCapabilities,
+        capability: name,
+      });
+  }
+  return (
+    isObjectLike(host.performanceTarget) &&
+    getEntriesByType.ok &&
+    getEntries.ok &&
+    perfObserver.ok &&
+    typeof perfObserver.value === 'function'
+  );
 }
 
 export function detectBrowserCapabilities(
@@ -108,7 +174,14 @@ export function detectBrowserCapabilities(
       userAgent.ok && typeof userAgent.value === 'string' && userAgent.value.length > 0,
     canReadVisibility: visibility.ok && typeof visibility.value === 'string',
     canObservePageLifecycle:
-      hasListenerPair(host.windowTarget, diagnostics) &&
-      hasListenerPair(host.documentTarget, diagnostics),
+      hasListenerPair(host.windowTarget, diagnostics, BrowserCapabilityName.PageLifecycle) &&
+      hasListenerPair(host.documentTarget, diagnostics, BrowserCapabilityName.PageLifecycle),
+    canObserveErrorSources: hasListenerPair(
+      host.windowTarget,
+      diagnostics,
+      BrowserCapabilityName.ErrorSource,
+    ),
+    canObserveRequests: canObserveRequests(host, diagnostics),
+    canObservePerformance: canObservePerformance(host, diagnostics),
   });
 }

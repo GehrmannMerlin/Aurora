@@ -90,3 +90,15 @@ review-cycle: protocol-change-or-release
 ## 8. 共享样本
 
 SDK、数据接入和数据处理的契约测试统一从 `@aurora/event-schema/contract-testkit` 导入合法、非法和边界样本。消费者不得复制并改写这些样本的协议含义。
+
+## 9. 精确错误事件解析
+
+公共 `parseEventEnvelope(input: unknown)` 继续只校验信封和通用 `body` 资源边界，成功结果的 `body` 保持 `unknown`。
+
+错误事件必须继续调用 `parseErrorEventEnvelope(input: unknown)`。该入口复用本信封的版本、编号、事件类型和时间戳规则，要求 `eventType` 为 `error`，再按[错误事件协议契约](error-event-contract.md)校验 JavaScript、未处理 Promise 拒绝或资源加载错误正文。
+
+资源加载错误属于 `eventType: "error"` 与 `body.category: "resource"` 的组合，不使用公共 `eventType: "resource"`。通过通用信封解析不等于通过精确错误正文解析。
+
+## 10. 精确请求事件解析
+
+请求事件必须调用 `parseRequestEventEnvelope(input: unknown)`。该入口复用本信封的版本、编号、事件类型和时间戳规则，要求 `eventType` 为 `request`，再按[请求事件协议契约](request-event-contract.md)校验最小安全请求正文（方法、安全 URL、开始时间、持续时间、结果类别和可选状态码）。`EventType.Request` 表示请求事件类别；请求监控的允许来源、同源、跨域和路径归一化判断不属于协议层。通过通用信封解析不等于通过精确请求正文解析。

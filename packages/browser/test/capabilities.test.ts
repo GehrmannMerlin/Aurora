@@ -26,6 +26,9 @@ describe('browser capability detection', () => {
       canReadUserAgent: false,
       canReadVisibility: false,
       canObservePageLifecycle: false,
+      canObserveErrorSources: false,
+      canObserveRequests: false,
+      canObservePerformance: false,
     });
     expect(Object.isFrozen(capabilities)).toBe(true);
     expect(diagnostics.getDiagnostics()).toEqual([]);
@@ -50,6 +53,9 @@ describe('browser capability detection', () => {
       canReadUserAgent: true,
       canReadVisibility: true,
       canObservePageLifecycle: true,
+      canObserveErrorSources: true,
+      canObserveRequests: false,
+      canObservePerformance: false,
     });
   });
 

@@ -4,7 +4,35 @@ export {
   BrowserDiagnosticCode,
   BrowserDiagnosticOperation,
   type BrowserDiagnostic,
+  type BrowserDiagnosticEventType,
 } from './diagnostics.js';
+export {
+  BrowserErrorSourceEventType,
+  type BrowserErrorSourceEvent,
+  type BrowserErrorSourceListener,
+  type BrowserJavaScriptErrorSourceEvent,
+  type BrowserResourceErrorSourceEvent,
+  type BrowserUnhandledRejectionSourceEvent,
+} from './error-source.js';
+export {
+  BrowserRequestMechanism,
+  BrowserRequestOutcome,
+  BrowserRequestSourceEventType,
+} from './request-source.js';
+export type {
+  BrowserFetchRequestSourceEvent,
+  BrowserRequestSourceEvent,
+  BrowserRequestSourceListener,
+  BrowserXhrRequestSourceEvent,
+} from './request-source.js';
+export {
+  BrowserPerformanceMetricName,
+  BrowserPerformanceMetricUnit,
+} from './performance-source-types.js';
+export type {
+  BrowserPerformanceSourceEvent,
+  BrowserPerformanceSourceListener,
+} from './performance-source-types.js';
 export {
   BrowserDestroyCode,
   BrowserSubscribeCode,

@@ -1,5 +1,8 @@
 import type { BrowserCapabilityName } from './capabilities.js';
+import type { BrowserErrorSourceEventType } from './error-source.js';
 import type { PageLifecycleEventType } from './page-lifecycle.js';
+import type { BrowserRequestSourceEventType } from './request-source.js';
+import type { BrowserPerformanceMetricName } from './performance-source-types.js';
 
 const MAX_DIAGNOSTICS = 100;
 export const BrowserDiagnosticCode = Object.freeze({
@@ -9,6 +12,7 @@ export const BrowserDiagnosticCode = Object.freeze({
   ListenerRegistrationFailed: 'listener_registration_failed',
   ListenerRemovalFailed: 'listener_removal_failed',
   CallbackFailed: 'callback_failed',
+  PerformanceEntryRejected: 'performance_entry_rejected',
 } as const);
 export type BrowserDiagnosticCode =
   (typeof BrowserDiagnosticCode)[keyof typeof BrowserDiagnosticCode];
@@ -23,18 +27,23 @@ export const BrowserDiagnosticOperation = Object.freeze({
 } as const);
 export type BrowserDiagnosticOperation =
   (typeof BrowserDiagnosticOperation)[keyof typeof BrowserDiagnosticOperation];
+export type BrowserDiagnosticEventType =
+  | PageLifecycleEventType
+  | BrowserErrorSourceEventType
+  | BrowserRequestSourceEventType
+  | BrowserPerformanceMetricName;
 export interface BrowserDiagnostic {
   readonly sequence: number;
   readonly code: BrowserDiagnosticCode;
   readonly operation: BrowserDiagnosticOperation;
   readonly capability?: BrowserCapabilityName;
-  readonly eventType?: PageLifecycleEventType;
+  readonly eventType?: BrowserDiagnosticEventType;
 }
 export interface BrowserDiagnosticInput {
   readonly code: BrowserDiagnosticCode;
   readonly operation: BrowserDiagnosticOperation;
   readonly capability?: BrowserCapabilityName;
-  readonly eventType?: PageLifecycleEventType;
+  readonly eventType?: BrowserDiagnosticEventType;
 }
 export interface BrowserDiagnosticStore {
   append(input: BrowserDiagnosticInput): void;

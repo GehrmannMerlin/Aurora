@@ -1,8 +1,8 @@
-import type { CoreEventResult } from './event-entry.js';
+import type { CoreEventDraftResult } from './event-entry.js';
 import type { CoreLifecycleState } from './lifecycle.js';
 
 export interface CorePluginContext {
-  readonly submitEvent: (input: unknown) => CoreEventResult;
+  readonly submitEvent: (input: unknown) => CoreEventDraftResult;
 }
 
 export interface CorePlugin {

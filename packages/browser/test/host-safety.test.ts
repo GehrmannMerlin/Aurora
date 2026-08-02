@@ -75,6 +75,33 @@ describe('Browser host safety', () => {
     expect(consoleError).not.toHaveBeenCalled();
   });
 
+  it('contains a callback error and handles the next error source event', () => {
+    const windowTarget = target();
+    vi.stubGlobal('window', { ...windowTarget, location: { href: 'https://example.test/' } });
+    vi.stubGlobal('document', {});
+    vi.stubGlobal('navigator', { userAgent: 'agent' });
+    vi.stubGlobal('performance', { now: (): number => 1 });
+    const browser = createBrowserEnvironment();
+    let healthyCalls = 0;
+    browser.subscribeErrorSources((): never => {
+      throw new Error('callback-error');
+    });
+    browser.subscribeErrorSources(() => {
+      healthyCalls += 1;
+    });
+    windowTarget.dispatch('error', {
+      target: window,
+      message: 'Synthetic',
+      error: new Error('x'),
+    });
+    windowTarget.dispatch('error', {
+      target: window,
+      message: 'Synthetic 2',
+      error: new Error('y'),
+    });
+    expect(healthyCalls).toBe(2);
+  });
+
   it('contains one throwing callback and still notifies another callback', () => {
     const windowTarget = target();
     const documentTarget = target();

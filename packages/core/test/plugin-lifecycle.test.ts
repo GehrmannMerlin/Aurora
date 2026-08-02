@@ -1,10 +1,10 @@
-import { validEventEnvelopeSamples } from '@aurora/event-schema/contract-testkit';
+import { EventType } from '@aurora/event-schema';
 import { describe, expect, it } from 'vitest';
 import {
   createCore,
   type CorePlugin,
   type CorePluginContext,
-  type CoreEventResult,
+  type CoreEventDraftResult,
 } from '../src/index.js';
 
 function loggingPlugin(name: string, log: string[]): CorePlugin {
@@ -199,13 +199,13 @@ describe('AuroraCore plugin lifecycle', () => {
 
   it('gives plugins only a frozen event entry bound to the same Core', async () => {
     let context: CorePluginContext | undefined;
-    let duringInitialize: CoreEventResult | undefined;
+    let duringInitialize: CoreEventDraftResult | undefined;
     const core = createCore();
     core.registerPlugin({
       name: 'context-plugin',
       initialize: (received: CorePluginContext): void => {
         context = received;
-        duringInitialize = received.submitEvent(validEventEnvelopeSamples[0]);
+        duringInitialize = received.submitEvent({ eventType: EventType.Error, body: {} });
       },
       start: (): void => undefined,
       stop: (): void => undefined,
@@ -216,14 +216,38 @@ describe('AuroraCore plugin lifecycle', () => {
     expect(Object.keys(context ?? {})).toEqual(['submitEvent']);
     expect(duringInitialize).toMatchObject({ ok: false, code: 'not_started' });
     await core.start();
-    expect(context?.submitEvent(validEventEnvelopeSamples[0])).toMatchObject({
+    expect(context?.submitEvent({ eventType: EventType.Error, body: {} })).toMatchObject({
       ok: true,
       code: 'accepted',
     });
     await core.destroy();
-    expect(context?.submitEvent(validEventEnvelopeSamples[0])).toMatchObject({
+    expect(context?.submitEvent({ eventType: EventType.Error, body: {} })).toMatchObject({
       ok: false,
       code: 'destroyed',
+    });
+  });
+
+  it('rejects a full envelope passed through plugin context as invalid draft', async () => {
+    const core = createCore();
+    core.registerPlugin({
+      name: 'envelope-blocker',
+      initialize: (): void => undefined,
+      start: (): void => undefined,
+      stop: (): void => undefined,
+      destroy: (): void => undefined,
+    });
+    await core.initialize();
+    await core.start();
+    const result = core.submitEventDraft({
+      eventType: EventType.Error,
+      body: {},
+      eventId: 'forged',
+    });
+    expect(result).toEqual({
+      ok: false,
+      code: 'invalid_event_draft',
+      state: 'started',
+      diagnosticsAdded: 1,
     });
   });
 });

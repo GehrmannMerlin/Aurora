@@ -20,6 +20,8 @@ describe('built Browser package entry', () => {
     expect(result.stderr).toBe('');
     expect(result.stdout.trim()).toBe(
       'BrowserCapabilityName,BrowserDestroyCode,BrowserDiagnosticCode,BrowserDiagnosticOperation,' +
+        'BrowserErrorSourceEventType,BrowserPerformanceMetricName,BrowserPerformanceMetricUnit,' +
+        'BrowserRequestMechanism,BrowserRequestOutcome,BrowserRequestSourceEventType,' +
         'BrowserSubscribeCode,BrowserUnsubscribeCode,PageLifecycleEventType,PageVisibilityState,' +
         'createBrowserEnvironment',
     );
@@ -30,6 +32,11 @@ describe('built Browser package entry', () => {
       '@aurora/browser/src/index.js',
       '@aurora/browser/internal/safe-access.js',
       '@aurora/browser/page-lifecycle',
+      '@aurora/browser/error-source',
+      '@aurora/browser/request-source',
+      '@aurora/browser/request-observer',
+      '@aurora/browser/performance-source',
+      '@aurora/browser/performance-source-types',
     ]) {
       const result = importFromPackage(specifier);
       expect(result.status, specifier).not.toBe(0);

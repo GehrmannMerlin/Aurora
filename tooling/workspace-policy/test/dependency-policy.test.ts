@@ -235,4 +235,77 @@ describe('Workspace dependency policy', () => {
       );
     },
   );
+
+  it.each(['sdk-core', 'sdk-browser', 'protocol'] as const)(
+    'allows sdk-plugin to depend on %s',
+    async (layer) => {
+      const plugin = validManifest('@aurora/plugin-error');
+      plugin.aurora = { layer: 'sdk-plugin' };
+      plugin.dependencies = { '@aurora/target': 'workspace:*' };
+      const target = validManifest('@aurora/target');
+      target.aurora = { layer };
+      fixture = await createWorkspaceFixture([
+        { directory: 'packages/plugin-error', manifest: plugin },
+        { directory: 'packages/target', manifest: target },
+      ]);
+      await expect(checkWorkspace(fixture.rootDir)).resolves.toEqual({
+        ok: true,
+        violations: [],
+      });
+    },
+  );
+
+  it.each(['sdk-plugin', 'framework', 'tooling'] as const)(
+    'rejects sdk-plugin dependency on %s',
+    async (layer) => {
+      const plugin = validManifest('@aurora/plugin-error');
+      plugin.aurora = { layer: 'sdk-plugin' };
+      plugin.dependencies = { '@aurora/target': 'workspace:*' };
+      const target = validManifest('@aurora/target');
+      target.aurora = { layer };
+      fixture = await createWorkspaceFixture([
+        { directory: 'packages/plugin-error', manifest: plugin },
+        { directory: 'packages/target', manifest: target },
+      ]);
+      const result = await checkWorkspace(fixture.rootDir);
+      expect(result.violations).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            code: 'forbidden-layer-dependency',
+            packageName: '@aurora/plugin-error',
+          }),
+        ]),
+      );
+    },
+  );
+
+  it('rejects plugin private imports and reverse dependencies', async () => {
+    const plugin = validManifest('@aurora/plugin-error');
+    plugin.aurora = { layer: 'sdk-plugin' };
+    plugin.dependencies = { '@aurora/core': 'workspace:*' };
+    const core = validManifest('@aurora/core');
+    core.aurora = { layer: 'sdk-core' };
+    core.dependencies = { '@aurora/plugin-error': 'workspace:*' };
+    fixture = await createWorkspaceFixture([
+      {
+        directory: 'packages/plugin-error',
+        manifest: plugin,
+        files: {
+          'src/index.ts': "import type { CorePlugin } from '@aurora/core/src/plugin-contract.js';",
+        },
+      },
+      { directory: 'packages/core', manifest: core },
+    ]);
+    const result = await checkWorkspace(fixture.rootDir);
+    expect(result.violations).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ code: 'private-path-import' }),
+        expect.objectContaining({
+          code: 'forbidden-layer-dependency',
+          packageName: '@aurora/core',
+        }),
+        expect.objectContaining({ code: 'dependency-cycle' }),
+      ]),
+    );
+  });
 });

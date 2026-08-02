@@ -9,6 +9,7 @@
 - Reject undeclared local imports, dependency cycles, `/src/`, `/internal/`, and unexported subpaths.
 - Enforce layer dependency rules: `protocol` rejects every local runtime dependency; `sdk-core` accepts only `protocol`.
 - Scan `sdk-core` source for forbidden browser globals and module-level mutable state.
+- Scan `sdk-plugin` source for forbidden DOM/host/Node globals, module-level mutable state, host mutation, and host event control.
 - Expose deterministic API results and a secret-free CLI for local and future CI use.
 
 ## 非职责
@@ -30,9 +31,11 @@ export function formatViolations(result: WorkspaceCheckResult): string;
 
 - `protocol` 层（如 `@aurora/event-schema`）声明的任何本地运行时依赖都被 `forbidden-layer-dependency` 拒绝。
 - `sdk-core` 层（如 `@aurora/core`）只允许依赖 `protocol` 层；依赖 `sdk-browser`、`sdk-plugin`、`framework` 或 `tooling` 层被拒绝。
+- `sdk-plugin` 层（如 `@aurora/plugin-error`）只允许依赖 `sdk-core`、`sdk-browser` 和 `protocol` 层；依赖其他插件、`framework` 或 `tooling` 层被拒绝。
 - 跨包导入 `@aurora/<name>/src/*`、`@aurora/<name>/internal/*` 或未导出子路径被 `private-path-import` 拒绝；依赖图循环被 `dependency-cycle` 拒绝，检查覆盖全部 Workspace 包。
 - `sdk-core` 源码引用 `window`、`document`、`navigator`、`location`、`fetch`、`XMLHttpRequest`、`localStorage`、`sessionStorage` 及 DOM 类型标识符被 `forbidden-runtime-global` 拒绝。
 - `sdk-core` 源码顶层 `let`/`var` 或顶层可变容器（`new`、数组字面量、对象字面量）被 `mutable-module-state` 拒绝。
+- `sdk-plugin` 源码引用 DOM/宿主全局、Node 运行时全局、任何 `node:` 导入被 `forbidden-runtime-global` 拒绝；顶层可变状态、宿主修改和事件控制分别被 `mutable-module-state`、`forbidden-host-mutation` 和 `forbidden-host-event-control` 拒绝。
 
 ## CLI 与失败语义
 

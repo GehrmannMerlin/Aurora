@@ -1,12 +1,21 @@
 export { createCore, type AuroraCore } from './core.js';
 export type {
   CoreEventAccepted,
+  CoreEventCreationFailure,
+  CoreEventDraftResult,
   CoreEventInternalFailure,
   CoreEventResult,
   CoreDestroyedEvent,
   CoreInactiveEvent,
   CoreInvalidEvent,
+  CoreInvalidEventDraft,
 } from './event-entry.js';
+export type { CoreEventDraft } from './event-draft.js';
+export type {
+  CoreEventIdProvider,
+  CoreEventProviders,
+  CoreEventTimeProvider,
+} from './event-providers.js';
 export type {
   CorePlugin,
   CorePluginContext,

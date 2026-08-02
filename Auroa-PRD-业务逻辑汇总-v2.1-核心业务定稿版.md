@@ -2,7 +2,7 @@
 title: Aurora 前端监控 SaaS PRD：业务逻辑汇总
 status: approved
 owner: product
-last-reviewed: 2026-07-27
+last-reviewed: 2026-08-01
 applies-to: Aurora 第一版核心业务
 related:
   - AURORA_RULES.md
@@ -1077,6 +1077,25 @@ SDK 配置决定浏览器实际采集什么。
 - 完整请求正文采集；
 - 用户行为回放；
 - 自动识别所有业务敏感字段。
+
+### 5.1.17 通用资源监控第一版不实现（deferred）
+
+Aurora 第一版不实现独立的“通用资源事件”链路。本决策明确边界：
+
+- 静态资源加载失败继续由错误事件契约和错误采集插件负责；
+- fetch/XMLHttpRequest 请求继续由请求事件契约和请求采集插件负责；
+- LCP、INP、CLS、页面加载耗时继续由性能事件契约和性能采集插件负责；
+- 通用资源成功加载、Resource Timing、资源尺寸、缓存状态及资源耗时事件暂不进入第一版；
+- 不创建 `resource-event-contract` 协议、浏览器资源事实源或 `plugin-resource` 采集插件；
+- 不批准 `initiatorType`、`transferSize`、`encodedBodySize`、`decodedBodySize`、缓存状态等资源字段；
+- `EventType.Resource` 仅作为未来兼容性预留值，不代表当前存在受支持的资源正文或产品能力。
+
+决策状态：
+
+- product scope: deferred；
+- implementation status: not-started；
+- reason: 第一版业务价值不明确，并与错误、请求和性能链路存在职责重叠；
+- reopen condition: 后续 PRD 明确资源监控用户价值、字段、隐私规则和与现有三条链路的边界。
 
 
 ## 5.2 SDK 配置

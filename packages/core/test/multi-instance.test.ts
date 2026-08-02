@@ -1,4 +1,5 @@
 import { validEventEnvelopeSamples } from '@aurora/event-schema/contract-testkit';
+import { EventType } from '@aurora/event-schema';
 import { describe, expect, it } from 'vitest';
 import { createCore, type CorePlugin } from '../src/index.js';
 
@@ -70,5 +71,27 @@ describe('AuroraCore multi-instance isolation', () => {
     expect(failed.getDiagnostics()[0]).toMatchObject({ sequence: 1, pluginName: 'failed-plugin' });
     expect(healthy.getDiagnostics()).toEqual([]);
     expect(healthy.getState()).toBe('initialized');
+  });
+
+  it('isolates different Providers and one Provider failure', async () => {
+    const failed = createCore({
+      eventIdProvider: {
+        createEventId: (): never => {
+          throw new Error('first-secret');
+        },
+      },
+      eventTimeProvider: { now: () => 1 },
+    });
+    const healthy = createCore({
+      eventIdProvider: { createEventId: () => 'second-event' },
+      eventTimeProvider: { now: () => 2 },
+    });
+    await Promise.all([failed.initialize(), healthy.initialize()]);
+    await Promise.all([failed.start(), healthy.start()]);
+    const draft = { eventType: EventType.Error, body: {} };
+    expect(failed.submitEventDraft(draft).code).toBe('event_creation_failed');
+    expect(healthy.submitEventDraft(draft).code).toBe('accepted');
+    expect(failed.getDiagnostics()).toHaveLength(1);
+    expect(healthy.getDiagnostics()).toEqual([]);
   });
 });

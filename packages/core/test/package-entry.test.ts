@@ -26,6 +26,9 @@ describe('built Core package entry', () => {
       '@aurora/core/src/index.js',
       '@aurora/core/internal/plugin-registry.js',
       '@aurora/core/plugin-registry',
+      '@aurora/core/event-creation',
+      '@aurora/core/event-providers',
+      '@aurora/core/src/event-creation.js',
     ]) {
       const result = importFromPackage(specifier);
       expect(result.status, specifier).not.toBe(0);

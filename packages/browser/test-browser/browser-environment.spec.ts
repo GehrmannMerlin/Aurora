@@ -95,3 +95,30 @@ test('contains callback errors and leaves the host page running', async ({ page 
 test('does not cross-cancel independent instances', async ({ page }) => {
   expect(await invoke(page, 'isolatedInstances')).toEqual({ firstCalls: 0, secondCalls: 1 });
 });
+
+test('captures three real error sources once without replacing host handlers', async ({ page }) => {
+  expect(await invoke(page, 'capabilities')).toMatchObject({ canObserveErrorSources: true });
+  expect(await invoke(page, 'triggerThreeErrorSources')).toMatchObject({
+    types: ['javascript_error', 'unhandled_rejection', 'resource_error'],
+    counts: { javascript_error: 1, unhandled_rejection: 1, resource_error: 1 },
+    onerrorIdentity: true,
+    onunhandledrejectionIdentity: true,
+    onerrorCalls: 1,
+    onunhandledrejectionCalls: 1,
+    hasNativeReference: false,
+  });
+});
+
+test('stops after unsubscribe and destroy without cross-cancelling instances', async ({ page }) => {
+  expect(await invoke(page, 'verifyErrorSourceRelease')).toEqual({
+    afterUnsubscribe: 0,
+    afterDestroy: 0,
+    survivingInstance: 1,
+  });
+});
+
+test('contains callback failure without recursive collection or page damage', async ({ page }) => {
+  const result = await invoke(page, 'verifyErrorCallbackIsolation');
+  expect(result).toMatchObject({ healthyCalls: 2, callbackDiagnostics: 2 });
+  expect(await page.evaluate(() => 20 + 22)).toBe(42);
+});

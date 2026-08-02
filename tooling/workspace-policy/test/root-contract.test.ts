@@ -36,6 +36,8 @@ describe('root Workspace contract', () => {
       'check:ci',
       'format:check',
       'lint',
+      'openapi:check',
+      'openapi:lint',
       'test',
       'test:coverage',
       'typecheck',

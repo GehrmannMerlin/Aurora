@@ -10,6 +10,9 @@ export type CoreDiagnosticCode =
   | 'plugin_destroy_failed'
   | 'invalid_event'
   | 'event_rejected'
+  | 'invalid_event_draft'
+  | 'event_id_provider_failed'
+  | 'event_time_provider_failed'
   | 'internal_error';
 
 export type CoreDiagnosticOperation =

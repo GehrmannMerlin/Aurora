@@ -1,9 +1,11 @@
 node_modules/
 dist/
 coverage/
+test-results/
 .vitest/
 .pnpm-store/
 *.tsbuildinfo
 .env
 .env.*
 !.env.example
+.migrations-combined/

@@ -4,7 +4,7 @@
 
 ## 模块定位
 
-Core 为每个 `createCore()` 调用建立独立实例，负责最小配置、生命周期、插件顺序、标准事件信封入口和有界内部诊断。Core 不访问 Browser 环境，也不负责采集或发送。
+Core 为每个 `createCore()` 调用建立独立实例，负责最小配置、生命周期、插件顺序、标准事件创建与提交边界和有界内部诊断。Core 不访问 Browser 环境，也不负责采集或发送。
 
 ## 职责
 
@@ -12,7 +12,11 @@ Core 为每个 `createCore()` 调用建立独立实例，负责最小配置、�
 - 提供默认 `maxDiagnosticEntries` 为 `100` 的冻结配置快照；
 - 在单实例内串行化异步生命周期调用；
 - 注册并隔离插件，按注册顺序初始化/启动、逆序停止/销毁；
-- 通过 `@aurora/event-schema` 根入口验证标准事件信封；
+- 接收插件或调用方的最小事件草稿（`eventType + body`）；
+- 以实例级 `CoreEventIdProvider` 生成事件 ID，以 `CoreEventTimeProvider` 取得事件时间；
+- 填入 `@aurora/event-schema` 根出口的 `CURRENT_PROTOCOL_VERSION` 并构造完整 `EventEnvelope`；
+- 所有系统字段（ID、时间、协议版本）归 Core 所有，插件不能覆盖；
+- 通过 `@aurora/event-schema` 根入口的 `parseEventEnvelope` 进行最终运行时校验；
 - 提供每实例有界且不含异常内容的诊断结果。
 
 ## 非职责
@@ -30,7 +34,12 @@ import {
   type AuroraCore,
   type CoreConfigInput,
   type CoreDiagnostic,
+  type CoreEventDraft,
+  type CoreEventDraftResult,
+  type CoreEventIdProvider,
+  type CoreEventProviders,
   type CoreEventResult,
+  type CoreEventTimeProvider,
   type CoreLifecycleResult,
   type CorePlugin,
   type CorePluginContext,
@@ -58,11 +67,68 @@ created --initialize--> initialized --start--> started
 
 插件名必须是 1—64 字符 kebab-case。插件只在 `created` 注册；首次初始化尝试后注册关闭。初始化和启动按注册顺序，停止和销毁按逆序。同步异常和 Promise 拒绝不会冒泡；失败插件被隔离，其他插件继续，销毁仍执行一次。
 
-`CorePluginContext` 只有冻结的 `submitEvent(input: unknown)`。插件不能读取 Core 配置、诊断、其他插件或私有状态，也不能通过 Core 获得独立上报通道。
+`CorePluginContext` 只有冻结的 `submitEvent(input: unknown): CoreEventDraftResult`。插件只能提交只含 `eventType` 和 `body` 的最小草稿；`eventId`、`occurredAt`、`protocolVersion` 或任何额外字段导致 `invalid_event_draft`。插件不能读取 Core 配置、诊断、其他插件或私有状态，也不能通过 Core 获得独立上报通道。
 
 ## 事件入口
 
-`submitEvent(input: unknown): CoreEventResult` 仅在 `started` 接受输入，并调用 `@aurora/event-schema` 的 `parseEventEnvelope`。`accepted` 只表示 Core 已启动且信封通过校验；它不表示事件已采样、保留、排队、批处理、发送或持久化。Core 不修改或保存协议对象。
+Core 提供两个公开提交入口：
+
+- `AuroraCore.submitEvent(input: unknown): CoreEventResult` — 既有低层完整信封入口，保持兼容。调用方必须自行提供完整的 `EventEnvelope`。
+- `AuroraCore.submitEventDraft(input: unknown): CoreEventDraftResult` — 标准草稿入口，也是插件上下文的唯一提交边界。Core 生成 ID、时间和协议版本并最终校验。
+
+两个入口均为同步方法。只有 `started` 状态才读取草稿和调用 Provider；其他状态返回 `not_started` 或 `destroyed`。
+
+每次调用表示一个新事件创建；重复或并发调用各自调用 Provider 并产生各自结果。`accepted` 只表示 Core 已启动且事件通过校验；它不表示采样、排队、发送或持久化。Core 不修改或保存协议对象。
+
+### 事件草稿
+
+插件或调用方仅提交：
+
+```ts
+interface CoreEventDraft {
+  readonly eventType: EventType;
+  readonly body: unknown;
+}
+```
+
+`eventId`、`occurredAt`、`protocolVersion` 或任何额外字段视为无效草稿。草稿和 `body` 不会被修改或保留。
+
+### ID 与时间 Provider
+
+每个 `createCore()` 实例拥有一对独立的、可注入的同步 Provider：
+
+```ts
+interface CoreEventIdProvider {
+  createEventId(): string;
+}
+
+interface CoreEventTimeProvider {
+  now(): number;
+}
+
+const core = createCore({
+  eventIdProvider: { createEventId: () => 'event-0001' },
+  eventTimeProvider: { now: () => 1_800_000_000_000 },
+});
+```
+
+默认 `CoreEventIdProvider` 在调用时安全读取 `globalThis.crypto.randomUUID`，以原始 `crypto` 对象作为 receiver 调用。能力缺失或调用失败时稳定返回 `event_creation_failed`，不使用 `Math.random`、时间拼接或全局计数器降级。
+
+默认 `CoreEventTimeProvider` 在调用时使用 `Date.now()`，不在模块导入时读取环境。
+
+Provider 同步、可注入、按实例隔离；Provider 抛错和非法返回值不影响宿主或其他实例。
+
+### 诊断映射
+
+| 条件                            | 公开结果                    | 诊断                         |
+| ------------------------------- | --------------------------- | ---------------------------- |
+| 非 started / destroyed          | `not_started` / `destroyed` | `event_rejected`             |
+| 草稿形状或 eventType 非法       | `invalid_event_draft`       | `invalid_event_draft`        |
+| ID Provider 能力缺失或抛错      | `event_creation_failed`     | `event_id_provider_failed`   |
+| 时间 Provider 抛错              | `event_creation_failed`     | `event_time_provider_failed` |
+| Provider 值或正文使最终信封非法 | `invalid_event`             | `invalid_event`              |
+| 未分类内部异常                  | `internal_error`            | `internal_error`             |
+| 成功                            | `accepted`                  | 不新增诊断                   |
 
 ## 诊断与隐私
 
@@ -84,13 +150,16 @@ pnpm check:boundaries
 pnpm check:ci
 ```
 
-覆盖率门槛为行 85%、分支 80%、函数 85%、语句 85%。无 DOM 编译、包根入口、私有路径拒绝、依赖层级、浏览器全局和模块级可变状态均有自动门禁。
+覆盖率门槛为行 85%、分支 80%、函数 85%、语句 85%。无 DOM 编译、包根入口、私有路径拒绝、依赖层级、浏览器全局、Node 运行时 API 和模块级可变状态均有自动门禁。
 
 ## 关联文档
 
 - [Core 基础规格](../../docs/sdk/sdk-core-foundation.md)
+- [Core 标准事件创建与提交边界](../../docs/sdk/core-event-creation.md)
 - [SDK 架构](../../docs/architecture/sdk-architecture.md)
 - [event-schema 基础规格](../../docs/protocol/event-schema-foundation.md)
+- [错误事件协议契约](../../docs/protocol/error-event-contract.md)
+- [Browser 环境基础](../../docs/sdk/browser-environment-foundation.md)
 - [ADR-003](../../docs/adr/ADR-003-sdk-plugin-architecture.md)
 - [ADR-005](../../docs/adr/ADR-005-event-schema-source-of-truth.md)
 - [ADR-006](../../docs/adr/ADR-006-one-way-dependencies.md)

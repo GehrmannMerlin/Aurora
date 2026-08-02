@@ -1,4 +1,5 @@
 import { validEventEnvelopeSamples } from '@aurora/event-schema/contract-testkit';
+import { EventType } from '@aurora/event-schema';
 import { describe, expect, it } from 'vitest';
 import { createCore } from '../src/index.js';
 
@@ -103,7 +104,147 @@ describe('AuroraCore event entry', () => {
       'start',
       'stop',
       'submitEvent',
+      'submitEventDraft',
       'updateConfig',
     ]);
+  });
+});
+
+describe('AuroraCore draft submission', () => {
+  it('creates and submits a draft while preserving the low-level envelope entry', async () => {
+    const core = createCore({
+      eventIdProvider: { createEventId: () => 'public-event' },
+      eventTimeProvider: { now: () => 1_800_000_000_000 },
+    });
+    await core.initialize();
+    await core.start();
+    expect(core.submitEventDraft({ eventType: EventType.Error, body: {} })).toEqual({
+      ok: true,
+      code: 'accepted',
+      state: 'started',
+      diagnosticsAdded: 0,
+    });
+    expect(core.submitEvent(validEventEnvelopeSamples[0])).toMatchObject({ code: 'accepted' });
+  });
+
+  it.each([
+    { eventType: EventType.Error },
+    { eventType: EventType.Error, body: {}, eventId: 'forged' },
+    { eventType: EventType.Error, body: {}, occurredAt: 1 },
+    { eventType: EventType.Error, body: {}, protocolVersion: 1 },
+  ])('rejects invalid or system-field draft %#', async (input) => {
+    const core = createCore({
+      eventIdProvider: { createEventId: () => 'unused' },
+      eventTimeProvider: { now: () => 1 },
+    });
+    await core.initialize();
+    await core.start();
+    expect(core.submitEventDraft(input)).toEqual({
+      ok: false,
+      code: 'invalid_event_draft',
+      state: 'started',
+      diagnosticsAdded: 1,
+    });
+  });
+
+  it('maps Provider throws without leaking or blocking the next submit', async () => {
+    let calls = 0;
+    const core = createCore({
+      eventIdProvider: {
+        createEventId: (): string => {
+          calls += 1;
+          if (calls === 1) throw new Error('authorization=secret');
+          return 'recovered-event';
+        },
+      },
+      eventTimeProvider: { now: () => 1 },
+    });
+    await core.initialize();
+    await core.start();
+    expect(core.submitEventDraft({ eventType: EventType.Error, body: {} })).toMatchObject({
+      ok: false,
+      code: 'event_creation_failed',
+    });
+    expect(core.submitEventDraft({ eventType: EventType.Error, body: {} })).toMatchObject({
+      ok: true,
+      code: 'accepted',
+    });
+    expect(JSON.stringify(core.getDiagnostics())).not.toContain('secret');
+  });
+});
+
+describe('AuroraCore draft lifecycle and isolation', () => {
+  it('never calls Providers outside started and rejects after destroy', async () => {
+    let idCalls = 0;
+    let timeCalls = 0;
+    const core = createCore({
+      eventIdProvider: {
+        createEventId: (): string => {
+          idCalls += 1;
+          return `event-${String(idCalls)}`;
+        },
+      },
+      eventTimeProvider: {
+        now: (): number => {
+          timeCalls += 1;
+          return timeCalls;
+        },
+      },
+    });
+    const draft = { eventType: EventType.Error, body: {} };
+    expect(core.submitEventDraft(draft).code).toBe('not_started');
+    await core.initialize();
+    expect(core.submitEventDraft(draft).code).toBe('not_started');
+    await core.start();
+    expect(core.submitEventDraft(draft).code).toBe('accepted');
+    await core.stop();
+    expect(core.submitEventDraft(draft).code).toBe('not_started');
+    await core.destroy();
+    expect(core.submitEventDraft(draft).code).toBe('destroyed');
+    expect({ idCalls, timeCalls }).toEqual({ idCalls: 1, timeCalls: 1 });
+  });
+
+  it('treats repeat and concurrent calls as distinct events', async () => {
+    let next = 0;
+    const core = createCore({
+      eventIdProvider: { createEventId: () => `event-${String(++next)}` },
+      eventTimeProvider: { now: () => next },
+    });
+    await core.initialize();
+    await core.start();
+    const draft = { eventType: EventType.Error, body: {} };
+    const results = await Promise.all([
+      Promise.resolve(core.submitEventDraft(draft)),
+      Promise.resolve(core.submitEventDraft(draft)),
+      Promise.resolve(core.submitEventDraft(draft)),
+    ]);
+    expect(results.every(({ code }) => code === 'accepted')).toBe(true);
+    expect(next).toBe(3);
+  });
+
+  it('rejects invalid body values with event-schema issues', async () => {
+    const core = createCore({
+      eventIdProvider: { createEventId: () => 'body-test' },
+      eventTimeProvider: { now: () => 1 },
+    });
+    await core.initialize();
+    await core.start();
+    for (const body of [undefined, () => undefined, NaN, Symbol('s')]) {
+      const result = core.submitEventDraft({ eventType: EventType.Error, body });
+      expect(result).toMatchObject({ ok: false, code: 'invalid_event' });
+    }
+  });
+
+  it('does not mutate a frozen nested body across submission', async () => {
+    const core = createCore({
+      eventIdProvider: { createEventId: () => 'immutable-test' },
+      eventTimeProvider: { now: () => 1 },
+    });
+    await core.initialize();
+    await core.start();
+    const body = Object.freeze({ nested: Object.freeze(['a', 'b']) });
+    const before = JSON.stringify(body);
+    expect(core.submitEventDraft({ eventType: EventType.Error, body }).code).toBe('accepted');
+    expect(JSON.stringify(body)).toBe(before);
   });
 });

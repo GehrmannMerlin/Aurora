@@ -1,0 +1,34 @@
+{
+  "name": "@aurora/ingestion-openapi-contract",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Aurora ingestion OpenAPI drift gate: asserts docs/api/ingestion.openapi.yaml stays aligned with @aurora/event-schema",
+  "engines": {
+    "node": ">=24.18.0 <25"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "@aurora/event-schema": "workspace:*",
+    "@types/node": "24.13.3",
+    "typescript": "6.0.3",
+    "vitest": "4.1.10",
+    "yaml": "2.9.0"
+  },
+  "aurora": {
+    "layer": "tooling"
+  }
+}

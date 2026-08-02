@@ -6,7 +6,17 @@ import {
   type CoreConfigUpdateResult,
 } from './configuration.js';
 import { DiagnosticStore, type CoreDiagnostic } from './diagnostics.js';
-import { submitCoreEvent, type CoreEventResult } from './event-entry.js';
+import {
+  submitCoreEvent,
+  submitCoreEventDraft,
+  type CoreEventResult,
+  type CoreEventDraftResult,
+} from './event-entry.js';
+import {
+  snapshotEventProviders,
+  type CoreEventProviderSnapshot,
+  type CoreEventProviders,
+} from './event-providers.js';
 import {
   lifecycleFailure,
   lifecycleSuccess,
@@ -31,11 +41,13 @@ export interface AuroraCore {
   stop(): Promise<CoreLifecycleResult>;
   destroy(): Promise<CoreLifecycleResult>;
   submitEvent(input: unknown): CoreEventResult;
+  submitEventDraft(input: unknown): CoreEventDraftResult;
 }
 
 type LifecycleOperation = 'initialize' | 'start' | 'stop' | 'destroy';
 
-export function createCore(): AuroraCore {
+export function createCore(providers?: CoreEventProviders): AuroraCore {
+  const eventProviders: CoreEventProviderSnapshot = snapshotEventProviders(providers);
   let state: CoreLifecycleState = 'created';
   let config: CoreConfigSnapshot | null = null;
   let lifecycleTail: Promise<void> = Promise.resolve();
@@ -217,8 +229,12 @@ export function createCore(): AuroraCore {
     return submitCoreEvent(state, input, diagnostics);
   }
 
+  function submitEventDraft(input: unknown): CoreEventDraftResult {
+    return submitCoreEventDraft(state, input, eventProviders, diagnostics);
+  }
+
   const pluginContext: CorePluginContext = Object.freeze({
-    submitEvent: (input: unknown): CoreEventResult => submitEvent(input),
+    submitEvent: (input: unknown): CoreEventDraftResult => submitEventDraft(input),
   });
 
   return Object.freeze({
@@ -232,5 +248,6 @@ export function createCore(): AuroraCore {
     stop,
     destroy,
     submitEvent,
+    submitEventDraft,
   });
 }

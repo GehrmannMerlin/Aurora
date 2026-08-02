@@ -25,6 +25,12 @@ describe('Browser documentation contract', () => {
     expect(readme).toContain('85%');
     expect(readme).toContain('80%');
     expect(readme).not.toMatch(/Cookie.*采集|完整 URL 查询.*保留/);
+    expect(readme).toContain('subscribeErrorSources');
+    expect(readme).toContain('subscribeRequests');
+    expect(readme).toContain('错误源');
+    expect(readme).toContain('请求观测');
+    expect(readme).toContain('不读取请求/响应正文');
+    expect(readme).toContain('恢复原始宿主引用');
   });
 
   it('records Browser as implemented without overstating plugins or the whole SDK', async () => {
@@ -41,7 +47,11 @@ describe('Browser documentation contract', () => {
       expect(text, path).toContain('浏览器环境能力与页面生命周期基础第一增量');
     }
     expect(await rootFile('docs/architecture/sdk-architecture.md')).toContain(
-      '错误、请求、性能、资源和行为插件仍不存在',
+      '通用资源/行为事件正文、行为插件、采样算法与框架适配仍不存在',
+    );
+    expect(await rootFile('docs/architecture/sdk-architecture.md')).toContain('请求采集插件只从');
+    expect(await rootFile('docs/sdk/browser-error-source.md')).toContain(
+      'implementation-status: implemented',
     );
   });
 

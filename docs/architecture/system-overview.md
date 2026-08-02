@@ -72,4 +72,4 @@ review-cycle: architecture-change-or-release
 
 ## 6. 当前正式化边界
 
-已形成正式文档的部分包括 SDK、管理平台前后端、部署、测试、发布、恢复和 A5 数据生命周期。数据接入物理架构、处理/存储架构和事件协议仍缺少 accepted ADR、容量证据或机器 Schema，状态分别为 `requires-accepted-adr`、`requires-benchmark` 和 `deferred`；本轮不创建空壳文档。真实 SDK 包现包括 `@aurora/core` 与 `@aurora/browser`：Browser 的浏览器环境能力与页面生命周期基础第一增量已经实现；错误、请求、性能、资源和行为插件仍不存在，传输与框架适配仍不存在。
+已形成正式文档的部分包括 SDK、管理平台前后端、部署、测试、发布、恢复和 A5 数据生命周期。数据接入物理架构、处理/存储架构和事件协议仍缺少 accepted ADR、容量证据或机器 Schema，状态分别为 `requires-accepted-adr`、`requires-benchmark` 和 `deferred`；本轮不创建空壳文档。公共协议已实施为真实私有包 `@aurora/event-schema`：版本化公共信封、运行时边界校验、稳定错误、共享契约样本、错误事件协议契约第一增量（JavaScript 运行时错误、未处理 Promise 拒绝和资源加载错误正文、错误信封解析器与错误契约样本）与请求事件协议契约第一增量（请求方法/结果常量、安全请求正文、请求信封解析器与请求契约样本）已经存在；性能、通用资源、行为事件正文、批次/接收协议与请求采集插件仍不存在。真实 SDK 包现包括 `@aurora/core`、`@aurora/browser` 与 `@aurora/plugin-error`：Browser 的浏览器环境能力与页面生命周期基础第一增量、错误源订阅能力与请求观测能力第一增量（安全 fetch/XHR 观测、请求事实投影、共享代理 + 引用计数与宿主恢复）已经实现，错误插件第一增量已经实现；请求采集插件、性能/资源/行为插件、传输与框架适配仍不存在。

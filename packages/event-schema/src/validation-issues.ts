@@ -5,6 +5,7 @@ export type EventSchemaIssueCode =
   | 'invalid_type'
   | 'unknown_field'
   | 'invalid_enum'
+  | 'string_empty'
   | 'string_too_long'
   | 'array_too_large'
   | 'object_too_large'
@@ -12,6 +13,8 @@ export type EventSchemaIssueCode =
   | 'cyclic_reference'
   | 'invalid_number'
   | 'invalid_timestamp'
+  | 'invalid_url'
+  | 'event_type_mismatch'
   | 'unknown_event_type'
   | 'unsupported_protocol_version'
   | 'forbidden_field';

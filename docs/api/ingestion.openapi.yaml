@@ -1,0 +1,366 @@
+openapi: 3.1.0
+info:
+  title: Aurora Data Ingestion API
+  version: 1.0.0
+  description: >
+    HTTP transport projection of the Aurora data ingestion batch and receipt
+    contract. The machine-semantic source of truth is the @aurora/event-schema
+    package; this document is the HTTP projection.
+security:
+  - ClientIngestionKey: []
+paths:
+  /v1/batches:
+    post:
+      operationId: ingestionSubmitBatch
+      summary: Submit an event batch for reliable ingestion
+      security:
+        - ClientIngestionKey: []
+      parameters:
+        - name: X-Aurora-Environment
+          in: header
+          required: true
+          description: >
+            Stable environment identifier from the project environment catalog.
+            Does not grant privileges; used for data partitioning, policy
+            validation, and diagnostics.
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/IngestionBatchRequest'
+            examples:
+              validBatch:
+                $ref: '#/components/examples/ValidBatchRequest'
+      responses:
+        '200':
+          description: >
+            Request-level receipt. HTTP 200 means JSON parseable, batch
+            structure parseable, request-level auth/origin/environment passed,
+            and a definitive receipt formed for every event. It does NOT mean
+            every event succeeded; use perEventResults.
+          headers:
+            X-Aurora-Request-Id:
+              required: true
+              description: Server-generated opaque request identifier.
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IngestionRequestReceipt'
+              examples:
+                partialSuccess:
+                  $ref: '#/components/examples/PartialSuccessReceipt'
+        '400':
+          description: Malformed JSON or unparseable batch structure.
+          headers:
+            X-Aurora-Request-Id:
+              required: true
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: >
+            Missing, invalid, disabled, revoked, expired, or rotated client key.
+            Clients must not auto-retry authentication failures as transient.
+          headers:
+            X-Aurora-Request-Id:
+              required: true
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: >
+            Origin not allowed, non-browser disallowed, environment not
+            allowed, or policy-permanent request rejection. Permanently
+            rejected; retryable: false.
+          headers:
+            X-Aurora-Request-Id:
+              required: true
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '413':
+          description: >
+            Request body exceeds server protection threshold. Exact byte limit
+            is requires-benchmark and not declared here.
+          headers:
+            X-Aurora-Request-Id:
+              required: true
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '415':
+          description: Content-Type is not application/json.
+          headers:
+            X-Aurora-Request-Id:
+              required: true
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '429':
+          description: >
+            Request-level rate limiting or capacity protection. retryable;
+            Retry-After may be provided. Never returns a falsely accepted result.
+          headers:
+            X-Aurora-Request-Id:
+              required: true
+              schema:
+                type: string
+            Retry-After:
+              required: false
+              schema:
+                type: integer
+                minimum: 1
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IngestionRequestReceipt'
+        '500':
+          description: >
+            Unclassified internal error. No internal service, SQL, constraint
+            name, or stack leakage. Treated as retryable by default.
+          headers:
+            X-Aurora-Request-Id:
+              required: true
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '503':
+          description: >
+            PostgreSQL/Inbox temporarily unavailable, capacity protection, or
+            the reliable-durability boundary (ADR-008) cannot be satisfied.
+            Never mapped to accepted.
+          headers:
+            X-Aurora-Request-Id:
+              required: true
+              schema:
+                type: string
+            Retry-After:
+              required: false
+              schema:
+                type: integer
+                minimum: 1
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IngestionRequestReceipt'
+components:
+  securitySchemes:
+    ClientIngestionKey:
+      type: apiKey
+      in: header
+      name: X-Aurora-Client-Key
+      description: >
+        Client ingestion key of the form aurora_ingest_<keyId>_<secret>,
+        treated as an opaque string. Grants ingestion only; never read, query,
+        manage, Source Map, or platform access. Never sent via Query, URL,
+        Cookie, or request body. Fully isolated from management-platform
+        Session/Bearer/user authentication.
+  schemas:
+    IngestionBatchRequest:
+      type: object
+      required: [protocolVersion, events]
+      additionalProperties: false
+      properties:
+        protocolVersion:
+          const: 1
+          description: Must equal CURRENT_PROTOCOL_VERSION (1).
+        events:
+          type: array
+          minItems: 1
+          maxItems: 50
+          description: BATCH_EVENT_LIMITS.maxEventsPerBatch = 50.
+          items:
+            $ref: '#/components/schemas/EventEnvelope'
+        receivedAt:
+          type: integer
+          format: int64
+          minimum: 1
+          description: Optional positive safe integer Unix epoch milliseconds.
+    EventEnvelope:
+      type: object
+      required: [protocolVersion, eventId, eventType, occurredAt, body]
+      additionalProperties: false
+      properties:
+        protocolVersion:
+          const: 1
+        eventId:
+          type: string
+          minLength: 1
+          maxLength: 128
+          description: EVENT_SCHEMA_LIMITS.maxEventIdLength = 128.
+        eventType:
+          $ref: '#/components/schemas/EventType'
+        occurredAt:
+          type: integer
+          format: int64
+          minimum: 1
+        body:
+          type: object
+          additionalProperties: true
+          description: >
+            Event-type-specific body. The machine semantic schema lives in
+            @aurora/event-schema; this projection keeps body opaque.
+    EventType:
+      type: string
+      enum: [error, request, performance]
+      description: Must match EventType values from @aurora/event-schema.
+    IngestionReceiptState:
+      type: string
+      enum: [accepted, duplicate_accepted, permanently_rejected, temporarily_failed]
+      description: Must match IngestionReceiptState values from @aurora/event-schema.
+    IngestionErrorCode:
+      type: string
+      enum:
+        - batch_accepted
+        - event_accepted
+        - duplicate_accepted
+        - unsupported_protocol_version
+        - invalid_schema
+        - field_exceeds_limit
+        - forbidden_field
+        - invalid_event_type
+        - project_permanently_not_allowed
+        - source_permanently_not_allowed
+        - service_temporarily_unavailable
+        - rate_limited
+        - capacity_protected
+      description: Must match IngestionErrorCode values from @aurora/event-schema.
+    IngestionEventReceipt:
+      type: object
+      required: [eventId, state, retryable]
+      additionalProperties: false
+      properties:
+        eventId:
+          type: string
+          minLength: 1
+          maxLength: 128
+        state:
+          $ref: '#/components/schemas/IngestionReceiptState'
+        errorCode:
+          $ref: '#/components/schemas/IngestionErrorCode'
+        retryable:
+          type: boolean
+        retryAfterMs:
+          type: integer
+          format: int64
+          minimum: 0
+          maximum: 86400000
+          description: BATCH_EVENT_LIMITS.maxRetryAfterMs = 86400000.
+    IngestionRequestReceipt:
+      type: object
+      required: [batchState, retryable, perEventResults]
+      additionalProperties: false
+      properties:
+        batchState:
+          $ref: '#/components/schemas/IngestionReceiptState'
+        errorCode:
+          $ref: '#/components/schemas/IngestionErrorCode'
+        retryable:
+          type: boolean
+        retryAfterMs:
+          type: integer
+          format: int64
+          minimum: 0
+          maximum: 86400000
+          description: BATCH_EVENT_LIMITS.maxRetryAfterMs = 86400000.
+        perEventResults:
+          type: array
+          items:
+            $ref: '#/components/schemas/IngestionEventReceipt'
+          description: Length must match request events one-to-one (parser context check).
+    ErrorResponse:
+      type: object
+      required: [requestId, message]
+      additionalProperties: false
+      properties:
+        requestId:
+          type: string
+          description: Matches the X-Aurora-Request-Id response header.
+        message:
+          type: string
+        errorCode:
+          $ref: '#/components/schemas/IngestionErrorCode'
+          description: Uses existing IngestionErrorCode, never a second business code set.
+  examples:
+    ValidBatchRequest:
+      summary: Minimal valid batch with one event
+      value:
+        protocolVersion: 1
+        events:
+          - protocolVersion: 1
+            eventId: evt-doc-example-001
+            eventType: error
+            occurredAt: 1800000005100
+            body: {}
+    PartialSuccessReceipt:
+      summary: Request-level receipt with one accepted and one temporarily failed event
+      value:
+        batchState: accepted
+        errorCode: event_accepted
+        retryable: false
+        perEventResults:
+          - eventId: evt-doc-example-001
+            state: accepted
+            retryable: false
+          - eventId: evt-doc-example-002
+            state: temporarily_failed
+            errorCode: rate_limited
+            retryable: true
+            retryAfterMs: 5000
+    DuplicateAcceptedReceipt:
+      summary: Request-level receipt where an event was already accepted
+      value:
+        batchState: duplicate_accepted
+        errorCode: duplicate_accepted
+        retryable: false
+        perEventResults:
+          - eventId: evt-doc-example-001
+            state: duplicate_accepted
+            retryable: false
+    PermanentRejectionReceipt:
+      summary: Request-level receipt where an event was permanently rejected
+      value:
+        batchState: permanently_rejected
+        errorCode: source_permanently_not_allowed
+        retryable: false
+        perEventResults:
+          - eventId: evt-doc-example-001
+            state: permanently_rejected
+            errorCode: source_permanently_not_allowed
+            retryable: false
+    TemporarilyFailedReceipt:
+      summary: Request-level receipt where the service is temporarily unavailable
+      value:
+        batchState: temporarily_failed
+        errorCode: service_temporarily_unavailable
+        retryable: true
+        retryAfterMs: 5000
+        perEventResults:
+          - eventId: evt-doc-example-001
+            state: temporarily_failed
+            errorCode: service_temporarily_unavailable
+            retryable: true
+            retryAfterMs: 5000

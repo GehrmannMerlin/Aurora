@@ -1,0 +1,14 @@
+extends:
+  - recommended
+rules:
+  info-license: off
+  info-license-strict: off
+  security-defined: off
+  no-unused-components: off
+  no-ambiguous-paths: off
+  operation-4xx-response: off
+  operation-2xx-response: off
+  operation-description: off
+  tag-description: off
+  tags-alphabetical: off
+  no-empty-servers: off

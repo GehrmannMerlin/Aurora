@@ -1,0 +1,9 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "rootDir": ".",
+    "types": []
+  },
+  "include": ["src/**/*.ts", "test/no-dom-consumer.ts"]
+}

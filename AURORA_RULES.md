@@ -76,20 +76,22 @@ maintenance: operational-snapshot
 - 已批准 A5-001—A5-011 账号注销与数据生命周期设计，并已形成长期正式安全规则；
 - 已从 approved 设计形成根入口、正式文档索引以及系统、SDK、管理平台前后端、测试、部署、发布/回滚、恢复和 A5 安全的最小充分正式文档；ADR-001—007 已完成独立非作者与所需领域评审；ADR-001/003/005/006 为 `accepted / in-progress`，ADR-007 为 `accepted / implemented`，ADR-002、ADR-004 为 `accepted / not-started`；
 - 首个私有 Monorepo 根 Workspace 与最小本地工程工具已实施；`@aurora/workspace-policy` 是首个真实内部包，`README.md` 已包含可验证的根命令入口。
-- `event-schema` 协议基础第一增量已由 approved 正式规格实施为真实私有包 `@aurora/event-schema`（第二个真实内部包）；该增量只覆盖包入口、版本、公共信封、受限运行时校验、稳定错误和共享契约样本，并通过新鲜验证。
+- `event-schema` 协议基础第一增量已由 approved 正式规格实施为真实私有包 `@aurora/event-schema`（第二个真实内部包）；该增量覆盖包入口、版本、公共信封、受限运行时校验、稳定错误和共享契约样本；错误事件协议契约第一增量已在信封基础上增加 JavaScript 运行时错误、未处理 Promise 拒绝和资源加载错误正文、错误信封解析器与错误契约样本；请求事件协议契约第一增量已增加请求方法/结果常量、安全请求正文、请求信封解析器与请求契约样本；三者均通过新鲜验证。
 - SDK Core 生命周期与插件编排基础第一增量已有[approved 正式规格](docs/sdk/sdk-core-foundation.md)和[单一模块实施计划](docs/superpowers/plans/2026-07-30-sdk-core-foundation.md)；计划已执行，`@aurora/core` 基础增量（环境无关 Core、显式生命周期、最小配置、插件注册与顺序编排、异常隔离、事件入口和多实例隔离）已实施并通过新鲜验证，ADR-003 进入 `accepted / in-progress`。
-- `@aurora/browser` 浏览器环境能力与页面生命周期基础第一增量已有[approved 正式规格](docs/sdk/browser-environment-foundation.md)和[单一模块实施计划](docs/superpowers/plans/2026-07-30-browser-environment-foundation.md)；计划已执行，`@aurora/browser` 基础增量（安全环境与能力探测、脱敏页面快照、`visibilitychange`/`pagehide`/`pageshow` 生命周期订阅、幂等释放、异常隔离和多实例隔离）已实施并通过新鲜验证（含本地 Chromium 真实浏览器门禁），ADR-003/006 保持 `accepted / in-progress`。
+- `@aurora/browser` 浏览器环境能力与页面生命周期基础第一增量已有[approved 正式规格](docs/sdk/browser-environment-foundation.md)和[单一模块实施计划](docs/superpowers/plans/2026-07-30-browser-environment-foundation.md)；计划已执行，`@aurora/browser` 基础增量（安全环境与能力探测、脱敏页面快照、`visibilitychange`/`pagehide`/`pageshow` 生命周期订阅、幂等释放、异常隔离和多实例隔离）已实施并通过新鲜验证（含本地 Chromium 真实浏览器门禁）；浏览器错误源订阅能力第一增量、请求观测能力第一增量与性能事实观测能力第一增量已实施并通过新鲜验证（含本地 Chromium 真实浏览器门禁），ADR-003/006 保持 `accepted / in-progress`。
+- `@aurora/plugin-error` 浏览器错误采集插件第一增量已有[approved 正式规格](docs/sdk/error-capture-plugin.md)和[单一模块实施计划](docs/superpowers/plans/2026-07-31-error-capture-plugin.md)；计划已执行，`@aurora/plugin-error` 错误插件第一增量（通过公开错误源订阅 JavaScript、未处理 Promise 拒绝和资源加载错误，经 `parseErrorEventBody` 校验后以最小草稿提交 Core，同步生命周期、重入门禁、有界诊断、宿主安全与多实例隔离）已实施并通过新鲜验证（含本地 Chromium 真实浏览器门禁），ADR-003/005/006 保持 `accepted / in-progress`。
+- `@aurora/plugin-request` 浏览器请求采集插件第一增量已有[approved 正式规格](docs/sdk/request-capture-plugin.md)和[单一模块实施计划](docs/superpowers/plans/2026-07-31-request-capture-plugin.md)；计划已执行，`@aurora/plugin-request` 请求插件第一增量（通过公开请求源订阅 fetch 与 XMLHttpRequest 请求事实，经 `parseRequestEventBody` 校验后以最小草稿提交 Core，同步生命周期、重入门禁、有界诊断、宿主安全与多实例隔离）已实施并通过新鲜验证（含本地 Chromium 真实浏览器门禁），ADR-003/005/006 保持 `accepted / in-progress`。
 
 当前没有：
 
 - 管理平台前端或正式服务端实现；
 - 管理平台设计令牌代码、PrimeVue/Aurora UI 主题、真实视觉组件、截图与浏览器证据；
-- 机器可读公开 API 制品、`platform-contract`、生成 Platform Client/Fastify 适配、具体事件正文、批次/接收协议、可执行服务端数据模型或具体事件 Schema 机器运行时；
+- 机器可读公开 API 制品、`platform-contract`、生成 Platform Client/Fastify 适配、通用资源事件正文（product scope deferred）、行为事件正文、采样算法、接入/处理机器契约（数据接入 OpenAPI、Inbox 模型已实施，处理存储仍 absent）、可执行服务端数据模型或具体事件 Schema 机器运行时；
 - 已通过必要 accepted ADR、可以授权实施的管理平台后端技术栈；
 - 前四个基础专题的独立完整实施规格，以及其未决工具、公共契约和基础设施选择；
 - ADR-002/004 对应实现、Issue、PR、测试或性能证据；ADR-002/004 实施状态仍是 `not-started`，ADR-003/005/006 为 `in-progress`。
 
-因此，accepted ADR 可以约束后续工作，但不得把候选框架、能力名称、`not-started` ADR 或 approved 设计当作代码已实现。当前真实内部包为 `@aurora/workspace-policy`、`@aurora/event-schema` 协议基础增量、`@aurora/core` 基础增量与 `@aurora/browser` 基础增量；具体事件正文、具体采集插件、平台机器契约和下游模块仍不授权自动实施。
+因此，accepted ADR 可以约束后续工作，但不得把候选框架、能力名称、`not-started` ADR 或 approved 设计当作代码已实现。当前真实内部包为 `@aurora/workspace-policy`、`@aurora/event-schema`（协议基础加错误、请求与性能事件契约第一增量）、`@aurora/core` 基础增量、`@aurora/browser`（浏览器环境、生命周期、错误源、请求观测与性能观测基础增量）、`@aurora/plugin-error` 错误插件第一增量、`@aurora/plugin-request` 请求插件第一增量、`@aurora/plugin-performance` 性能插件第一增量、`@aurora/ingestion-inbox`（写侧 + 处理侧 Repository）与 `@aurora/ingestion-credentials`（客户端凭证存储、验证与生命周期服务）；真实应用为 `apps/ingestion-api`（接入 HTTP 服务 + 真实 authorizer）、`apps/ingestion-worker`（Worker 运行时与处理器编排第一增量）；通用资源事件正文已产品决策 deferred，行为事件正文、采样算法、行为插件、其他具体采集插件、具体事件处理器、Worker retry/dead-letter policy、凭证管理 HTTP API、管理平台 UI、管理员授权、完整审计、人工重放、平台机器契约和下游模块仍不授权自动实施。
 
 ## 4. 正式化与详细设计入口
 
@@ -103,7 +105,7 @@ A5-001—A5-011 已批准，长期规则见[账号注销与数据生命周期](d
 
 有限决策清单的全部单项一旦获得用户明确批准，即按整体批准同步，不再重复请求完整方案批准；只有权威冲突或不可逆安全、隐私、数据丢失风险可以重新阻断。
 
-仓库已有根文档入口与四个真实内部包（`@aurora/workspace-policy`、`@aurora/event-schema` 协议基础增量、`@aurora/core` 基础增量、`@aurora/browser` 基础增量），但仍没有具体事件正文、服务端/平台业务代码、机器平台 API/模型、CI、IaC、云资源或部署结果。`writing-plans` 采用逐模块门禁：Monorepo、event-schema 协议基础、SDK Core 基础与 Browser 环境基础第一增量已实施；其他模块继续 blocked。
+仓库已有根文档入口与七个真实内部包（`@aurora/workspace-policy`、`@aurora/event-schema` 协议基础加错误、请求与性能事件契约第一增量、`@aurora/core` 基础增量、`@aurora/browser` 浏览器环境/生命周期/错误源/请求观测/性能观测基础增量、`@aurora/plugin-error` 错误采集插件第一增量、`@aurora/plugin-request` 请求采集插件第一增量、`@aurora/plugin-performance` 性能采集插件第一增量），但仍没有通用资源事件正文（product scope deferred）、行为事件正文、采样算法、服务端/平台业务代码、机器平台 API/模型、CI、IaC、云资源或部署结果。`writing-plans` 采用逐模块门禁：Monorepo、event-schema 协议基础、错误事件契约、请求事件契约、性能事件契约、SDK Core 基础、Browser 环境基础、错误源订阅、请求观测能力第一增量、性能事实观测能力第一增量、错误采集插件第一增量、请求采集插件第一增量与性能采集插件第一增量已实施；采样算法、行为等其他具体插件、框架适配、队列、传输和持久化继续 blocked。
 
 ## 5. 第一版边界摘要
 
@@ -138,21 +140,30 @@ A5-001—A5-011 已批准，长期规则见[账号注销与数据生命周期](d
 |---|---|---|---|
 | [ADR-001 使用统一 Monorepo](docs/adr/ADR-001-use-monorepo.md) | accepted | in-progress | 正式仓库形态决策 |
 | [ADR-002 五大系统边界](docs/adr/ADR-002-five-system-boundaries.md) | accepted | not-started | 正式逻辑边界决策 |
-| [ADR-003 SDK 分层插件架构](docs/adr/ADR-003-sdk-plugin-architecture.md) | accepted | in-progress | 正式 SDK 分层决策；Core 基础与 Browser 环境基础第一增量已实施，具体插件与传输仍未实现 |
+| [ADR-003 SDK 分层插件架构](docs/adr/ADR-003-sdk-plugin-architecture.md) | accepted | in-progress | 正式 SDK 分层决策；Core 基础、Browser 环境基础、错误源订阅、请求观测能力与错误采集插件第一增量已实施，其他具体插件与传输仍未实现 |
 | [ADR-004 可靠接收与异步处理](docs/adr/ADR-004-asynchronous-event-processing.md) | accepted | not-started | 正式接收/处理语义；物理缓冲未决定 |
-| [ADR-005 event-schema 单一来源](docs/adr/ADR-005-event-schema-source-of-truth.md) | accepted | in-progress | 正式协议权威决策；信封基础已实施，机器 Schema 与具体事件正文不存在 |
+| [ADR-005 event-schema 单一来源](docs/adr/ADR-005-event-schema-source-of-truth.md) | accepted | in-progress | 正式协议权威决策；信封基础、错误事件契约、请求事件契约与性能事件契约第一增量已实施，通用资源事件正文 deferred，机器 Schema 与行为事件正文不存在 |
 | [ADR-006 单向依赖与自动约束](docs/adr/ADR-006-one-way-dependencies.md) | accepted | in-progress | 正式依赖原则；通用检查已存在，领域层级规则待真实模块 |
 | [ADR-007 pnpm Workspace 与原生任务入口](docs/adr/ADR-007-workspace-package-and-task-tooling.md) | accepted | implemented | 首个工程模块工具决策；全部门禁通过 |
+| [ADR-008 数据接入可靠缓冲与异步处理的物理技术](docs/adr/ADR-008-ingestion-durable-buffering.md) | accepted | in-progress | PostgreSQL 事务性 Inbox；批次/接收结果协议、数据接入 OpenAPI、Inbox 数据模型、接入 HTTP 服务、Worker 运行时与客户端凭证存储/验证已实施，具体事件处理器/Worker policy/凭证生命周期管理/容量基准未实现 |
+| [ADR-009 数据接入公开传输与客户端上报密钥安全语义](docs/adr/ADR-009-ingestion-transport-and-client-credential.md) | accepted | in-progress | 数据接入 OpenAPI 前置已批准并实施：`POST /v1/batches`、`X-Aurora-Client-Key`/`X-Aurora-Environment`、Origin 匹配、CORS、HTTP 状态映射、`Retry-After`、`X-Aurora-Request-Id`、OpenAPI 3.1；机器文件与漂移门禁已实施，凭证/服务/CORS 中间件未实现 |
+| [ADR-010 数据接入数据库访问与 Migration 工具链](docs/adr/ADR-010-postgresql-access-and-migration-tooling.md) | accepted | implemented | Inbox 数据模型前置已批准并实施：PostgreSQL 17 + `pg` + `node-pg-migrate` + SQL-first；`@aurora/ingestion-inbox`（`event_inbox` Migration + `persistBatch`）已实施并通过真实 PostgreSQL 17.10 验证，接入服务/Worker/CI/RDS 未实现 |
+| [ADR-011 数据接入同步 HTTP 服务的运行时与应用边界](docs/adr/ADR-011-ingestion-http-service-runtime.md) | accepted | in-progress | 接入 HTTP 服务已批准并实施：Fastify 5.10.0、`apps/ingestion-api`、显式 CORS adapter、`service` 层、两阶段配置、build/start Pool 所有权；`POST /v1/batches` 已通过真实 PostgreSQL 17.10 集成测试；凭证模块/Worker/CI/RDS/IaC 未实现 |
+| [ADR-012 数据接入 Worker 应用的运行时与应用边界](docs/adr/ADR-012-ingestion-worker-runtime.md) | accepted | in-progress | Worker 运行时已批准并实施：Node.js 24 原生异步、`apps/ingestion-worker`、两阶段配置、build/start Pool 所有权；`buildIngestionWorker`/`startIngestionWorker` 已通过真实 PostgreSQL 17.10 并发/续租/关闭/双 Worker 集成测试；具体事件处理器/人工重放/CI/RDS/IaC 未实现 |
+| [ADR-013 客户端上报凭证存储与验证](docs/adr/ADR-013-ingestion-client-credential-storage-and-verification.md) | accepted | implemented | 凭证存储与验证已批准并实施：PostgreSQL 17、SQL-first、`@aurora/ingestion-credentials`（16-byte keyId、32-byte secret、SHA-256 digest、timing-safe comparison、active/disabled/revoked、expires_at 动态失效、Origin/environment 策略快照）、`apps/ingestion-api` 真实 authorizer adapter；已通过真实 PostgreSQL 17.10 凭证与 HTTP 401/403/503 集成验证；凭证管理 HTTP API 未实现 |
+| [ADR-014 客户端上报凭证生命周期服务](docs/adr/ADR-014-ingestion-client-credential-lifecycle.md) | accepted | implemented | 凭证生命周期已批准并实施：扩展 `@aurora/ingestion-credentials`（`generateClientKeyPair`/`createIngestionClientCredential`/`rotateIngestionClientCredential`/`disableIngestionClientCredential`/`enableIngestionClientCredential`/`revokeIngestionClientCredential`、`SELECT ... FOR UPDATE` 行锁、keyId 碰撞有界重试、一次性 clientKey 返回、稳定结果）；已通过真实 PostgreSQL 17.10 创建/轮换/状态/并发 rotate 集成验证；管理 HTTP API、平台 UI、管理员授权与完整审计未实现 |
+| [ADR-015 Worker 重试预算与自动死信策略](docs/adr/ADR-015-ingestion-worker-retry-budget-policy.md) | accepted | implemented | Worker retry budget 已批准并实施：`apps/ingestion-worker` policy（`decideRetryDisposition` 纯函数、`maxProcessingAttempts` typed config、预算未耗尽 `scheduleRetry`/耗尽自动 `markDeadLettered{retry_budget_exhausted}`/非法 retry 不写回/processor 异常保持 leased/lease lost 不二次写回）；已通过真实 PostgreSQL 17.10 budget exhausted/dead-letter 集成验证；人工重放与退避算法未实现 |
 
 ## 9. 待决策队列
 
 决策按当前阻塞和恢复顺序推进：
 
 1. “私有 Monorepo 根 Workspace 与最小本地工程工具”的[模块实施计划](docs/superpowers/plans/2026-07-29-monorepo-foundation.md)已执行并经新鲜验证核验；`@aurora/workspace-policy` 是首个真实内部包；
-2. `event-schema` 协议基础第一增量的[正式规格](docs/protocol/event-schema-foundation.md)与[实施计划](docs/superpowers/plans/2026-07-30-event-schema-foundation.md)已执行完毕并通过新鲜验证；`@aurora/event-schema` 是第二个真实内部包，仅信封基础存在，ADR-005 为 `in-progress`；
-3. SDK Core 生命周期与插件编排基础第一增量已实施为 `@aurora/core` 并通过新鲜验证，ADR-003 进入 `accepted / in-progress`；`@aurora/browser` 浏览器环境能力与页面生命周期基础第一增量已实施为 `@aurora/browser` 并通过新鲜验证（含本地 Chromium 真实浏览器门禁），ADR-003/006 保持 `accepted / in-progress`；具体事件正文 Schema、具体采集插件、框架适配、其余 SDK、服务端、平台、CI、发布与 AWS/IaC 按各自直接前置逐模块审查，不自动开始；
+2. `event-schema` 协议基础第一增量的[正式规格](docs/protocol/event-schema-foundation.md)与[实施计划](docs/superpowers/plans/2026-07-30-event-schema-foundation.md)已执行完毕并通过新鲜验证；`@aurora/event-schema` 是第二个真实内部包；错误事件协议契约第一增量的[正式规格](docs/protocol/error-event-contract.md)与[实施计划](docs/superpowers/plans/2026-07-30-error-event-contract.md)已执行完毕，JavaScript/Promise/资源加载错误正文与错误信封/样本存在；请求事件协议契约第一增量的[正式规格](docs/protocol/request-event-contract.md)与[实施计划](docs/superpowers/plans/2026-07-31-request-event-contract.md)已执行完毕，请求方法/结果常量、安全请求正文、请求信封解析器与请求契约样本存在；性能事件协议契约第一增量的[正式规格](docs/protocol/performance-event-contract.md)与[实施计划](docs/superpowers/plans/2026-07-31-performance-event-contract.md)已执行完毕，PRD 5.1.9 批准的 LCP/INP/CLS/页面加载耗时指标、性能正文解析器与性能契约样本存在；ADR-005 为 `in-progress`；
+3. SDK Core 生命周期与插件编排基础第一增量已实施为 `@aurora/core` 并通过新鲜验证，ADR-003 进入 `accepted / in-progress`；`@aurora/browser` 浏览器环境能力与页面生命周期基础第一增量已实施为 `@aurora/browser` 并通过新鲜验证（含本地 Chromium 真实浏览器门禁），ADR-003/006 保持 `accepted / in-progress`；`@aurora/plugin-error` 浏览器错误采集插件第一增量已实施为 `@aurora/plugin-error` 并通过新鲜验证（含本地 Chromium 真实浏览器门禁），ADR-003/005/006 保持 `accepted / in-progress`；`@aurora/browser` 请求观测能力第一增量已实施并通过新鲜验证（含本地 Chromium 真实浏览器门禁），ADR-003/005/006 保持 `accepted / in-progress`；`@aurora/plugin-request` 浏览器请求采集插件第一增量已实施为 `@aurora/plugin-request` 并通过新鲜验证（含本地 Chromium 真实浏览器门禁），ADR-003/005/006 保持 `accepted / in-progress`；`@aurora/browser` 性能事实观测能力第一增量已实施并通过新鲜验证（含本地 Chromium 真实浏览器门禁），ADR-003/005/006 保持 `accepted / in-progress`；`@aurora/plugin-performance` 性能采集插件第一增量已实施为 `@aurora/plugin-performance` 并通过新鲜验证（含本地 Chromium 真实浏览器门禁），ADR-003/005/006 保持 `accepted / in-progress`；采样算法、行为等其他具体事件正文 Schema 与采集插件、框架适配、其余 SDK、服务端、平台、CI、发布与 AWS/IaC 按各自直接前置逐模块审查，不自动开始；
 4. 管理平台总体 OpenAPI 与实现约束设计已批准；机器 Platform OpenAPI、`platform-contract`、生成 Client/适配、平台模型和前后端实现仍 blocked，不自动进入 planning 或实现；
-5. 按[无编号候选队列](docs/architecture/formalization-readiness.md#7-新-adr-候选队列)只为直接阻塞模块的长期决定建立独立提案，不进入 D2 或其他新 brainstorming。
+5. 数据接入批次与接收结果协议第一增量已实施；数据接入 OpenAPI 机器契约第一增量（ADR-008 后续依赖链第 2 项）已实施：其公开传输与客户端凭证语义已由 [ADR-009](docs/adr/ADR-009-ingestion-transport-and-client-credential.md)（accepted / in-progress）批准，机器文件 `docs/api/ingestion.openapi.yaml`（OpenAPI 3.1，`POST /v1/batches`、`apiKey` + `X-Aurora-Client-Key`、`X-Aurora-Environment`、Origin/CORS/状态码映射/`Retry-After`/`X-Aurora-Request-Id`）与 `tooling/ingestion-openapi-contract` 漂移门禁（40 测试）已实施；Inbox 数据模型（依赖链第 3 项）的数据库工具链已由 [ADR-010](docs/adr/ADR-010-postgresql-access-and-migration-tooling.md)（accepted / implemented）批准并实施：正式规格 [ingestion-inbox-data-model.md](docs/architecture/ingestion-inbox-data-model.md)（implemented）、`@aurora/ingestion-inbox`（`event_inbox` Migration + `persistBatch` Repository + 状态/租约 helper）已通过真实 PostgreSQL 17.10 集成测试（21 个）；接入服务（第 4 项）已由 [ADR-011](docs/adr/ADR-011-ingestion-http-service-runtime.md)（accepted / in-progress）批准并实施为 `apps/ingestion-api`（Fastify 5.10.0、`POST /v1/batches`、显式 CORS adapter），已通过真实 PostgreSQL 17.10 集成测试；Worker 运行时（第 5 项）已由 [ADR-012](docs/adr/ADR-012-ingestion-worker-runtime.md)（accepted / in-progress）批准并实施为 `apps/ingestion-worker`（Node.js 24 原生异步、`buildIngestionWorker`/`startIngestionWorker`、claim 循环/并发上限/lease 续期/graceful shutdown），已通过真实 PostgreSQL 17.10 并发/续租/关闭/双 Worker 集成测试；具体事件处理器、Worker retry/dead-letter policy、人工重放继续 blocked；容量基准（第 6 项）和凭证数据模型继续按 ADR-008 后续依赖链推进；
+6. 按[无编号候选队列](docs/architecture/formalization-readiness.md#7-新-adr-候选队列)只为直接阻塞模块的长期决定建立独立提案，不进入 D2 或其他新 brainstorming。
 
 每项未决内容都必须保持明确状态和恢复入口。优先决定当前专题下一项和即将形成实施阻塞的事项；不能把“尽快决策”解释为跳过业务推导、评审或 ADR 门禁。
 

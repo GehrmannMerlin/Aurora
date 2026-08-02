@@ -96,4 +96,6 @@ Flaky 重跑只采集证据，不能覆盖首次失败；豁免必须有 Owner�
 
 ## 8. 已实施模块门禁
 
-`@aurora/browser` 因直接管理宿主监听器与异常隔离，采用 lines 85%、branches 80%、functions 85%、statements 85%；单元测试之外必须通过本地 Chromium 生命周期、释放、宿主身份与多实例门禁。该门禁只覆盖浏览器环境能力与页面生命周期基础第一增量，不修改全仓长期最低基线，也不表示错误、请求、性能、资源或行为采集插件已经存在。
+`@aurora/browser` 因直接管理宿主监听器与异常隔离，采用 lines 85%、branches 80%、functions 85%、statements 85%；单元测试之外必须通过本地 Chromium 生命周期、释放、宿主身份与多实例门禁。该门禁只覆盖浏览器环境能力与页面生命周期基础第一增量。
+
+`@aurora/plugin-error` 错误采集插件第一增量采用相同 85/80/85/85 门禁，实际通过结果为 statements 94.57%、branches 91.95%、functions 100%、lines 94.91%；包边界负例（`sdk-plugin → sdk-core | sdk-browser | protocol`、反向/插件间/framework/tooling 依赖、私有子路径拒绝、no-DOM 编译、模块级可变状态与宿主修改/事件控制禁用）与 5 个真实 Chromium 场景（三类错误各提交一次、宿主 handler 与事件默认不变、stop/destroy 释放、多实例隔离、内部失败隔离）全部通过。该门禁只覆盖浏览器错误采集插件第一增量，不表示请求、性能、资源或行为采集插件已经存在，也不表示错误去重、分组、指纹、Source Map、采样、队列、传输或持久化已实现。

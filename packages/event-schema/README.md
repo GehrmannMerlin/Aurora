@@ -13,12 +13,13 @@
 - 有界扫描不可信事件正文，限制字符串、数组、对象键数和对象深度；
 - 拒绝非 JSON 值、循环引用和明确禁止字段；
 - 返回稳定、可判别且不含输入数据的验证 issue；
-- 从独立测试入口共享合法、非法和边界样本。
+- 从独立测试入口共享合法、非法和边界样本；
+- 定义错误、请求、性能事件正文以及数据接入批次与接收结果协议。
 
 ## 非职责
 
-- 不定义具体错误、请求、性能或资源事件正文；
-- 不定义上报批次、HTTP、鉴权、接收结果、重试或可靠缓冲；
+- 不定义通用资源或行为事件正文；
+- 不实现上报批次的实际网络传输、HTTP、鉴权、接收服务、可靠缓冲或 Inbox 写入；
 - 不采集、发送、存储、查询或展示事件；
 - 不提供历史版本转换、JSON Schema、OpenAPI、代码生成或发布编排。
 
@@ -80,6 +81,225 @@ import {
 }
 ```
 
+## 错误事件契约
+
+本包已实现错误事件协议契约第一增量。它只定义 JavaScript 运行时错误、未处理 Promise 拒绝和资源加载错误的机器正文，不实现错误采集插件。
+
+```ts
+import {
+  ERROR_EVENT_LIMITS,
+  ErrorCategory,
+  ErrorResourceType,
+  PromiseRejectionReasonKind,
+  parseErrorEventBody,
+  parseErrorEventEnvelope,
+  type ErrorEventBody,
+  type ErrorEventEnvelope,
+} from '@aurora/event-schema';
+```
+
+`parseErrorEventBody(input: unknown)` 同步校验精确正文。`parseErrorEventEnvelope(input: unknown)` 先复用公共信封校验，再要求 `eventType: "error"`。成功结果是新对象；解析器不修改输入。
+
+- JavaScript 运行时错误：必填有限 `message`，可选有限 `name` 和原始 `stack`；
+- 未处理 Promise 拒绝：使用 `error`、`string` 或有界 `non_standard` 原因；
+- 资源加载错误：只允许 `script`、`stylesheet`、`image`、`font`，并从 HTTP(S) URL 中移除全部查询和片段。
+
+自由文本必须在进入协议前完成隐私过滤。协议拒绝未知字段、已知禁止字段、无限对象、循环、超界值和非 JSON Promise 值；issue 不回显输入。
+
+<!-- contract-example:valid-error-readme -->
+
+```json
+{
+  "protocolVersion": 1,
+  "eventId": "evt-readme-error-valid",
+  "eventType": "error",
+  "occurredAt": 1800000004001,
+  "body": {
+    "category": "javascript",
+    "error": {
+      "name": "TypeError",
+      "message": "Synthetic runtime failure"
+    }
+  }
+}
+```
+
+<!-- contract-example:invalid-error-readme -->
+
+```json
+{
+  "protocolVersion": 1,
+  "eventId": "evt-readme-error-invalid",
+  "eventType": "error",
+  "occurredAt": 1800000004002,
+  "body": {
+    "category": "resource",
+    "resource": {
+      "type": "image",
+      "url": "data:image/png,synthetic"
+    }
+  }
+}
+```
+
+错误协议不包含浏览器监听器、错误规范化、去重、分组、指纹、Source Map、传输、采样、队列、重试、持久化、服务端或管理平台。
+
+## 请求事件契约
+
+本包已实现请求事件协议契约第一增量。它定义请求监控链路的最小安全正文，不实现请求观测能力或请求采集插件。
+
+```ts
+import {
+  REQUEST_EVENT_LIMITS,
+  RequestMethod,
+  RequestOutcome,
+  parseRequestEventBody,
+  parseRequestEventEnvelope,
+  type RequestEventBody,
+  type RequestEventEnvelope,
+} from '@aurora/event-schema';
+```
+
+`parseRequestEventBody(input: unknown)` 同步校验精确正文。`parseRequestEventEnvelope(input: unknown)` 先复用公共信封校验，再要求 `eventType: "request"`。成功结果是新对象；解析器不修改输入。
+
+- 请求方法：`GET`、`POST`、`PUT`、`PATCH`、`DELETE`、`HEAD`、`OPTIONS`；
+- 安全 URL：只允许小写 HTTP(S) 绝对地址，移除全部查询参数和片段，拒绝 `data:`/`blob:`/`file:`/相对地址；
+- 开始时间：正安全整数 Unix epoch 毫秒；
+- 持续时间：非负安全整数毫秒；
+- 结果类别：`success`、`http_error`、`network_error`、`timeout`、`canceled`；
+- 可选 HTTP 状态码：`100..599`。
+
+请求监控的允许来源、同源判断、跨域允许列表、路径动态段归一化和开发者路径模板不属于协议层。协议不采集请求/响应正文、请求头、响应头、Cookie、凭据或尺寸；URL 查询与片段不会进入成功结果。
+
+<!-- contract-example:valid-request-readme -->
+
+```json
+{
+  "protocolVersion": 1,
+  "eventId": "evt-readme-request-valid",
+  "eventType": "request",
+  "occurredAt": 1800000005000,
+  "body": {
+    "method": "GET",
+    "url": "https://api.example.test/search?token=private#fragment",
+    "startedAt": 1800000004000,
+    "durationMs": 120,
+    "outcome": "success",
+    "statusCode": 200
+  }
+}
+```
+
+<!-- contract-example:invalid-request-readme -->
+
+```json
+{
+  "protocolVersion": 1,
+  "eventId": "evt-readme-request-invalid",
+  "eventType": "request",
+  "occurredAt": 1800000005001,
+  "body": {
+    "method": "GET",
+    "url": "data:text/plain,synthetic",
+    "startedAt": 1800000004001,
+    "durationMs": 120,
+    "outcome": "success"
+  }
+}
+```
+
+请求协议不实现请求观测，不实现请求采集插件，也不代理 fetch/XHR，不包含去重、分组、指纹、传输、采样、队列、重试、持久化、服务端或管理平台。
+
+## 性能事件契约
+
+本包已实现性能事件协议契约第一增量。它只定义 PRD 5.1.9 批准的四项页面性能指标的最小安全正文，不实现性能事实观测、`PerformanceObserver`，不实现性能采集插件，也不实现采样。
+
+```ts
+import {
+  PERFORMANCE_EVENT_LIMITS,
+  PerformanceMetricCategory,
+  PerformanceMetricName,
+  PerformanceMetricUnit,
+  parsePerformanceEventBody,
+  parsePerformanceEventEnvelope,
+  type PerformanceEventBody,
+  type PerformanceEventEnvelope,
+} from '@aurora/event-schema';
+```
+
+`parsePerformanceEventBody(input: unknown)` 同步校验精确正文。`parsePerformanceEventEnvelope(input: unknown)` 先复用公共信封校验，再要求 `eventType: "performance"`。成功结果是新对象；解析器不修改输入。
+
+- 指标类别：`page`；
+- 指标名称：只允许 PRD 5.1.9 批准的 `lcp`、`inp`、`cls`、`page_load`；
+- 指标单位：`millisecond`（整数毫秒）或 `ratio`（0..1 有限非负 CLS 比率）；
+- 开始时间：正安全整数 Unix epoch 毫秒；
+- 可选持续时间：`0..86400000` 安全整数毫秒。
+
+性能协议不实现性能事实观测、`PerformanceObserver`、采样（PRD 默认采样率 10% 属于 SDK 采集层）、聚合、指标统计、问题识别、传输、队列、重试、持久化、服务端或管理平台。未批准的 Web Vitals（FCP、TTFB、FID、TBT 等）、自定义业务指标、完整资源 URL、DOM、页面文本和用户输入不进入协议。
+
+<!-- contract-example:valid-performance-readme -->
+
+```json
+{
+  "protocolVersion": 1,
+  "eventId": "evt-readme-performance-valid",
+  "eventType": "performance",
+  "occurredAt": 1800000005000,
+  "body": {
+    "metricCategory": "page",
+    "metricName": "lcp",
+    "value": 2500,
+    "unit": "millisecond",
+    "startedAt": 1800000004000
+  }
+}
+```
+
+<!-- contract-example:invalid-performance-readme -->
+
+```json
+{
+  "protocolVersion": 1,
+  "eventId": "evt-readme-performance-invalid",
+  "eventType": "performance",
+  "occurredAt": 1800000005001,
+  "body": {
+    "metricCategory": "page",
+    "metricName": "fcp",
+    "value": 1000,
+    "unit": "millisecond",
+    "startedAt": 1800000004001
+  }
+}
+```
+
+## 数据接入批次与接收结果协议
+
+本包已实现数据接入批次与接收结果协议第一增量。它定义 SDK 数据接入的批次请求正文、请求级与逐事件接收结果、稳定状态枚举和稳定错误码，不实现 Inbox 写入、数据库、OpenAPI、采样、限流、队列或 Worker。
+
+```ts
+import {
+  BATCH_EVENT_LIMITS,
+  IngestionErrorCode,
+  IngestionReceiptState,
+  parseIngestionBatchRequest,
+  parseIngestionRequestReceipt,
+  parseIngestionEventReceipt,
+  type IngestionBatchRequest,
+  type IngestionRequestReceipt,
+  type IngestionEventReceipt,
+} from '@aurora/event-schema';
+```
+
+`parseIngestionBatchRequest(input: unknown)` 同步校验批次请求正文。`parseIngestionRequestReceipt(input: unknown)` 与 `parseIngestionEventReceipt(input: unknown)` 校验请求级与逐事件接收结果。成功结果是新对象；解析器不修改输入。
+
+- 批次请求：必填 `protocolVersion`（字面量 `1`）与 `events` 数组（长度 `1..50`），可选 `receivedAt` 正安全整数毫秒；
+- 接收状态：`accepted`（已可靠接收，严格等于 Inbox 事务提交成功）、`duplicate_accepted`（重复事件幂等结果）、`permanently_rejected`（`retryable: false`）、`temporarily_failed`（`retryable: true` + 可选 `retryAfterMs`）；
+- 稳定错误码：`unsupported_protocol_version`、`invalid_schema`、`field_exceeds_limit`、`forbidden_field`、`invalid_event_type`、`project_permanently_not_allowed`、`source_permanently_not_allowed`、`service_temporarily_unavailable`、`rate_limited`、`capacity_protected` 等；
+- 批次部分成功：逐事件独立结果，请求级结果不掩盖逐事件结果；重复事件返回 `duplicate_accepted`，不暴露数据库约束或错误。
+
+批次协议不实现 Inbox 写入、数据库/Migration、OpenAPI、HTTP 路径/Header/状态码映射、采样、限流、去重窗口、队列、重试、死信、重放、Worker、服务端或管理平台。
+
 ## 依赖边界
 
 本包没有运行时依赖，也不得依赖任何 Aurora 本地业务包。SDK、接入和处理只能依赖本包公开入口；本包不能反向依赖消费者。
@@ -105,6 +325,11 @@ pnpm check:ci
 
 - [协议基础规格](../../docs/protocol/event-schema-foundation.md)
 - [事件信封版本 1](../../docs/protocol/event-envelope-v1.md)
+- [错误事件协议契约](../../docs/protocol/error-event-contract.md)
+- [请求事件协议契约](../../docs/protocol/request-event-contract.md)
+- [性能事件协议契约](../../docs/protocol/performance-event-contract.md)
+- [数据接入批次与接收结果协议](../../docs/protocol/ingestion-batch-and-receipt-contract.md)
 - [ADR-005](../../docs/adr/ADR-005-event-schema-source-of-truth.md)
 - [ADR-006](../../docs/adr/ADR-006-one-way-dependencies.md)
+- [ADR-008](../../docs/adr/ADR-008-ingestion-durable-buffering.md)
 - [测试策略](../../docs/testing/test-strategy.md)

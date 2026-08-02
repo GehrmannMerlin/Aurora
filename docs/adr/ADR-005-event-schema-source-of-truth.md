@@ -227,3 +227,93 @@ ADR accepted 后先定义基础事件、协议版本和批次结构，再建立�
 - 实施 Commit：none（未提交）
 - Issue/PR：none
 - 剩余工作：具体事件正文 Schema、批次/接收协议、兼容转换和接入/处理真实消费者仍不存在，ADR 保持 `in-progress`。
+
+### 2026-07-31：错误事件协议契约第一增量实施证据
+
+- 实施状态保持 `in-progress`；本记录覆盖[错误事件协议契约第一增量](../protocol/error-event-contract.md)，在协议基础第一增量之上增加 JavaScript 运行时错误、未处理 Promise 拒绝和资源加载错误的精确正文、错误信封解析器与错误契约样本；决策状态保持 `accepted`，最终决策不变。
+- 实施 Commit：none（未提交）
+- 实施范围：仅扩展 `packages/event-schema`，私有、零运行时依赖、`aurora.layer: protocol`；公共根入口与 `contract-testkit` 入口保持不变，未创建第二套信封或协议版本来源。
+- 新增源文件：`src/error-event-types.ts`（常量、限制、正文/原因/资源/信封/结果类型）、`src/error-event-validation.ts`（字段读取、允许列表、有界字符串、issue 辅助）、`src/error-descriptor.ts`、`src/javascript-error-event.ts`、`src/promise-rejection-error-event.ts`（含 `copySafeErrorValue` 有界深复制）、`src/resource-error-event.ts`（URL 查询/片段移除与安全 authority 校验）、`src/error-event-body.ts`（`parseErrorEventBody` 类别分发）、`src/error-event-envelope.ts`（`parseErrorEventEnvelope` 复用 `parseEventEnvelope`）、`src/contract-testkit/{valid,invalid,boundary}-error-event-samples.ts`。
+- 公共根出口新增：`ErrorCategory`、`PromiseRejectionReasonKind`、`ErrorResourceType`、`ERROR_EVENT_LIMITS`、`parseErrorEventBody`、`parseErrorEventEnvelope` 及全部错误正文/原因/资源/信封/结果类型；`EventSchemaIssueCode` 追加 `string_empty`、`invalid_url`、`event_type_mismatch`；`parseEventEnvelope` 签名与 `EventEnvelope.body: unknown` 未变。
+- `contract-testkit` 新增：`validErrorEventSamples`（6 条）、`invalidErrorEventSamples`（11 条）、`boundaryErrorEventSamples`（11 条）及对应样本类型；既有信封样本保持不变。
+- 隐私与边界：资源 URL 移除全部查询参数与片段；Promise 非标准值复用 `EVENT_SCHEMA_LIMITS`（字符串 4096、数组 100、对象键 100、根深度 0/最大深度 8、issue 50）并递归复制，循环/超深/超大/非 JSON/禁止字段（含 `token`/`accessToken`/`refreshToken` 归一化）均返回稳定 issue；issue 不回显输入值；解析器不修改输入，成功结果全部新建。
+- 验证命令与结果（新鲜运行，环境 Node.js v24.18.0、pnpm 11.17.0、TypeScript 6.0.3、Vitest 4.1.10）：
+  - `pnpm --filter @aurora/event-schema test`: 通过（exit 0；16 个测试文件 / 102 个测试）
+  - `pnpm --filter @aurora/event-schema test:coverage`: 通过（exit 0；语句 93.09% 364/391、分支 88.75% 221/249、函数 100% 51/51、行 95.77% 340/355；门槛 85/80/85/85 全部满足）
+  - `pnpm --filter @aurora/event-schema typecheck`: 通过（exit 0）
+  - `pnpm --filter @aurora/event-schema test:package`: 通过（exit 0，3 个测试；根入口与 `contract-testkit` 入口加载，`error-event-body`、`error-event-envelope`、`resource-error-event` 等私有路径以 `ERR_PACKAGE_PATH_NOT_EXPORTED` 拒绝）
+  - `pnpm --filter @aurora/event-schema exec vitest run test/architecture-boundary.test.ts`: 通过（exit 0，3 个测试；零运行时依赖、仅两个公共入口、ES-only 构建、源码无 DOM/Node/console/消费者/私有跨包引用）
+  - `pnpm --filter @aurora/workspace-policy exec vitest run test/environment.test.ts test/dependency-policy.test.ts test/event-schema-package-contract.test.ts`: 通过（exit 0，57 个测试；协议源码 DOM/Node 运行时负例与纯协议正例均生效）
+  - `pnpm check:boundaries`: 通过（exit 0，真实仓库无违规）
+- 消费者契约证据：SDK、接入、处理三类消费者测试共用同一公开样本源；README 与 `docs/protocol/error-event-contract.md` 中的 4 个错误 JSON 示例由 `documentation-contract.test.ts` 提取并通过 `parseErrorEventEnvelope` 验证（合法 2 条成功，非法 2 条返回 `invalid_url`）。
+- Issue/PR：none
+- 性能结果：不存在（包体与运行时性能基准属于后续 SDK/接入模块）
+- 剩余工作：请求、性能、通用资源、行为事件正文、上报批次与接收协议、历史版本兼容转换、SDK/接入/处理真实消费者及包体基准均不存在，继续阻塞各自下游模块；`packages/plugin-error` 不在本增量内。
+
+### 2026-07-31：错误插件真实协议消费者证据
+
+- 决策状态保持 `accepted`，实施状态保持 `in-progress`。
+- `@aurora/plugin-error` 只从 `@aurora/event-schema` 根入口导入错误常量、限制、类型、`EventType` 与 `parseErrorEventBody`；没有复制错误正文、URL 校验、Promise 有界复制、协议版本或 EventEnvelope。
+- 三类 Browser 事实全部在提交 Core 草稿前通过公共错误正文解析器；schema 拒绝不提交且不泄露 issue 输入。
+- 包入口、私有路径、契约单测、覆盖率和 Chromium 公共解析证据全部通过；精确命令与结果记录于错误插件正式规格的实施证据。
+- 实施 Commit：none（如本轮产生真实 Commit，则只把该真实哈希写入本行）
+- Issue/PR：none
+
+### 2026-07-31：请求事件协议契约第一增量实施证据
+
+- 决策状态保持 `accepted`，实施状态保持 `in-progress`；本记录覆盖[请求事件协议契约第一增量](../protocol/request-event-contract.md)。
+- `@aurora/event-schema` 根入口新增 `RequestMethod`、`RequestOutcome`、`REQUEST_EVENT_LIMITS`、`parseRequestEventBody`、`parseRequestEventEnvelope` 与请求正文/信封类型；`contract-testkit` 新增 `valid/invalid/boundaryRequestEventSamples`。
+- 请求正文为精确六字段允许列表（`method`、`url`、`startedAt`、`durationMs`、`outcome`、可选 `statusCode`）；URL 移除全部查询参数与片段；允许来源、同源、跨域、路径归一化判断没有进入协议层。
+- 中立 `field-validation.ts` 与 `safe-url.ts` 被错误契约与请求契约共享；错误契约全部既有测试保持通过，`error-event-validation.ts` 与 `resource-error-event.ts` 只改为复用助手。
+- 验证命令：`pnpm --filter @aurora/event-schema typecheck/test/test:coverage/test:package`、`pnpm check:boundaries`、`pnpm check:ci`，全部 exit 0。
+- 实施 Commit：none（如本轮产生真实 Commit，则只把该真实哈希写入本行）
+- Issue/PR：none
+
+### 2026-07-31：请求插件真实协议消费者证据
+
+- 决策状态保持 `accepted`，实施状态保持 `in-progress`。
+- `@aurora/plugin-request` 只从 `@aurora/event-schema` 根入口导入请求常量、限制、类型、`EventType` 与 `parseRequestEventBody`；没有复制请求正文、URL 校验、协议版本或 EventEnvelope。
+- 全部 Browser 请求事实在提交 Core 草稿前通过公共请求正文解析器；schema 拒绝不提交且不泄露 issue 输入。
+- 包入口、私有路径、契约单测、覆盖率和 Chromium 公共解析证据全部通过。
+- 实施 Commit：none（如本轮产生真实 Commit，则只把该真实哈希写入本行）
+- Issue/PR：none
+
+### 2026-07-31：性能事件协议契约第一增量实施证据
+
+- 决策状态保持 `accepted`，实施状态保持 `in-progress`；本记录覆盖[性能事件协议契约第一增量](../protocol/performance-event-contract.md)。
+- `@aurora/event-schema` 根入口新增 `PerformanceMetricCategory`、`PerformanceMetricName`、`PerformanceMetricUnit`、`PERFORMANCE_EVENT_LIMITS`、`parsePerformanceEventBody`、`parsePerformanceEventEnvelope` 与性能正文/信封类型；`contract-testkit` 新增 `valid/invalid/boundaryPerformanceEventSamples`。
+- 性能正文为精确六字段允许列表（`metricCategory`、`metricName`、`value`、`unit`、`startedAt`、可选 `durationMs`）；指标范围严格限定为 PRD 5.1.9 批准的 LCP、INP、CLS、页面加载耗时；`PerformanceObserver`/`performance.*`/采样不进入协议层。
+- 中立 `field-validation.ts` 与 `value-boundaries.ts` 继续被错误/请求/性能契约共享；错误与请求契约全部既有测试保持通过。
+- 验证命令：`pnpm --filter @aurora/event-schema typecheck/test/test:coverage/test:package`、`pnpm check:boundaries`、`pnpm check:ci`，全部 exit 0。
+- 实施 Commit：none（如本轮产生真实 Commit，则只把该真实哈希写入本行）
+- Issue/PR：none
+
+### 2026-08-01：性能插件真实协议消费者证据
+
+- 决策状态保持 `accepted`，实施状态保持 `in-progress`。
+- `@aurora/plugin-performance` 只从 `@aurora/event-schema` 根入口导入性能常量、限制、类型、`EventType` 与 `parsePerformanceEventBody`；没有复制性能正文、指标枚举、协议版本或 EventEnvelope。
+- 全部 Browser 性能事实在提交 Core 草稿前通过公共性能正文解析器；schema 拒绝不提交且不泄露 issue 输入。
+- 包入口、私有路径、契约单测、覆盖率和 Chromium 公共解析证据全部通过。
+- 实施 Commit：none（如本轮产生真实 Commit，则只把该真实哈希写入本行）
+- Issue/PR：none
+
+### 2026-08-01：数据接入批次与接收结果协议第一增量实施证据
+
+- 决策状态保持 `accepted`，实施状态保持 `in-progress`；本记录覆盖[数据接入批次与接收结果协议第一增量](../protocol/ingestion-batch-and-receipt-contract.md)。
+- `@aurora/event-schema` 根入口新增 `BATCH_EVENT_LIMITS`、`IngestionReceiptState`、`IngestionErrorCode`、`parseIngestionBatchRequest`、`parseIngestionRequestReceipt`、`parseIngestionEventReceipt` 与批次/接收结果类型；`contract-testkit` 新增 `valid/invalid/boundaryIngestionBatchRequestSamples` 与 `valid/invalid/boundaryIngestionRequestReceiptSamples`。
+- 批次请求正文为精确三字段允许列表（`protocolVersion`、`events`、可选 `receivedAt`）；接收结果状态为 `accepted`/`duplicate_accepted`/`permanently_rejected`/`temporarily_failed`；稳定错误码覆盖协议版本、Schema、字段超限、禁止字段、事件类型、项目/来源永久不允许、服务暂时不可用、限流和容量保护。
+- "已可靠接收"严格对应 accepted ADR-008 的 `event_inbox` 事务提交成功；本协议层不实现 Inbox 写入、数据库、OpenAPI、采样、限流、队列或 Worker。
+- 中立 `field-validation.ts` 与 `parseEventEnvelope` 被继续复用；错误/请求/性能契约全部既有测试保持通过。
+- 验证命令：`pnpm --filter @aurora/event-schema typecheck/test/test:coverage/test:package`、`pnpm check:boundaries`、`pnpm check:ci`，全部 exit 0。
+- 实施 Commit：none（如本轮产生真实 Commit，则只把该真实哈希写入本行）
+- Issue/PR：none
+
+### 2026-08-01：数据接入 OpenAPI 映射 event-schema 真实证据
+
+- 决策状态保持 `accepted`，实施状态保持 `in-progress`；本记录覆盖[数据接入 OpenAPI 机器契约第一增量](../api/ingestion-openapi.md)作为 `@aurora/event-schema` 批次/接收结果协议的 HTTP 传输投影。
+- `docs/api/ingestion.openapi.yaml`（OpenAPI 3.1.0）的 `components.schemas` 全部映射 event-schema：`IngestionBatchRequest`（`const: 1`、`events.maxItems: 50`）、`EventEnvelope`（`eventId.maxLength: 128`）、`IngestionReceiptState`（四值枚举）、`IngestionErrorCode`（十三值枚举）、`IngestionRequestReceipt`/`IngestionEventReceipt`（`retryAfterMs.maximum: 86400000`）。
+- OpenAPI 不建立第二套状态/错误码/限制；"已可靠接收"仍严格对应 ADR-008 Inbox 事务提交成功；OpenAPI 层不实现 Inbox 写入、数据库、采样、限流、队列或 Worker。
+- 漂移门禁 `tooling/ingestion-openapi-contract` 从 `@aurora/event-schema` 根与 `contract-testkit` 消费常量、枚举、类型与样本，40 个漂移测试自动比对枚举/required/限制/合法/非法/边界样本/`retryable`/`retryAfterMs`/安全；`@aurora/event-schema` 公共 API 未被修改。
+- 验证命令：`pnpm openapi:lint`、`pnpm --filter @aurora/ingestion-openapi-contract test/typecheck/build`、`pnpm check:boundaries`、`pnpm lint`，全部 exit 0。
+- 实施 Commit：none（未提交）
+- Issue/PR：none
