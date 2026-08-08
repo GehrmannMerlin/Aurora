@@ -41,12 +41,15 @@ describe('schema primitives', () => {
       maybe: nullable(str(1, 5)),
       extra: optional(str(1, 5)),
     });
-    expect(def.zod.safeParse({ name: 'a', tags: [], counts: {} }).success).toBe(true);
+    expect(def.zod.safeParse({ name: 'a', tags: [], counts: {}, maybe: null }).success).toBe(true);
+    expect(def.zod.safeParse({ name: 'a', tags: [], counts: {} }).success).toBe(false);
     expect(
       def.zod.safeParse({ name: 'a', tags: ['x'], counts: { k: 1 }, maybe: 'y', extra: 'z' })
         .success,
     ).toBe(true);
-    expect(def.zod.safeParse({ name: 'a', tags: [''], counts: {} }).success).toBe(false);
+    expect(def.zod.safeParse({ name: 'a', tags: [''], counts: {}, maybe: null }).success).toBe(
+      false,
+    );
     expect(def.openapi.properties).toBeDefined();
   });
 });

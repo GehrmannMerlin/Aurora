@@ -94,7 +94,7 @@ export function union(members: readonly SchemaDef[]): SchemaDef {
 }
 
 export function nullable(def_: SchemaDef): SchemaDef {
-  return def(z.nullable(def_.zod).optional(), { ...def_.openapi, nullable: true });
+  return def(z.nullable(def_.zod), { ...def_.openapi, nullable: true });
 }
 
 export function optional(def_: SchemaDef): SchemaDef {
