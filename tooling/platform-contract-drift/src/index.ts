@@ -37,11 +37,11 @@ export async function assertPlatformDrift(): Promise<void> {
         delete?: { operationId?: string };
       }
     >;
-  };
+  } | null;
 
   const drifts: string[] = [];
   const yamlOps = new Set<string>();
-  for (const path of Object.values(doc.paths ?? {})) {
+  for (const path of Object.values(doc?.paths ?? {})) {
     for (const method of ['get', 'post', 'patch', 'delete'] as const) {
       const opId = path[method]?.operationId;
       if (opId) yamlOps.add(opId);
