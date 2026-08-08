@@ -101,6 +101,8 @@ maintenance: operational-snapshot
 
 **PLT-01 Platform Contract 基础（2026-08-08，implemented-in-feature-branch）**：`@aurora/platform-contract`（根 + `/client` + `/server` + `/contract-testkit` 真实导出）、机器 Platform OpenAPI v1（`docs/api/platform-openapi-v1.yaml` + `docs/api/platform-openapi-v1.manifest.json`）、生成 Client/Server 适配器与 `tooling/platform-contract-drift` 漂移门禁（含 schema 兼容差异门禁）已实现并通过全仓质量门禁；规格 [platform-contract-foundation.md](docs/architecture/platform-contract-foundation.md)、计划 [2026-08-08-platform-contract-foundation.md](docs/superpowers/plans/2026-08-08-platform-contract-foundation.md)。**未部署；已通过独立验收并关闭叶子**：completed 38→39 / remaining 40→39；ADR-025—028 accepted / not-started；`platform-api`/Worker、平台数据模型与 Session backend 仍不存在（`apps/console` 壳层已 implemented-in-feature-branch，见 PLT-02 条目）。
 
+**PLT-02 Platform Frontend Shell（2026-08-08，implemented-in-feature-branch）**：`apps/console`（`@aurora/console`，`aurora.layer: console`）Vue 3 SPA 壳层（bootstrap/Vue Router 36 RouteTarget 真实可达/Session+Navigation Context/Aurora UI shell/status pages/Playwright 可达性与 axe 门禁/`test:package` 生产构建门禁/Preview 切换文件）已实现并通过全仓质量门禁；规格 [platform-frontend-shell.md](docs/architecture/platform-frontend-shell.md)、计划 [2026-08-08-platform-frontend-shell.md](docs/superpowers/plans/2026-08-08-platform-frontend-shell.md)。**未部署；已通过独立验收并关闭叶子**：completed 39→40 / remaining 39→38；`platform-api`/Worker、平台数据模型与 Session backend 仍不存在；G10—G13 业务与主题实现不自动开始。
+
 ## 4. 正式化与详细设计入口
 
 [正式文档索引](docs/README.md)维护 approved 设计到长期权威文档的唯一映射；[正式化与实施就绪追踪](docs/architecture/formalization-readiness.md)维护 ADR、机器契约和真实阻塞，不成为第二份 PRD。

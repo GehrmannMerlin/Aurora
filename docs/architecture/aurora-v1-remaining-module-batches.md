@@ -15,15 +15,15 @@ related:
 supersedes: none
 audit-baseline-date: 2026-08-03
 fixed-v1-leaf-modules: 78
-completed-v1-leaf-modules: 39
-remaining-v1-leaf-modules: 39
+completed-v1-leaf-modules: 40
+remaining-v1-leaf-modules: 38
 ---
 
 # Aurora 第一版剩余模块分批基线
 
 ## 1. 文档定位
 
-本文把 2026-08-03《Aurora 第一版剩余模块盘点与实现状态审计》确认的 46 个剩余叶子实施模块，整理为可供后续规格化和 `writing-plans` 使用的实施分组。DAT-07（请求处理规则/配置 adapter）已于 2026-08-03 关闭，DAT-08（性能指标聚合与有界诊断样本存储）已于 2026-08-05 关闭，DAT-09（性能事件处理器）、DAT-10（事件处理器 Router）与 DAT-11（生产 Worker composition）已于 2026-08-07 关闭，**G01 数据处理生产链闭合全部 5 个叶子已关闭**；**OPS-01（G14 CI quality workflows）已于 2026-08-08 关闭**；**PLT-01（Platform Contract foundation）已于 2026-08-08 关闭（独立验收通过）**，当前剩余 39 个（OPS-02 blocked 不占用 completed）。**PLT-02（前端壳层）已于 2026-08-08 implemented-in-feature-branch（未部署）**：`apps/console` Vue 3 SPA 壳层、生产构建门禁与 Preview 切换文件已落盘，但叶子计数保持 completed 39 / remaining 39，只有 PLT-02 独立验收通过后才更新计数。
+本文把 2026-08-03《Aurora 第一版剩余模块盘点与实现状态审计》确认的 46 个剩余叶子实施模块，整理为可供后续规格化和 `writing-plans` 使用的实施分组。DAT-07（请求处理规则/配置 adapter）已于 2026-08-03 关闭，DAT-08（性能指标聚合与有界诊断样本存储）已于 2026-08-05 关闭，DAT-09（性能事件处理器）、DAT-10（事件处理器 Router）与 DAT-11（生产 Worker composition）已于 2026-08-07 关闭，**G01 数据处理生产链闭合全部 5 个叶子已关闭**；**OPS-01（G14 CI quality workflows）已于 2026-08-08 关闭**；**PLT-01（Platform Contract foundation）已于 2026-08-08 关闭（独立验收通过）**；**PLT-02（前端壳层）已于 2026-08-08 关闭（独立验收通过）**，当前剩余 38 个（OPS-02 blocked 不占用 completed）。
 
 本文是**计划编制输入**，不是 PRD、ADR、approved 正式规格或可直接执行的实施计划。本文不会：
 
@@ -41,19 +41,19 @@ remaining-v1-leaf-modules: 39
 
 ```text
 fixed_v1_leaf_modules = 78
-completed_v1_leaf_modules = 39
+completed_v1_leaf_modules = 40
 partial_v1_leaf_modules = 0
-not_started_v1_leaf_modules = 10
+not_started_v1_leaf_modules = 9
 blocked_v1_leaf_modules = 29
-remaining_v1_leaf_modules = 39
+remaining_v1_leaf_modules = 38
 
-78 = 39 + 0 + 10 + 29
-39 = 0 + 10 + 29
+78 = 40 + 0 + 9 + 29
+38 = 0 + 9 + 29
 ```
 
 > 更新（2026-08-08）：OPS-01 completed（completed 37→38），OPS-02 blocked（blocked 30→29），remaining 41→40。
 > 更新（2026-08-08）：PLT-01 closed（completed 38→39），not_started 11→10，remaining 40→39（独立验收通过）。
-> 更新（2026-08-08）：PLT-02 implemented-in-feature-branch（未部署），`apps/console` Vue 3 SPA 壳层 + 生产构建门禁 + Preview 切换文件已落盘；**计数保持 completed 39 / remaining 39，等待 PLT-02 独立验收**。
+> 更新（2026-08-08）：PLT-02 closed（completed 39→40），not_started 10→9，remaining 39→38（独立验收通过）。
 
 分组只改变后续工作的组织方式，不改变计数方式：
 
@@ -188,7 +188,7 @@ remaining_v1_leaf_modules = 39
 | Module | 业务逻辑分类                               | 固定回读集合                                                                                                                              | 重点章节与实施前置                                                                                                                                                                                                                                                                                                                                                                                                                                                |
 | ------ | ------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | PLT-01 | 单一 Platform Contract、Schema 和生成适配  | `BASE-PRD`、`BASE-ARCH`、`BASE-IMPL`、`PLAT-DOMAINS`、`PLAT-UX`、`PLAT-STACK`、`PLAT-OAPI`、`FORM`                                        | OpenAPI 设计 §4—14、§16—20；UX/UI §9、§11—13；D2、Session 和下游 Query/Command 未正式化部分不得用空 Schema 占位。**已关闭（2026-08-08，独立验收通过）**：`@aurora/platform-contract`（根 + `/client` + `/server` + `/contract-testkit`）、`docs/api/platform-openapi-v1.yaml` + 覆盖清单、生成适配与 `tooling/platform-contract-drift` 漂移门禁（含 schema 兼容差异门禁）已存在。                                                                                 |
-| PLT-02 | Session、导航、RouteTarget 和 Vue SPA 壳层 | `BASE-PRD`、`BASE-ARCH`、`BASE-IMPL`、`PLAT-DOMAINS`、`PLAT-UX`、`PLAT-STACK`、`PLAT-OAPI`、`FORM`                                        | UX/UI §5、§7.1、§12.1—12.9；OpenAPI 设计 §11—15、§17；Frontend Architecture §2—7；视觉语言 §2—10。必须实现真实可达性，不允许仅手输 URL。**已 implemented-in-feature-branch（未部署，2026-08-08）**：`apps/console` Vue 3 SPA 壳层（36 个 RouteTarget 真实可达、Session/Navigation Context、Aurora UI shell、状态页、Playwright 可达性与 axe 门禁、`test:package` 生产构建门禁、Preview 切换文件）；叶子计数保持 completed 39 / remaining 39，待 PLT-02 独立验收。 |
+| PLT-02 | Session、导航、RouteTarget 和 Vue SPA 壳层 | `BASE-PRD`、`BASE-ARCH`、`BASE-IMPL`、`PLAT-DOMAINS`、`PLAT-UX`、`PLAT-STACK`、`PLAT-OAPI`、`FORM`                                        | UX/UI §5、§7.1、§12.1—12.9；OpenAPI 设计 §11—15、§17；Frontend Architecture §2—7；视觉语言 §2—10。必须实现真实可达性，不允许仅手输 URL。**已关闭（2026-08-08，独立验收通过）**：`apps/console` Vue 3 SPA 壳层（36 个 RouteTarget 真实可达、Session/Navigation Context、Aurora UI shell、状态页、Playwright 可达性与 axe 门禁、`test:package` 生产构建门禁、Preview 切换文件）已 implemented-in-feature-branch、未部署。 |
 | PLT-03 | A1—A4 身份、认证、密码和邀请               | `BASE-PRD`、`BASE-ARCH`、`BASE-IMPL`、`PLAT-DOMAINS`、`PLAT-UX`、`PLAT-STACK`、`PLAT-OAPI`、`FORM`                                        | PRD §4.1—4.3、§13；UX/UI §7.2—7.6、§8.1—8.4、§9.1—9.4、§10.2.1、§11；Backend Design §6—8。Session、CSRF、邮件和审计是实施门禁。                                                                                                                                                                                                                                                                                                                                   |
 | PLT-04 | B1—B8 组织、项目、成员和治理               | `BASE-PRD`、`BASE-ARCH`、`BASE-IMPL`、`PLAT-DOMAINS`、`PLAT-UX`、`PLAT-STACK`、`PLAT-OAPI`、`SEC-A5`、`FORM`                              | PRD §4、§12—13、§15、§17；UX/UI §7.8—7.15、§8.6—8.13、§9.6—9.13、§10.3—10.7；组织时区、一次性秘密、审计和回收站语义不得弱化。                                                                                                                                                                                                                                                                                                                                     |
 | PLT-05 | C1/C2/C7 接入、概览和诊断                  | `BASE-PRD`、`BASE-ARCH`、`BASE-IMPL`、`PLAT-DOMAINS`、`PLAT-UX`、`PLAT-STACK`、`PLAT-OAPI`、`ING-HTTP`、`ING-INBOX`、`ING-WORKER`、`FORM` | PRD §4.4、§7.3、§12.4；UX/UI §7.16—7.17、§7.22、§8.14—8.15、§8.20、§9.14—9.15、§9.20、§10.8—10.9、§10.14。接收状态与处理状态必须分开。                                                                                                                                                                                                                                                                                                                            |
@@ -344,7 +344,7 @@ Vue 与 React 不得合成一个叶子或一个实现计划，因为组件生命
 
 契约和壳层不能共用一个计划：机器契约可以独立漂移验证，SPA 壳层还涉及 Session、导航、浏览器和可访问性测试。
 
-**G09 当前状态（2026-08-08）**：PLT-01 已关闭（implemented-in-feature-branch、未部署、独立验收通过）：`@aurora/platform-contract`（根 + `/client` + `/server` + `/contract-testkit` 真实导出）、机器 Platform OpenAPI v1（`docs/api/platform-openapi-v1.yaml` + `docs/api/platform-openapi-v1.manifest.json`）、生成 Client/Server 适配器与 `tooling/platform-contract-drift` 漂移门禁（含 schema 兼容差异门禁）均真实存在。叶子计数：completed 38→39 / remaining 40→39（PLT-01 独立验收通过后按 repo 规则记录）。**PLT-02 已 implemented-in-feature-branch（未部署）**：`apps/console` Vue 3 SPA 壳层（36 个 RouteTarget 真实可达、Session/Navigation Context、Aurora UI shell、状态页、Playwright 可达性与 axe 门禁、`test:package` 生产构建门禁、Preview 切换文件）；叶子计数保持 completed 39 / remaining 39，PLT-02 独立验收通过前不更新计数。
+**G09 当前状态（2026-08-08）**：PLT-01 已关闭（implemented-in-feature-branch、未部署、独立验收通过）：`@aurora/platform-contract`（根 + `/client` + `/server` + `/contract-testkit` 真实导出）、机器 Platform OpenAPI v1（`docs/api/platform-openapi-v1.yaml` + `docs/api/platform-openapi-v1.manifest.json`）、生成 Client/Server 适配器与 `tooling/platform-contract-drift` 漂移门禁（含 schema 兼容差异门禁）均真实存在。**PLT-02 已关闭（implemented-in-feature-branch、未部署、独立验收通过）**：`apps/console` Vue 3 SPA 壳层（36 个 RouteTarget 真实可达、Session/Navigation Context、Aurora UI shell、状态页、Playwright 可达性与 axe 门禁、`test:package` 生产构建门禁、Preview 切换文件）。叶子计数：PLT-01 关闭后 completed 38→39 / remaining 40→39；PLT-02 独立验收通过后 completed 39→40 / remaining 39→38。
 
 ### G10：身份、组织治理与账号注销
 
@@ -537,7 +537,7 @@ flowchart TD
 
 > 更新（2026-08-07）：DAT-07（2026-08-03）、DAT-08（2026-08-05）、DAT-09（2026-08-07）、DAT-10（2026-08-07）、DAT-11（2026-08-07）均已关闭（completed），**G01 全部 5 个叶子已关闭**；`fixed` 总数不变（78），`completed` 32→37，`blocked` 35→30，`remaining` 46→41。下表反映更新后的剩余覆盖。
 >
-> 更新（2026-08-08）：**OPS-01 已关闭（completed）**，`completed` 37→38、`remaining` 41→40；**OPS-02 blocked**（reference app/Console/device matrix/performance env 缺失，不伪造关闭），G14 = partially completed；**PLT-01 已关闭（completed）**，`completed` 38→39、`remaining` 40→39（独立验收通过）。**PLT-02 implemented-in-feature-branch（未部署）**：`apps/console` Vue 3 SPA 壳层 + 生产构建门禁 + Preview 切换文件已落盘，**计数保持 completed 39 / remaining 39，待 PLT-02 独立验收**。下表反映更新后的剩余覆盖。
+> 更新（2026-08-08）：**OPS-01 已关闭（completed）**，`completed` 37→38、`remaining` 41→40；**OPS-02 blocked**（reference app/Console/device matrix/performance env 缺失，不伪造关闭），G14 = partially completed；**PLT-01 已关闭（completed）**，`completed` 38→39、`remaining` 40→39（独立验收通过）；**PLT-02 已关闭（completed）**，`completed` 39→40、`remaining` 39→38（独立验收通过）。下表反映更新后的剩余覆盖。
 
 | Group     | Protocol |   SDK | Ingestion | Processing/Storage | Platform | Security/Lifecycle | CI/Deployment/Infra |  Total |
 | --------- | -------: | ----: | --------: | -----------------: | -------: | -----------------: | ------------------: | -----: |
@@ -549,7 +549,7 @@ flowchart TD
 | G06       |        0 |     2 |         0 |                  0 |        0 |                  0 |                   0 |      2 |
 | G07       |        0 |     2 |         0 |                  0 |        0 |                  0 |                   0 |      2 |
 | G08       |        0 |     0 |         2 |                  0 |        0 |                  0 |                   0 |      2 |
-| G09       |        0 |     0 |         0 |                  0 |        1 |                  0 |                   0 |      1 |
+| G09       |        0 |     0 |         0 |                  0 |        0 |                  0 |                   0 |      0 |
 | G10       |        0 |     0 |         0 |                  0 |        2 |                  1 |                   0 |      3 |
 | G11       |        0 |     0 |         0 |                  0 |        2 |                  0 |                   0 |      2 |
 | G12       |        0 |     0 |         0 |                  0 |        2 |                  0 |                   0 |      2 |
@@ -557,21 +557,21 @@ flowchart TD
 | G14       |        0 |     0 |         0 |                  0 |        0 |                  0 |                   1 |      1 |
 | G15       |        0 |     0 |         0 |                  0 |        0 |                  0 |                   1 |      1 |
 | G16       |        0 |     0 |         0 |                  0 |        0 |                  0 |                   4 |      4 |
-| **Total** |    **1** | **9** |     **2** |             **10** |    **9** |              **2** |               **6** | **39** |
+| **Total** |    **1** | **9** |     **2** |             **10** |    **8** |              **2** |               **6** | **38** |
 
 覆盖校验：
 
 ```text
-0 + 3 + 4 + 4 + 6 + 2 + 2 + 2 + 1 + 3 + 2 + 2 + 2 + 1 + 1 + 4 = 39
+0 + 3 + 4 + 4 + 6 + 2 + 2 + 2 + 0 + 3 + 2 + 2 + 2 + 1 + 1 + 4 = 38
 
 1 protocol
 + 9 SDK
 + 2 ingestion
 + 10 processing/storage
-+ 9 platform
++ 8 platform
 + 2 security/lifecycle
 + 6 CI/deployment/infra
-= 39
+= 38
 ```
 
 ## 11. 第一批后续计划设计队列

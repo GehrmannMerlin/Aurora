@@ -319,7 +319,7 @@ reopen condition：后续 PRD 明确资源监控用户价值、字段、隐私�
 - **Environment**：`preview`（URL aurora.ah.cn，无 approval）；
 - **Lumina nginx ownership 修复**：Lumina `deploy.sh` 的 nginx `up` 改用 `AURORA_COMPOSE`（含 Aurora override），Lumina 下次部署不再丢 Aurora vhost（备份 `deploy.sh.bak-20260808`）；
 - **真实验证**：两次 push（`955ccde`、`94931cb`）均触发 main CI success → Preview CD success → server release 创建 → public smoke PASS；
-- **状态**：completed 39 / remaining 39（PLT-01 于 2026-08-08 独立验收通过后关闭，38→39 / 40→39；Preview CD 本身不关闭叶子）；OPS-04 ≠ completed、OPS-05 ≠ completed、OPS-02 = blocked、G16 = started / temporary-preview-bridge-active。
+- **状态**：completed 40 / remaining 38（PLT-01 于 2026-08-08 独立验收通过后关闭 38→39 / 40→39；PLT-02 于 2026-08-08 独立验收通过后关闭 39→40 / 39→38；Preview CD 本身不关闭叶子）；OPS-04 ≠ completed、OPS-05 ≠ completed、OPS-02 = blocked、G16 = started / temporary-preview-bridge-active。
 
 ### 8.4 G14 工程质量与兼容门禁记录（2026-08-08）
 
