@@ -1,19 +1,29 @@
 import type { FastifyReply, FastifyRequest } from 'fastify';
 import {
   createAccount,
+  createIntentToken,
   createPersonalOrganization,
   hashPassword,
+  insertEmailVerificationIntent,
+  insertOutboxRow,
   normalizeEmail,
 } from '@aurora/platform-identity';
 import { createSession } from '@aurora/platform-session';
 import { OPERATION_ID_REGISTER } from '@aurora/platform-contract';
 import { parseInput, serializeOutput, type OperationDef } from '@aurora/platform-contract/server';
 import { operationById } from '../operations.js';
-import { mapErrorToProblem, sendProblem } from '../error-mapper.js';
+import { sendProblem } from '../error-mapper.js';
 import { setSessionCookie } from '../session-cookie.js';
+import { maskEmail } from '../email-mask.js';
+import { runIdempotentCommand, requestDigest, type IdempotentCommandResult } from '../idempotency.js';
+import { ServiceError, sendMappedError } from '../service-error.js';
 import type { PlatformApiRouteDependencies } from '../route-deps.js';
 
 const REGISTER_OPERATION: OperationDef = operationById(OPERATION_ID_REGISTER);
+
+/** Email verification intent lifetime (minutes) — the value shown in the mail. */
+const VERIFY_INTENT_MINUTES = 120;
+const VERIFY_INTENT_TTL_MS = VERIFY_INTENT_MINUTES * 60 * 1000;
 
 interface RegisterBody {
   readonly email: string;
@@ -22,11 +32,21 @@ interface RegisterBody {
 }
 
 /**
- * Task 6 stub for POST /api/platform/v1/auth/register. It performs the real
- * account + personal-workspace creation and establishes a session (so the
- * following session query can resolve it), then returns the closed
- * `identityRegisterResponse` contract shape. Idempotency, email verification
- * outbox rows, rate limiting and the full A1 flow land in Task 7.
+ * POST /api/platform/v1/auth/register — full A1 flow:
+ *
+ * Argon2id hash -> ONE atomic transaction { createAccount + credential +
+ * createPersonalOrganization(owner) + insertEmailVerificationIntent +
+ * insertOutboxRow(verification mail, mailLinkUrl embedding the transient
+ * token) + idempotency record } -> Redis session -> HttpOnly cookie ->
+ * `identityRegisterResponse`.
+ *
+ * - Idempotency: same key + same request replays the first result (and
+ *   re-establishes a session so a lost response converges); same key + a
+ *   different request -> 409 idempotency_conflict.
+ * - Redis down after the transaction commits -> consistent 503
+ *   authority_unavailable; a same-key retry replays and creates the session.
+ * - Duplicate email -> 409 business_validation (spec §9).
+ * - In-memory rate limit per (operation, IP, email-normalized) -> 429.
  */
 export async function handleRegister(
   request: FastifyRequest,
@@ -34,6 +54,7 @@ export async function handleRegister(
   deps: PlatformApiRouteDependencies,
 ): Promise<void> {
   const requestId = deps.requestIdProvider();
+  const now = deps.now();
 
   const parsed = parseInput(REGISTER_OPERATION, { body: request.body });
   if (!parsed.ok) {
@@ -41,6 +62,18 @@ export async function handleRegister(
     return;
   }
   const input = parsed.data.body as RegisterBody;
+  const emailNormalized = normalizeEmail(input.email);
+
+  const rate = deps.rateLimiter.check(
+    `${OPERATION_ID_REGISTER}:${request.ip}:${emailNormalized}`,
+    now.getTime(),
+  );
+  if (!rate.allowed) {
+    await sendProblem(reply, requestId, 429, 'rate_limited', 'Too many registration attempts.', {
+      ...(rate.retryAfterSeconds === undefined ? {} : { retryAfter: rate.retryAfterSeconds }),
+    });
+    return;
+  }
 
   let passwordHash: string;
   try {
@@ -50,66 +83,98 @@ export async function handleRegister(
     return;
   }
 
-  const emailNormalized = normalizeEmail(input.email);
-  let accountResult;
+  let idempotency: IdempotentCommandResult;
   try {
-    accountResult = await createAccount(deps.pool, {
-      email: input.email,
-      emailNormalized,
-      passwordHash,
-      status: 'pending_verification',
+    idempotency = await runIdempotentCommand({
+      pool: deps.pool,
+      key: input.idempotencyKey,
+      operation: OPERATION_ID_REGISTER,
+      digest: requestDigest({ ...input, emailNormalized }),
+      execute: async (client) => {
+      const account = await createAccount(client, {
+        email: input.email,
+        emailNormalized,
+        passwordHash,
+        status: 'pending_verification',
+      });
+      if (account.status === 'conflict') {
+        throw new ServiceError(409, 'business_validation', 'An account with this email already exists.');
+      }
+      const workspace = await createPersonalOrganization(client, {
+        name: 'My Workspace',
+        accountId: account.account.accountId,
+      });
+      if (workspace.status === 'conflict') {
+        throw new ServiceError(409, 'business_validation', 'Workspace creation failed.');
+      }
+
+      const { token, digest } = createIntentToken();
+      const expiresAt = new Date(now.getTime() + VERIFY_INTENT_TTL_MS);
+      await insertEmailVerificationIntent(client, {
+        accountId: account.account.accountId,
+        tokenDigest: digest,
+        expiresAt,
+      });
+
+      const masked = maskEmail(emailNormalized);
+      await insertOutboxRow(client, {
+        aggregateType: 'email.verification',
+        aggregateId: account.account.accountId,
+        payload: {
+          intentType: 'email_verification',
+          toAddress: emailNormalized,
+          toMasked: masked,
+          mailLinkUrl: `/api/platform/v1/auth/verify/${token}`,
+          expiresInMinutes: VERIFY_INTENT_MINUTES,
+        },
+      });
+
+      return {
+        accountId: account.account.accountId,
+        workspaceId: { organizationId: workspace.organizationId },
+        emailMasked: masked,
+        verificationStatus: { verified: false, reason: 'email_verification_pending' },
+        serverTime: now.toISOString(),
+      };
+      },
     });
   } catch (error) {
-    const mapped = mapErrorToProblem(requestId, error);
-    await reply.code(mapped.status).send(mapped.problem);
-    return;
+    if (await sendMappedError(reply, requestId, error)) return;
+    throw error;
   }
-  if (accountResult.status === 'conflict') {
-    await sendProblem(reply, requestId, 409, 'business_validation', 'An account with this email already exists.');
+
+  if (idempotency.outcome === 'conflict') {
+    await sendProblem(reply, requestId, 409, 'idempotency_conflict', 'Idempotency key conflict.');
     return;
   }
 
-  let workspaceResult;
-  try {
-    workspaceResult = await createPersonalOrganization(deps.pool, {
-      name: 'My Workspace',
-      accountId: accountResult.account.accountId,
-    });
-  } catch (error) {
-    const mapped = mapErrorToProblem(requestId, error);
-    await reply.code(mapped.status).send(mapped.problem);
-    return;
-  }
-  if (workspaceResult.status === 'conflict') {
-    await sendProblem(reply, requestId, 409, 'business_validation', 'Workspace creation failed.');
-    return;
-  }
+  const response = idempotency.resultData as {
+    accountId: string;
+    workspaceId: { organizationId: string };
+    emailMasked: string;
+    verificationStatus: { verified: false; reason: string };
+    serverTime: string;
+  };
 
-  const now = deps.now();
+  // Establish the session (Redis). Both a fresh run and a replay create a fresh
+  // session so a lost-response retry ends up authenticated.
   let session;
   try {
     session = await createSession(deps.sessionStore, {
-      accountId: accountResult.account.accountId,
+      accountId: response.accountId,
       authLevel: 'pending_verification',
       now,
       idleMs: deps.config.sessionIdleMs,
       absoluteMs: deps.config.sessionAbsoluteMs,
     });
-  } catch (error) {
-    const mapped = mapErrorToProblem(requestId, error);
-    await reply.code(mapped.status).send(mapped.problem);
+  } catch {
+    // Redis is the session authority; fail closed with a consistent 503
+    // (ADR-028 决定细节 7, PLT-03 Task 7 carry-forward).
+    await sendProblem(reply, requestId, 503, 'authority_unavailable', 'Session authority is temporarily unavailable.');
     return;
   }
 
   setSessionCookie(reply, session.cookieValue, deps.cookieOptions);
-
-  const response = {
-    accountId: accountResult.account.accountId,
-    workspaceId: { organizationId: workspaceResult.organizationId },
-    emailMasked: maskEmail(emailNormalized),
-    verificationStatus: { verified: false, reason: 'email_verification_pending' },
-    serverTime: now.toISOString(),
-  };
 
   const serialized = serializeOutput(REGISTER_OPERATION, 200, response);
   if (!serialized.ok) {
@@ -119,11 +184,5 @@ export async function handleRegister(
   void reply.header('x-aurora-request-id', requestId).code(200).send(serialized.body);
 }
 
-/** Server-side email mask for display/logging — never the full address. */
-export function maskEmail(email: string): string {
-  const at = email.indexOf('@');
-  const domain = at < 0 ? '' : email.slice(at);
-  const local = at < 0 ? email : email.slice(0, at);
-  if (local.length <= 2) return `${local[0] ?? ''}***${domain}`;
-  return `${local.slice(0, 2)}***${domain}`;
-}
+// Re-exported for the existing unit test (kept importable from routes/register.js).
+export { maskEmail } from '../email-mask.js';

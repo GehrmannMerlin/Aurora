@@ -2,7 +2,7 @@ import type { Pool, PoolClient } from 'pg';
 import { isForeignKeyViolation, isUniqueViolation, PlatformIdentityError, toStableError } from '../errors.js';
 import { normalizeEmail } from '../intent-token.js';
 import { isoTimestamp } from './timestamp.js';
-import { withTransaction } from './transaction.js';
+import { isPoolClient, withTransaction } from './transaction.js';
 
 /** Core account row (camelCase projection of the accounts table). */
 export interface AccountRow {
@@ -86,40 +86,51 @@ const INSERT_CREDENTIAL_SQL = `
   VALUES ($1, $2, 1)
 `;
 
+/** The account + initial credential write, runnable on any client (composable). */
+async function runCreateAccount(
+  client: PoolClient,
+  input: CreateAccountInput,
+): Promise<AccountRowShape> {
+  const inserted = await client.query<{
+    account_id: string;
+    created_at: string;
+    updated_at: string;
+  }>(INSERT_ACCOUNT_SQL, [normalizeEmail(input.email), input.emailNormalized, input.status]);
+  const insertedRow = inserted.rows[0];
+  if (insertedRow === undefined) {
+    throw new PlatformIdentityError('statement_failed', 'account insert returned no row');
+  }
+  await client.query(INSERT_CREDENTIAL_SQL, [insertedRow.account_id, input.passwordHash]);
+  return {
+    account_id: insertedRow.account_id,
+    email: input.email,
+    email_normalized: input.emailNormalized,
+    password_hash: input.passwordHash,
+    password_version: 1,
+    verified_at: null,
+    security_version: 0,
+    status: input.status,
+    created_at: insertedRow.created_at,
+    updated_at: insertedRow.updated_at,
+  } satisfies AccountRowShape;
+}
+
 /**
- * Create an account and its initial credential in one transaction. Returns
- * `conflict` when the email or normalized email already exists (no partial
- * account row is left behind).
+ * Create an account and its initial credential. When given a `Pool` this opens
+ * a transaction; when given an already-leased `PoolClient` it runs directly on
+ * the caller's transaction (so the platform-api layer can compose it with the
+ * personal-workspace / intent / outbox / idempotency writes atomically).
+ * Returns `conflict` when the email or normalized email already exists (no
+ * partial account row is left behind).
  */
 export async function createAccount(
-  pool: Pool,
+  pool: Pool | PoolClient,
   input: CreateAccountInput,
 ): Promise<CreateAccountResult> {
   try {
-    const account = await withTransaction(pool, async (client) => {
-      const inserted = await client.query<{
-        account_id: string;
-        created_at: string;
-        updated_at: string;
-      }>(INSERT_ACCOUNT_SQL, [normalizeEmail(input.email), input.emailNormalized, input.status]);
-      const insertedRow = inserted.rows[0];
-      if (insertedRow === undefined) {
-        throw new PlatformIdentityError('statement_failed', 'account insert returned no row');
-      }
-      await client.query(INSERT_CREDENTIAL_SQL, [insertedRow.account_id, input.passwordHash]);
-      return {
-        account_id: insertedRow.account_id,
-        email: input.email,
-        email_normalized: input.emailNormalized,
-        password_hash: input.passwordHash,
-        password_version: 1,
-        verified_at: null,
-        security_version: 0,
-        status: input.status,
-        created_at: insertedRow.created_at,
-        updated_at: insertedRow.updated_at,
-      } satisfies AccountRowShape;
-    });
+    const account = isPoolClient(pool)
+      ? await runCreateAccount(pool, input)
+      : await withTransaction(pool, (client) => runCreateAccount(client, input));
     return { status: 'success', account: toAccountRow(account) };
   } catch (error) {
     if (isUniqueViolation(error)) return { status: 'conflict' };

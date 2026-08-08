@@ -25,7 +25,7 @@ export function setSessionCookie(
   value: string,
   options: SessionCookieOptions,
 ): void {
-  void reply.header('set-cookie', serializeSessionCookie(SESSION_COOKIE_NAME, value, options));
+  appendSetCookie(reply, serializeSessionCookie(SESSION_COOKIE_NAME, value, options));
 }
 
 /** Expire the session cookie immediately (logout / revocation). */
@@ -34,7 +34,19 @@ export function clearSessionCookie(
   options: SessionCookieOptions,
 ): void {
   const expired = `${serializeSessionCookie(SESSION_COOKIE_NAME, '', options)}; Max-Age=0; Expires=Thu, 01 Jan 1970 00:00:00 GMT`;
-  void reply.header('set-cookie', expired);
+  appendSetCookie(reply, expired);
+}
+
+/**
+ * Append a `Set-Cookie` value, preserving any already-set cookies (a handler may
+ * set both the session cookie and the intent cookie on the same reply). Fastify
+ * serializes an array of `set-cookie` values into multiple `Set-Cookie` headers.
+ */
+export function appendSetCookie(reply: FastifyReply, value: string): void {
+  const existing = reply.getHeader('set-cookie');
+  const values =
+    existing === undefined ? [] : Array.isArray(existing) ? existing : [existing as string];
+  void reply.header('set-cookie', [...values, value]);
 }
 
 /**

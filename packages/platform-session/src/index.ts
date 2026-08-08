@@ -32,6 +32,7 @@ export {
   type SessionAuthLevel,
   type SessionPayload,
   type SessionStore,
+  type SessionToken,
 } from './session-store.js';
 
 export { createCsrfSecret, verifyCsrf } from './csrf.js';

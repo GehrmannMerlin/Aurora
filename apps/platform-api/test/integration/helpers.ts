@@ -5,7 +5,6 @@ import { Pool } from 'pg';
 const migrationsDir = fileURLToPath(
   new URL('../../../../packages/platform-identity/migrations', import.meta.url),
 );
-
 export function testDatabaseUrl(): string {
   const url = process.env.AURORA_TEST_DATABASE_URL;
   if (url === undefined) {
@@ -59,4 +58,53 @@ export function extractSessionCookie(setCookie: unknown): string {
     throw new Error('no aurora_session cookie in set-cookie header');
   }
   return match[1] ?? '';
+}
+
+/** Extract a named cookie value from a `set-cookie` header (first entry). */
+export function extractCookie(setCookie: unknown, name: string): string | undefined {
+  const value = Array.isArray(setCookie) ? setCookie[0] : (setCookie as string | undefined);
+  if (typeof value !== 'string') return undefined;
+  const escaped = name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const match = new RegExp(`(?:^|; )${escaped}=([^;]+)`).exec(value);
+  return match?.[1];
+}
+
+/** Extract the `aurora_intent` cookie value from a `set-cookie` header. */
+export function extractIntentCookie(setCookie: unknown): string | undefined {
+  return extractCookie(setCookie, 'aurora_intent');
+}
+
+/**
+ * Extract the raw intent token from the most recent outbox row for an aggregate
+ * type. The mailLinkUrl embeds the transient token as the final path segment.
+ */
+export async function outboxIntentToken(
+  pool: Pool,
+  aggregateType: string,
+): Promise<string> {
+  const result = await pool.query<{ payload: unknown }>(
+    `SELECT payload FROM outbox WHERE aggregate_type = $1 ORDER BY created_at DESC, outbox_id DESC LIMIT 1`,
+    [aggregateType],
+  );
+  const row = result.rows[0];
+  if (row === undefined) {
+    throw new Error(`no outbox row for aggregate_type=${aggregateType}`);
+  }
+  const payload = row.payload as { mailLinkUrl?: unknown };
+  const url = typeof payload?.mailLinkUrl === 'string' ? payload.mailLinkUrl : '';
+  const token = url.split('/').filter(Boolean).pop();
+  if (typeof token !== 'string' || token.length === 0) {
+    throw new Error(`no token in outbox mailLinkUrl for aggregate_type=${aggregateType}`);
+  }
+  return token;
+}
+
+/** Truncate all PLT-03 identity tables (test isolation). */
+export async function truncateIdentityTables(pool: Pool): Promise<void> {
+  await pool.query(
+    `TRUNCATE outbox, idempotency_records, security_audit_events, project_members,
+      organization_invitations, organization_members, organizations,
+      password_reset_intents, email_verification_intents,
+      account_credentials, accounts CASCADE`,
+  );
 }

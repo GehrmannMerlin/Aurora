@@ -1,7 +1,7 @@
 import type { Pool, PoolClient } from 'pg';
 import { isUniqueViolation, PlatformIdentityError, toStableError } from '../errors.js';
 import { isoTimestamp } from './timestamp.js';
-import { withTransaction } from './transaction.js';
+import { isPoolClient, withTransaction } from './transaction.js';
 
 export type OrganizationRole = 'owner' | 'admin' | 'member';
 export type ProjectRole = 'project_admin' | 'developer' | 'read_only';
@@ -125,29 +125,41 @@ const INSERT_OWNER_MEMBERSHIP_SQL = `
   VALUES ($1, $2, 'owner')
 `;
 
+/** The personal workspace org + single owner membership write (composable). */
+async function runCreatePersonalOrganization(
+  client: PoolClient,
+  input: CreatePersonalOrganizationInput,
+): Promise<{ organizationId: string }> {
+  const inserted = await client.query<{
+    organization_id: string;
+    created_at: string;
+    updated_at: string;
+  }>(INSERT_ORGANIZATION_SQL, [input.name]);
+  const row = inserted.rows[0];
+  if (row === undefined) {
+    throw new PlatformIdentityError('statement_failed', 'organization insert returned no row');
+  }
+  await client.query(INSERT_OWNER_MEMBERSHIP_SQL, [row.organization_id, input.accountId]);
+  return { organizationId: row.organization_id };
+}
+
 /**
  * Atomically create a personal workspace organization plus its single owner
- * membership (spec §4.6 owner invariant). `conflict` on a unique violation
- * (e.g. an owner membership already occupying the composite key path).
+ * membership (spec §4.6 owner invariant). When given a `Pool` this opens a
+ * transaction; when given an already-leased `PoolClient` it runs directly on
+ * the caller's transaction (so the platform-api layer can compose it with the
+ * account / intent / outbox / idempotency writes atomically). `conflict` on a
+ * unique violation (e.g. an owner membership already occupying the composite
+ * key path).
  */
 export async function createPersonalOrganization(
-  pool: Pool,
+  pool: Pool | PoolClient,
   input: CreatePersonalOrganizationInput,
 ): Promise<CreatePersonalOrganizationResult> {
   try {
-    const { organizationId } = await withTransaction(pool, async (client) => {
-      const inserted = await client.query<{
-        organization_id: string;
-        created_at: string;
-        updated_at: string;
-      }>(INSERT_ORGANIZATION_SQL, [input.name]);
-      const row = inserted.rows[0];
-      if (row === undefined) {
-        throw new PlatformIdentityError('statement_failed', 'organization insert returned no row');
-      }
-      await client.query(INSERT_OWNER_MEMBERSHIP_SQL, [row.organization_id, input.accountId]);
-      return { organizationId: row.organization_id };
-    });
+    const { organizationId } = isPoolClient(pool)
+      ? await runCreatePersonalOrganization(pool, input)
+      : await withTransaction(pool, (client) => runCreatePersonalOrganization(client, input));
     return { status: 'success', organizationId };
   } catch (error) {
     if (isUniqueViolation(error)) return { status: 'conflict' };

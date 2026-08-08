@@ -18,6 +18,10 @@ export interface PlatformApiConfig {
   readonly emailDeliveryMode: string;
   /** Explicitly allowed browser Origin values (CSRF Origin check). */
   readonly appOrigins: readonly string[];
+  /** Rate-limit window in milliseconds for the public auth commands (in-memory stub). */
+  readonly rateLimitWindowMs: number;
+  /** Maximum requests per rate-limit window per (operation, IP, email) key. */
+  readonly rateLimitMax: number;
   readonly gracefulShutdownTimeoutMs: number;
   readonly logEnabled: boolean;
 }
@@ -81,6 +85,8 @@ export function loadPlatformApiConfig(env: NodeJS.ProcessEnv): PlatformApiConfig
     cookieSecure: optionalBoolean(env, 'COOKIE_SECURE', false),
     emailDeliveryMode: env.EMAIL_DELIVERY_MODE ?? 'console',
     appOrigins: optionalOriginList(env, 'APP_ORIGIN'),
+    rateLimitWindowMs: optionalPositiveInt(env, 'RATE_LIMIT_WINDOW_MS', 60_000),
+    rateLimitMax: optionalPositiveInt(env, 'RATE_LIMIT_MAX', 10),
     gracefulShutdownTimeoutMs: optionalPositiveInt(env, 'GRACEFUL_SHUTDOWN_TIMEOUT_MS', 5000),
     logEnabled: optionalBoolean(env, 'LOG_ENABLED', false),
   };

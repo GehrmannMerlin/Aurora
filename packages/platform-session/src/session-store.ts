@@ -70,29 +70,42 @@ export async function createSessionStore(options: CreateSessionStoreOptions): Pr
   return { client, keyPrefix: options.keyPrefix ?? DEFAULT_KEY_PREFIX };
 }
 
+/** Result of creating/rotating a session — the raw cookie value plus the CSRF secret bound to it. */
+export interface SessionToken {
+  /** Raw opaque session id presented via the HttpOnly cookie (never stored in Redis). */
+  readonly cookieValue: string;
+  /** Absolute session expiry (checked on read). */
+  readonly expiresAt: string;
+  /** The session-bound CSRF secret (returned to the client via identityGetSession/login). */
+  readonly csrfSecret: string;
+}
+
 /**
  * Create a new session. Returns the raw opaque cookie value — the only caller
  * that ever sees it is the response cookie setter; it is never stored in Redis
- * (only its SHA-256 digest is) and never logged.
+ * (only its SHA-256 digest is) and never logged. Also returns the session-bound
+ * CSRF secret so the login/session handlers can surface it in the closed
+ * contract response.
  */
 export async function createSession(
   store: SessionStore,
   input: CreateSessionInput,
-): Promise<{ cookieValue: string; expiresAt: string }> {
+): Promise<SessionToken> {
   const cookieValue = randomBytes(32).toString('base64url');
   const expiresAt = new Date(input.now.getTime() + input.absoluteMs);
+  const csrfSecret = randomBytes(32).toString('base64url');
   const payload: SessionPayload = {
     accountId: input.accountId,
     authLevel: input.authLevel,
     expiresAt: expiresAt.toISOString(),
     rotationDueAt: null,
-    csrfSecret: randomBytes(32).toString('base64url'),
+    csrfSecret,
   };
   await store.client.set(sessionKey(store, cookieValue), JSON.stringify(payload), {
     PX: input.idleMs,
   });
   await store.client.sAdd(accountKey(store, input.accountId), digest(cookieValue));
-  return { cookieValue, expiresAt: expiresAt.toISOString() };
+  return { cookieValue, expiresAt: expiresAt.toISOString(), csrfSecret };
 }
 
 /** Look up a session by its raw cookie value; returns null for missing/expired/revoked. */
@@ -118,7 +131,7 @@ export async function rotateSession(
   cookieValue: string,
   now: Date,
   input: RotateSessionInput,
-): Promise<{ cookieValue: string; expiresAt: string } | null> {
+): Promise<SessionToken | null> {
   const existing = await getSession(store, cookieValue, now);
   if (existing === null) return null;
   await store.client.del(sessionKey(store, cookieValue));
