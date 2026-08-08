@@ -2,6 +2,11 @@ import { readFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import { parse } from 'yaml';
 import { PLATFORM_OPERATIONS, OPERATION_MANIFEST } from '@aurora/platform-contract';
+import {
+  buildCompatibilityBaseline,
+  detectIncompatibleChanges,
+  type CompatibilityBaseline,
+} from './compat.js';
 
 // NOTE: from tooling/platform-contract-drift/src/index.ts, THREE levels up is required to reach
 // the repo root. The brief originally specified four ('../../../../'), which empirically resolves
@@ -9,6 +14,9 @@ import { PLATFORM_OPERATIONS, OPERATION_MANIFEST } from '@aurora/platform-contra
 // verified to resolve to the repo docs/api/platform-openapi-v1.yaml. See task-11-report.md.
 const ARTIFACT = fileURLToPath(
   new URL('../../../docs/api/platform-openapi-v1.yaml', import.meta.url),
+);
+const MANIFEST = fileURLToPath(
+  new URL('../../../docs/api/platform-openapi-v1.manifest.json', import.meta.url),
 );
 const HEADER = '# 由契约源码生成、禁止手工修改\n';
 
@@ -58,5 +66,31 @@ export async function assertPlatformDrift(): Promise<void> {
   if (OPERATION_MANIFEST.routeTargetCoverage['platform.resource-policies'] !== 'unavailable') {
     drifts.push('platform.resource-policies must remain unavailable (D2 gate)');
   }
+
+  // Schema-level compatibility gate (spec §30 / ADR-027 决定细节 6). The committed baseline inside
+  // the generated manifest is compared against a fresh in-memory projection of the current
+  // PLATFORM_OPERATIONS schema tree. Any same-major-version incompatible change is reported.
+  const manifestText = await readFile(MANIFEST, 'utf8');
+  const manifest = JSON.parse(manifestText) as { readonly compatibilityBaseline?: unknown };
+  const committedBaseline = manifest.compatibilityBaseline as CompatibilityBaseline | undefined;
+  if (committedBaseline === undefined) {
+    drifts.push(
+      'manifest missing compatibilityBaseline (regenerate with pnpm platform-contract:generate)',
+    );
+  } else {
+    const currentBaseline = buildCompatibilityBaseline(PLATFORM_OPERATIONS);
+    for (const incompatibility of detectIncompatibleChanges(committedBaseline, currentBaseline)) {
+      drifts.push(`compat: ${incompatibility}`);
+    }
+  }
+
   if (drifts.length > 0) throw new PlatformDriftError(drifts);
 }
+
+export {
+  buildCompatibilityBaseline,
+  detectIncompatibleChanges,
+  type CompatibilityBaseline,
+  type OperationCompatibilityBaseline,
+  type SchemaCompatibilityNode,
+} from './compat.js';

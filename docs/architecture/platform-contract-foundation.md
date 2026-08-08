@@ -1,7 +1,7 @@
 ---
 title: Aurora 管理平台契约基础（PLT-01）正式规格
 status: approved
-implementation-status: not-started
+implementation-status: implemented
 approval-status: approved
 owner: platform/backend
 created: 2026-08-08
@@ -36,7 +36,7 @@ review-cycle: platform-contract-api-or-compat-change
 
 本文冻结管理平台契约基础第一增量（PLT-01）的正式规格。它承载 accepted/待批准总体 OpenAPI 与实现约束设计的"统一公开契约、内部按领域模块化、生成单一 Platform OpenAPI"方案 A，并为后续 Session/Navigation/RouteTarget/前端壳层（PLT-02）与全部 A1—D2 业务增量提供可消费、可校验、可生成、可漂移检测的机器契约基础。
 
-**当前状态**：本文为用户于 2026-08-08 批准的正式规格（`status: approved`、`approval-status: approved`）。它是已批准设计（总体 OpenAPI 设计、平台前端架构、平台后端架构、前端 UX/UI、控制台视觉语言）与 accepted ADR-025/026/027/028 的形式化产物，不是新设计。`implementation-status` 保持 `not-started`：正式实施需 PLT-01 实施计划（writing-plans）经自检后按 SDD 执行；未创建 `packages/platform-contract` 正式代码、机器 OpenAPI 或进入实施前不得标记 implemented。
+**当前状态**：本文为用户于 2026-08-08 批准的正式规格（`status: approved`、`approval-status: approved`），`implementation-status` 已更新为 `implemented`。它是已批准设计（总体 OpenAPI 设计、平台前端架构、平台后端架构、前端 UX/UI、控制台视觉语言）与 accepted ADR-025/026/027/028 的形式化产物，不是新设计。第一增量已实施于 feature 分支（`feature/g09-platform-contract-shell`，未部署）：`@aurora/platform-contract` 包（`.`/`/client`/`/server`/`/contract-testkit` 四个公开导出）、机器 Platform OpenAPI v1（`docs/api/platform-openapi-v1.yaml` 与 `platform-openapi-v1.manifest.json`，manifest 含契约能力清单与兼容基线）、确定性生成器与漂移门禁（`tooling/platform-contract-drift`，含 schema 级兼容差异检查，接入根 `openapi:check`）均已真实存在并通过全仓质量门禁与 PLT-01 独立验收（本次验收即叶子关闭门禁）。本状态更新不改变本文冻结的规格语义与 D2/Session/安全边界。
 
 **声明边界**：本文冻结的是**契约基础**（Schema、操作注册表、生成器、Client/Server 适配、漂移门禁、样本、包导出），不是业务 handler，不是数据库模型，不是 Session/Redis 实现，不是 Vue SPA 页面实现。PLT-01 不实现任何业务端点；未授权能力一律以未启用/不可用状态表示，禁止空 Schema、`{}` Schema、`unknown` 响应或伪造端点。
 
