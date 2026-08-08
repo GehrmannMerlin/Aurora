@@ -13,7 +13,7 @@ name: Preview Continuous Delivery
 
 on:
   workflow_run:
-    workflows: ["Main Quality Gates"]
+    workflows: ['Main Quality Gates']
     types: [completed]
   workflow_dispatch:
     inputs:
