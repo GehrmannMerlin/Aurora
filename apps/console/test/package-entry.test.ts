@@ -48,4 +48,19 @@ describe('built console production output', () => {
       expect(content, file).not.toMatch(/msw|contract-testkit|validSessionSamples|__mock\/scope/);
     }
   });
+
+  // Regression gate: the approved stack (ADR-025) requires open-source PrimeVue.
+  // PrimeVue 5.x switched to the commercial PrimeUI license and injects a
+  // fixed-position "Invalid PrimeUI License" banner into every page when no
+  // license key is configured (see @primeui/license-manager). No commercial
+  // PrimeUI capability is in the approved scope, so any occurrence of its
+  // banner string or license-check plumbing in the production bundle is a
+  // defect and must fail the build.
+  it('contains no PrimeUI commercial license machinery in the production bundle', () => {
+    expect(bundleJs.length).toBeGreaterThan(0);
+    for (const file of bundleJs) {
+      const content = readFileSync(file, 'utf8');
+      expect(content, file).not.toMatch(/Invalid PrimeUI License|p-license-host|license-manager/);
+    }
+  });
 });

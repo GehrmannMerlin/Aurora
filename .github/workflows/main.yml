@@ -88,6 +88,12 @@ jobs:
       - name: Package entry (plugin-performance)
         run: pnpm --filter @aurora/plugin-performance test:package
 
+      # Console production-build gate (ADR-025 open-source PrimeVue line). See
+      # the PR workflow note: the deployed Preview carried PrimeVue 5.x PrimeUI
+      # license machinery because no console gate ran in CI.
+      - name: Package entry (console)
+        run: pnpm --filter @aurora/console test:package
+
   postgres-integration:
     name: PostgreSQL Integration (${{ matrix.suite }})
     runs-on: ubuntu-latest
@@ -189,3 +195,10 @@ jobs:
 
       - name: Browser (plugin-performance)
         run: pnpm --filter @aurora/plugin-performance test:browser
+
+      # Console browser gate: real-Chromium reachability, axe a11y, and the
+      # PrimeUI license regression spec (asserts no #p-license-host banner and
+      # no license console warning across shell routes). Added in the G09
+      # post-deployment stabilization hotfix.
+      - name: Browser (console)
+        run: pnpm --filter @aurora/console test:browser
