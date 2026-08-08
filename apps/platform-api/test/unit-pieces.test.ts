@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { loadPlatformApiConfig } from '../src/config.js';
 import { problem } from '../src/error-mapper.js';
 import { maskEmail } from '../src/routes/register.js';
@@ -7,6 +7,10 @@ import {
   serializeSessionCookie,
   SESSION_COOKIE_NAME,
 } from '../src/session-cookie.js';
+
+const { idempotencyLookupMock } = vi.hoisted(() => ({ idempotencyLookupMock: vi.fn() }));
+vi.mock('@aurora/platform-identity', () => ({ findIdempotencyRecord: idempotencyLookupMock }));
+import { lookupIdempotency } from '../src/idempotency.js';
 
 describe('maskEmail', () => {
   it('masks the local part and keeps the domain', () => {
@@ -28,9 +32,7 @@ describe('session cookie serialization', () => {
 
   it('emits HttpOnly, Secure, SameSite=Lax and Path=/', () => {
     const header = serializeSessionCookie(SESSION_COOKIE_NAME, 'opaque', options);
-    expect(header).toBe(
-      `${SESSION_COOKIE_NAME}=opaque; HttpOnly; Secure; SameSite=Lax; Path=/`,
-    );
+    expect(header).toBe(`${SESSION_COOKIE_NAME}=opaque; HttpOnly; Secure; SameSite=Lax; Path=/`);
   });
   it('omits Secure when the config disables it', () => {
     const header = serializeSessionCookie(SESSION_COOKIE_NAME, 'opaque', {
@@ -93,5 +95,60 @@ describe('loadPlatformApiConfig', () => {
         PORT: 'not-a-number',
       }),
     ).toThrow(/PORT/);
+  });
+});
+
+describe('lookupIdempotency', () => {
+  const pool = {} as never;
+
+  afterEach(() => {
+    idempotencyLookupMock.mockReset();
+  });
+
+  it('returns new when no record exists', async () => {
+    idempotencyLookupMock.mockResolvedValue(null);
+    await expect(lookupIdempotency(pool, 'key', 'digest')).resolves.toEqual({ outcome: 'new' });
+  });
+
+  it('returns conflict when a non-terminal record has the same digest (fail closed)', async () => {
+    idempotencyLookupMock.mockResolvedValue({
+      idempotencyKey: 'key',
+      operation: 'op',
+      requestDigest: 'digest',
+      status: 'processing',
+      resultData: null,
+      createdAt: '2026-08-09T00:00:00.000Z',
+      updatedAt: '2026-08-09T00:00:00.000Z',
+    });
+    await expect(lookupIdempotency(pool, 'key', 'digest')).resolves.toEqual({ outcome: 'conflict' });
+  });
+
+  it('returns conflict when the key has a different digest', async () => {
+    idempotencyLookupMock.mockResolvedValue({
+      idempotencyKey: 'key',
+      operation: 'op',
+      requestDigest: 'other',
+      status: 'succeeded',
+      resultData: { ok: true },
+      createdAt: '2026-08-09T00:00:00.000Z',
+      updatedAt: '2026-08-09T00:00:00.000Z',
+    });
+    await expect(lookupIdempotency(pool, 'key', 'digest')).resolves.toEqual({ outcome: 'conflict' });
+  });
+
+  it('returns replay when a succeeded record matches the digest', async () => {
+    idempotencyLookupMock.mockResolvedValue({
+      idempotencyKey: 'key',
+      operation: 'op',
+      requestDigest: 'digest',
+      status: 'succeeded',
+      resultData: { ok: true },
+      createdAt: '2026-08-09T00:00:00.000Z',
+      updatedAt: '2026-08-09T00:00:00.000Z',
+    });
+    await expect(lookupIdempotency(pool, 'key', 'digest')).resolves.toEqual({
+      outcome: 'replay',
+      resultData: { ok: true },
+    });
   });
 });

@@ -21,7 +21,7 @@
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "vitest run --exclude test/integration/** --exclude test/package-entry.test.ts",
     "test:integration": "vitest run test/integration --no-file-parallelism",
-    "test:coverage": "vitest run --coverage --exclude test/integration/**"
+    "test:coverage": "vitest run --coverage --no-file-parallelism --exclude test/package-entry.test.ts"
   },
   "dependencies": {
     "@aurora/platform-contract": "workspace:*",

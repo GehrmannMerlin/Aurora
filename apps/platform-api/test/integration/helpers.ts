@@ -49,7 +49,9 @@ export async function runIdentityMigrations(): Promise<void> {
 
 /** Extract the `aurora_session` cookie value from a `set-cookie` header. */
 export function extractSessionCookie(setCookie: unknown): string {
-  const value = Array.isArray(setCookie) ? setCookie[0] : (setCookie as string | undefined);
+  const value = Array.isArray(setCookie)
+    ? (setCookie as string[])[0]
+    : (setCookie as string | undefined);
   if (typeof value !== 'string') {
     throw new Error('no set-cookie header in response');
   }
@@ -62,7 +64,9 @@ export function extractSessionCookie(setCookie: unknown): string {
 
 /** Extract a named cookie value from a `set-cookie` header (first entry). */
 export function extractCookie(setCookie: unknown, name: string): string | undefined {
-  const value = Array.isArray(setCookie) ? setCookie[0] : (setCookie as string | undefined);
+  const value = Array.isArray(setCookie)
+    ? (setCookie as string[])[0]
+    : (setCookie as string | undefined);
   if (typeof value !== 'string') return undefined;
   const escaped = name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   const match = new RegExp(`(?:^|; )${escaped}=([^;]+)`).exec(value);
@@ -78,10 +82,7 @@ export function extractIntentCookie(setCookie: unknown): string | undefined {
  * Extract the raw intent token from the most recent outbox row for an aggregate
  * type. The mailLinkUrl embeds the transient token as the final path segment.
  */
-export async function outboxIntentToken(
-  pool: Pool,
-  aggregateType: string,
-): Promise<string> {
+export async function outboxIntentToken(pool: Pool, aggregateType: string): Promise<string> {
   const result = await pool.query<{ payload: unknown }>(
     `SELECT payload FROM outbox WHERE aggregate_type = $1 ORDER BY created_at DESC, outbox_id DESC LIMIT 1`,
     [aggregateType],
@@ -91,7 +92,7 @@ export async function outboxIntentToken(
     throw new Error(`no outbox row for aggregate_type=${aggregateType}`);
   }
   const payload = row.payload as { mailLinkUrl?: unknown };
-  const url = typeof payload?.mailLinkUrl === 'string' ? payload.mailLinkUrl : '';
+  const url = typeof payload.mailLinkUrl === 'string' ? payload.mailLinkUrl : '';
   // mailLinkUrl is an SPA confirm URL with the transient token as a query param:
   //   `${consoleOrigin}/verify-email/confirm?token=<token>`
   const tokenMatch = /\btoken=([^&]+)/.exec(url);

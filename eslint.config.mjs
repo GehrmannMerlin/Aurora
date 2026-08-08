@@ -22,8 +22,13 @@ export default tseslint.config(
       'packages/ingestion-inbox/**/*.ts',
       'packages/processing-store/**/*.ts',
       'packages/platform-contract/**/*.ts',
+      'packages/platform-identity/**/*.ts',
+      'packages/platform-session/**/*.ts',
+      'packages/platform-email/**/*.ts',
       'apps/ingestion-api/**/*.ts',
       'apps/ingestion-worker/**/*.ts',
+      'apps/platform-api/**/*.ts',
+      'apps/platform-worker/**/*.ts',
       'apps/console/**/*.ts',
     ],
     languageOptions: {
