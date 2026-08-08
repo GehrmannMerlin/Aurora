@@ -1,0 +1,27 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "lib": ["ES2024", "DOM", "DOM.Iterable"],
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "jsx": "preserve",
+    "types": ["vite/client", "vitest/globals"],
+    "skipLibCheck": true,
+    "paths": {
+      "@aurora/platform-contract": ["../../packages/platform-contract/src/index.ts"],
+      "@aurora/platform-contract/client": ["../../packages/platform-contract/src/client/index.ts"],
+      "@aurora/platform-contract/contract-testkit": [
+        "../../packages/platform-contract/src/contract-testkit/index.ts"
+      ]
+    }
+  },
+  "include": [
+    "src/**/*.ts",
+    "src/**/*.vue",
+    "test/**/*.ts",
+    "vite.config.ts",
+    "vitest.config.ts",
+    "playwright.config.ts"
+  ]
+}

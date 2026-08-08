@@ -24,6 +24,7 @@ export default tseslint.config(
       'packages/platform-contract/**/*.ts',
       'apps/ingestion-api/**/*.ts',
       'apps/ingestion-worker/**/*.ts',
+      'apps/console/**/*.ts',
     ],
     languageOptions: {
       parserOptions: {

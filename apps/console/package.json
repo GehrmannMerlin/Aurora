@@ -1,0 +1,50 @@
+{
+  "name": "@aurora/console",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Aurora management platform Vue 3 SPA shell",
+  "exports": {
+    ".": "./index.html"
+  },
+  "files": [
+    "dist"
+  ],
+  "engines": {
+    "node": ">=24.18.0 <25"
+  },
+  "scripts": {
+    "build": "pnpm --filter @aurora/platform-contract build && vite build",
+    "build:test": "pnpm --filter @aurora/platform-contract build && vite build --mode test --outDir dist-test",
+    "typecheck": "vue-tsc --noEmit",
+    "test": "vitest run --exclude test/package-entry.test.ts",
+    "test:coverage": "vitest run --coverage --exclude test/package-entry.test.ts",
+    "test:package": "pnpm build && vitest run test/package-entry.test.ts",
+    "test:browser": "pnpm build:test && playwright test --config playwright.config.ts"
+  },
+  "dependencies": {
+    "@aurora/platform-contract": "workspace:*",
+    "pinia": "4.0.2",
+    "primevue": "5.0.0",
+    "vue": "3.5.41",
+    "vue-router": "5.2.0",
+    "zod": "4.4.3"
+  },
+  "devDependencies": {
+    "@axe-core/playwright": "4.12.1",
+    "@playwright/test": "1.62.1",
+    "@testing-library/vue": "8.1.0",
+    "@vitejs/plugin-vue": "6.0.8",
+    "@vitest/coverage-v8": "4.1.10",
+    "@vue/test-utils": "2.4.11",
+    "jsdom": "30.0.1",
+    "msw": "2.15.0",
+    "typescript": "6.0.3",
+    "vite": "8.2.1",
+    "vitest": "4.1.10",
+    "vue-tsc": "3.3.9"
+  },
+  "aurora": {
+    "layer": "console"
+  }
+}

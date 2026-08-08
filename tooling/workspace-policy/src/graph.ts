@@ -33,6 +33,7 @@ const allowedLocalDependencyLayers: ReadonlyMap<string, ReadonlySet<string>> = n
   ['service', new Set<string>(['protocol', 'data', 'tooling', 'contract'])],
   ['contract', new Set<string>(['protocol'])],
   ['tooling', new Set<string>(['service', 'data', 'protocol', 'tooling', 'contract'])],
+  ['console', new Set<string>(['contract', 'tooling'])],
 ]);
 
 function layerDependencyViolations(
