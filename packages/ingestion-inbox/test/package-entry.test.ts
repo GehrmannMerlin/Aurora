@@ -6,8 +6,10 @@ import {
   markProcessed,
   persistBatch,
   renewLease,
+  replayDeadLettered,
   scheduleRetry,
   type PersistIngestionBatchResult,
+  type ReplayDeadLetteredEventResult,
 } from '../src/index.js';
 
 describe('ingestion-inbox package entry', () => {
@@ -23,6 +25,18 @@ describe('ingestion-inbox package entry', () => {
     expect(typeof markProcessed).toBe('function');
     expect(typeof scheduleRetry).toBe('function');
     expect(typeof markDeadLettered).toBe('function');
+  });
+
+  it('exports the manual replay function and result type from the package root', () => {
+    expect(typeof replayDeadLettered).toBe('function');
+    const statuses: ReplayDeadLetteredEventResult['status'][] = [
+      'replayed',
+      'already_replayed',
+      'not_found',
+      'invalid_state',
+      'operation_conflict',
+    ];
+    expect(statuses).toHaveLength(5);
   });
 
   it('declares pg as a production dependency and tooling as devDependencies', async () => {

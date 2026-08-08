@@ -31,3 +31,9 @@ export type {
   RenewInboxLeaseInput,
   ScheduleInboxEventRetryInput,
 } from './processing-types.js';
+export { replayDeadLettered } from './replay.js';
+export type {
+  IngestionInboxReplayRepository,
+  ReplayDeadLetteredEventInput,
+  ReplayDeadLetteredEventResult,
+} from './replay-types.js';

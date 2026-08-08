@@ -279,6 +279,66 @@ describe('Workspace dependency policy', () => {
     },
   );
 
+  it.each(['service', 'data', 'protocol'] as const)(
+    'allows tooling to depend on %s',
+    async (layer) => {
+      const tool = validManifest('@aurora/ingestion-benchmark');
+      tool.aurora = { layer: 'tooling' };
+      tool.dependencies = { '@aurora/target': 'workspace:*' };
+      const target = validManifest('@aurora/target');
+      target.aurora = { layer };
+      fixture = await createWorkspaceFixture([
+        { directory: 'tooling/ingestion-benchmark', manifest: tool },
+        { directory: 'packages/target', manifest: target },
+      ]);
+      await expect(checkWorkspace(fixture.rootDir)).resolves.toEqual({
+        ok: true,
+        violations: [],
+      });
+    },
+  );
+
+  it.each(['sdk-browser', 'sdk-plugin', 'sdk-core'] as const)(
+    'rejects tooling dependency on %s',
+    async (layer) => {
+      const tool = validManifest('@aurora/ingestion-benchmark');
+      tool.aurora = { layer: 'tooling' };
+      tool.dependencies = { '@aurora/target': 'workspace:*' };
+      const target = validManifest('@aurora/target');
+      target.aurora = { layer };
+      fixture = await createWorkspaceFixture([
+        { directory: 'tooling/ingestion-benchmark', manifest: tool },
+        { directory: 'packages/target', manifest: target },
+      ]);
+      const result = await checkWorkspace(fixture.rootDir);
+      expect(result.ok).toBe(false);
+      expect(result.violations).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            packageName: '@aurora/ingestion-benchmark',
+            code: 'forbidden-layer-dependency',
+          }),
+        ]),
+      );
+    },
+  );
+
+  it('allows a service package to depend on tooling', async () => {
+    const service = validManifest('@aurora/ingestion-api');
+    service.aurora = { layer: 'service' };
+    service.dependencies = { '@aurora/ingestion-benchmark': 'workspace:*' };
+    const tool = validManifest('@aurora/ingestion-benchmark');
+    tool.aurora = { layer: 'tooling' };
+    fixture = await createWorkspaceFixture([
+      { directory: 'apps/ingestion-api', manifest: service },
+      { directory: 'tooling/ingestion-benchmark', manifest: tool },
+    ]);
+    await expect(checkWorkspace(fixture.rootDir)).resolves.toEqual({
+      ok: true,
+      violations: [],
+    });
+  });
+
   it('rejects plugin private imports and reverse dependencies', async () => {
     const plugin = validManifest('@aurora/plugin-error');
     plugin.aurora = { layer: 'sdk-plugin' };

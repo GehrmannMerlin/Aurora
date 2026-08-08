@@ -16,6 +16,12 @@ export default defineConfig({
           new URL('../../packages/ingestion-inbox/src/index.ts', import.meta.url),
         ),
       },
+      {
+        find: /^@aurora\/processing-store$/,
+        replacement: fileURLToPath(
+          new URL('../../packages/processing-store/src/index.ts', import.meta.url),
+        ),
+      },
     ],
   },
   test: {

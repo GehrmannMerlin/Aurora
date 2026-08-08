@@ -21,6 +21,7 @@ describeDb('ingestion-inbox processing migrations (real PostgreSQL 17)', () => {
   beforeAll(async () => {
     assertIsTestDatabase(testDatabaseUrl());
     pool = createTestPool();
+    await pool.query('DROP TABLE IF EXISTS event_inbox_replay_operations CASCADE');
     await pool.query('DROP TABLE IF EXISTS event_inbox CASCADE');
     await pool.query('DROP TABLE IF EXISTS pgmigrations CASCADE');
   });

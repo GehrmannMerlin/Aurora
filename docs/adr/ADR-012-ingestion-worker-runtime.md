@@ -219,3 +219,21 @@ Aurora 已接受 ADR-004（可靠接收与异步处理）、ADR-008（数据接�
 - 实施 Commit：none（未提交）；
 - Issue/PR：none；
 - 未实现：具体事件处理器、Worker retry/dead-letter policy、退避算法、人工重放、凭证模块、CI、RDS、IaC。
+
+### 2026-08-03：具体错误事件 Processor 核心能力实施证据
+
+- 决策状态保持 `accepted`，实施状态保持 `in-progress`；`@aurora/ingestion-worker` 新增具体错误事件 Processor 核心能力（`createErrorEventProcessor` 工厂），本记录为错误事件处理器衔接证据；
+- 实施内容：`src/error-event-processor.ts`（`CreateErrorEventProcessorInput`、`ErrorEventProcessorDiagnostics`、`PersistErrorEventOccurrenceFn`、`createErrorEventProcessor`、`mapPersistResultToWorkerResult`）；只处理 `EventType.Error`，通过 `@aurora/processing-store` 包根调用 `persistErrorEventOccurrence`；结果映射：`inserted`/`duplicate` → `processed`、`invalid_input` → `dead-letter{invalid_event_type}`、`temporarily_unavailable` → `retry{service_temporarily_unavailable}`（`availableAt` 由 `calculateRetryBackoffSchedule` 计算，复用 ADR-016）；未知异常传播给 Worker runtime（ADR-015 既有规则）；非 Error 输入返回 `dead-letter{invalid_event_type}` 作为处理器局部前置条件，不构成非错误事件最终处理策略；
+- **不接入生产 composition root**：`startIngestionWorker` 未修改、未创建生产 bin/start、未实现总事件路由器；生产 composition root 接线与 Request/Performance 事件路由继续 blocked（处理存储与路由语义尚未形成 approved 规格或 accepted ADR）；
+- `@aurora/ingestion-worker` `package.json` 新增 `@aurora/processing-store` 依赖（可注入，供测试与未来接线）；Workspace Policy `service → data | protocol` 通过；
+- 测试：16 个处理器单元测试（mapping/工厂/前置校验/backoff/未知异常/诊断/输入不变/非 error 局部前置）+ 5 个真实 PostgreSQL 17.10 集成测试（插入/duplicate 幂等/非 error 不持久化/temp→retry/并发单 occurrence）+ 安全负例（不泄露正文/凭据/数据库 URL）；覆盖率 lines 97.98/statements 95.28/branches 91.9/functions 87.3（≥85/85/80/85）；
+- 验证命令：`pnpm --filter @aurora/ingestion-worker typecheck/test/test:integration/test:coverage`、`pnpm check:boundaries`、全仓门禁全部 exit 0；
+- 实施 Commit：none（未提交）；
+- Issue/PR：none；
+- 状态记录：error event processor core implemented；production worker composition not-started / blocked；request event processor not-started；performance event processor not-started；event processor routing not-started / blocked；CI/RDS/IaC not-started。
+
+### 2026-08-07：事件处理器 Router（DAT-10）与生产 composition（DAT-11）实施证据
+
+- **事件处理器 Router 第一增量（DAT-10，2026-08-07）已实施**：`apps/ingestion-worker` `src/event-processor-router.ts`（`createEventProcessorRouter`：实现 `IngestionEventProcessor` 端口、按 `eventType`（唯一来源 `@aurora/event-schema`）分发到注入的 Error/Request/Performance 处理器并原样传播结果、`resource`/未知类型稳定 `dead-letter{invalid_event_type}`、纯分发器不实现 retry/backoff/lease/数据库访问、不吞异常），正式规格 [event-processor-router.md](../architecture/event-processor-router.md)（approved + implemented）；无需新 ADR（已批准架构内的普通功能实现）；通过单元测试（11 个）与全仓质量门禁；本 ADR 的"总事件路由 blocked"状态随 DAT-10 关闭更新为已实现；
+- **生产 Worker composition（DAT-11）已实施（2026-08-07）**：`apps/ingestion-worker` `src/production-composition.ts`（`createProductionIngestionWorker`：接线三个真实 processor + DAT-07 真实 adapter + DAT-10 Router，Router 作为 `IngestionEventProcessor` 返回；不创建/关闭 Pool、close 幂等、无 fake/noop processor），通过单元测试与真实 PostgreSQL 17.10 端到端集成测试（Error→`error_event_occurrences`、Request→`request_metric_buckets`、Performance→`performance_metric_buckets` 且无样本）；正式规格 [production-worker-composition-root.md](../architecture/production-worker-composition-root.md)（approved + implemented）；
+- 状态记录：event processor router implemented；performance event processor core implemented；production worker composition implemented（DAT-11）；performance query projection not-started（DAT-17）；CI/RDS/IaC not-started。

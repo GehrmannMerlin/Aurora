@@ -32,6 +32,7 @@ describeDb('ingestion-inbox migrations (real PostgreSQL 17)', () => {
     pool = createTestPool();
     // Deterministic start: the dedicated test database may hold state from a
     // prior run. Reset public-schema objects so "fresh up" semantics hold.
+    await pool.query('DROP TABLE IF EXISTS event_inbox_replay_operations CASCADE');
     await pool.query('DROP TABLE IF EXISTS event_inbox CASCADE');
     await pool.query('DROP TABLE IF EXISTS pgmigrations CASCADE');
   });

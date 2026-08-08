@@ -61,4 +61,18 @@ describe('ingestion-inbox security negatives', () => {
     expect(JSON.stringify(exports)).not.toContain('src/');
     expect(JSON.stringify(exports)).not.toContain('internal');
   });
+
+  it('keeps replay modules free of EventEnvelope bodies, SQLSTATE, constraint names, and connection strings', async () => {
+    const replaySource = await readFile(new URL('../src/replay.ts', import.meta.url), 'utf8');
+    const replayTypes = await readFile(
+      new URL('../src/replay-types.ts', import.meta.url),
+      'utf8',
+    );
+    const text = `${replaySource}\n${replayTypes}`;
+    expect(text).not.toMatch(/SQLSTATE/);
+    expect(text).not.toMatch(/constraint/i);
+    expect(text).not.toMatch(/postgres:\/\/|postgresql:\/\//);
+    expect(text).not.toMatch(/EventEnvelope\.body/);
+    expect(text).not.toMatch(/clientKey|secret_digest|Authorization/);
+  });
 });

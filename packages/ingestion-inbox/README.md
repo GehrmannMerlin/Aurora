@@ -11,13 +11,15 @@
 - 最小处理状态模型与 Worker 后续租约所需结构字段；
 - 原子批次持久化 `persistBatch`：事务内插入 + `ON CONFLICT DO NOTHING`，区分 `inserted`/`duplicate`；
 - 原子领取 `claimAvailable`（`FOR UPDATE SKIP LOCKED`）、lease fencing（`lease_id`）、`renewLease`、`markProcessed`、`scheduleRetry`、`markDeadLettered`；
+- 死信人工重放 `replayDeadLettered`：单事件 `dead_lettered → pending`、`replay_generation` 新处理代次、`attemptCount` 重置、`operationId` 幂等、事务 + 行锁、项目隔离、最小操作记录表；
 - `node-pg-migrate` Migration 执行入口（显式命令，应用启动不自动迁移）；
-- 真实 PostgreSQL 17 集成测试（写侧 + 处理侧并发/租约/状态转换）。
+- 真实 PostgreSQL 17 集成测试（写侧 + 处理侧并发/租约/状态转换 + 人工重放）。
 
 ## 非职责
 
 - 不实现 Fastify 路由、HTTP 鉴权、Origin/CORS/environment 校验、客户端密钥；
-- 不实现接入服务编排、Worker 运行循环、业务处理器、重试策略、死信重放；
+- 不实现接入服务编排、Worker 运行循环、业务处理器、重试策略；
+- 不提供人工重放 HTTP API、CLI、管理 UI、权限、审计、批量重放（仅核心 Inbox 命令）；
 - 不固定租约时长、领取批量、重试次数、退避数值（`requires-benchmark`）；
 - 不实现队列/Redis/BullMQ/SQS/Kinesis、采样、限流；
 - 不创建 RDS、CI、IaC；
@@ -25,7 +27,7 @@
 
 ## 对外接口
 
-包根导出：`persistBatch`、`claimAvailable`、`renewLease`、`markProcessed`、`scheduleRetry`、`markDeadLettered`、`IngestionInboxError`、`eventEnvelopeToJson`/`jsonToEventEnvelope`、`claimableWhereClause`/`expiredLeaseWhereClause`、`CLAIMABLE_STATES` 及公共类型。
+包根导出：`persistBatch`、`claimAvailable`、`renewLease`、`markProcessed`、`scheduleRetry`、`markDeadLettered`、`replayDeadLettered`、`IngestionInboxError`、`eventEnvelopeToJson`/`jsonToEventEnvelope`、`claimableWhereClause`/`expiredLeaseWhereClause`、`CLAIMABLE_STATES` 及公共类型。
 
 ```ts
 export interface IngestionInboxRepository {
@@ -67,6 +69,8 @@ AURORA_TEST_DATABASE_URL=... pnpm --filter @aurora/ingestion-inbox migrate  # �
 
 - [Inbox 数据模型正式规格](../../docs/architecture/ingestion-inbox-data-model.md)
 - [Inbox 处理侧 Repository 正式规格](../../docs/architecture/ingestion-inbox-processing-repository.md)
+- [死信人工重放核心正式规格](../../docs/architecture/ingestion-dead-letter-manual-replay.md)
+- [ADR-017 死信人工重放核心](../../docs/adr/ADR-017-ingestion-dead-letter-manual-replay.md)
 - [数据接入批次与接收结果协议](../../docs/protocol/ingestion-batch-and-receipt-contract.md)
 - [ADR-008 数据接入可靠缓冲](../../docs/adr/ADR-008-ingestion-durable-buffering.md)
 - [ADR-010 数据库访问与 Migration 工具链](../../docs/adr/ADR-010-postgresql-access-and-migration-tooling.md)
