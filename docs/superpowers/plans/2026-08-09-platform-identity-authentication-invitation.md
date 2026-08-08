@@ -26,7 +26,7 @@
 
 - Node `>=24.18.0 <25`；pnpm 11.17.0；TypeScript strict。
 - 所有新包 `aurora.layer` 正确：`platform-identity`/`platform-session`/`platform-email` = `data`；`platform-api`/`platform-worker` = `service`。console 层禁止依赖 data/service 内部包。
-- 严格单向依赖：`console → contract`；`service → contract + data`；`data → contract（仅类型/常量）`。`pnpm check:boundaries` 强制执行。
+- 严格单向依赖（Workspace Policy `graph.ts` 强制）：`console → {contract, tooling}`；`service → {protocol, data, tooling, contract}`；**`data → {protocol}`（不依赖 contract 层）**；`contract → {protocol}`。data 层 Repository 接收纯值，契约类型只在 service 层 handler 消费。
 - 所有 persisted/external input 从 `@aurora/platform-contract` 的 Zod SchemaDef 运行时校验进入；禁止裸类型断言。
 - 错误用 RFC 9457 `auroraProblem`（code/title/status/detail/requestId/fieldErrors/retryAfter）；禁止栈/SQL/队列名/对象键/token/枚举信息。
 - Integration tests 用真实 PostgreSQL 17 + Redis（本地容器见 memory `aurora-local-test-infra`）；禁止 mock 冒充。

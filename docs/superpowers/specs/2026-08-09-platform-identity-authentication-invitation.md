@@ -75,16 +75,15 @@ apps/platform-api (service 层)
   → packages/platform-session (data 层)
   → packages/platform-email (data 层)
 packages/platform-identity (data 层)
-  → packages/platform-contract (contract 层, 仅类型/常量)
-  → node-pg-migrate/pg (dev 迁移)
+  → node-pg-migrate/pg（迁移/访问工具，非 workspace 包）
 apps/platform-worker (service 层)
   → packages/platform-email (data 层)  — Outbox 消费
   → packages/platform-contract (contract 层)
 ```
 
 - `console` 层禁止依赖 `data`/`service` 内部包；
-- `platform-identity` 等 data 层包只允许依赖 `contract` 层与运行时工具；
-- `apps/platform-api`/`platform-worker` 是 service 层，是唯一 HTTP/后台入口。
+- **`data` 层只允许依赖 `protocol` 层**（Workspace Policy `graph.ts`：`data → {protocol}`）；`platform-identity`/`platform-session`/`platform-email` 不依赖 `platform-contract`（contract 层），由 service 层在 handler 处消费契约类型并把纯值传给 data 层 Repository；
+- `apps/platform-api`/`platform-worker` 是 service 层（`service → {protocol, data, tooling, contract}`），是唯一 HTTP/后台入口，也是唯一消费 `platform-contract` server adapter 的层。
 
 ### 3.2 新包（真实创建，镜像 `@aurora/ingestion-credentials` 结构）
 
