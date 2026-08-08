@@ -38,11 +38,11 @@ export const useSessionStore = defineStore('session', () => {
     status.value = 'loading';
     error.value = null;
     try {
-      const data = (await executeQuery({
+      const data = await executeQuery<SessionResponse>({
         operationId: OPERATION_ID_SESSION,
         scope: { type: 'account' },
         input: {},
-      })) as SessionResponse;
+      });
       account.value = data.account;
       expiresAt.value = data.session.expiresAt;
       csrf.value = data.csrf;

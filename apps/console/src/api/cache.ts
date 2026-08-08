@@ -14,7 +14,7 @@ export class RequestCache {
     return this.store.get(key) as CachedValue<T> | undefined;
   }
 
-  set<T>(key: string, data: T, scope: ScopeKey): void {
+  set(key: string, data: unknown, scope: ScopeKey): void {
     this.store.set(key, { data, readAt: new Date().toISOString(), scope });
   }
 

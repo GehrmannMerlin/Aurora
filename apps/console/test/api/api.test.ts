@@ -14,14 +14,20 @@ const workspace: ScopeKey = { type: 'workspace' };
 const project: ScopeKey = { type: 'project', id: 'prj_test_1' };
 const SESSION_KEY = 'workspace:identityGetSession';
 
-beforeAll(() => mockServer.listen({ onUnhandledRequest: 'error' }));
+beforeAll(() => {
+  mockServer.listen({ onUnhandledRequest: 'error' });
+});
 beforeEach(() => {
   requestCache.clear();
   handlerControls.delayMs = 0;
   handlerControls.sessionRequests = 0;
 });
-afterEach(() => mockServer.resetHandlers());
-afterAll(() => mockServer.close());
+afterEach(() => {
+  mockServer.resetHandlers();
+});
+afterAll(() => {
+  mockServer.close();
+});
 
 describe('request/cache layer', () => {
   it('fetches a session through the generated client', async () => {

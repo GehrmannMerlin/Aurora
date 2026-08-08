@@ -5,16 +5,20 @@ import { router } from '../../src/router';
 import { pinia } from '../../src/stores';
 import { mockServer } from '../msw/server';
 
-beforeAll(() => mockServer.listen({ onUnhandledRequest: 'error' }));
+beforeAll(() => {
+  mockServer.listen({ onUnhandledRequest: 'error' });
+});
 beforeEach(async () => {
-  router.push('/');
+  await router.push('/');
   await router.isReady();
 });
 afterEach(() => {
   cleanup();
   mockServer.resetHandlers();
 });
-afterAll(() => mockServer.close());
+afterAll(() => {
+  mockServer.close();
+});
 
 describe('app shell', () => {
   it('renders the top bar entries when authenticated (real session projection)', async () => {

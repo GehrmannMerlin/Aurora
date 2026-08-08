@@ -4,10 +4,10 @@ import {
   validSessionSamples,
 } from '@aurora/platform-contract/contract-testkit';
 
-export type MockScope = {
+export interface MockScope {
   readonly type: 'workspace' | 'organization' | 'project';
   readonly id?: string;
-};
+}
 
 const MOCK_SCOPE_STORAGE_KEY = '__aurora_mock_scope';
 
@@ -15,7 +15,7 @@ function readStoredScope(): MockScope {
   try {
     const raw = sessionStorage.getItem(MOCK_SCOPE_STORAGE_KEY);
     if (raw !== null) {
-      const parsed = JSON.parse(raw) as MockScope;
+      const parsed = JSON.parse(raw) as { type?: string; id?: string } | string | null;
       if (
         parsed !== null &&
         typeof parsed === 'object' &&

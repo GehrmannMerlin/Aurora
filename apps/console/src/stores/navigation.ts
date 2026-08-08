@@ -69,11 +69,11 @@ export const useNavigationStore = defineStore('navigation', () => {
     if (status.value === 'loading' || status.value === 'ready') return;
     status.value = 'loading';
     try {
-      const data = (await executeQuery({
+      const data = await executeQuery<NavigationContextResponse>({
         operationId: OPERATION_ID_NAVIGATION,
         scope: { type: 'workspace' },
         input: {},
-      })) as NavigationContextResponse;
+      });
       workspaceTargets.value = data.workspace;
       organizations.value = data.organizations;
       currentScope.value = data.currentScope;

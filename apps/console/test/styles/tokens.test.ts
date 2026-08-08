@@ -18,7 +18,7 @@ const sources = collectSources(srcDir);
 describe('visual language foundation', () => {
   it('defines every approved token with its exact value', () => {
     const tokens = readFileSync(join(srcDir, 'styles/tokens.css'), 'utf8');
-    const expected: ReadonlyArray<[string, string]> = [
+    const expected: readonly [string, string][] = [
       ['--color-topbar-bg', '#111827'],
       ['--color-topbar-fg', '#F8FAFC'],
       ['--color-sidebar-bg', '#D47A16'],

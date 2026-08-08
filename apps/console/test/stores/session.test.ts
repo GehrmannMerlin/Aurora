@@ -8,14 +8,20 @@ import { invalidateScope } from '../../src/api/query.js';
 import { mapSessionError, useSessionStore } from '../../src/stores/session.js';
 import { mockServer } from '../msw/server.js';
 
-beforeAll(() => mockServer.listen({ onUnhandledRequest: 'error' }));
+beforeAll(() => {
+  mockServer.listen({ onUnhandledRequest: 'error' });
+});
 beforeEach(() => {
   setActivePinia(createPinia());
   mockServer.resetHandlers();
   handlerControls.sessionRequests = 0;
 });
-afterEach(() => invalidateScope({ type: 'account' }));
-afterAll(() => mockServer.close());
+afterEach(() => {
+  invalidateScope({ type: 'account' });
+});
+afterAll(() => {
+  mockServer.close();
+});
 
 describe('Session Context consumer', () => {
   it('enters authenticated with the contract-projected account (no fabricated data)', async () => {

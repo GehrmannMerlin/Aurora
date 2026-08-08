@@ -56,13 +56,13 @@ const KNOWN_CODES: ReadonlySet<string> = new Set([
 
 // `SchemaDef.zod` erases to the `z.ZodType` base, so `safeParse` data is `unknown`; the
 // fields below are the subset the request layer reads after the schema validated them.
-type NormalizedProblem = {
+interface NormalizedProblem {
   code: string;
   title: string;
   status: number;
   requestId?: string;
   retryAfter?: number;
-};
+}
 
 export function normalizeProblem(raw: unknown, status: number): ApiError {
   const parsed = auroraProblem.zod.safeParse(raw);

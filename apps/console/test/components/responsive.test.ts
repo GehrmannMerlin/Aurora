@@ -14,16 +14,20 @@ const DrawerStub = defineComponent({
     '<div data-testid="drawer" v-if="visible" :aria-label="ariaLabel"><h2>{{ header }}</h2><slot /></div>',
 });
 
-beforeAll(() => mockServer.listen({ onUnhandledRequest: 'error' }));
+beforeAll(() => {
+  mockServer.listen({ onUnhandledRequest: 'error' });
+});
 beforeEach(async () => {
-  router.push('/');
+  await router.push('/');
   await router.isReady();
 });
 afterEach(() => {
   cleanup();
   mockServer.resetHandlers();
 });
-afterAll(() => mockServer.close());
+afterAll(() => {
+  mockServer.close();
+});
 
 describe('responsive shell + keyboard foundation', () => {
   it('renders every shell nav entry as a keyboard-reachable link', async () => {

@@ -6,7 +6,9 @@ import { setMockScope } from '../../src/mocks/handlers.js';
 import { useNavigationStore } from '../../src/stores/navigation.js';
 import { mockServer } from '../msw/server.js';
 
-beforeAll(() => mockServer.listen({ onUnhandledRequest: 'error' }));
+beforeAll(() => {
+  mockServer.listen({ onUnhandledRequest: 'error' });
+});
 beforeEach(() => {
   setActivePinia(createPinia());
   mockServer.resetHandlers();
@@ -16,7 +18,9 @@ afterEach(() => {
   setMockScope({ type: 'project', id: 'prj_test_1' });
   invalidateScope({ type: 'workspace' });
 });
-afterAll(() => mockServer.close());
+afterAll(() => {
+  mockServer.close();
+});
 
 describe('Navigation Context consumer', () => {
   it('loads the authorized navigation projection', async () => {

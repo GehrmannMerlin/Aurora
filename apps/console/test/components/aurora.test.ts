@@ -61,14 +61,14 @@ describe('Aurora UI wrapper layer', () => {
   });
 
   it('AppDrawer renders content only while open', async () => {
-    const { rerender } = render(AppDrawer, {
+    const drawer = render(AppDrawer, {
       props: { open: true, title: '导航' },
       slots: { default: '侧栏内容' },
       global: { stubs: { Drawer: DrawerStub } },
     });
     expect(screen.getByTestId('drawer')).toBeTruthy();
     expect(screen.getByText('侧栏内容')).toBeTruthy();
-    await rerender({ open: false });
+    await drawer.rerender({ open: false });
     expect(screen.queryByTestId('drawer')).toBeNull();
   });
 });
