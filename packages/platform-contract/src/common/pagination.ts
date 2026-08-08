@@ -1,0 +1,23 @@
+import { arr, enum_, num, obj, optional, str } from './schema.js';
+import type { SchemaDef } from './schema.js';
+
+export const cursorPage = obj({ cursor: optional(str(1, 64)), limit: num(1, 100) });
+
+export const pageNumber = obj({ page: num(1), pageSize: num(1, 100) });
+
+export const totalCountStatus = enum_(['available', 'unavailable']);
+
+export const paginationMeta = obj({
+  cursor: optional(str(1, 64)),
+  nextCursor: optional(str(1, 64)),
+  totalCount: optional(num(0)),
+  totalCountStatus,
+});
+
+// eslint-disable-next-line @typescript-eslint/no-unnecessary-type-parameters -- <T> is part of the approved contract surface; SchemaDef erases it, so it is only pinned here
+export function pageResult<T>(item: SchemaDef): SchemaDef {
+  void (0 as unknown as T);
+  return obj({ items: arr(item), pagination: paginationMeta });
+}
+
+export type PaginationModel = 'cursor' | 'page';

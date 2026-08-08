@@ -65,13 +65,17 @@ export function enum_(values: readonly string[], opts: { openEnum?: boolean } = 
 export function obj(props: Readonly<Record<string, SchemaDef>>, requiredAll = true): SchemaDef {
   const entries = Object.entries(props);
   const shape = Object.fromEntries(entries.map(([k, v]) => [k, v.zod]));
-  const zod = requiredAll ? z.object(shape) : z.object(shape).partial();
+  // Contract objects are closed: unknown keys are rejected (zod) and forbidden (JSON Schema).
+  // Open maps are expressed with rec(), which carries its own additionalProperties schema.
+  const base = requiredAll ? z.object(shape) : z.object(shape).partial();
+  const zod = base.strict();
   const required = requiredAll
     ? entries.filter(([, v]) => !v.zod.safeParse(undefined).success).map(([k]) => k)
     : [];
   return def(zod, {
     type: 'object',
     properties: Object.fromEntries(entries.map(([k, v]) => [k, v.openapi])),
+    additionalProperties: false,
     ...(required.length > 0 ? { required } : {}),
   });
 }
