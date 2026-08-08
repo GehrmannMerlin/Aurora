@@ -1,9 +1,9 @@
 ---
 title: ADR-025：管理平台前端技术栈
-status: proposed
-decision-status: proposed
+status: accepted
+decision-status: accepted
 implementation-status: not-started
-approval-status: awaiting-user-approval
+approval-status: approved
 owner: platform/frontend
 date: 2026-08-08
 last-reviewed: 2026-08-08
@@ -26,10 +26,10 @@ superseded-by: none
 
 ## 元数据
 
-- 状态：proposed
-- 决策状态：proposed
+- 状态：accepted
+- 决策状态：accepted
 - 实施状态：not-started
-- 审批状态：awaiting-user-approval
+- 审批状态：approved
 - 日期：2026-08-08
 - Owner：platform/frontend
 - 适用范围：管理平台前端工程基线——Vue 3 SPA＋Vite（严格 TypeScript、SFC＋Composition API）、Vue Router、Pinia 与自建请求/缓存层、PrimeVue＋VeeValidate/Zod＋受控 DataTable＋Apache ECharts、质量工具链（vue-tsc/ESLint/Vitest/Vue Testing Library/MSW/Playwright/axe/Lighthouse CI）
@@ -204,3 +204,18 @@ Aurora 第一版管理平台是登录后的高交互应用，31 个页面设计�
 - **架构评审（交叉）**：`ACCEPT`（无 blocking finding）。触发合法性成立；与 ADR-002/005/006、平台前端架构一致。
 - **非阻断观察**：N1 决定细节 5 未复述 FE-STACK-002"客户端状态（草稿/选择/抽屉/对话框）留在页面/业务 composable 而非 Pinia"——建议实施计划补一句；N2 建议在实施计划为 `apps/console` 钉死新 Workspace 层（console 不得是 `service` 层，因 service 可依赖 data）；N3 ADR-025—028 应登记进 ADR 索引；N4 修正方案 B 标题笔误（TanStack Vue Query → TanStack Query，已修正）。
 - **评审落实**：N1—N3 作为实施计划与索引同步事项记录；N4 已修正。
+
+### 2026-08-08：用户正式批准（accepted）
+
+- 用户已于 2026-08-08 对本 ADR 作出明确正式批准，批准范围（逐条）：
+  1. 方案 A：Vue 3 SPA＋Vite＋Vue Router＋Pinia＋自建请求缓存层＋PrimeVue＋VeeValidate/Zod＋受控 DataTable＋Apache ECharts＋vue-tsc/ESLint/Vitest/Vue Testing Library/MSW/Playwright/axe/Lighthouse CI 精简质量链；
+  2. 纯客户端渲染；不使用 Next.js App Router/RSC/SSR/SSG/BFF；
+  3. 严格 TypeScript、SFC 与 Composition API；精确版本实施锁定时确定，不使用浮动 `latest`；
+  4. 自建请求/缓存层（去重、取消、过期丢弃、作用域清理、八状态无损映射、有界重试仅限幂等读取、Command 用正式幂等/并发上下文）；
+  5. PrimeVue 经 Aurora UI 包装层；单一浅色主题；受控 DataTable 全服务端模式；ECharts 仅 C5/C6 懒加载；
+  6. `apps/console`（`@aurora/console`，private）＋Workspace Policy 新平台前端应用层；
+  7. 本 ADR 从 proposed 转为 accepted。
+- 批准仅适用于本 ADR 已记录并经过评审修订的决策范围；不得扩大 Platform Admin 权限模型、提前实现 G13、发明未批准 Query/Command、改变 G10 范围、修改 event-schema、绕过 Session/CSRF 安全约束或修改已批准 ADR 核心决策；
+- 状态更新：`status: accepted`、`decision-status: accepted`、`approval-status: approved`、`implementation-status: not-started`；
+- 原 proposed 历史记录完整保留（上文"创建（proposed）"、"独立评审"各节均未删除或覆盖）；
+- 实施状态保持 `not-started`，直到 PLT-02 正式实施开始；本 ADR 不得在此时标记为 implemented 或 in-progress。

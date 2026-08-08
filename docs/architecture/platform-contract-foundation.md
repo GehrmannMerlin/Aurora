@@ -1,8 +1,8 @@
 ---
 title: Aurora 管理平台契约基础（PLT-01）正式规格
-status: draft
+status: approved
 implementation-status: not-started
-approval-status: proposed
+approval-status: approved
 owner: platform/backend
 created: 2026-08-08
 last-reviewed: 2026-08-08
@@ -36,7 +36,7 @@ review-cycle: platform-contract-api-or-compat-change
 
 本文冻结管理平台契约基础第一增量（PLT-01）的正式规格。它承载 accepted/待批准总体 OpenAPI 与实现约束设计的"统一公开契约、内部按领域模块化、生成单一 Platform OpenAPI"方案 A，并为后续 Session/Navigation/RouteTarget/前端壳层（PLT-02）与全部 A1—D2 业务增量提供可消费、可校验、可生成、可漂移检测的机器契约基础。
 
-**当前状态**：本文为 `draft`。它是已批准设计（总体 OpenAPI 设计、平台前端架构、平台后端架构、前端 UX/UI、控制台视觉语言）的形式化产物，不是新设计。正式实施受 required ADR（ADR-025 前端技术栈、ADR-026 后端运行时与契约链、ADR-027 契约生成工具链、ADR-028 Session/CSRF 安全）accepted 门禁约束；在对应 ADR 未 accepted 前，不得创建 `packages/platform-contract` 的正式代码、机器 OpenAPI 或进入 `writing-plans`。
+**当前状态**：本文为用户于 2026-08-08 批准的正式规格（`status: approved`、`approval-status: approved`）。它是已批准设计（总体 OpenAPI 设计、平台前端架构、平台后端架构、前端 UX/UI、控制台视觉语言）与 accepted ADR-025/026/027/028 的形式化产物，不是新设计。`implementation-status` 保持 `not-started`：正式实施需 PLT-01 实施计划（writing-plans）经自检后按 SDD 执行；未创建 `packages/platform-contract` 正式代码、机器 OpenAPI 或进入实施前不得标记 implemented。
 
 **声明边界**：本文冻结的是**契约基础**（Schema、操作注册表、生成器、Client/Server 适配、漂移门禁、样本、包导出），不是业务 handler，不是数据库模型，不是 Session/Redis 实现，不是 Vue SPA 页面实现。PLT-01 不实现任何业务端点；未授权能力一律以未启用/不可用状态表示，禁止空 Schema、`{}` Schema、`unknown` 响应或伪造端点。
 

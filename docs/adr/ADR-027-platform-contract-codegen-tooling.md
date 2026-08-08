@@ -1,9 +1,9 @@
 ---
 title: ADR-027：管理平台契约生成工具链
-status: proposed
-decision-status: proposed
+status: accepted
+decision-status: accepted
 implementation-status: not-started
-approval-status: awaiting-user-approval
+approval-status: approved
 owner: platform/backend
 date: 2026-08-08
 last-reviewed: 2026-08-08
@@ -26,10 +26,10 @@ superseded-by: none
 
 ## 元数据
 
-- 状态：proposed
-- 决策状态：proposed
+- 状态：accepted
+- 决策状态：accepted
 - 实施状态：not-started
-- 审批状态：awaiting-user-approval
+- 审批状态：approved
 - 日期：2026-08-08
 - Owner：platform/backend
 - 适用范围：`@aurora/platform-contract` 的契约源码组织、唯一操作注册表、确定性生成器、生成 Client/Server 适配、漂移门禁、兼容差异检查与契约样本/testkit；数据接入 OpenAPI 工具链先例（`tooling/ingestion-openapi-contract`）与 event-schema 单一来源原则的推广
@@ -211,3 +211,20 @@ superseded-by: none
 - **非阻断观察**：平台契约漂移是自引用（注册表→OpenAPI），与 ingestion 双权威先例不同，其真实职责是确定性＋已提交制品一致＋跨制品版本一致；新增错误码应加进稳定类别目录且客户端未知码安全降级；漂移建议 PR＋main 都跑。
 
 **评审落实**：本 ADR 决定细节 5/9、实施约束已落实：① Workspace Policy `contract` 层矩阵变更钉死（`contract → {protocol}`、`service` 追加 `contract`、`tooling` 追加 `contract`、`console` 应用层），漂移门禁不产生层环；② 引用改为前端技术栈设计 §7.2 与总体 OpenAPI §17.2/§18，并说明 §7 队列同一变更追加候选行；③ 实施约束新增可执行门禁（空 operation/`{}`/`unknown` lint、生产代码不 import testkit/MSW/fixture、启用 operation 真实 handler、注册表 `openEnum`/默认排序/空值语义标记、错误码进稳定目录、漂移 PR＋main）。详见各节修订。
+
+### 2026-08-08：用户正式批准（accepted）
+
+- 用户已于 2026-08-08 对本 ADR 作出明确正式批准，批准范围（逐条）：
+  1. 方案 A：Zod 注册表源码＋自研确定性生成器＋漂移门禁＋兼容差异检查；
+  2. 契约源码按 common/领域组织；唯一操作注册表（`operationId` 稳定格式、认证级别、权限、输入/输出 Schema、错误、幂等/并发、缓存、审计、页面追踪）；
+  3. 确定性生成 OpenAPI 3.1、前端 Client、Fastify 输入/输出校验适配、MSW 样本、兼容差异报告、覆盖清单；同输入同输出；
+  4. 生成物带"禁止手工修改"标记；CI 再生成差异即失败；漂移/再生成检查 PR＋main 都运行；
+  5. 兼容差异检查自动阻断同一主版本不兼容变化（含 `openEnum`/默认排序/空值语义标记的机器判定；语义含义变化人工评审门禁并行）；
+  6. 包公开导出（`.`/`/client`/`/server`/`/contract-testkit`）；内部生成器/路径拼装器不导出；
+  7. Workspace Policy 新增 `contract` 层（`contract → {protocol}`、`service` 追加 `contract`、`tooling` 追加 `contract`、`console` 应用层）；
+  8. 可执行门禁（空 operation/`{}`/`unknown` lint、生产代码不 import testkit/MSW/fixture、启用 operation 真实 handler、错误码进稳定目录）；
+  9. 本 ADR 从 proposed 转为 accepted。
+- 批准仅适用于本 ADR 已记录并经过评审修订的决策范围；不得扩大 Platform Admin 权限模型、提前实现 G13、发明未批准 Query/Command、改变 G10 范围、修改 event-schema、绕过 Session/CSRF 安全约束或修改已批准 ADR 核心决策；
+- 状态更新：`status: accepted`、`decision-status: accepted`、`approval-status: approved`、`implementation-status: not-started`；
+- 原 proposed 历史记录完整保留（上文"创建（proposed）"、"独立评审"各节均未删除或覆盖）；
+- 实施状态保持 `not-started`，直到 PLT-01 正式实施开始；本 ADR 不得在此时标记为 implemented 或 in-progress。

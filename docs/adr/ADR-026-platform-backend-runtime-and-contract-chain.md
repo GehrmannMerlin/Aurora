@@ -1,9 +1,9 @@
 ---
 title: ADR-026：管理平台后端运行时与契约链
-status: proposed
-decision-status: proposed
+status: accepted
+decision-status: accepted
 implementation-status: not-started
-approval-status: awaiting-user-approval
+approval-status: approved
 owner: platform/backend
 date: 2026-08-08
 last-reviewed: 2026-08-08
@@ -31,10 +31,10 @@ superseded-by: none
 
 ## 元数据
 
-- 状态：proposed
-- 决策状态：proposed
+- 状态：accepted
+- 决策状态：accepted
 - 实施状态：not-started
-- 审批状态：awaiting-user-approval
+- 审批状态：approved
 - 日期：2026-08-08
 - Owner：platform/backend
 - 适用范围：管理平台后端工程基线——Node.js 严格 TypeScript 模块化单体 `platform-api`＋独立 `platform-worker`、Fastify、PostgreSQL/Kysely＋版本化 SQL Migration、Zod/OpenAPI 契约链（与 PLT-01 `@aurora/platform-contract` 协作）
@@ -209,3 +209,18 @@ Aurora 管理平台后端需为 31 个页面提供公开 Query/Command 能力，
   - **Load-bearing finding B2**：决定细节 3 CORS 措辞为含混双否。修正：已改为直陈"不使用 `@fastify/cors`；CORS 采用显式 adapter，严格遵循 ADR-011 §4.5 先例（明确 OPTIONS 路由、禁 `*`、禁 Cookie credential、单 Origin 回显、`Vary: Origin`）"。
 - **后端评审非阻断观察**：N1 "不得通过全局容器共享任意可变状态"（后端设计 §3）已补入实施约束；N2 "数据库 ADR accepted 前不得创建权威 SQL/Migration" 已改为直陈；N3 Workspace Policy `contract`/`service` 层新增归 ADR-027/实施计划；N4 event-schema 边界由 PLT-01 §28 与 ADR-005 承接。
 - **评审落实**：B1/B2/N1/N2 已落实（见决定细节 3/5 与实施约束）。详见各节修订。
+
+### 2026-08-08：用户正式批准（accepted）
+
+- 用户已于 2026-08-08 对本 ADR 作出明确正式批准，批准范围（逐条）：
+  1. 方案 A：Node.js 严格 TypeScript 模块化单体 `platform-api`＋独立 `platform-worker`，Fastify 为 HTTP 适配层，PostgreSQL/Kysely＋版本化 SQL Migration 为数据访问，Zod/OpenAPI 契约链（与 `@aurora/platform-contract` 协作）；
+  2. 不使用 `@fastify/cors`，CORS 采用显式 adapter 严格遵循 ADR-011 §4.5 先例；领域和应用层不依赖 Fastify 类型；
+  3. Kysely 冻结为平台数据访问层；后续"平台数据库与访问/Migration"ADR 保留物理数据模型/版本/Migration 执行/DDL 权威，不再重开 Kysely vs Prisma vs Drizzle；数据库 ADR accepted 前不得创建权威 SQL/Migration；
+  4. 独立逻辑平台数据库与最小权限角色；不与事件明细/聚合存储共享表或私有模型；
+  5. `platform-api` 只能通过数据接入/处理存储正式公开契约组合数据，不能直连其数据库或队列；
+  6. 九个领域模块分区；`platform-api` 与 `platform-worker` 复用纯领域/应用用例/公开契约但不得通过全局容器共享任意可变状态；
+  7. 本 ADR 从 proposed 转为 accepted。
+- 批准仅适用于本 ADR 已记录并经过评审修订的决策范围；不得扩大 Platform Admin 权限模型、提前实现 G13、发明未批准 Query/Command、改变 G10 范围、修改 event-schema、绕过 Session/CSRF 安全约束或修改已批准 ADR 核心决策；
+- 状态更新：`status: accepted`、`decision-status: accepted`、`approval-status: approved`、`implementation-status: not-started`；
+- 原 proposed 历史记录完整保留（上文"创建（proposed）"、"独立评审"各节均未删除或覆盖）；
+- 实施状态保持 `not-started`，直到后续模块正式实施开始；本 ADR 不得在此时标记为 implemented 或 in-progress。

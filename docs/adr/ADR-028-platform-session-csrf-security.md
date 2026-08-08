@@ -1,9 +1,9 @@
 ---
 title: ADR-028：管理平台 Session、CSRF 与认证传输契约
-status: proposed
-decision-status: proposed
+status: accepted
+decision-status: accepted
 implementation-status: not-started
-approval-status: awaiting-user-approval
+approval-status: approved
 owner: platform/security
 date: 2026-08-08
 last-reviewed: 2026-08-08
@@ -28,10 +28,10 @@ superseded-by: none
 
 ## 元数据
 
-- 状态：proposed
-- 决策状态：proposed
+- 状态：accepted
+- 决策状态：accepted
 - 实施状态：not-started
-- 审批状态：awaiting-user-approval
+- 审批状态：approved
 - 日期：2026-08-08
 - Owner：platform/security
 - 适用范围：管理平台浏览器认证传输契约——不透明 HttpOnly Cookie Session、同步 CSRF 令牌、Origin/Fetch Metadata 校验、`identityGetSession` 公开契约形状、Session 失败语义、认证级别枚举（public/intent/session/recent-verification）；**物理参数**（Argon2id 数值、Cookie SameSite/期限、Redis Session 拓扑/持久化/淘汰、KMS/签名算法、内部能力令牌）由后续安全评审与 G10 门禁承载，不在本 ADR 冻结
@@ -201,3 +201,21 @@ Aurora 管理平台浏览器通过公开 `platform-api` 使用服务端能力。
 - **安全评审**：`ACCEPT`（无 blocking finding）。范围边界正确（只冻结公开传输契约形状，物理参数 defer 到 G10）；冻结决策安全可靠（HttpOnly 主机限定 Cookie、服务端权威不透明 Session、同步 CSRF＋Origin/Fetch Metadata、Redis 权威不可用 503 失败关闭不伪装 401、统一 401、安全 403/404、A5/密码重置全部 Session 终止、短期受限内部能力令牌不转发浏览器 Cookie）；泄露控制与 PLT-01 §15/§16/§25、PLT-02 §5.3 交叉核对干净；PLT-02"unavailable 壳层"区分安全成立；无任何物理值需在 PLT-02 壳层验收前锁定。
 - **非阻断观察**（建议接受时一并纳入，不 blocking）：N1 后端设计 §7.3"日志和 Referrer 不得包含原始值"未在实施约束复述——建议补"Referrer 不得包含原始令牌值"；N2 无配套威胁模型决策包（ADR-009/013 先例有）——建议补短威胁模型附件（XSS→CSRF 令牌窃取、session fixation、Redis 泄露、A5 复活、枚举）；N3 `identityGetSession` 导航目标与 `navigationGetContext` 重叠（源自 approved 设计，非本 ADR 缺陷）；N4 建议明确 `identityGetSession` 为可无 Session 调用的公开 Query、401 表示未认证（防 G10 意外）；N5 ADR-025—028 应登记进 ADR 索引；N6 Session-ID 摘要存储（后端设计 §7.2）属 G10 存储决策；N7 CSRF 令牌不进共享/持久化请求缓存层。
 - **评审落实**：N1 已补入实施约束（Referrer 不得包含原始令牌值）。N2—N7 作为非阻断建议记录，随接受/实施推进。
+
+### 2026-08-08：用户正式批准（accepted）
+
+- 用户已于 2026-08-08 对本 ADR 作出明确正式批准，批准范围（逐条）：
+  1. 方案 A：Redis 权威不透明 Session＋同步 CSRF＋HttpOnly Cookie（BACKEND-003=B）；本 ADR 只冻结公开传输契约形状；
+  2. 浏览器凭据：高熵随机不透明 Session ID；HttpOnly、Secure、无 `Domain` 主机限定 Cookie；不进入 URL/localStorage/日志/前端持久 Store；前端永不读取 Cookie 值；
+  3. 服务端权威 Session：活动/期限/CSRF 绑定/轮换/撤销状态由隔离 Redis 权威保存；Redis 不可用时受保护请求失败关闭（503），不从 PostgreSQL 猜测恢复；
+  4. 账号权威：账号状态/密码摘要/安全版本在 PostgreSQL；Session 只证明认证，不固化组织/项目角色或允许操作；
+  5. `identityGetSession` 契约形状（安全账号摘要、Session 安全信息、CSRF 令牌、认证/生命周期状态、Navigation Context 读取目标；不返回密码摘要/Session ID/Cookie 值/角色缓存/私密令牌/内部能力令牌）；
+  6. CSRF：同步令牌；SPA 从安全 Session Query 获取并在非安全方法自定义 Header 提交；校验 Origin/Fetch Metadata；Cookie 凭据 CORS 只允许显式受控来源禁止通配符；令牌不进 URL/日志；
+  7. 认证级别：`public`/`intent`/`session`/`recent-verification`；意图 GET 只建立短期 HttpOnly 意图，最终写入受 CSRF 保护的 Command；
+  8. Session 失败语义：缺失/过期/撤销 401＋安全登录目标；Redis 不可用 503 失败关闭；权限撤销 403/404；密码重置与 A5 注销按批准规则撤销相应 Session；
+  9. 内部能力令牌边界：短期、受限（audience/resource/action/subject/op-correlation）、不转发浏览器 Cookie；物理参数 defer 到 G10；
+  10. 本 ADR 从 proposed 转为 accepted。
+- 批准仅适用于本 ADR 已记录并经过评审修订的决策范围；不得扩大 Platform Admin 权限模型、提前实现 G13、发明未批准 Query/Command、改变 G10 范围、修改 event-schema、绕过 Session/CSRF 安全约束或修改已批准 ADR 核心决策；
+- 状态更新：`status: accepted`、`decision-status: accepted`、`approval-status: approved`、`implementation-status: not-started`；
+- 原 proposed 历史记录完整保留（上文"创建（proposed）"、"独立评审"各节均未删除或覆盖）；
+- 实施状态保持 `not-started`，直到 Session 后端（G10）正式实施开始；本 ADR 的契约形状将作为 PLT-01/PLT-02 实施依据，但不得在此时标记为 implemented 或 in-progress。
