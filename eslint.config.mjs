@@ -10,6 +10,7 @@ export default tseslint.config(
     files: [
       'tooling/workspace-policy/**/*.ts',
       'tooling/ingestion-openapi-contract/**/*.ts',
+      'tooling/platform-contract-drift/**/*.ts',
       'tooling/ingestion-benchmark/**/*.ts',
       'packages/event-schema/**/*.ts',
       'packages/core/**/*.ts',
@@ -20,8 +21,10 @@ export default tseslint.config(
       'packages/ingestion-credentials/**/*.ts',
       'packages/ingestion-inbox/**/*.ts',
       'packages/processing-store/**/*.ts',
+      'packages/platform-contract/**/*.ts',
       'apps/ingestion-api/**/*.ts',
       'apps/ingestion-worker/**/*.ts',
+      'apps/console/**/*.ts',
     ],
     languageOptions: {
       parserOptions: {

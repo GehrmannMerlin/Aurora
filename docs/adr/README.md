@@ -53,6 +53,10 @@ ADR-001—ADR-006 从已批准架构规范中的 ARCH-001—ARCH-006 提取，AD
 | [ADR-022](ADR-022-aws-account-region-network-and-iac.md)                              | AWS 账号、区域、网络与 IaC 基础设施基础                | proposed | not-started | OPS-04 云基础设施基础                         |
 | [ADR-023](ADR-023-managed-compute-and-managed-data-services.md)                       | 托管计算与托管数据服务（ECS/Fargate、RDS、Redis 边界） | proposed | not-started | OPS-04 托管计算/数据服务                      |
 | [ADR-024](ADR-024-edge-dns-tls-secrets-and-encryption.md)                             | 边缘、DNS、TLS、秘密与加密                             | proposed | not-started | OPS-04 边缘/安全基础                          |
+| [ADR-025](ADR-025-platform-frontend-technology-stack.md)                              | 管理平台前端技术栈                                     | accepted | not-started | PLT-02 前端工程基线                           |
+| [ADR-026](ADR-026-platform-backend-runtime-and-contract-chain.md)                     | 管理平台后端运行时与契约链                             | accepted | not-started | PLT-01/后续平台后端基线                       |
+| [ADR-027](ADR-027-platform-contract-codegen-tooling.md)                               | 管理平台契约生成工具链                                 | accepted | not-started | PLT-01 契约生成/漂移/兼容门禁                 |
+| [ADR-028](ADR-028-platform-session-csrf-security.md)                                  | 管理平台 Session、CSRF 与认证传输契约                 | accepted | not-started | PLT-01/PLT-02 Session/CSRF 传输契约形状       |
 
 > 状态说明：ADR-008 于 2026-08-01 由用户批准（`accepted / in-progress / approved`），推荐方案 A（PostgreSQL 事务性 Inbox），批准以六项校正为准。批次/接收结果协议、数据接入 OpenAPI 与 Inbox 数据模型已实施；接入服务、Worker 与容量证据未实现。
 
@@ -73,6 +77,8 @@ ADR-001—ADR-006 从已批准架构规范中的 ARCH-001—ARCH-006 提取，AD
 > 状态说明：ADR-022、ADR-023、ADR-024 于 2026-08-07 由 G16/OPS-04 前置门禁创建为 `proposed / not-started / awaiting-user-approval`。门禁确认：AWS 主云方向已 approved，但主区域、账号/环境细化、网络模型、IaC 工具、托管计算/数据服务、边缘/DNS/TLS/秘密/加密均无 accepted 决策（deployment.md 标为 `deferred`/`requires-accepted-adr`）。三者只用于讨论和评审，**不得约束任何正式实现**；不创建 IaC、不创建 AWS 资源、不运行 `writing-plans`。独立评审（架构/安全/运维/成本/测试五域）已完成，结论为 PASS-WITH-CONCERNS（无 blocking）；评审只是决策材料，**不等同于 accepted ADR，也不等同用户批准**。用户批准 G16/OPS-04 Cloud Decision Package 后，才可更新为 `accepted` 并进入后续实施门禁。
 
 > **临时部署路径（2026-08-08）**：用户选择先使用阿里云单主机公网预览桥接（`public-preview`，见 [public-preview-single-host-deployment.md](../operations/public-preview-single-host-deployment.md)），以获得当前已实现应用的公网运行环境。这**不表示接受或拒绝 AWS 生产 ADR**；ADR-022/023/024 保持 `proposed / not-started`。G16 状态只记录为 `started / temporary-preview-bridge-active`，OPS-04 不因本桥接标记 completed；当 G16/OPS-05 重新评估正式基础设施时，再更新这些 ADR。
+
+> 状态说明：ADR-025、ADR-026、ADR-027、ADR-028 于 2026-08-08 由 G09（PLT-01/PLT-02）实施门禁创建为 `proposed`，完成独立非作者评审（架构/前端/后端/安全/测试兼容）并写回全部修订后，于 2026-08-08 经用户明确正式批准（`accepted / not-started / approved`）。批准仅覆盖各 ADR 已记录并经过评审修订的决策内容；不得借批准扩大 Platform Admin 权限模型、提前实现 G13、发明未批准 Query/Command、改变 G10 范围、修改 event-schema、绕过 Session/CSRF 安全约束或修改已批准 ADR 核心决策。四份 ADR 作为 PLT-01/PLT-02 正式实施依据；`implementation-status` 保持 `not-started`，代码/机器 OpenAPI/console 实现开始前不得标记 implemented。
 
 ## 评审门禁
 
@@ -375,3 +381,12 @@ ADR 从 proposed 变为 accepted 前必须：
 - 关联：[ADR-015](ADR-015-ingestion-worker-retry-budget-policy.md)、[Worker retry budget 正式规格](../architecture/ingestion-worker-retry-budget-policy.md)、[apps/ingestion-worker](../../apps/ingestion-worker/README.md)
 - 当前解释：ADR-015 实施状态更新为 `implemented`。`apps/ingestion-worker` retry budget 策略已实施（`decideRetryDisposition` 纯函数、`maxProcessingAttempts` typed config、runtime 集成：`attemptCount < max` → `scheduleRetry`、`attemptCount >= max` → `markDeadLettered{retry_budget_exhausted}` 单次、显式 dead-letter/processed 不受预算影响、processor exception 保持 leased、invalid retry 不写回、lease_lost 不二次写回、稳定诊断 `retry_budget_exhausted`/`processor_retry_result_invalid`/`retry_policy_evaluation_failed`），通过真实 PostgreSQL 17.10 集成验证与全仓质量门禁；ADR-008 `accepted / in-progress`、ADR-010 `accepted / implemented`、ADR-011 `accepted / in-progress`、ADR-013/014 `accepted / implemented`。
 - 决策边界：人工重放、具体事件 processor、数据处理存储、凭证管理 HTTP API、管理平台、CI、RDS、IaC、容量 benchmark 未实现。
+
+### ADR-INDEX-G09-PLATFORM-ACCEPTED-20260808：ADR-025—028 用户批准
+
+- 状态：approved
+- 生效日期：2026-08-08
+- Owner：platform/architecture
+- 关联：[ADR-025](ADR-025-platform-frontend-technology-stack.md)、[ADR-026](ADR-026-platform-backend-runtime-and-contract-chain.md)、[ADR-027](ADR-027-platform-contract-codegen-tooling.md)、[ADR-028](ADR-028-platform-session-csrf-security.md)、[PLT-01 正式规格](../architecture/platform-contract-foundation.md)、[PLT-02 正式规格](../architecture/platform-frontend-shell.md)
+- 当前解释：ADR-025/026/027/028 于 2026-08-08 由 G09 实施门禁创建为 `proposed`，完成独立非作者评审（架构/前端/后端/安全/测试兼容）并写回全部修订后，于 2026-08-08 经用户明确正式批准，决策状态由 `proposed` 更新为 `accepted`，审批状态 `approved`，实施状态保持 `not-started`。批准仅覆盖各 ADR 已记录并经过评审修订的决策内容；不得借批准扩大 Platform Admin 权限模型、提前实现 G13、发明未批准 Query/Command、改变 G10 范围、修改 event-schema、绕过 Session/CSRF 安全约束或修改已批准 ADR 核心决策。两份 PLT-01/PLT-02 正式规格同步由用户批准（`status: approved`、`implementation-status: not-started`）。
+- 决策边界：批准不代表 `@aurora/platform-contract`、机器 Platform OpenAPI、生成 Client/Server 适配、漂移门禁、`apps/console`、平台前后端实现、数据库/Redis/BullMQ 或任何代码已经存在；`implementation-status` 全部保持 `not-started`，实现开始后按各自追加记录更新。各既有 ADR（001—024）决策状态与实施状态不变。

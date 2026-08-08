@@ -368,4 +368,85 @@ describe('Workspace dependency policy', () => {
       ]),
     );
   });
+
+  it.each(['protocol'] as const)('allows a contract package to depend on %s', async (layer) => {
+    const contract = validManifest('@aurora/platform-contract');
+    contract.aurora = { layer: 'contract' };
+    contract.dependencies = { '@aurora/target': 'workspace:*' };
+    const target = validManifest('@aurora/target');
+    target.aurora = { layer };
+    fixture = await createWorkspaceFixture([
+      { directory: 'packages/platform-contract', manifest: contract },
+      { directory: 'packages/target', manifest: target },
+    ]);
+    await expect(checkWorkspace(fixture.rootDir)).resolves.toEqual({ ok: true, violations: [] });
+  });
+
+  it('rejects a contract package depending on tooling', async () => {
+    const contract = validManifest('@aurora/platform-contract');
+    contract.aurora = { layer: 'contract' };
+    contract.dependencies = { '@aurora/ingestion-benchmark': 'workspace:*' };
+    const tool = validManifest('@aurora/ingestion-benchmark');
+    tool.aurora = { layer: 'tooling' };
+    fixture = await createWorkspaceFixture([
+      { directory: 'packages/platform-contract', manifest: contract },
+      { directory: 'tooling/ingestion-benchmark', manifest: tool },
+    ]);
+    const result = await checkWorkspace(fixture.rootDir);
+    expect(result.ok).toBe(false);
+    expect(result.violations).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          packageName: '@aurora/platform-contract',
+          code: 'forbidden-layer-dependency',
+        }),
+      ]),
+    );
+  });
+
+  it('allows a console package to depend on contract', async () => {
+    const consoleApp = validManifest('@aurora/console');
+    consoleApp.aurora = { layer: 'console' };
+    consoleApp.dependencies = { '@aurora/platform-contract': 'workspace:*' };
+    const contract = validManifest('@aurora/platform-contract');
+    contract.aurora = { layer: 'contract' };
+    fixture = await createWorkspaceFixture([
+      { directory: 'apps/console', manifest: consoleApp },
+      { directory: 'packages/platform-contract', manifest: contract },
+    ]);
+    const result = await checkWorkspace(fixture.rootDir);
+    expect(result.violations.filter((v) => v.code === 'forbidden-layer-dependency')).toHaveLength(
+      0,
+    );
+  });
+
+  it('allows a console package to depend on tooling', async () => {
+    const consoleApp = validManifest('@aurora/console');
+    consoleApp.aurora = { layer: 'console' };
+    consoleApp.dependencies = { '@aurora/platform-contract-drift': 'workspace:*' };
+    const tool = validManifest('@aurora/platform-contract-drift');
+    tool.aurora = { layer: 'tooling' };
+    fixture = await createWorkspaceFixture([
+      { directory: 'apps/console', manifest: consoleApp },
+      { directory: 'tooling/platform-contract-drift', manifest: tool },
+    ]);
+    const result = await checkWorkspace(fixture.rootDir);
+    expect(result.violations.filter((v) => v.code === 'forbidden-layer-dependency')).toHaveLength(
+      0,
+    );
+  });
+
+  it('rejects a console package depending on data (no DB internals)', async () => {
+    const consoleApp = validManifest('@aurora/console');
+    consoleApp.aurora = { layer: 'console' };
+    consoleApp.dependencies = { '@aurora/processing-store': 'workspace:*' };
+    const store = validManifest('@aurora/processing-store');
+    store.aurora = { layer: 'data' };
+    fixture = await createWorkspaceFixture([
+      { directory: 'apps/console', manifest: consoleApp },
+      { directory: 'packages/processing-store', manifest: store },
+    ]);
+    const result = await checkWorkspace(fixture.rootDir);
+    expect(result.violations.some((v) => v.code === 'forbidden-layer-dependency')).toBe(true);
+  });
 });

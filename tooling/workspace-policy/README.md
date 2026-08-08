@@ -32,6 +32,8 @@ export function formatViolations(result: WorkspaceCheckResult): string;
 - `protocol` 层（如 `@aurora/event-schema`）声明的任何本地运行时依赖都被 `forbidden-layer-dependency` 拒绝。
 - `sdk-core` 层（如 `@aurora/core`）只允许依赖 `protocol` 层；依赖 `sdk-browser`、`sdk-plugin`、`framework` 或 `tooling` 层被拒绝。
 - `sdk-plugin` 层（如 `@aurora/plugin-error`）只允许依赖 `sdk-core`、`sdk-browser` 和 `protocol` 层；依赖其他插件、`framework` 或 `tooling` 层被拒绝。
+- `contract` 层（如 `@aurora/platform-contract`）只允许依赖 `protocol` 层；依赖 `service`、`data`、`sdk-*`、`tooling` 或任何 Aurora 本地业务包被拒绝。
+- `console` 层（如 `@aurora/console`）只允许依赖 `contract` 与 `tooling` 层；依赖 `service`、`data`、`sdk-*`、`protocol` 或任何 Aurora 本地业务包被拒绝（管理平台前端只经公开契约访问服务端能力）。
 - 跨包导入 `@aurora/<name>/src/*`、`@aurora/<name>/internal/*` 或未导出子路径被 `private-path-import` 拒绝；依赖图循环被 `dependency-cycle` 拒绝，检查覆盖全部 Workspace 包。
 - `sdk-core` 源码引用 `window`、`document`、`navigator`、`location`、`fetch`、`XMLHttpRequest`、`localStorage`、`sessionStorage` 及 DOM 类型标识符被 `forbidden-runtime-global` 拒绝。
 - `sdk-core` 源码顶层 `let`/`var` 或顶层可变容器（`new`、数组字面量、对象字面量）被 `mutable-module-state` 拒绝。

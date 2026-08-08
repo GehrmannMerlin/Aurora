@@ -1,0 +1,21 @@
+# Aurora console production image (multi-stage): build the SPA with pnpm, serve via nginx.
+# Node version from repository engines: >=24.18.0 <25. .node-version = 24.18.0.
+FROM node:24.18.0-slim AS build
+
+ENV PNPM_HOME=/pnpm
+ENV PATH="$PNPM_HOME:$PATH"
+ENV COREPACK_HOME=/corepack
+RUN npm i -g corepack && corepack enable && corepack prepare pnpm@11.17.0 --activate
+
+WORKDIR /workspace
+COPY . ./
+# Production build (no MSW): vite build --mode default, sourcemap false.
+RUN pnpm install --frozen-lockfile \
+  && pnpm --filter @aurora/console build
+
+FROM nginx:1.27-alpine AS runtime
+
+COPY deploy/preview/nginx/console-default.conf /etc/nginx/conf.d/default.conf
+COPY --from=build /workspace/apps/console/dist/ /usr/share/nginx/html/
+
+EXPOSE 80

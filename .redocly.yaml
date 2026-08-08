@@ -12,3 +12,6 @@ rules:
   tag-description: off
   tags-alphabetical: off
   no-empty-servers: off
+apis:
+  platform@v1:
+    root: docs/api/platform-openapi-v1.yaml

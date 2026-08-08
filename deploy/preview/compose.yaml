@@ -107,6 +107,19 @@ services:
       - aurora-private
     logging: *default-logging
 
+  console:
+    # Vue SPA (static build served by nginx). No DB/API dependency: reached only
+    # via the shared Lumina nginx edge, never on a published host port.
+    image: aurora-preview-console:${RELEASE_ID:?RELEASE_ID is required}
+    build:
+      context: ../..
+      dockerfile: deploy/preview/Dockerfile.console
+    restart: unless-stopped
+    networks:
+      - aurora-private
+      - lumina-prod-internal
+    logging: *default-logging
+
 volumes:
   postgres-data:
     name: aurora-preview-postgres-data
