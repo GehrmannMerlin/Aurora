@@ -1,0 +1,35 @@
+:root {
+  --color-topbar-bg: #111827;
+  --color-topbar-fg: #F8FAFC;
+  --color-sidebar-bg: #D47A16;
+  --color-sidebar-fg: #17120D;
+  --color-sidebar-active-bg: #FFF4DC;
+  --color-sidebar-active-fg: #172033;
+  --color-sidebar-active-indicator: #1D4ED8;
+  --color-page-bg: #F8FAFC;
+  --color-surface-bg: #FFFFFF;
+  --color-border-default: #CBD5E1;
+  --color-text-primary: #111827;
+  --color-text-secondary: #475569;
+  --color-action-primary: #2563EB;
+  --color-status-danger: #D92D20;
+  --color-status-success: #15803D;
+
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+
+  --control-height: 40px;
+  --nav-height: 44px;
+  --radius-base: 6px;
+
+  --font-family-base:
+    system-ui,
+    'Segoe UI',
+    'PingFang SC',
+    'Microsoft YaHei',
+    sans-serif;
+}
