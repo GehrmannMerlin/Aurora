@@ -52,4 +52,18 @@ describe('schema primitives', () => {
     );
     expect(def.openapi.properties).toBeDefined();
   });
+
+  it('derives obj required keys from zod-requiredness, excluding optional keys', () => {
+    const def = obj({ name: str(1, 10), extra: optional(str(1, 5)) });
+    expect(def.openapi.required).toEqual(['name']);
+    expect(def.zod.safeParse({ name: 'x' }).success).toBe(true);
+    expect(def.zod.safeParse({}).success).toBe(false);
+  });
+
+  it('keeps nullable keys in obj required (nullable is not optional)', () => {
+    const def = obj({ name: str(1, 10), maybe: nullable(str(1, 5)) });
+    expect(def.openapi.required).toEqual(['name', 'maybe']);
+    expect(def.zod.safeParse({ name: 'x', maybe: null }).success).toBe(true);
+    expect(def.zod.safeParse({ name: 'x' }).success).toBe(false);
+  });
 });

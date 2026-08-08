@@ -67,8 +67,8 @@ export function obj(props: Readonly<Record<string, SchemaDef>>, requiredAll = tr
   const shape = Object.fromEntries(entries.map(([k, v]) => [k, v.zod]));
   const zod = requiredAll ? z.object(shape) : z.object(shape).partial();
   const required = requiredAll
-    ? entries.map(([k]) => k)
-    : entries.filter(([, v]) => !v.zod.safeParse(undefined).success).map(([k]) => k);
+    ? entries.filter(([, v]) => !v.zod.safeParse(undefined).success).map(([k]) => k)
+    : [];
   return def(zod, {
     type: 'object',
     properties: Object.fromEntries(entries.map(([k, v]) => [k, v.openapi])),
