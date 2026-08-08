@@ -1,4 +1,5 @@
 <script setup lang="ts">
+withDefaults(defineProps<{ fill?: boolean }>(), { fill: false });
 import { computed } from 'vue';
 import { storeToRefs } from 'pinia';
 import { useRoute } from 'vue-router';
@@ -46,7 +47,7 @@ function hrefFor(routeId: string): string {
 </script>
 
 <template>
-  <nav class="au-sidebar" aria-label="侧栏导航">
+  <nav class="au-sidebar" :class="{ 'au-sidebar--fill': fill }" aria-label="侧栏导航">
     <ul class="au-sidebar-list">
       <li v-for="entry in entries" :key="entry.routeId">
         <AppLink
@@ -81,5 +82,8 @@ function hrefFor(routeId: string): string {
 .au-sidebar :deep(.au-link--active) {
   background-color: var(--color-sidebar-active-bg);
   color: var(--color-sidebar-active-fg);
+}
+.au-sidebar--fill {
+  width: 100%;
 }
 </style>
