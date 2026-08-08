@@ -12,7 +12,7 @@ const sessionOp = findOp('identityGetSession');
 
 describe('server adapter', () => {
   it('lists the same server operations as the registry', () => {
-    expect(listServerOperations).toEqual(PLATFORM_OPERATIONS);
+    expect(listServerOperations()).toEqual(PLATFORM_OPERATIONS);
   });
 
   it('accepts a valid empty input for a GET session op', () => {
