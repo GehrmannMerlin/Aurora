@@ -63,7 +63,8 @@ export function createPlatformHandlers() {
       if (handlerControls.delayMs > 0) await delay(handlerControls.delayMs);
       return HttpResponse.json(validSessionSamples[0] as JsonBodyType, { status: 200 });
     }),
-    http.get('/api/platform/v1/navigation/context', () => {
+    http.get('/api/platform/v1/navigation/context', async () => {
+      if (handlerControls.delayMs > 0) await delay(handlerControls.delayMs);
       const body = structuredClone(navigationBody);
       body.currentScope =
         mockScope.type === 'workspace'

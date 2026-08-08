@@ -15,6 +15,7 @@ beforeEach(() => {
   setActivePinia(createPinia());
   mockServer.resetHandlers();
   handlerControls.sessionRequests = 0;
+  handlerControls.delayMs = 0;
 });
 afterEach(() => {
   invalidateScope({ type: 'account' });
@@ -82,5 +83,26 @@ describe('Session Context consumer', () => {
     await store.restore();
     expect(store.status).toBe('authenticated');
     expect(handlerControls.sessionRequests).toBe(1);
+  });
+
+  it('does not resurrect cleared session state when reset() runs during an in-flight restore', async () => {
+    handlerControls.delayMs = 50;
+    try {
+      const store = useSessionStore();
+      const pending = store.restore();
+      expect(store.status).toBe('loading');
+      store.reset();
+      expect(store.status).toBe('idle');
+      await pending;
+      expect(store.status).toBe('idle');
+      expect(store.account).toBeNull();
+    } finally {
+      handlerControls.delayMs = 0;
+    }
+    // a fresh restore after the stale in-flight restore is discarded still works
+    const store = useSessionStore();
+    await store.restore();
+    expect(store.status).toBe('authenticated');
+    expect(store.account?.accountId).toBe('acct_test_1');
   });
 });

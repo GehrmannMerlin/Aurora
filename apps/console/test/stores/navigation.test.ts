@@ -3,7 +3,7 @@ import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from
 import { http, HttpResponse, type JsonBodyType } from 'msw';
 import { validProblemSamples } from '@aurora/platform-contract/contract-testkit';
 import { invalidateScope } from '../../src/api/query.js';
-import { setMockScope } from '../../src/mocks/handlers.js';
+import { handlerControls, setMockScope } from '../../src/mocks/handlers.js';
 import { useNavigationStore } from '../../src/stores/navigation.js';
 import { mockServer } from '../msw/server.js';
 
@@ -14,6 +14,7 @@ beforeEach(() => {
   setActivePinia(createPinia());
   mockServer.resetHandlers();
   setMockScope({ type: 'project', id: 'prj_test_1' });
+  handlerControls.delayMs = 0;
 });
 afterEach(() => {
   setMockScope({ type: 'project', id: 'prj_test_1' });
@@ -93,5 +94,27 @@ describe('Navigation Context consumer', () => {
     expect(store.status).toBe('idle');
     expect(store.organizations).toHaveLength(0);
     expect(store.currentScope).toBeNull();
+  });
+
+  it('does not resurrect cleared state when clear() runs during an in-flight load', async () => {
+    handlerControls.delayMs = 50;
+    try {
+      const store = useNavigationStore();
+      const pending = store.load();
+      expect(store.status).toBe('loading');
+      store.clear();
+      expect(store.status).toBe('idle');
+      await pending;
+      expect(store.status).toBe('idle');
+      expect(store.organizations).toHaveLength(0);
+      expect(store.currentScope).toBeNull();
+    } finally {
+      handlerControls.delayMs = 0;
+    }
+    // a fresh load after the stale in-flight load is discarded still commits
+    const store = useNavigationStore();
+    await store.load();
+    expect(store.status).toBe('ready');
+    expect(store.organizations[0]?.name).toBe('Acme');
   });
 });

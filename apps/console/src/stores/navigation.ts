@@ -46,6 +46,9 @@ interface NavigationContextResponse {
 }
 
 export const useNavigationStore = defineStore('navigation', () => {
+  // Generation counter: clear() bumps it so an in-flight load can never
+  // resurrect scope state committed before the clear (scope-switch safety).
+  let epoch = 0;
   const status = ref<NavigationStatus>('idle');
   const workspaceTargets = ref<readonly RouteTargetRef[]>([]);
   const organizations = ref<readonly OrganizationNav[]>([]);
@@ -68,12 +71,14 @@ export const useNavigationStore = defineStore('navigation', () => {
   async function load(): Promise<void> {
     if (status.value === 'loading' || status.value === 'ready') return;
     status.value = 'loading';
+    const startedEpoch = epoch;
     try {
       const data = await executeQuery<NavigationContextResponse>({
         operationId: OPERATION_ID_NAVIGATION,
         scope: { type: 'workspace' },
         input: {},
       });
+      if (startedEpoch !== epoch) return; // clear() ran while the request was in flight
       workspaceTargets.value = data.workspace;
       organizations.value = data.organizations;
       currentScope.value = data.currentScope;
@@ -81,6 +86,7 @@ export const useNavigationStore = defineStore('navigation', () => {
       safeExitTarget.value = data.safeExitTarget;
       status.value = 'ready';
     } catch (caught) {
+      if (startedEpoch !== epoch) return; // do not overwrite a post-clear state with 'unavailable'
       status.value = 'unavailable';
       workspaceTargets.value = [];
       organizations.value = [];
@@ -94,6 +100,7 @@ export const useNavigationStore = defineStore('navigation', () => {
   }
 
   function clear(): void {
+    epoch += 1;
     invalidateScope({ type: 'workspace' });
     status.value = 'idle';
     workspaceTargets.value = [];
