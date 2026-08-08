@@ -136,6 +136,12 @@ jobs:
       - name: Install (frozen lockfile)
         run: pnpm install --frozen-lockfile
 
+      # Build workspace deps: integration suites import @aurora/* packages whose
+      # dist/ is gitignored and absent on a fresh checkout (e.g. benchmark ->
+      # ingestion-worker -> processing-store).
+      - name: Build (workspace deps for integration tests)
+        run: pnpm build
+
       # Each suite runs against its own PostgreSQL service container. Some
       # suites (ingestion-api, ingestion-credentials) apply migrations without
       # a schema reset, so a shared DB with prior-suite pgmigrations would trip
