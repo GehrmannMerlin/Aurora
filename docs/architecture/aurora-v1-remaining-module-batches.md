@@ -15,15 +15,15 @@ related:
 supersedes: none
 audit-baseline-date: 2026-08-03
 fixed-v1-leaf-modules: 78
-completed-v1-leaf-modules: 37
-remaining-v1-leaf-modules: 41
+completed-v1-leaf-modules: 38
+remaining-v1-leaf-modules: 40
 ---
 
 # Aurora 第一版剩余模块分批基线
 
 ## 1. 文档定位
 
-本文把 2026-08-03《Aurora 第一版剩余模块盘点与实现状态审计》确认的 46 个剩余叶子实施模块，整理为可供后续规格化和 `writing-plans` 使用的实施分组。DAT-07（请求处理规则/配置 adapter）已于 2026-08-03 关闭，DAT-08（性能指标聚合与有界诊断样本存储）已于 2026-08-05 关闭，DAT-09（性能事件处理器）、DAT-10（事件处理器 Router）与 DAT-11（生产 Worker composition）已于 2026-08-07 关闭，**G01 数据处理生产链闭合全部 5 个叶子已关闭**，当前剩余 41 个。
+本文把 2026-08-03《Aurora 第一版剩余模块盘点与实现状态审计》确认的 46 个剩余叶子实施模块，整理为可供后续规格化和 `writing-plans` 使用的实施分组。DAT-07（请求处理规则/配置 adapter）已于 2026-08-03 关闭，DAT-08（性能指标聚合与有界诊断样本存储）已于 2026-08-05 关闭，DAT-09（性能事件处理器）、DAT-10（事件处理器 Router）与 DAT-11（生产 Worker composition）已于 2026-08-07 关闭，**G01 数据处理生产链闭合全部 5 个叶子已关闭**；**OPS-01（G14 CI quality workflows）已于 2026-08-08 关闭**，当前剩余 40 个（OPS-02 blocked 不占用 completed）。
 
 本文是**计划编制输入**，不是 PRD、ADR、approved 正式规格或可直接执行的实施计划。本文不会：
 
@@ -41,15 +41,17 @@ remaining-v1-leaf-modules: 41
 
 ```text
 fixed_v1_leaf_modules = 78
-completed_v1_leaf_modules = 37
+completed_v1_leaf_modules = 38
 partial_v1_leaf_modules = 0
 not_started_v1_leaf_modules = 11
-blocked_v1_leaf_modules = 30
-remaining_v1_leaf_modules = 41
+blocked_v1_leaf_modules = 29
+remaining_v1_leaf_modules = 40
 
-78 = 37 + 0 + 11 + 30
-41 = 0 + 11 + 30
+78 = 38 + 0 + 11 + 29
+40 = 0 + 11 + 29
 ```
+
+> 更新（2026-08-08）：OPS-01 completed（completed 37→38），OPS-02 blocked（blocked 30→29），remaining 41→40。
 
 分组只改变后续工作的组织方式，不改变计数方式：
 
@@ -136,24 +138,24 @@ remaining_v1_leaf_modules = 41
 
 ### 5.3 G01—G04：数据处理与存储回读路由
 
-| Module | 业务逻辑分类                       | 固定回读集合                                                                                                | 重点章节与实施前置                                                                                                                                                     |
-| ------ | ---------------------------------- | ----------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| DAT-07 | 请求分类、慢请求和安全配置         | `BASE-PRD`、`BASE-ARCH`、`BASE-IMPL`、`PROTO-EVENTS`、`PROC-REQUEST`、`FORM`                                | PRD §5.1.2—5.1.8、§5.1.14—5.1.15、§15；Request Processor §9、§30。**已关闭（2026-08-03）**：正式规格 [request-processing-rules-configuration-adapter.md](./request-processing-rules-configuration-adapter.md) approved + implemented，`@aurora/ingestion-worker` `createRequestProcessingRulesAdapter` 已实施（默认慢阈值 3000ms/失败 429+500—599/额外状态码默认空、确定性分类、不可变冻结快照、非法配置抛稳定错误），通过单元测试与真实 PostgreSQL 17.10 集成测试；真实配置存储/Repository、配置管理 API、生产接线仍 not-started / blocked。 |
+| Module | 业务逻辑分类                       | 固定回读集合                                                                                                | 重点章节与实施前置                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
+| ------ | ---------------------------------- | ----------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| DAT-07 | 请求分类、慢请求和安全配置         | `BASE-PRD`、`BASE-ARCH`、`BASE-IMPL`、`PROTO-EVENTS`、`PROC-REQUEST`、`FORM`                                | PRD §5.1.2—5.1.8、§5.1.14—5.1.15、§15；Request Processor §9、§30。**已关闭（2026-08-03）**：正式规格 [request-processing-rules-configuration-adapter.md](./request-processing-rules-configuration-adapter.md) approved + implemented，`@aurora/ingestion-worker` `createRequestProcessingRulesAdapter` 已实施（默认慢阈值 3000ms/失败 429+500—599/额外状态码默认空、确定性分类、不可变冻结快照、非法配置抛稳定错误），通过单元测试与真实 PostgreSQL 17.10 集成测试；真实配置存储/Repository、配置管理 API、生产接线仍 not-started / blocked。                                                                                                                                                                                |
 | DAT-08 | 性能聚合与有限样本数据模型         | `BASE-PRD`、`BASE-ARCH`、`BASE-IMPL`、`PROTO-EVENTS`、`ING-INBOX`、`PROC-ERROR`、`PROC-REQUEST`、`FORM`     | PRD §5.1.9、§12、§14—16；Performance Contract §4—10、§17—18；ADR-010。**已关闭（2026-08-05）**：正式规格 [performance-metric-aggregate-and-bounded-sample-store.md](./performance-metric-aggregate-and-bounded-sample-store.md) approved + implemented，`@aurora/processing-store` `performance_metric_buckets`/`performance_metric_event_applications`/`performance_event_samples` Migration + `persistPerformanceMetricContribution`/`persistPerformanceEventSample` Repository 已实施（UTC 一分钟桶、`(project_id, bucket_start, metric_name, unit)` 聚合键、count/sum/max、样本白名单投影、`(project_id, event_id)` 幂等、percentile/直方图 deferred，accepted ADR-021），通过单元测试与真实 PostgreSQL 17.10 集成测试。 |
-| DAT-09 | 性能事件处理器                     | `BASE-PRD`、`BASE-ARCH`、`BASE-IMPL`、`PROTO-EVENTS`、`ING-WORKER`、`PROC-ERROR`、`PROC-REQUEST`、`FORM`    | PRD §5.1.9、§7；Performance Contract；Error/Request Processor 的输入输出、retry、lease lost 和隐私边界。**已关闭（2026-08-07）**：正式规格 [performance-event-processor.md](./performance-event-processor.md) approved + implemented，`@aurora/ingestion-worker` `createPerformanceEventProcessor` 已实施（只处理 `EventType.Performance`、聚合主路径 `persistPerformanceMetricContribution`、V1 不调用 `persistPerformanceEventSample`（不保存性能诊断样本，样本选择策略 deferred）、无服务器侧二次采样），通过单元测试与真实 PostgreSQL 17.10 集成测试；Event Processor Router（DAT-10）、production composition（DAT-11）仍 not-started / blocked。 |
-| DAT-10 | EventType 路由和处理结果编排       | `BASE-ARCH`、`BASE-IMPL`、`PROTO-BASE`、`PROTO-EVENTS`、`ING-WORKER`、`PROC-ERROR`、`PROC-REQUEST`、`FORM`  | 架构规范 §2.3.3、§2.5—2.7；Worker Runtime §9—16、§22—23；三个 processor 的公共/私有边界。**已关闭（2026-08-07）**：正式规格 [event-processor-router.md](./event-processor-router.md) approved + implemented，`@aurora/ingestion-worker` `createEventProcessorRouter` 已实施（按 eventType 分发到 Error/Request/Performance 处理器并原样传播结果、resource/未知类型稳定 dead-letter、纯分发器），通过单元测试与全仓质量门禁；production composition（DAT-11）仍 not-started / blocked。                                                     |
-| DAT-11 | 生产 Worker composition root       | `BASE-ARCH`、`BASE-IMPL`、`ING-INBOX`、`ING-WORKER`、`PROC-ERROR`、`PROC-REQUEST`、`FORM`                    | Worker Runtime §7—16；Error Processor §10；Request Processor §21、§30；启动配置；Pool 所有权；graceful shutdown。**已关闭（2026-08-07）**：正式规格 [production-worker-composition-root.md](./production-worker-composition-root.md) approved + implemented，`@aurora/ingestion-worker` `createProductionIngestionWorker` 已实施（接线三个真实 processor + DAT-07 真实 adapter + Router、不创建/关闭 Pool、close 幂等、无 fake/noop processor），通过单元测试与真实 PostgreSQL 17.10 端到端集成测试；G01 三个处理器 + Router + production composition 完整接线。 |
-| DAT-16 | 请求指标 Query 与安全投影          | `BASE-PRD`、`BASE-ARCH`、`BASE-IMPL`、`PROC-REQUEST`、`PLAT-DOMAINS`、`PLAT-UX`、`PLAT-OAPI`、`FORM`        | PRD §5.1.2—5.1.5、§12；UX/UI §7.20、§8.18、§9.18、§10.12；Platform OpenAPI §7—10。Query 独立规格缺失。                                                                 |
-| DAT-17 | 性能 Query 与安全投影              | `BASE-PRD`、`BASE-ARCH`、`BASE-IMPL`、`PROTO-EVENTS`、`PLAT-DOMAINS`、`PLAT-UX`、`PLAT-OAPI`、`FORM`        | PRD §5.1.9、§12；UX/UI §7.21、§8.19、§9.19、§10.13；Platform OpenAPI §7—10。必须先回读未来 DAT-08/09 approved 规格；Query 独立规格缺失。                               |
-| DAT-20 | 接入状态与诊断 Query               | `BASE-PRD`、`BASE-ARCH`、`BASE-IMPL`、`ING-HTTP`、`ING-INBOX`、`ING-WORKER`、`PLAT-UX`、`PLAT-OAPI`、`FORM` | PRD §4.4.6—4.4.11、§7.3；UX/UI §7.16、§7.22、§8.14、§8.20、§10.8、§10.14；不得把“已接收”与“已处理”混同。独立 Query 规格缺失。                                          |
-| DAT-12 | 错误归一化、fingerprint 和分组版本 | `BASE-PRD`、`BASE-ARCH`、`BASE-IMPL`、`PROTO-EVENTS`、`PROC-ERROR`、`FORM`                                  | PRD §9.1—9.2、§9.4—9.7、§14；Error Contract §5—10；自定义 fingerprint、敏感信息和算法版本兼容。独立 ADR/规格缺失。                                                     |
-| DAT-13 | Issue 聚合、代表样本和数据模型     | `BASE-PRD`、`BASE-ARCH`、`BASE-IMPL`、`PROC-ERROR`、`PLAT-DOMAINS`、`PLAT-OAPI`、`FORM`                     | PRD §9.1—9.3、§9.6—9.7、§16、§18；ADR-018；平台后端设计 §4、§8、§10—13。必须先回读 DAT-12 的 accepted 决策；独立数据模型 ADR/规格缺失。                                |
-| DAT-14 | Issue 生命周期 Command、活动和审计 | `BASE-PRD`、`BASE-ARCH`、`BASE-IMPL`、`PLAT-DOMAINS`、`PLAT-UX`、`PLAT-OAPI`、`FORM`                        | PRD §10、§13；UX/UI §7.19、§8.17、§9.17、§10.11、§11.2—11.4；Platform OpenAPI §9、§12。必须等待身份、组织和权限基础。                                                  |
-| DAT-15 | Issue 列表/详情 Query              | `BASE-PRD`、`BASE-ARCH`、`BASE-IMPL`、`PLAT-DOMAINS`、`PLAT-UX`、`PLAT-OAPI`、`FORM`                        | PRD §9—10、§12；UX/UI §7.18—7.19、§8.16—8.17、§9.16—9.17、§10.10—10.11；URL 查询、保存视图、分页和安全样本投影。                                                       |
-| DAT-18 | 发布关联、Source Map、匹配与重解析 | `BASE-PRD`、`BASE-ARCH`、`BASE-IMPL`、`PLAT-DOMAINS`、`PLAT-UX`、`PLAT-OAPI`、`OPS-DELIVERY`、`FORM`        | PRD §8、§9.3、§13—14；UX/UI §7.23—7.24、§8.21—8.22、§9.21—9.22、§10.15—10.16；平台后端设计 §9.3。对象存储和处理 ADR/规格缺失。                                         |
-| DAT-19 | 告警规则求值、实例和证据           | `BASE-PRD`、`BASE-ARCH`、`BASE-IMPL`、`PLAT-DOMAINS`、`PLAT-UX`、`PLAT-OAPI`、`OPS-QUALITY`、`FORM`         | PRD §11；UX/UI §7.25—7.27、§8.23—8.25、§9.23—9.25、§10.17—10.19；平台后端设计 §9—12。规则、窗口、恢复、冷却和数据缺失必须保持 PRD 语义。                               |
-| DAT-21 | 用量、额度、降级和展示可信度       | `BASE-PRD`、`BASE-ARCH`、`BASE-IMPL`、`PLAT-DOMAINS`、`PLAT-UX`、`PLAT-OAPI`、`ING-BENCH`、`FORM`           | PRD §15；UX/UI §7.12、§8.10、§10.4、§10.25；不得实施采样外推或收费逻辑；聚合/投影规格缺失。                                                                            |
-| SEC-02 | 数据保留、跨存储清理和备份淘汰     | `BASE-PRD`、`BASE-ARCH`、`BASE-IMPL`、`SEC-A5`、`OPS-DELIVERY`、`PROC-ERROR`、`PROC-REQUEST`、`FORM`        | PRD §14、§16—18；账号注销规格 §6—11；Backup §2—7。必须覆盖 PostgreSQL、Redis/BullMQ、对象存储、审计和备份，不得只删除在线主表。                                        |
+| DAT-09 | 性能事件处理器                     | `BASE-PRD`、`BASE-ARCH`、`BASE-IMPL`、`PROTO-EVENTS`、`ING-WORKER`、`PROC-ERROR`、`PROC-REQUEST`、`FORM`    | PRD §5.1.9、§7；Performance Contract；Error/Request Processor 的输入输出、retry、lease lost 和隐私边界。**已关闭（2026-08-07）**：正式规格 [performance-event-processor.md](./performance-event-processor.md) approved + implemented，`@aurora/ingestion-worker` `createPerformanceEventProcessor` 已实施（只处理 `EventType.Performance`、聚合主路径 `persistPerformanceMetricContribution`、V1 不调用 `persistPerformanceEventSample`（不保存性能诊断样本，样本选择策略 deferred）、无服务器侧二次采样），通过单元测试与真实 PostgreSQL 17.10 集成测试；Event Processor Router（DAT-10）、production composition（DAT-11）仍 not-started / blocked。                                                                       |
+| DAT-10 | EventType 路由和处理结果编排       | `BASE-ARCH`、`BASE-IMPL`、`PROTO-BASE`、`PROTO-EVENTS`、`ING-WORKER`、`PROC-ERROR`、`PROC-REQUEST`、`FORM`  | 架构规范 §2.3.3、§2.5—2.7；Worker Runtime §9—16、§22—23；三个 processor 的公共/私有边界。**已关闭（2026-08-07）**：正式规格 [event-processor-router.md](./event-processor-router.md) approved + implemented，`@aurora/ingestion-worker` `createEventProcessorRouter` 已实施（按 eventType 分发到 Error/Request/Performance 处理器并原样传播结果、resource/未知类型稳定 dead-letter、纯分发器），通过单元测试与全仓质量门禁；production composition（DAT-11）仍 not-started / blocked。                                                                                                                                                                                                                                       |
+| DAT-11 | 生产 Worker composition root       | `BASE-ARCH`、`BASE-IMPL`、`ING-INBOX`、`ING-WORKER`、`PROC-ERROR`、`PROC-REQUEST`、`FORM`                   | Worker Runtime §7—16；Error Processor §10；Request Processor §21、§30；启动配置；Pool 所有权；graceful shutdown。**已关闭（2026-08-07）**：正式规格 [production-worker-composition-root.md](./production-worker-composition-root.md) approved + implemented，`@aurora/ingestion-worker` `createProductionIngestionWorker` 已实施（接线三个真实 processor + DAT-07 真实 adapter + Router、不创建/关闭 Pool、close 幂等、无 fake/noop processor），通过单元测试与真实 PostgreSQL 17.10 端到端集成测试；G01 三个处理器 + Router + production composition 完整接线。                                                                                                                                                             |
+| DAT-16 | 请求指标 Query 与安全投影          | `BASE-PRD`、`BASE-ARCH`、`BASE-IMPL`、`PROC-REQUEST`、`PLAT-DOMAINS`、`PLAT-UX`、`PLAT-OAPI`、`FORM`        | PRD §5.1.2—5.1.5、§12；UX/UI §7.20、§8.18、§9.18、§10.12；Platform OpenAPI §7—10。Query 独立规格缺失。                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
+| DAT-17 | 性能 Query 与安全投影              | `BASE-PRD`、`BASE-ARCH`、`BASE-IMPL`、`PROTO-EVENTS`、`PLAT-DOMAINS`、`PLAT-UX`、`PLAT-OAPI`、`FORM`        | PRD §5.1.9、§12；UX/UI §7.21、§8.19、§9.19、§10.13；Platform OpenAPI §7—10。必须先回读未来 DAT-08/09 approved 规格；Query 独立规格缺失。                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| DAT-20 | 接入状态与诊断 Query               | `BASE-PRD`、`BASE-ARCH`、`BASE-IMPL`、`ING-HTTP`、`ING-INBOX`、`ING-WORKER`、`PLAT-UX`、`PLAT-OAPI`、`FORM` | PRD §4.4.6—4.4.11、§7.3；UX/UI §7.16、§7.22、§8.14、§8.20、§10.8、§10.14；不得把“已接收”与“已处理”混同。独立 Query 规格缺失。                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
+| DAT-12 | 错误归一化、fingerprint 和分组版本 | `BASE-PRD`、`BASE-ARCH`、`BASE-IMPL`、`PROTO-EVENTS`、`PROC-ERROR`、`FORM`                                  | PRD §9.1—9.2、§9.4—9.7、§14；Error Contract §5—10；自定义 fingerprint、敏感信息和算法版本兼容。独立 ADR/规格缺失。                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
+| DAT-13 | Issue 聚合、代表样本和数据模型     | `BASE-PRD`、`BASE-ARCH`、`BASE-IMPL`、`PROC-ERROR`、`PLAT-DOMAINS`、`PLAT-OAPI`、`FORM`                     | PRD §9.1—9.3、§9.6—9.7、§16、§18；ADR-018；平台后端设计 §4、§8、§10—13。必须先回读 DAT-12 的 accepted 决策；独立数据模型 ADR/规格缺失。                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
+| DAT-14 | Issue 生命周期 Command、活动和审计 | `BASE-PRD`、`BASE-ARCH`、`BASE-IMPL`、`PLAT-DOMAINS`、`PLAT-UX`、`PLAT-OAPI`、`FORM`                        | PRD §10、§13；UX/UI §7.19、§8.17、§9.17、§10.11、§11.2—11.4；Platform OpenAPI §9、§12。必须等待身份、组织和权限基础。                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| DAT-15 | Issue 列表/详情 Query              | `BASE-PRD`、`BASE-ARCH`、`BASE-IMPL`、`PLAT-DOMAINS`、`PLAT-UX`、`PLAT-OAPI`、`FORM`                        | PRD §9—10、§12；UX/UI §7.18—7.19、§8.16—8.17、§9.16—9.17、§10.10—10.11；URL 查询、保存视图、分页和安全样本投影。                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| DAT-18 | 发布关联、Source Map、匹配与重解析 | `BASE-PRD`、`BASE-ARCH`、`BASE-IMPL`、`PLAT-DOMAINS`、`PLAT-UX`、`PLAT-OAPI`、`OPS-DELIVERY`、`FORM`        | PRD §8、§9.3、§13—14；UX/UI §7.23—7.24、§8.21—8.22、§9.21—9.22、§10.15—10.16；平台后端设计 §9.3。对象存储和处理 ADR/规格缺失。                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
+| DAT-19 | 告警规则求值、实例和证据           | `BASE-PRD`、`BASE-ARCH`、`BASE-IMPL`、`PLAT-DOMAINS`、`PLAT-UX`、`PLAT-OAPI`、`OPS-QUALITY`、`FORM`         | PRD §11；UX/UI §7.25—7.27、§8.23—8.25、§9.23—9.25、§10.17—10.19；平台后端设计 §9—12。规则、窗口、恢复、冷却和数据缺失必须保持 PRD 语义。                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| DAT-21 | 用量、额度、降级和展示可信度       | `BASE-PRD`、`BASE-ARCH`、`BASE-IMPL`、`PLAT-DOMAINS`、`PLAT-UX`、`PLAT-OAPI`、`ING-BENCH`、`FORM`           | PRD §15；UX/UI §7.12、§8.10、§10.4、§10.25；不得实施采样外推或收费逻辑；聚合/投影规格缺失。                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| SEC-02 | 数据保留、跨存储清理和备份淘汰     | `BASE-PRD`、`BASE-ARCH`、`BASE-IMPL`、`SEC-A5`、`OPS-DELIVERY`、`PROC-ERROR`、`PROC-REQUEST`、`FORM`        | PRD §14、§16—18；账号注销规格 §6—11；Backup §2—7。必须覆盖 PostgreSQL、Redis/BullMQ、对象存储、审计和备份，不得只删除在线主表。                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
 
 ### 5.4 G05—G07：SDK 与公共协议回读路由
 
@@ -225,14 +227,14 @@ remaining_v1_leaf_modules = 41
 
 ### G01：数据处理生产链闭合
 
-| 属性         | 内容                                                                                                                                                                                                                       |
-| ------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 叶子模块     | （G01 全部叶子 DAT-07/DAT-08/DAT-09/DAT-10/DAT-11 均已关闭） |
-| 数量         | 0（G01 已全部关闭）                                                                                                                                                                                                                |
-| 推荐计划包装 | 不适用（G01 已关闭）                                                                                                                                                                                                    |
-| 内部顺序     | 不适用（G01 已关闭）                                                                                                                                                                                                   |
-| 进入门禁     | 事件路由职责形成 approved 规格；不得在缺少 Performance 路由时只把 Error/Request 接入生产 composition root                                                                                                                  |
-| 退出条件     | Error、Request、Performance 三类现有第一版事件均经同一 router 进入真实 Worker；分类配置来自真实 adapter；每个 processor 的失败语义和 retry/backoff 保持既有契约                                                            |
+| 属性         | 内容                                                                                                                                                            |
+| ------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 叶子模块     | （G01 全部叶子 DAT-07/DAT-08/DAT-09/DAT-10/DAT-11 均已关闭）                                                                                                    |
+| 数量         | 0（G01 已全部关闭）                                                                                                                                             |
+| 推荐计划包装 | 不适用（G01 已关闭）                                                                                                                                            |
+| 内部顺序     | 不适用（G01 已关闭）                                                                                                                                            |
+| 进入门禁     | 事件路由职责形成 approved 规格；不得在缺少 Performance 路由时只把 Error/Request 接入生产 composition root                                                       |
+| 退出条件     | Error、Request、Performance 三类现有第一版事件均经同一 router 进入真实 Worker；分类配置来自真实 adapter；每个 processor 的失败语义和 retry/backoff 保持既有契约 |
 
 DAT-10 和 DAT-11 可以共用计划，因为两者位于同一应用、共享同一启动和集成测试环境，且 production composition 是 router 的直接消费者。它们仍是两个叶子：router 单元测试通过不等于生产入口已经接线。
 
@@ -403,6 +405,11 @@ D1 与 D2 不能共用一份计划：通知是用户事件流，资源策略是�
 
 CI workflow 和兼容矩阵必须保留两个叶子：workflow 运行成功不代表矩阵覆盖完整。
 
+**G14 当前状态（2026-08-08）**：
+
+- **OPS-01 completed**（`completed` 37 → 38）：approved spec [ci-quality-workflows.md](../architecture/ci-quality-workflows.md) + 实施计划 [2026-08-08-ci-quality-workflows.md](../superpowers/plans/2026-08-08-ci-quality-workflows.md)；GitHub Actions 四个 workflow（PR/main/nightly/release）；PostgreSQL 17.10 每 suite 独立 service 隔离；Chromium browser；真实 GitHub Actions 全部 8 job 通过；修复 fresh-checkout type resolution 与跨 suite migration 冲突。
+- **OPS-02 blocked**：SDK reference app、Console、device matrix、performance measurement environment、production UI 均缺失；approved Browser matrix 证据 `requires-benchmark`。按用户规则不伪造 reference app/Console 关闭。**G14 = partially completed**，OPS-01 完成状态保留，不阻塞后续 Preview CD。
+
 ### G15：SDK 发布工程
 
 | 属性         | 内容                                                     |
@@ -525,6 +532,8 @@ flowchart TD
 ## 10. 剩余叶子的分组覆盖矩阵
 
 > 更新（2026-08-07）：DAT-07（2026-08-03）、DAT-08（2026-08-05）、DAT-09（2026-08-07）、DAT-10（2026-08-07）、DAT-11（2026-08-07）均已关闭（completed），**G01 全部 5 个叶子已关闭**；`fixed` 总数不变（78），`completed` 32→37，`blocked` 35→30，`remaining` 46→41。下表反映更新后的剩余覆盖。
+>
+> 更新（2026-08-08）：**OPS-01 已关闭（completed）**，`completed` 37→38、`remaining` 41→40；**OPS-02 blocked**（reference app/Console/device matrix/performance env 缺失，不伪造关闭），G14 = partially completed。下表反映更新后的剩余覆盖。
 
 | Group     | Protocol |   SDK | Ingestion | Processing/Storage | Platform | Security/Lifecycle | CI/Deployment/Infra |  Total |
 | --------- | -------: | ----: | --------: | -----------------: | -------: | -----------------: | ------------------: | -----: |
@@ -541,15 +550,15 @@ flowchart TD
 | G11       |        0 |     0 |         0 |                  0 |        2 |                  0 |                   0 |      2 |
 | G12       |        0 |     0 |         0 |                  0 |        2 |                  0 |                   0 |      2 |
 | G13       |        0 |     0 |         0 |                  0 |        2 |                  0 |                   0 |      2 |
-| G14       |        0 |     0 |         0 |                  0 |        0 |                  0 |                   2 |      2 |
+| G14       |        0 |     0 |         0 |                  0 |        0 |                  0 |                   1 |      1 |
 | G15       |        0 |     0 |         0 |                  0 |        0 |                  0 |                   1 |      1 |
 | G16       |        0 |     0 |         0 |                  0 |        0 |                  0 |                   4 |      4 |
-| **Total** |    **1** | **9** |     **2** |             **10** |   **10** |              **2** |               **7** | **41** |
+| **Total** |    **1** | **9** |     **2** |             **10** |   **10** |              **2** |               **6** | **40** |
 
 覆盖校验：
 
 ```text
-0 + 3 + 4 + 4 + 6 + 2 + 2 + 2 + 2 + 3 + 2 + 2 + 2 + 2 + 1 + 4 = 41
+0 + 3 + 4 + 4 + 6 + 2 + 2 + 2 + 2 + 3 + 2 + 2 + 2 + 1 + 1 + 4 = 40
 
 1 protocol
 + 9 SDK

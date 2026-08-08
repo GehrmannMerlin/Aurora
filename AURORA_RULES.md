@@ -95,6 +95,8 @@ maintenance: operational-snapshot
 
 **Public Preview 单主机桥接（2026-08-08，temporary operational snapshot）**：用户已明确授权建立临时公网预览桥接，见 [public-preview-single-host-deployment.md](docs/operations/public-preview-single-host-deployment.md)。已部署到阿里云单主机（47.238.145.24）：postgres 17.10 + migrate（8 个正式 Migration）+ `apps/ingestion-api` + `apps/ingestion-worker`，Docker Compose，真实 PostgreSQL 验证通过；`pnpm deploy:preview` / `pnpm deploy:preview:rollback` 为受控更新入口（不监听文件保存）。**不是 OPS-04 completed、不是 G16 completed、不是正式 production 架构**；G16 状态 `started / temporary-preview-bridge-active`，完成/剩余叶子计数不变；ADR-022/023/024 保持 `proposed / not-started`。公网固定 HTTPS 域名（`aurora.ah.cn` / `ingest.aurora.ah.cn`）依赖 DNS A 记录就绪后由宿主机 certbot + 共享 Lumina nginx 边缘承载。
 
+**G14 工程质量门禁（2026-08-08）**：**OPS-01 CI quality workflows 已 completed**（GitHub Actions PR/main/nightly/release 四 workflow、PostgreSQL 17.10 每 suite 隔离、Chromium browser、真实 GitHub Actions 全 8 job 通过；规格 [ci-quality-workflows.md](docs/architecture/ci-quality-workflows.md)、计划 [2026-08-08-ci-quality-workflows.md](docs/superpowers/plans/2026-08-08-ci-quality-workflows.md)）；**OPS-02 blocked**（reference app/Console/device matrix/performance env 缺失，不伪造关闭），**G14 = partially completed**；`completed` 37→38、`remaining` 41→40。后续 Preview CD 建议接入 `pnpm deploy:preview`，不关闭正式 OPS-05。
+
 ## 4. 正式化与详细设计入口
 
 [正式文档索引](docs/README.md)维护 approved 设计到长期权威文档的唯一映射；[正式化与实施就绪追踪](docs/architecture/formalization-readiness.md)维护 ADR、机器契约和真实阻塞，不成为第二份 PRD。
