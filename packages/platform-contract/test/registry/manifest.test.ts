@@ -8,10 +8,18 @@ import { BLOCKED_OPERATIONS, PLATFORM_OPERATIONS } from '../../src/registry/oper
 import { ROUTE_TARGET_IDS, type RouteTargetId } from '../../src/common/navigation.js';
 
 describe('operation registry and manifest', () => {
-  it('exposes two stable foundation operations', () => {
+  it('exposes the ten stable operations', () => {
     expect(PLATFORM_OPERATIONS.map((o) => o.operationId)).toEqual([
       'identityGetSession',
       'navigationGetContext',
+      'identityRegister',
+      'identityConfirmEmailVerification',
+      'identityLogin',
+      'identityLogout',
+      'identityRequestPasswordReset',
+      'identityConfirmPasswordReset',
+      'identityChangePassword',
+      'organizationAcceptInvitation',
     ]);
   });
 
@@ -80,7 +88,7 @@ describe('operation registry and manifest', () => {
   it('throws when a route target is marked stable without an emittable operation', () => {
     const bad: Readonly<Record<RouteTargetId, CoverageKind>> = {
       ...OPERATION_MANIFEST.routeTargetCoverage,
-      'account.security': 'stable',
+      'organization.usage': 'stable',
     };
     expect(() => {
       validateManifest({ coverage: bad });
@@ -101,14 +109,14 @@ describe('operation registry and manifest', () => {
 
   it('freezes the exact route target coverage kind for every route target', () => {
     const expected: Readonly<Record<RouteTargetId, CoverageKind>> = {
-      'auth.register': 'blocked',
+      'auth.register': 'stable',
       'auth.verify-email': 'unavailable',
-      'auth.verify-email-confirm': 'blocked',
-      'auth.login': 'blocked',
-      'auth.forgot-password': 'blocked',
-      'auth.reset-password': 'blocked',
-      'invitation.accept': 'blocked',
-      'account.security': 'blocked',
+      'auth.verify-email-confirm': 'stable',
+      'auth.login': 'stable',
+      'auth.forgot-password': 'stable',
+      'auth.reset-password': 'stable',
+      'invitation.accept': 'stable',
+      'account.security': 'stable',
       'workspace.home': 'stable',
       'organization.project-create': 'blocked',
       'organization.members': 'blocked',

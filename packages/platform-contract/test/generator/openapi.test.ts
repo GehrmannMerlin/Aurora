@@ -15,12 +15,15 @@ describe('openapi generator', () => {
     expect(pathCount).toBe(PLATFORM_OPERATIONS.length);
     expect(doc.paths['/session']).toBeDefined();
     expect(doc.paths['/navigation/context']).toBeDefined();
+    expect(doc.paths['/auth/register']).toBeDefined();
+    expect(doc.paths['/auth/login']).toBeDefined();
+    expect(doc.paths['/invitations/accept']).toBeDefined();
   });
 
   it('does not emit blocked operations as empty schemas', () => {
     const doc = generateOpenApiDocument();
     const json = JSON.stringify(doc);
-    expect(json).not.toContain('identityLogin');
+    expect(json).not.toContain('organizationCreateProject');
     expect(json).not.toContain('projectCreateProject');
     expect(json).not.toContain('"type":"object","properties":{}');
   });

@@ -34,6 +34,231 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/navigationGetContextResponse"
+  /auth/register:
+    post:
+      operationId: identityRegister
+      summary: Register a new account and create the personal workspace
+      tags:
+        - identity
+        - auth
+      responses:
+        "200":
+          description: 200 response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/identityRegisterResponse"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                  minLength: 3
+                  maxLength: 320
+                password:
+                  type: string
+                  minLength: 8
+                  maxLength: 256
+                idempotencyKey: &a1
+                  type: string
+                  minLength: 36
+                  maxLength: 36
+              additionalProperties: false
+              required:
+                - email
+                - password
+                - idempotencyKey
+  /auth/email/confirm:
+    post:
+      operationId: identityConfirmEmailVerification
+      summary: Confirm a pending email verification intent (intent cookie + CSRF)
+      tags:
+        - identity
+        - auth
+      responses:
+        "200":
+          description: 200 response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/identityConfirmEmailVerificationResponse"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                idempotencyKey: *a1
+              additionalProperties: false
+              required:
+                - idempotencyKey
+  /auth/login:
+    post:
+      operationId: identityLogin
+      summary: Authenticate an account and establish a session
+      tags:
+        - identity
+        - auth
+      responses:
+        "200":
+          description: 200 response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/identityLoginResponse"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                  minLength: 3
+                  maxLength: 320
+                password:
+                  type: string
+                  minLength: 8
+                  maxLength: 256
+                idempotencyKey: *a1
+              additionalProperties: false
+              required:
+                - email
+                - password
+                - idempotencyKey
+  /auth/logout:
+    post:
+      operationId: identityLogout
+      summary: Revoke the current session and sign out
+      tags:
+        - identity
+        - auth
+      responses:
+        "200":
+          description: 200 response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/identityLogoutResponse"
+  /auth/password/request:
+    post:
+      operationId: identityRequestPasswordReset
+      summary: Request a password reset email (enumeration-safe)
+      tags:
+        - identity
+        - auth
+      responses:
+        "200":
+          description: 200 response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/identityRequestPasswordResetResponse"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                  minLength: 3
+                  maxLength: 320
+                idempotencyKey: *a1
+              additionalProperties: false
+              required:
+                - email
+                - idempotencyKey
+  /auth/password/confirm:
+    post:
+      operationId: identityConfirmPasswordReset
+      summary: Confirm a password reset intent and set a new password
+      tags:
+        - identity
+        - auth
+      responses:
+        "200":
+          description: 200 response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/identityConfirmPasswordResetResponse"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                newPassword:
+                  type: string
+                  minLength: 8
+                  maxLength: 256
+                idempotencyKey: *a1
+              additionalProperties: false
+              required:
+                - newPassword
+                - idempotencyKey
+  /auth/password/change:
+    post:
+      operationId: identityChangePassword
+      summary: Change the current password and revoke all sessions
+      tags:
+        - identity
+        - auth
+      responses:
+        "200":
+          description: 200 response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/identityChangePasswordResponse"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                currentPassword:
+                  type: string
+                  minLength: 8
+                  maxLength: 256
+                newPassword:
+                  type: string
+                  minLength: 8
+                  maxLength: 256
+                idempotencyKey: *a1
+              additionalProperties: false
+              required:
+                - currentPassword
+                - newPassword
+                - idempotencyKey
+  /invitations/accept:
+    post:
+      operationId: organizationAcceptInvitation
+      summary: Accept an organization invitation atomically (intent cookie + CSRF)
+      tags:
+        - organization
+        - invitation
+      responses:
+        "200":
+          description: 200 response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/organizationAcceptInvitationResponse"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                idempotencyKey: *a1
+              additionalProperties: false
+              required:
+                - idempotencyKey
 components:
   schemas:
     identityGetSessionResponse:
@@ -42,7 +267,7 @@ components:
         account:
           type: object
           properties:
-            accountId: &a2
+            accountId: &a3
               type: string
               minLength: 3
               maxLength: 64
@@ -67,10 +292,10 @@ components:
         session:
           type: object
           properties:
-            expiresAt: &a1
+            expiresAt: &a2
               type: string
               format: date-time
-            rotationDueAt: *a1
+            rotationDueAt: *a2
           additionalProperties: false
           required:
             - expiresAt
@@ -78,9 +303,9 @@ components:
           type: string
           minLength: 1
           maxLength: 256
-        navigation: &a3
+        navigation: &a4
           type: array
-          items: &a4
+          items: &a5
             type: object
             properties:
               routeId:
@@ -152,7 +377,7 @@ components:
         account:
           type: object
           properties:
-            accountId: *a2
+            accountId: *a3
             email:
               type: string
               minLength: 3
@@ -164,13 +389,13 @@ components:
             - accountId
             - email
             - verified
-        workspace: *a3
+        workspace: *a4
         organizations:
           type: array
           items:
             type: object
             properties:
-              organizationId:
+              organizationId: &a6
                 type: string
                 minLength: 3
                 maxLength: 64
@@ -198,14 +423,14 @@ components:
                       enum:
                         - active
                         - archived
-                    entry: *a4
+                    entry: *a5
                   additionalProperties: false
                   required:
                     - projectId
                     - name
                     - lifecycle
                     - entry
-              entry: *a4
+              entry: *a5
             additionalProperties: false
             required:
               - organizationId
@@ -237,8 +462,8 @@ components:
           type:
             - object
             - "null"
-        defaultTarget: *a4
-        safeExitTarget: *a4
+        defaultTarget: *a5
+        safeExitTarget: *a5
       additionalProperties: false
       required:
         - account
@@ -247,7 +472,217 @@ components:
         - currentScope
         - defaultTarget
         - safeExitTarget
+    identityRegisterResponse:
+      type: object
+      properties:
+        accountId: *a3
+        workspaceId:
+          type: object
+          properties:
+            organizationId: *a6
+          additionalProperties: false
+          required:
+            - organizationId
+        emailMasked:
+          type: string
+          minLength: 3
+          maxLength: 320
+        verificationStatus:
+          type: object
+          properties:
+            verified:
+              type: boolean
+              enum:
+                - false
+            reason:
+              type: string
+              minLength: 1
+              maxLength: 64
+          additionalProperties: false
+          required:
+            - verified
+            - reason
+        resendAvailableAt: *a2
+        serverTime: *a2
+      additionalProperties: false
+      required:
+        - accountId
+        - workspaceId
+        - emailMasked
+        - verificationStatus
+        - serverTime
+    identityConfirmEmailVerificationResponse:
+      type: object
+      properties:
+        verificationStatus:
+          type: object
+          properties:
+            verified: &a7
+              type: boolean
+              enum:
+                - true
+          additionalProperties: false
+          required:
+            - verified
+        account:
+          type: object
+          properties:
+            accountId: *a3
+            email:
+              type: string
+              minLength: 3
+              maxLength: 320
+            verified: *a7
+          additionalProperties: false
+          required:
+            - accountId
+            - email
+            - verified
+      additionalProperties: false
+      required:
+        - verificationStatus
+        - account
+    identityLoginResponse:
+      type: object
+      properties:
+        account:
+          type: object
+          properties:
+            accountId: *a3
+            email:
+              type: string
+              minLength: 3
+              maxLength: 320
+            verified:
+              type: boolean
+          additionalProperties: false
+          required:
+            - accountId
+            - email
+            - verified
+        authentication:
+          type: string
+          enum:
+            - pending_verification
+            - authenticated
+            - restricted
+        session:
+          type: object
+          properties:
+            expiresAt: *a2
+            rotationDueAt: *a2
+          additionalProperties: false
+          required:
+            - expiresAt
+        csrf:
+          type: string
+          minLength: 1
+          maxLength: 256
+        navigation:
+          type: object
+          properties:
+            navigationTargets: *a5
+          additionalProperties: false
+          required:
+            - navigationTargets
+        continuation:
+          type: object
+          properties:
+            target: *a5
+            kind:
+              type: string
+              enum:
+                - invitation
+                - return_to
+          additionalProperties: false
+          required:
+            - target
+            - kind
+      additionalProperties: false
+      required:
+        - account
+        - authentication
+        - session
+        - csrf
+        - navigation
+    identityLogoutResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          enum:
+            - succeeded
+        serverTime: *a2
+      additionalProperties: false
+      required:
+        - status
+        - serverTime
+    identityRequestPasswordResetResponse:
+      type: object
+      properties:
+        serverTime: *a2
+        nextRequestAllowedAt: *a2
+      additionalProperties: false
+      required:
+        - serverTime
+    identityConfirmPasswordResetResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          enum:
+            - succeeded
+        serverTime: *a2
+      additionalProperties: false
+      required:
+        - status
+        - serverTime
+    identityChangePasswordResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          enum:
+            - succeeded
+        sessionImpact:
+          type: string
+          enum:
+            - revoked_all
+      additionalProperties: false
+      required:
+        - status
+        - sessionImpact
+    organizationAcceptInvitationResponse:
+      type: object
+      properties:
+        organization:
+          type: object
+          properties:
+            organizationId: *a6
+            name:
+              type: string
+              minLength: 1
+              maxLength: 128
+            role:
+              type: string
+              enum:
+                - owner
+                - admin
+                - member
+          additionalProperties: false
+          required:
+            - organizationId
+            - name
+            - role
+        navigationTargets: *a5
+      additionalProperties: false
+      required:
+        - organization
+        - navigationTargets
 tags:
+  - name: auth
   - name: identity
+  - name: invitation
   - name: navigation
+  - name: organization
   - name: session

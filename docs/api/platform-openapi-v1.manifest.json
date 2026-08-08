@@ -1,19 +1,19 @@
 {
   "stable": [
     "identityGetSession",
-    "navigationGetContext"
+    "navigationGetContext",
+    "identityRegister",
+    "identityConfirmEmailVerification",
+    "identityLogin",
+    "identityLogout",
+    "identityRequestPasswordReset",
+    "identityConfirmPasswordReset",
+    "identityChangePassword",
+    "organizationAcceptInvitation"
   ],
   "blocked": {
-    "identityRegister": "A1 auth backend not formalized (G10)",
-    "identityConfirmEmailVerification": "A1 verify backend not formalized (G10)",
-    "identityLogin": "A2 login backend not formalized (G10)",
-    "identityLogout": "A2 session backend not formalized (G10)",
-    "identityRequestPasswordReset": "A3 reset backend not formalized (G10)",
-    "identityConfirmPasswordReset": "A3 reset backend not formalized (G10)",
-    "identityChangePassword": "A5 security backend not formalized (G10)",
     "identityDeleteAccountPreflight": "A5 deletion backend not formalized (G10)",
     "identityDeleteAccount": "A5 deletion orchestration not formalized (G10/SEC-01)",
-    "organizationAcceptInvitation": "A4 invitation backend not formalized (G10)",
     "organizationListProjects": "B1 workspace backend not formalized (G10)",
     "organizationCreateProject": "B2 project-governance model not formalized (G10)",
     "organizationListMembers": "B3 membership model not formalized (G10)",
@@ -45,14 +45,14 @@
     "policySetPlatformDefault": "D2 PlatformAdmin authority not approved (G13)"
   },
   "routeTargetCoverage": {
-    "auth.register": "blocked",
+    "auth.register": "stable",
     "auth.verify-email": "unavailable",
-    "auth.verify-email-confirm": "blocked",
-    "auth.login": "blocked",
-    "auth.forgot-password": "blocked",
-    "auth.reset-password": "blocked",
-    "invitation.accept": "blocked",
-    "account.security": "blocked",
+    "auth.verify-email-confirm": "stable",
+    "auth.login": "stable",
+    "auth.forgot-password": "stable",
+    "auth.reset-password": "stable",
+    "invitation.accept": "stable",
+    "account.security": "stable",
     "workspace.home": "stable",
     "organization.project-create": "blocked",
     "organization.members": "blocked",
@@ -693,6 +693,564 @@
                 }
               },
               "safeExitTarget": {
+                "type": "object",
+                "required": [
+                  "routeId",
+                  "pathParams",
+                  "query"
+                ],
+                "properties": {
+                  "routeId": {
+                    "type": "string",
+                    "enum": [
+                      "auth.register",
+                      "auth.verify-email",
+                      "auth.verify-email-confirm",
+                      "auth.login",
+                      "auth.forgot-password",
+                      "auth.reset-password",
+                      "invitation.accept",
+                      "account.security",
+                      "workspace.home",
+                      "organization.project-create",
+                      "organization.members",
+                      "organization.settings",
+                      "organization.usage",
+                      "organization.tokens",
+                      "organization.audit",
+                      "organization.trash",
+                      "project.onboarding",
+                      "project.overview",
+                      "project.issues",
+                      "project.issue-detail",
+                      "project.requests",
+                      "project.performance",
+                      "project.data-status",
+                      "project.releases",
+                      "project.release-detail",
+                      "project.source-maps",
+                      "project.alerts",
+                      "project.alert-rule-create",
+                      "project.alert-rule-edit",
+                      "project.alert-instance-detail",
+                      "project.access",
+                      "project.client-keys",
+                      "project.settings",
+                      "project.lifecycle",
+                      "account.notifications",
+                      "platform.resource-policies"
+                    ],
+                    "openEnum": false
+                  },
+                  "pathParams": {
+                    "type": "object",
+                    "additionalProperties": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 256
+                    }
+                  },
+                  "query": {
+                    "type": "object",
+                    "additionalProperties": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 512
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "identityRegister": {
+        "responses": {
+          "200": {
+            "type": "object",
+            "required": [
+              "accountId",
+              "workspaceId",
+              "emailMasked",
+              "verificationStatus",
+              "serverTime"
+            ],
+            "properties": {
+              "accountId": {
+                "type": "string",
+                "minLength": 3,
+                "maxLength": 64
+              },
+              "workspaceId": {
+                "type": "object",
+                "required": [
+                  "organizationId"
+                ],
+                "properties": {
+                  "organizationId": {
+                    "type": "string",
+                    "minLength": 3,
+                    "maxLength": 64
+                  }
+                }
+              },
+              "emailMasked": {
+                "type": "string",
+                "minLength": 3,
+                "maxLength": 320
+              },
+              "verificationStatus": {
+                "type": "object",
+                "required": [
+                  "verified",
+                  "reason"
+                ],
+                "properties": {
+                  "verified": {
+                    "type": "boolean",
+                    "enum": [
+                      false
+                    ],
+                    "openEnum": false
+                  },
+                  "reason": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 64
+                  }
+                }
+              },
+              "resendAvailableAt": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "serverTime": {
+                "type": "string",
+                "format": "date-time"
+              }
+            }
+          }
+        }
+      },
+      "identityConfirmEmailVerification": {
+        "responses": {
+          "200": {
+            "type": "object",
+            "required": [
+              "verificationStatus",
+              "account"
+            ],
+            "properties": {
+              "verificationStatus": {
+                "type": "object",
+                "required": [
+                  "verified"
+                ],
+                "properties": {
+                  "verified": {
+                    "type": "boolean",
+                    "enum": [
+                      true
+                    ],
+                    "openEnum": false
+                  }
+                }
+              },
+              "account": {
+                "type": "object",
+                "required": [
+                  "accountId",
+                  "email",
+                  "verified"
+                ],
+                "properties": {
+                  "accountId": {
+                    "type": "string",
+                    "minLength": 3,
+                    "maxLength": 64
+                  },
+                  "email": {
+                    "type": "string",
+                    "minLength": 3,
+                    "maxLength": 320
+                  },
+                  "verified": {
+                    "type": "boolean",
+                    "enum": [
+                      true
+                    ],
+                    "openEnum": false
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "identityLogin": {
+        "responses": {
+          "200": {
+            "type": "object",
+            "required": [
+              "account",
+              "authentication",
+              "session",
+              "csrf",
+              "navigation"
+            ],
+            "properties": {
+              "account": {
+                "type": "object",
+                "required": [
+                  "accountId",
+                  "email",
+                  "verified"
+                ],
+                "properties": {
+                  "accountId": {
+                    "type": "string",
+                    "minLength": 3,
+                    "maxLength": 64
+                  },
+                  "email": {
+                    "type": "string",
+                    "minLength": 3,
+                    "maxLength": 320
+                  },
+                  "verified": {
+                    "type": "boolean"
+                  }
+                }
+              },
+              "authentication": {
+                "type": "string",
+                "enum": [
+                  "pending_verification",
+                  "authenticated",
+                  "restricted"
+                ],
+                "openEnum": false
+              },
+              "session": {
+                "type": "object",
+                "required": [
+                  "expiresAt"
+                ],
+                "properties": {
+                  "expiresAt": {
+                    "type": "string",
+                    "format": "date-time"
+                  },
+                  "rotationDueAt": {
+                    "type": "string",
+                    "format": "date-time"
+                  }
+                }
+              },
+              "csrf": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 256
+              },
+              "navigation": {
+                "type": "object",
+                "required": [
+                  "navigationTargets"
+                ],
+                "properties": {
+                  "navigationTargets": {
+                    "type": "object",
+                    "required": [
+                      "routeId",
+                      "pathParams",
+                      "query"
+                    ],
+                    "properties": {
+                      "routeId": {
+                        "type": "string",
+                        "enum": [
+                          "auth.register",
+                          "auth.verify-email",
+                          "auth.verify-email-confirm",
+                          "auth.login",
+                          "auth.forgot-password",
+                          "auth.reset-password",
+                          "invitation.accept",
+                          "account.security",
+                          "workspace.home",
+                          "organization.project-create",
+                          "organization.members",
+                          "organization.settings",
+                          "organization.usage",
+                          "organization.tokens",
+                          "organization.audit",
+                          "organization.trash",
+                          "project.onboarding",
+                          "project.overview",
+                          "project.issues",
+                          "project.issue-detail",
+                          "project.requests",
+                          "project.performance",
+                          "project.data-status",
+                          "project.releases",
+                          "project.release-detail",
+                          "project.source-maps",
+                          "project.alerts",
+                          "project.alert-rule-create",
+                          "project.alert-rule-edit",
+                          "project.alert-instance-detail",
+                          "project.access",
+                          "project.client-keys",
+                          "project.settings",
+                          "project.lifecycle",
+                          "account.notifications",
+                          "platform.resource-policies"
+                        ],
+                        "openEnum": false
+                      },
+                      "pathParams": {
+                        "type": "object",
+                        "additionalProperties": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 256
+                        }
+                      },
+                      "query": {
+                        "type": "object",
+                        "additionalProperties": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 512
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              "continuation": {
+                "type": "object",
+                "required": [
+                  "target",
+                  "kind"
+                ],
+                "properties": {
+                  "target": {
+                    "type": "object",
+                    "required": [
+                      "routeId",
+                      "pathParams",
+                      "query"
+                    ],
+                    "properties": {
+                      "routeId": {
+                        "type": "string",
+                        "enum": [
+                          "auth.register",
+                          "auth.verify-email",
+                          "auth.verify-email-confirm",
+                          "auth.login",
+                          "auth.forgot-password",
+                          "auth.reset-password",
+                          "invitation.accept",
+                          "account.security",
+                          "workspace.home",
+                          "organization.project-create",
+                          "organization.members",
+                          "organization.settings",
+                          "organization.usage",
+                          "organization.tokens",
+                          "organization.audit",
+                          "organization.trash",
+                          "project.onboarding",
+                          "project.overview",
+                          "project.issues",
+                          "project.issue-detail",
+                          "project.requests",
+                          "project.performance",
+                          "project.data-status",
+                          "project.releases",
+                          "project.release-detail",
+                          "project.source-maps",
+                          "project.alerts",
+                          "project.alert-rule-create",
+                          "project.alert-rule-edit",
+                          "project.alert-instance-detail",
+                          "project.access",
+                          "project.client-keys",
+                          "project.settings",
+                          "project.lifecycle",
+                          "account.notifications",
+                          "platform.resource-policies"
+                        ],
+                        "openEnum": false
+                      },
+                      "pathParams": {
+                        "type": "object",
+                        "additionalProperties": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 256
+                        }
+                      },
+                      "query": {
+                        "type": "object",
+                        "additionalProperties": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 512
+                        }
+                      }
+                    }
+                  },
+                  "kind": {
+                    "type": "string",
+                    "enum": [
+                      "invitation",
+                      "return_to"
+                    ],
+                    "openEnum": false
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "identityLogout": {
+        "responses": {
+          "200": {
+            "type": "object",
+            "required": [
+              "status",
+              "serverTime"
+            ],
+            "properties": {
+              "status": {
+                "type": "string",
+                "enum": [
+                  "succeeded"
+                ],
+                "openEnum": false
+              },
+              "serverTime": {
+                "type": "string",
+                "format": "date-time"
+              }
+            }
+          }
+        }
+      },
+      "identityRequestPasswordReset": {
+        "responses": {
+          "200": {
+            "type": "object",
+            "required": [
+              "serverTime"
+            ],
+            "properties": {
+              "serverTime": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "nextRequestAllowedAt": {
+                "type": "string",
+                "format": "date-time"
+              }
+            }
+          }
+        }
+      },
+      "identityConfirmPasswordReset": {
+        "responses": {
+          "200": {
+            "type": "object",
+            "required": [
+              "status",
+              "serverTime"
+            ],
+            "properties": {
+              "status": {
+                "type": "string",
+                "enum": [
+                  "succeeded"
+                ],
+                "openEnum": false
+              },
+              "serverTime": {
+                "type": "string",
+                "format": "date-time"
+              }
+            }
+          }
+        }
+      },
+      "identityChangePassword": {
+        "responses": {
+          "200": {
+            "type": "object",
+            "required": [
+              "status",
+              "sessionImpact"
+            ],
+            "properties": {
+              "status": {
+                "type": "string",
+                "enum": [
+                  "succeeded"
+                ],
+                "openEnum": false
+              },
+              "sessionImpact": {
+                "type": "string",
+                "enum": [
+                  "revoked_all"
+                ],
+                "openEnum": false
+              }
+            }
+          }
+        }
+      },
+      "organizationAcceptInvitation": {
+        "responses": {
+          "200": {
+            "type": "object",
+            "required": [
+              "organization",
+              "navigationTargets"
+            ],
+            "properties": {
+              "organization": {
+                "type": "object",
+                "required": [
+                  "organizationId",
+                  "name",
+                  "role"
+                ],
+                "properties": {
+                  "organizationId": {
+                    "type": "string",
+                    "minLength": 3,
+                    "maxLength": 64
+                  },
+                  "name": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 128
+                  },
+                  "role": {
+                    "type": "string",
+                    "enum": [
+                      "owner",
+                      "admin",
+                      "member"
+                    ],
+                    "openEnum": false
+                  }
+                }
+              },
+              "navigationTargets": {
                 "type": "object",
                 "required": [
                   "routeId",
