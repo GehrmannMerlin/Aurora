@@ -10,3 +10,4 @@ test-results/
 !.env.example
 .migrations-combined/
 .artifacts/
+.claude/worktrees/
