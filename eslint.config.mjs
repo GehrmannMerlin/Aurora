@@ -20,6 +20,7 @@ export default tseslint.config(
       'packages/ingestion-credentials/**/*.ts',
       'packages/ingestion-inbox/**/*.ts',
       'packages/processing-store/**/*.ts',
+      'packages/platform-contract/**/*.ts',
       'apps/ingestion-api/**/*.ts',
       'apps/ingestion-worker/**/*.ts',
     ],

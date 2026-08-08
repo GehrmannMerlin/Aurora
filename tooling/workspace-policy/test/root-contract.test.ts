@@ -42,6 +42,8 @@ describe('root Workspace contract', () => {
       'lint',
       'openapi:check',
       'openapi:lint',
+      'platform-contract:drift',
+      'platform-contract:generate',
       'test',
       'test:coverage',
       'typecheck',

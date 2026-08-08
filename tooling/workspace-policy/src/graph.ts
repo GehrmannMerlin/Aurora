@@ -30,8 +30,9 @@ const allowedLocalDependencyLayers: ReadonlyMap<string, ReadonlySet<string>> = n
   ['sdk-browser', new Set<string>(['sdk-core', 'protocol'])],
   ['sdk-plugin', new Set<string>(['sdk-core', 'sdk-browser', 'protocol'])],
   ['data', new Set<string>(['protocol'])],
-  ['service', new Set<string>(['protocol', 'data', 'tooling'])],
-  ['tooling', new Set<string>(['service', 'data', 'protocol', 'tooling'])],
+  ['service', new Set<string>(['protocol', 'data', 'tooling', 'contract'])],
+  ['contract', new Set<string>(['protocol'])],
+  ['tooling', new Set<string>(['service', 'data', 'protocol', 'tooling', 'contract'])],
 ]);
 
 function layerDependencyViolations(
