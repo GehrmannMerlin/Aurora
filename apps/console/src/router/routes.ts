@@ -1,4 +1,4 @@
-import type { RouteRecordRaw } from 'vue-router';
+import type { RouteLocationNormalized, RouteRecordRaw } from 'vue-router';
 import { ROUTE_REGISTRY } from '../contracts/route-registry';
 import AppShell from '../components/shell/AppShell.vue';
 
@@ -13,15 +13,31 @@ export const appRoutes: readonly RouteRecordRaw[] = [
         component: () => import('../components/pages/RootView.vue'),
         meta: { label: '工作空间', routeId: 'workspace.home', scope: 'workspace' },
       },
-      ...ROUTE_REGISTRY.map((entry) => ({
-        path: entry.path.replace(/^\/+/, '') || '',
-        name: entry.routeId,
-        component:
-          entry.routeId === 'auth.login'
+      ...ROUTE_REGISTRY.map((entry) => {
+        const unavailable = entry.unavailableReason;
+        const isAuthLogin = entry.routeId === 'auth.login';
+        return {
+          path: entry.path.replace(/^\/+/, '') || '',
+          name: entry.routeId,
+          component: isAuthLogin
             ? () => import('../components/pages/AuthUnavailableView.vue')
             : entry.lazy,
-        meta: { label: entry.label, routeId: entry.routeId, scope: entry.scope },
-      })),
+          ...(unavailable !== null && !isAuthLogin
+            ? {
+                props: (route: RouteLocationNormalized) => ({
+                  title: route.meta.label as string,
+                  reason: unavailable,
+                }),
+              }
+            : {}),
+          meta: {
+            label: entry.label,
+            routeId: entry.routeId,
+            scope: entry.scope,
+            unavailableReason: entry.unavailableReason,
+          },
+        };
+      }),
       {
         path: 'route-error',
         name: 'route-error',

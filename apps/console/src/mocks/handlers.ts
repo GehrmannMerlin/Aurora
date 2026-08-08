@@ -9,7 +9,30 @@ export type MockScope = {
   readonly id?: string;
 };
 
-let mockScope: MockScope = { type: 'project', id: 'prj_test_1' };
+const MOCK_SCOPE_STORAGE_KEY = '__aurora_mock_scope';
+
+function readStoredScope(): MockScope {
+  try {
+    const raw = sessionStorage.getItem(MOCK_SCOPE_STORAGE_KEY);
+    if (raw !== null) {
+      const parsed = JSON.parse(raw) as MockScope;
+      if (
+        parsed !== null &&
+        typeof parsed === 'object' &&
+        (parsed.type === 'workspace' || parsed.type === 'organization' || parsed.type === 'project')
+      ) {
+        return parsed.id === undefined
+          ? { type: parsed.type }
+          : { type: parsed.type, id: parsed.id };
+      }
+    }
+  } catch {
+    // storage may be unavailable (non-browser harness); fall through to the default
+  }
+  return { type: 'project', id: 'prj_test_1' };
+}
+
+let mockScope: MockScope = readStoredScope();
 
 const navigationBody = JSON.parse(JSON.stringify(validNavigationSamples[0])) as {
   currentScope: unknown;
@@ -22,6 +45,11 @@ export const handlerControls = {
 
 export function setMockScope(scope: MockScope): void {
   mockScope = scope;
+  try {
+    sessionStorage.setItem(MOCK_SCOPE_STORAGE_KEY, JSON.stringify(scope));
+  } catch {
+    // storage may be unavailable in some harnesses; the module state still applies
+  }
 }
 
 function delay(ms: number): Promise<void> {
@@ -45,10 +73,11 @@ export function createPlatformHandlers() {
     }),
     http.post('/__mock/scope', async ({ request }) => {
       const body = (await request.json()) as MockScope;
-      mockScope =
+      setMockScope(
         body.type === 'workspace'
           ? { type: 'workspace' }
-          : { type: body.type, id: body.id ?? 'prj_test_1' };
+          : { type: body.type, id: body.id ?? 'prj_test_1' },
+      );
       return new HttpResponse(null, { status: 204 });
     }),
   ];

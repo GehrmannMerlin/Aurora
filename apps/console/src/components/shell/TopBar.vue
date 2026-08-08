@@ -60,6 +60,9 @@ function hrefFor(routeId: string): string {
 .au-topnav :deep(.au-link) {
   color: var(--color-topbar-fg);
 }
+.au-topbar :deep(.au-brand) {
+  color: var(--color-topbar-fg);
+}
 .au-brand {
   font-weight: 600;
 }

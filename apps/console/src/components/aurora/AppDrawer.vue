@@ -15,6 +15,7 @@ const visible = computed({
 
 <template>
   <Drawer
+    id="nav-drawer"
     v-model:visible="visible"
     :header="title"
     position="left"
