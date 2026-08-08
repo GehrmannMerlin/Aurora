@@ -17,6 +17,10 @@
       "types": "./dist/client/index.d.ts",
       "import": "./dist/client/index.js"
     },
+    "./contract-testkit": {
+      "types": "./dist/contract-testkit/index.d.ts",
+      "import": "./dist/contract-testkit/index.js"
+    },
     "./server": {
       "types": "./dist/server/index.d.ts",
       "import": "./dist/server/index.js"
