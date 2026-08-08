@@ -3,6 +3,7 @@ import type { FastifyReply, FastifyRequest } from 'fastify';
 import {
   findEmailVerificationIntentByDigest,
   findInvitationByDigest,
+  findOrganizationById,
   findPasswordResetIntentByDigest,
   getAccountById,
 } from '@aurora/platform-identity';
@@ -157,8 +158,23 @@ export async function handleInvitationLink(
   const remainingMs = Math.max(60_000, Date.parse(invitation.expiresAt) - now);
   setIntentCookie(reply, 'organization_invitation', token, csrfSecret, deps.cookieOptions, remainingMs);
 
+  // N7/N2 reconciliation: the accept page needs the masked invited email (never the
+  // raw address) and a read-only permission summary (org name + granted role) to render
+  // the invitation before the user decides to accept. Org name is best-effort; the
+  // invitation row itself is authoritative for the role and masked email.
+  let organizationName = '';
+  try {
+    const organization = await findOrganizationById(deps.pool, invitation.organizationId);
+    if (organization !== null) organizationName = organization.name;
+  } catch {
+    // The intent is valid; the org display name is best-effort and never a blocker.
+  }
+
   void reply.header('x-aurora-request-id', requestId).code(200).send({
     status: 'valid',
     csrf: csrfSecret,
+    maskedEmail: maskEmail(invitation.invitedEmail),
+    organizationName,
+    role: invitation.orgRole,
   });
 }

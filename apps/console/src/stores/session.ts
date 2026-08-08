@@ -75,5 +75,20 @@ export const useSessionStore = defineStore('session', () => {
     error.value = null;
   }
 
-  return { status, account, expiresAt, csrf, error, restore, reset };
+  /**
+   * Apply an authenticated session projection directly from a command response
+   * (identityLogin). Bumps the epoch so an in-flight restore cannot resurrect
+   * pre-login state, then commits the authenticated shape. The caller still
+   * relies on a subsequent identityGetSession for the full navigation context.
+   */
+  function applyAuthenticated(data: SessionResponse): void {
+    epoch += 1;
+    account.value = data.account;
+    expiresAt.value = data.session.expiresAt;
+    csrf.value = data.csrf;
+    status.value = 'authenticated';
+    error.value = null;
+  }
+
+  return { status, account, expiresAt, csrf, error, restore, reset, applyAuthenticated };
 });

@@ -35,7 +35,7 @@ describe('organizationAcceptInvitation contract', () => {
     expect(
       organizationAcceptInvitationResponse.zod.safeParse({
         organization: { organizationId: 'org_1', name: 'Acme', role: 'member' },
-        navigationTargets: { routeId: 'workspace.home', pathParams: {}, query: {} },
+        navigationTargets: [{ routeId: 'workspace.home', pathParams: {}, query: {} }],
       }).success,
     ).toBe(true);
   });
@@ -50,7 +50,7 @@ describe('organizationAcceptInvitation contract', () => {
           inviteToken: 'x',
           permissions: ['read', 'write'],
         },
-        navigationTargets: { routeId: 'workspace.home', pathParams: {}, query: {} },
+        navigationTargets: [{ routeId: 'workspace.home', pathParams: {}, query: {} }],
       }).success,
     ).toBe(false);
   });

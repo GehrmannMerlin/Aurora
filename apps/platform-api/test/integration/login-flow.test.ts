@@ -98,7 +98,7 @@ describeDb('login flow (real PostgreSQL 17 + Redis)', () => {
       authentication?: string;
       csrf?: string;
       session?: { expiresAt?: string };
-      navigation?: { navigationTargets?: { routeId?: string } };
+      navigation?: Array<{ routeId?: string }>;
       continuation?: unknown;
     };
     expect(body.account?.email).toBe(email);
@@ -107,7 +107,8 @@ describeDb('login flow (real PostgreSQL 17 + Redis)', () => {
     expect(typeof body.csrf).toBe('string');
     expect(body.csrf?.length ?? 0).toBeGreaterThan(0);
     expect(typeof body.session?.expiresAt).toBe('string');
-    expect(body.navigation?.navigationTargets?.routeId).toBe('auth.verify-email');
+    // N1: login `navigation` is now the array shape (matching identityGetSession).
+    expect(body.navigation?.some((t) => t.routeId === 'auth.verify-email')).toBe(true);
     expect('continuation' in body).toBe(false);
 
     const cookie = extractSessionCookie(response.headers['set-cookie']);

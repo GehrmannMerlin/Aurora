@@ -50,9 +50,7 @@ describe('identityLogin contract', () => {
         authentication: 'authenticated',
         session: { expiresAt: '2026-08-09T01:00:00.000Z' },
         csrf: 'csrf_token',
-        navigation: {
-          navigationTargets: { routeId: 'workspace.home', pathParams: {}, query: {} },
-        },
+        navigation: [{ routeId: 'workspace.home', pathParams: {}, query: {} }],
         continuation: {
           target: { routeId: 'workspace.home', pathParams: {}, query: {} },
           kind: 'return_to',
@@ -68,9 +66,7 @@ describe('identityLogin contract', () => {
         authentication: 'authenticated',
         session: { expiresAt: '2026-08-09T01:00:00.000Z', sessionId: 's_1' },
         csrf: 'csrf_token',
-        navigation: {
-          navigationTargets: { routeId: 'workspace.home', pathParams: {}, query: {} },
-        },
+        navigation: [{ routeId: 'workspace.home', pathParams: {}, query: {} }],
         continuation: {
           target: { routeId: 'workspace.home', pathParams: {}, query: {} },
           kind: 'return_to',

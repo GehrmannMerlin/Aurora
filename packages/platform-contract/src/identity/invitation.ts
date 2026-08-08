@@ -1,7 +1,7 @@
 import { enum_, obj, str } from '../common/schema.js';
 import { idempotencyKey } from '../common/command.js';
 import { OrganizationId } from '../common/identifiers.js';
-import { routeTarget } from '../common/navigation.js';
+import { navigationTargets } from '../common/navigation.js';
 
 export const OPERATION_ID_ACCEPT_INVITATION = 'organizationAcceptInvitation' as const;
 
@@ -16,5 +16,6 @@ export const organizationAcceptInvitationResponse = obj({
     name: str(1, 128),
     role: enum_(['owner', 'admin', 'member']),
   }),
-  navigationTargets: routeTarget,
+  // The navigation target list matches identityGetSession exactly (session.ts).
+  navigationTargets,
 });

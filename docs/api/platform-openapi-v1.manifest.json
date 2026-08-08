@@ -953,76 +953,71 @@
                 "maxLength": 256
               },
               "navigation": {
-                "type": "object",
-                "required": [
-                  "navigationTargets"
-                ],
-                "properties": {
-                  "navigationTargets": {
-                    "type": "object",
-                    "required": [
-                      "routeId",
-                      "pathParams",
-                      "query"
-                    ],
-                    "properties": {
-                      "routeId": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "routeId",
+                    "pathParams",
+                    "query"
+                  ],
+                  "properties": {
+                    "routeId": {
+                      "type": "string",
+                      "enum": [
+                        "auth.register",
+                        "auth.verify-email",
+                        "auth.verify-email-confirm",
+                        "auth.login",
+                        "auth.forgot-password",
+                        "auth.reset-password",
+                        "invitation.accept",
+                        "account.security",
+                        "workspace.home",
+                        "organization.project-create",
+                        "organization.members",
+                        "organization.settings",
+                        "organization.usage",
+                        "organization.tokens",
+                        "organization.audit",
+                        "organization.trash",
+                        "project.onboarding",
+                        "project.overview",
+                        "project.issues",
+                        "project.issue-detail",
+                        "project.requests",
+                        "project.performance",
+                        "project.data-status",
+                        "project.releases",
+                        "project.release-detail",
+                        "project.source-maps",
+                        "project.alerts",
+                        "project.alert-rule-create",
+                        "project.alert-rule-edit",
+                        "project.alert-instance-detail",
+                        "project.access",
+                        "project.client-keys",
+                        "project.settings",
+                        "project.lifecycle",
+                        "account.notifications",
+                        "platform.resource-policies"
+                      ],
+                      "openEnum": false
+                    },
+                    "pathParams": {
+                      "type": "object",
+                      "additionalProperties": {
                         "type": "string",
-                        "enum": [
-                          "auth.register",
-                          "auth.verify-email",
-                          "auth.verify-email-confirm",
-                          "auth.login",
-                          "auth.forgot-password",
-                          "auth.reset-password",
-                          "invitation.accept",
-                          "account.security",
-                          "workspace.home",
-                          "organization.project-create",
-                          "organization.members",
-                          "organization.settings",
-                          "organization.usage",
-                          "organization.tokens",
-                          "organization.audit",
-                          "organization.trash",
-                          "project.onboarding",
-                          "project.overview",
-                          "project.issues",
-                          "project.issue-detail",
-                          "project.requests",
-                          "project.performance",
-                          "project.data-status",
-                          "project.releases",
-                          "project.release-detail",
-                          "project.source-maps",
-                          "project.alerts",
-                          "project.alert-rule-create",
-                          "project.alert-rule-edit",
-                          "project.alert-instance-detail",
-                          "project.access",
-                          "project.client-keys",
-                          "project.settings",
-                          "project.lifecycle",
-                          "account.notifications",
-                          "platform.resource-policies"
-                        ],
-                        "openEnum": false
-                      },
-                      "pathParams": {
-                        "type": "object",
-                        "additionalProperties": {
-                          "type": "string",
-                          "minLength": 1,
-                          "maxLength": 256
-                        }
-                      },
-                      "query": {
-                        "type": "object",
-                        "additionalProperties": {
-                          "type": "string",
-                          "minLength": 1,
-                          "maxLength": 512
-                        }
+                        "minLength": 1,
+                        "maxLength": 256
+                      }
+                    },
+                    "query": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 512
                       }
                     }
                   }
@@ -1251,69 +1246,72 @@
                 }
               },
               "navigationTargets": {
-                "type": "object",
-                "required": [
-                  "routeId",
-                  "pathParams",
-                  "query"
-                ],
-                "properties": {
-                  "routeId": {
-                    "type": "string",
-                    "enum": [
-                      "auth.register",
-                      "auth.verify-email",
-                      "auth.verify-email-confirm",
-                      "auth.login",
-                      "auth.forgot-password",
-                      "auth.reset-password",
-                      "invitation.accept",
-                      "account.security",
-                      "workspace.home",
-                      "organization.project-create",
-                      "organization.members",
-                      "organization.settings",
-                      "organization.usage",
-                      "organization.tokens",
-                      "organization.audit",
-                      "organization.trash",
-                      "project.onboarding",
-                      "project.overview",
-                      "project.issues",
-                      "project.issue-detail",
-                      "project.requests",
-                      "project.performance",
-                      "project.data-status",
-                      "project.releases",
-                      "project.release-detail",
-                      "project.source-maps",
-                      "project.alerts",
-                      "project.alert-rule-create",
-                      "project.alert-rule-edit",
-                      "project.alert-instance-detail",
-                      "project.access",
-                      "project.client-keys",
-                      "project.settings",
-                      "project.lifecycle",
-                      "account.notifications",
-                      "platform.resource-policies"
-                    ],
-                    "openEnum": false
-                  },
-                  "pathParams": {
-                    "type": "object",
-                    "additionalProperties": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "routeId",
+                    "pathParams",
+                    "query"
+                  ],
+                  "properties": {
+                    "routeId": {
                       "type": "string",
-                      "minLength": 1,
-                      "maxLength": 256
-                    }
-                  },
-                  "query": {
-                    "type": "object",
-                    "additionalProperties": {
-                      "type": "string",
-                      "minLength": 1,
-                      "maxLength": 512
+                      "enum": [
+                        "auth.register",
+                        "auth.verify-email",
+                        "auth.verify-email-confirm",
+                        "auth.login",
+                        "auth.forgot-password",
+                        "auth.reset-password",
+                        "invitation.accept",
+                        "account.security",
+                        "workspace.home",
+                        "organization.project-create",
+                        "organization.members",
+                        "organization.settings",
+                        "organization.usage",
+                        "organization.tokens",
+                        "organization.audit",
+                        "organization.trash",
+                        "project.onboarding",
+                        "project.overview",
+                        "project.issues",
+                        "project.issue-detail",
+                        "project.requests",
+                        "project.performance",
+                        "project.data-status",
+                        "project.releases",
+                        "project.release-detail",
+                        "project.source-maps",
+                        "project.alerts",
+                        "project.alert-rule-create",
+                        "project.alert-rule-edit",
+                        "project.alert-instance-detail",
+                        "project.access",
+                        "project.client-keys",
+                        "project.settings",
+                        "project.lifecycle",
+                        "account.notifications",
+                        "platform.resource-policies"
+                      ],
+                      "openEnum": false
+                    },
+                    "pathParams": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 256
+                      }
+                    },
+                    "query": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 512
+                      }
                     }
                   }
                 }

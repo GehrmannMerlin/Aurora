@@ -18,6 +18,18 @@ const anyQuery = z.record(z.string(), z.string());
 
 const unavailable = (): Promise<Component> => import('../components/pages/UnavailableView.vue');
 const workspaceHome = (): Promise<Component> => import('../components/pages/WorkspaceHomeView.vue');
+const registerView = (): Promise<Component> => import('../views/auth/RegisterView.vue');
+const verifyEmailView = (): Promise<Component> => import('../views/auth/VerifyEmailView.vue');
+const verifyEmailConfirmView = (): Promise<Component> =>
+  import('../views/auth/VerifyEmailConfirmView.vue');
+const loginView = (): Promise<Component> => import('../views/auth/LoginView.vue');
+const forgotPasswordView = (): Promise<Component> =>
+  import('../views/auth/ForgotPasswordView.vue');
+const resetPasswordView = (): Promise<Component> => import('../views/auth/ResetPasswordView.vue');
+const invitationAcceptView = (): Promise<Component> =>
+  import('../views/auth/InvitationAcceptView.vue');
+const accountSecurityView = (): Promise<Component> =>
+  import('../views/account/AccountSecurityView.vue');
 
 export const ROUTE_REGISTRY: readonly RouteEntry[] = [
   {
@@ -27,9 +39,9 @@ export const ROUTE_REGISTRY: readonly RouteEntry[] = [
     label: '注册',
     paramsSchema: emptyParams,
     querySchema: anyQuery,
-    lazy: unavailable,
+    lazy: registerView,
     menu: false,
-    unavailableReason: 'capability-not-provided',
+    unavailableReason: null,
   },
   {
     routeId: 'auth.verify-email',
@@ -38,9 +50,9 @@ export const ROUTE_REGISTRY: readonly RouteEntry[] = [
     label: '邮箱验证',
     paramsSchema: emptyParams,
     querySchema: anyQuery,
-    lazy: unavailable,
+    lazy: verifyEmailView,
     menu: false,
-    unavailableReason: 'capability-not-provided',
+    unavailableReason: null,
   },
   {
     routeId: 'auth.verify-email-confirm',
@@ -50,9 +62,9 @@ export const ROUTE_REGISTRY: readonly RouteEntry[] = [
     parent: 'auth.verify-email',
     paramsSchema: emptyParams,
     querySchema: anyQuery,
-    lazy: unavailable,
+    lazy: verifyEmailConfirmView,
     menu: false,
-    unavailableReason: 'capability-not-provided',
+    unavailableReason: null,
   },
   {
     routeId: 'auth.login',
@@ -61,9 +73,9 @@ export const ROUTE_REGISTRY: readonly RouteEntry[] = [
     label: '登录',
     paramsSchema: emptyParams,
     querySchema: anyQuery,
-    lazy: unavailable,
+    lazy: loginView,
     menu: false,
-    unavailableReason: 'capability-not-provided',
+    unavailableReason: null,
   },
   {
     routeId: 'auth.forgot-password',
@@ -72,9 +84,9 @@ export const ROUTE_REGISTRY: readonly RouteEntry[] = [
     label: '忘记密码',
     paramsSchema: emptyParams,
     querySchema: anyQuery,
-    lazy: unavailable,
+    lazy: forgotPasswordView,
     menu: false,
-    unavailableReason: 'capability-not-provided',
+    unavailableReason: null,
   },
   {
     routeId: 'auth.reset-password',
@@ -83,9 +95,9 @@ export const ROUTE_REGISTRY: readonly RouteEntry[] = [
     label: '重置密码',
     paramsSchema: emptyParams,
     querySchema: anyQuery,
-    lazy: unavailable,
+    lazy: resetPasswordView,
     menu: false,
-    unavailableReason: 'capability-not-provided',
+    unavailableReason: null,
   },
   {
     routeId: 'invitation.accept',
@@ -94,9 +106,9 @@ export const ROUTE_REGISTRY: readonly RouteEntry[] = [
     label: '接受邀请',
     paramsSchema: emptyParams,
     querySchema: anyQuery,
-    lazy: unavailable,
+    lazy: invitationAcceptView,
     menu: false,
-    unavailableReason: 'capability-not-provided',
+    unavailableReason: null,
   },
   {
     routeId: 'account.security',
@@ -105,9 +117,9 @@ export const ROUTE_REGISTRY: readonly RouteEntry[] = [
     label: '账号安全',
     paramsSchema: emptyParams,
     querySchema: anyQuery,
-    lazy: unavailable,
+    lazy: accountSecurityView,
     menu: true,
-    unavailableReason: 'capability-not-provided',
+    unavailableReason: null,
   },
   {
     routeId: 'workspace.home',

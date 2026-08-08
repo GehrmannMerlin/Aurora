@@ -62,8 +62,23 @@ describe('RouteTarget registry', () => {
   });
 
   it('marks every non-shell business target as unavailable (no fake content)', () => {
+    // PLT-03 replaced these unavailable stubs with real auth/account views.
+    const realViewRoutes = new Set([
+      'auth.register',
+      'auth.verify-email',
+      'auth.verify-email-confirm',
+      'auth.login',
+      'auth.forgot-password',
+      'auth.reset-password',
+      'invitation.accept',
+      'account.security',
+    ]);
     for (const entry of ROUTE_REGISTRY) {
       if (entry.routeId === 'workspace.home') continue;
+      if (realViewRoutes.has(entry.routeId)) {
+        expect(entry.unavailableReason, entry.routeId).toBeNull();
+        continue;
+      }
       expect(entry.unavailableReason).not.toBeNull();
       expect(entry.unavailableReason).toMatch(
         /^(capability-not-provided|dependency-unavailable|permission-unavailable)$/,

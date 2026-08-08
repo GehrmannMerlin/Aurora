@@ -153,12 +153,13 @@ describeDb('invitation accept flow (real PostgreSQL 17 + Redis)', () => {
     expect(accept.statusCode).toBe(200);
     const body = accept.json() as {
       organization?: { organizationId?: string; name?: string; role?: string };
-      navigationTargets?: { routeId?: string };
+      navigationTargets?: Array<{ routeId?: string }>;
     };
     expect(body.organization?.name).toBe('Acme Org');
     expect(body.organization?.role).toBe('member');
     expect(typeof body.organization?.organizationId).toBe('string');
-    expect(body.navigationTargets?.routeId).toBe('workspace.home');
+    // N1: navigationTargets is now the array shape (matching identityGetSession).
+    expect(body.navigationTargets?.some((t) => t.routeId === 'workspace.home')).toBe(true);
 
     // DB: membership + invitation accepted + audit.
     const member = await pool.query<{ role: string }>(

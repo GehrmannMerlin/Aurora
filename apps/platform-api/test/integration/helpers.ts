@@ -92,7 +92,11 @@ export async function outboxIntentToken(
   }
   const payload = row.payload as { mailLinkUrl?: unknown };
   const url = typeof payload?.mailLinkUrl === 'string' ? payload.mailLinkUrl : '';
-  const token = url.split('/').filter(Boolean).pop();
+  // mailLinkUrl is an SPA confirm URL with the transient token as a query param:
+  //   `${consoleOrigin}/verify-email/confirm?token=<token>`
+  const tokenMatch = /\btoken=([^&]+)/.exec(url);
+  const rawToken = tokenMatch === null ? undefined : tokenMatch[1];
+  const token = rawToken === undefined ? undefined : decodeURIComponent(rawToken);
   if (typeof token !== 'string' || token.length === 0) {
     throw new Error(`no token in outbox mailLinkUrl for aggregate_type=${aggregateType}`);
   }

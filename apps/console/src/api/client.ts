@@ -10,9 +10,35 @@ import { ApiError, normalizeProblem } from './errors.js';
 export interface RequestOptions {
   scope: ScopeKey;
   signal?: AbortSignal;
+  /**
+   * Synchronous CSRF token (accepted ADR-030 决定细节 5). Required for CSRF-
+   * protected state-changing operations. Public commands (register/login/
+   * request-reset) do not bind a CSRF secret and must not send this header.
+   * The value is held only for the duration of the request — never persisted.
+   */
+  csrf?: string;
 }
 
 const operationById = new Map(PLATFORM_OPERATIONS.map((op) => [op.operationId, op]));
+
+/**
+ * Generate a client-side idempotency key (contract: exactly 36 chars). A UUID is
+ * used when the runtime provides it; a deterministic-length base36 fallback keeps
+ * every submission contract-valid in test/legacy environments.
+ */
+export function createIdempotencyKey(): string {
+  const cryptoObject = globalThis.crypto as (Crypto & { randomUUID?: () => string }) | undefined;
+  if (cryptoObject !== undefined && typeof cryptoObject.randomUUID === 'function') {
+    try {
+      const uuid = cryptoObject.randomUUID();
+      if (typeof uuid === 'string' && uuid.length === 36) return uuid;
+    } catch {
+      // fall through to the deterministic fallback
+    }
+  }
+  const prefix = `k${Date.now().toString(36)}`;
+  return `${prefix}${Math.random().toString(36).slice(2)}`.slice(0, 36).padEnd(36, '0');
+}
 
 export async function platformRequest<T>(
   operationId: string,
@@ -40,12 +66,16 @@ export async function platformRequest<T>(
   }
   let response: Response;
   try {
+    const headers: Record<string, string> = { Accept: 'application/json' };
+    if (request.body !== undefined) headers['Content-Type'] = 'application/json';
+    if (options.csrf !== undefined) headers['X-Aurora-CSRF'] = options.csrf;
     const init: RequestInit = {
       method: request.method,
-      headers: { Accept: 'application/json' },
+      headers,
       credentials: 'same-origin',
     };
     if (options.signal !== undefined) init.signal = options.signal;
+    if (request.body !== undefined) init.body = JSON.stringify(request.body);
     response = await fetch(url.toString(), init);
   } catch (error) {
     if (error instanceof Error && error.name === 'AbortError') throw error;

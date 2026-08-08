@@ -107,3 +107,57 @@ export const invalidProblemSamples: readonly unknown[] = [
     extra: 'leak',
   },
 ];
+
+export const validRegisterSamples: readonly unknown[] = [
+  {
+    accountId: 'acct_test_1',
+    workspaceId: { organizationId: 'org_test_1' },
+    emailMasked: 'us**@example.invalid',
+    verificationStatus: { verified: false, reason: 'email_verification_pending' },
+    resendAvailableAt: '2026-08-09T01:05:00.000Z',
+    serverTime: '2026-08-09T01:00:00.000Z',
+  },
+];
+
+export const validLoginSamples: readonly unknown[] = [
+  {
+    account: { accountId: 'acct_test_1', email: 'user@example.invalid', verified: true },
+    authentication: 'authenticated',
+    session: { expiresAt: '2026-08-09T02:00:00.000Z' },
+    csrf: 'csrf_test_token',
+    navigation: [{ routeId: 'workspace.home', pathParams: {}, query: {} }],
+  },
+];
+
+export const validLogoutSamples: readonly unknown[] = [
+  { status: 'succeeded', serverTime: '2026-08-09T01:00:00.000Z' },
+];
+
+export const validRequestPasswordResetSamples: readonly unknown[] = [
+  {
+    serverTime: '2026-08-09T01:00:00.000Z',
+    nextRequestAllowedAt: '2026-08-09T01:05:00.000Z',
+  },
+];
+
+export const validConfirmPasswordResetSamples: readonly unknown[] = [
+  { status: 'succeeded', serverTime: '2026-08-09T01:00:00.000Z' },
+];
+
+export const validChangePasswordSamples: readonly unknown[] = [
+  { status: 'succeeded', sessionImpact: 'revoked_all' },
+];
+
+export const validConfirmEmailVerificationSamples: readonly unknown[] = [
+  {
+    verificationStatus: { verified: true },
+    account: { accountId: 'acct_test_1', email: 'user@example.invalid', verified: true },
+  },
+];
+
+export const validAcceptInvitationSamples: readonly unknown[] = [
+  {
+    organization: { organizationId: 'org_test_1', name: 'Acme', role: 'member' },
+    navigationTargets: [{ routeId: 'workspace.home', pathParams: {}, query: {} }],
+  },
+];

@@ -201,7 +201,7 @@ export async function handleAcceptInvitation(
 
       return {
         organization: { organizationId, name: org.name, role: orgRole },
-        navigationTargets: { routeId: 'workspace.home', pathParams: {}, query: {} },
+        navigationTargets: [{ routeId: 'workspace.home', pathParams: {}, query: {} }],
       };
       },
     });

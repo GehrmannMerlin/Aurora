@@ -117,6 +117,7 @@ export async function handleRegister(
       });
 
       const masked = maskEmail(emailNormalized);
+      const base = deps.config.consoleOrigin.replace(/\/$/, '');
       await insertOutboxRow(client, {
         aggregateType: 'email.verification',
         aggregateId: account.account.accountId,
@@ -124,7 +125,7 @@ export async function handleRegister(
           intentType: 'email_verification',
           toAddress: emailNormalized,
           toMasked: masked,
-          mailLinkUrl: `/api/platform/v1/auth/verify/${token}`,
+          mailLinkUrl: `${base}/verify-email/confirm?token=${token}`,
           expiresInMinutes: VERIFY_INTENT_MINUTES,
         },
       });

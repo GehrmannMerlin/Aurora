@@ -12,6 +12,7 @@ export interface ExecuteQueryOptions {
   scope: ScopeKey;
   signal?: AbortSignal;
   retry?: boolean;
+  csrf?: string;
 }
 
 const inFlight = new Map<string, Promise<unknown>>();
@@ -63,6 +64,7 @@ export async function executeQuery<T>(options: ExecuteQueryOptions): Promise<T> 
 function requestOptions(options: ExecuteQueryOptions): RequestOptions {
   const result: RequestOptions = { scope: options.scope };
   if (options.signal !== undefined) result.signal = options.signal;
+  if (options.csrf !== undefined) result.csrf = options.csrf;
   return result;
 }
 

@@ -68,8 +68,11 @@ async function insertResetOutboxRow(
     toAddress: string;
     token: string;
     expiresInMinutes: number;
+    /** Public console origin; emailed links land on the SPA confirm page. */
+    consoleOrigin: string;
   },
 ): Promise<void> {
+  const base = input.consoleOrigin.replace(/\/$/, '');
   await insertOutboxRow(client, {
     aggregateType: 'email.password_reset',
     aggregateId: input.accountId,
@@ -77,7 +80,7 @@ async function insertResetOutboxRow(
       intentType: 'password_reset',
       toAddress: input.toAddress,
       toMasked: maskEmail(input.toAddress),
-      mailLinkUrl: `/api/platform/v1/auth/reset/${input.token}`,
+      mailLinkUrl: `${base}/reset-password?token=${input.token}`,
       expiresInMinutes: input.expiresInMinutes,
     },
   });
@@ -145,6 +148,7 @@ export async function handleRequestPasswordReset(
             toAddress: emailNormalized,
             token,
             expiresInMinutes: RESET_INTENT_MINUTES,
+            consoleOrigin: deps.config.consoleOrigin,
           });
         }
         // Uniform response — never reveals account existence (anti-enumeration).

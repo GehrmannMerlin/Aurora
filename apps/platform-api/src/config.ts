@@ -18,6 +18,14 @@ export interface PlatformApiConfig {
   readonly emailDeliveryMode: string;
   /** Explicitly allowed browser Origin values (CSRF Origin check). */
   readonly appOrigins: readonly string[];
+  /**
+   * Public console (SPA) origin used to build the emailed intent-link URLs
+   * (`/verify-email/confirm?token=…`, `/reset-password?token=…`,
+   * `/invitations/accept?token=…`). The SPA pages then call the API intent-link
+   * GETs. Defaults to the first configured app origin so emailed links land on
+   * the same host as the app in single-host Preview.
+   */
+  readonly consoleOrigin: string;
   /** Rate-limit window in milliseconds for the public auth commands (in-memory stub). */
   readonly rateLimitWindowMs: number;
   /** Maximum requests per rate-limit window per (operation, IP, email) key. */
@@ -85,6 +93,8 @@ export function loadPlatformApiConfig(env: NodeJS.ProcessEnv): PlatformApiConfig
     cookieSecure: optionalBoolean(env, 'COOKIE_SECURE', false),
     emailDeliveryMode: env.EMAIL_DELIVERY_MODE ?? 'console',
     appOrigins: optionalOriginList(env, 'APP_ORIGIN'),
+    consoleOrigin:
+      env.CONSOLE_ORIGIN?.trim() || optionalOriginList(env, 'APP_ORIGIN')[0] || '',
     rateLimitWindowMs: optionalPositiveInt(env, 'RATE_LIMIT_WINDOW_MS', 60_000),
     rateLimitMax: optionalPositiveInt(env, 'RATE_LIMIT_MAX', 10),
     gracefulShutdownTimeoutMs: optionalPositiveInt(env, 'GRACEFUL_SHUTDOWN_TIMEOUT_MS', 5000),

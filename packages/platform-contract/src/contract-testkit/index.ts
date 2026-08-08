@@ -5,4 +5,12 @@ export {
   invalidNavigationSamples,
   validProblemSamples,
   invalidProblemSamples,
+  validRegisterSamples,
+  validLoginSamples,
+  validLogoutSamples,
+  validRequestPasswordResetSamples,
+  validConfirmPasswordResetSamples,
+  validChangePasswordSamples,
+  validConfirmEmailVerificationSamples,
+  validAcceptInvitationSamples,
 } from './samples.js';

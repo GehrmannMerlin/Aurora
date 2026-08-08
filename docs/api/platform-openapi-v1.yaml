@@ -578,13 +578,7 @@ components:
           type: string
           minLength: 1
           maxLength: 256
-        navigation:
-          type: object
-          properties:
-            navigationTargets: *a5
-          additionalProperties: false
-          required:
-            - navigationTargets
+        navigation: *a4
         continuation:
           type: object
           properties:
@@ -674,7 +668,7 @@ components:
             - organizationId
             - name
             - role
-        navigationTargets: *a5
+        navigationTargets: *a4
       additionalProperties: false
       required:
         - organization

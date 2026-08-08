@@ -26,7 +26,11 @@ interface LoginBody {
 interface LoginCommandResult {
   readonly account: { accountId: string; email: string; verified: boolean };
   readonly authentication: 'pending_verification' | 'authenticated' | 'restricted';
-  readonly navigation: { navigationTargets: { routeId: string; pathParams: Record<string, string>; query: Record<string, string> } };
+  readonly navigation: readonly {
+    routeId: string;
+    pathParams: Record<string, string>;
+    query: Record<string, string>;
+  }[];
   readonly continuation?: { target: { routeId: string; pathParams: Record<string, string>; query: Record<string, string> }; kind: 'invitation' | 'return_to' };
 }
 
@@ -188,7 +192,7 @@ function buildLoginCommandResult(account: AccountRow, request: FastifyRequest): 
       verified,
     },
     authentication,
-    navigation: { navigationTargets: navigationTarget },
+    navigation: [navigationTarget],
     ...(continuation === undefined ? {} : { continuation }),
   };
 }

@@ -2,7 +2,7 @@ import { bool, enum_, obj, optional, str } from '../common/schema.js';
 import { idempotencyKey } from '../common/command.js';
 import { utcTimestamp } from '../common/time.js';
 import { AccountId } from '../common/identifiers.js';
-import { routeTarget } from '../common/navigation.js';
+import { navigationTargets, routeTarget } from '../common/navigation.js';
 
 export const OPERATION_ID_LOGIN = 'identityLogin' as const;
 export const OPERATION_ID_LOGOUT = 'identityLogout' as const;
@@ -28,7 +28,9 @@ export const identityLoginResponse = obj({
     rotationDueAt: optional(utcTimestamp),
   }),
   csrf: str(1, 256),
-  navigation: obj({ navigationTargets: routeTarget }),
+  // The navigation target list matches identityGetSession exactly (session.ts):
+  // a resolved array of RouteTargets, never a single target.
+  navigation: navigationTargets,
   continuation: optional(obj({ target: routeTarget, kind: enum_(['invitation', 'return_to']) })),
 });
 
