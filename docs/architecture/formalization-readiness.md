@@ -308,6 +308,18 @@ reopen condition：后续 PRD 明确资源监控用户价值、字段、隐私�
 - **G16/OPS-04 状态**：G16 记录为 `started / temporary-preview-bridge-active`；OPS-04 不因本桥接标记 completed；完成/剩余叶子计数不因本桥接改变；
 - **退出条件**：G14 OPS-01 + G16 OPS-05 建立 approved CI/CD + 不可变制品流水线后替换/重新评估本桥接。
 
+### 8.4.1 Preview Continuous Delivery Bridge 记录（2026-08-08）
+
+本节记录 Preview CD 桥接（temporary-preview-bridge enhancement，非 V1 叶子）。详细运行边界见 [preview-continuous-delivery.md](../operations/preview-continuous-delivery.md)。
+
+- **触发**：`workflow_run`（Main Quality Gates success，branch main）→ 自动部署；`workflow_dispatch` 支持已知 commit 重部署；PR 不部署；
+- **exact SHA**：部署 `workflow_run.head_sha`，验证 checkout == CI-passed SHA，拒绝 dirty checkout；
+- **身份**：专用 `aurora-preview-deploy` ED25519（`PREVIEW_SSH_PRIVATE_KEY` GitHub secret，public key 上服务器），host-key pinning（`deploy/preview/ssh/known_hosts`，非 secret）；
+- **Environment**：`preview`（URL aurora.ah.cn，无 approval）；
+- **Lumina nginx ownership 修复**：Lumina `deploy.sh` 的 nginx `up` 改用 `AURORA_COMPOSE`（含 Aurora override），Lumina 下次部署不再丢 Aurora vhost（备份 `deploy.sh.bak-20260808`）；
+- **真实验证**：两次 push（`955ccde`、`94931cb`）均触发 main CI success → Preview CD success → server release 创建 → public smoke PASS；
+- **状态**：completed 38 / remaining 40 不变；OPS-04 ≠ completed、OPS-05 ≠ completed、OPS-02 = blocked、G16 = started / temporary-preview-bridge-active。
+
 ### 8.4 G14 工程质量与兼容门禁记录（2026-08-08）
 
 本节记录 G14（工程质量与兼容门禁）的 OPS-01 完成状态与 OPS-02 blocked 原因。

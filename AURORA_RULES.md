@@ -97,6 +97,8 @@ maintenance: operational-snapshot
 
 **G14 工程质量门禁（2026-08-08）**：**OPS-01 CI quality workflows 已 completed**（GitHub Actions PR/main/nightly/release 四 workflow、PostgreSQL 17.10 每 suite 隔离、Chromium browser、真实 GitHub Actions 全 8 job 通过；规格 [ci-quality-workflows.md](docs/architecture/ci-quality-workflows.md)、计划 [2026-08-08-ci-quality-workflows.md](docs/superpowers/plans/2026-08-08-ci-quality-workflows.md)）；**OPS-02 blocked**（reference app/Console/device matrix/performance env 缺失，不伪造关闭），**G14 = partially completed**；`completed` 37→38、`remaining` 41→40。后续 Preview CD 建议接入 `pnpm deploy:preview`，不关闭正式 OPS-05。
 
+**Preview Continuous Delivery Bridge（2026-08-08，active）**：main CI PASS 后经 GitHub Actions 自动部署到公网 Preview，见 [preview-continuous-delivery.md](docs/operations/preview-continuous-delivery.md)。触发 `workflow_run`（Main Quality Gates success）+ `workflow_dispatch`；部署 exact CI-passed SHA、拒绝 dirty checkout、serial concurrency；专用 `aurora-preview-deploy` SSH identity + host pinning（`deploy/preview/ssh/known_hosts`）；`preview` Environment + `PREVIEW_SSH_PRIVATE_KEY` secret；Lumina 共享 nginx ownership 已修复（`/opt/lumina/app/deploy/scripts/deploy.sh` 的 nginx `up` 改用 `AURORA_COMPOSE` 保留 Aurora vhost，备份 `deploy.sh.bak-20260808`）。**temporary-preview-bridge enhancement，不是 OPS-04/05**：completed 38 / remaining 40 不变；OPS-04 ≠ completed、OPS-05 ≠ completed、OPS-02 = blocked、G16 = started / temporary-preview-bridge-active。
+
 ## 4. 正式化与详细设计入口
 
 [正式文档索引](docs/README.md)维护 approved 设计到长期权威文档的唯一映射；[正式化与实施就绪追踪](docs/architecture/formalization-readiness.md)维护 ADR、机器契约和真实阻塞，不成为第二份 PRD。
