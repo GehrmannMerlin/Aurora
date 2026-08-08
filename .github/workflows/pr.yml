@@ -1,0 +1,80 @@
+# Aurora PR Quality Gates — fast, trusted PR checks.
+# Implements OPS-01 spec §4.1. No PostgreSQL integration (that's the main gate).
+# No production secrets. Minimal permissions.
+name: PR Quality Gates
+
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pr-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  quality:
+    name: Quality
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 11.17.0
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24.18.0
+          cache: pnpm
+
+      - name: Install (frozen lockfile)
+        run: pnpm install --frozen-lockfile
+
+      - name: Format check
+        run: pnpm format:check
+
+      - name: OpenAPI check
+        run: pnpm openapi:check
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+      - name: Workspace policy
+        run: pnpm --filter @aurora/workspace-policy test
+
+      - name: Boundaries
+        run: pnpm check:boundaries
+
+      - name: Unit tests
+        run: pnpm test
+
+      - name: Build
+        run: pnpm build
+
+      - name: Package entry (event-schema)
+        run: pnpm --filter @aurora/event-schema test:package
+
+      - name: Package entry (core)
+        run: pnpm --filter @aurora/core test:package
+
+      - name: Package entry (browser)
+        run: pnpm --filter @aurora/browser test:package
+
+      - name: Package entry (plugin-error)
+        run: pnpm --filter @aurora/plugin-error test:package
+
+      - name: Package entry (plugin-request)
+        run: pnpm --filter @aurora/plugin-request test:package
+
+      - name: Package entry (plugin-performance)
+        run: pnpm --filter @aurora/plugin-performance test:package

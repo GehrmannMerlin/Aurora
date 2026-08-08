@@ -1,0 +1,167 @@
+# Aurora Nightly Quality Gates — full evidence on a daily schedule.
+# Implements OPS-01 spec §4.3. Reuses the main gates plus coverage artifacts.
+name: Nightly Quality Gates
+
+on:
+  schedule:
+    - cron: '17 3 * * *' # 03:17 UTC daily (off the :00/:30 marks)
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: nightly
+  cancel-in-progress: true
+
+jobs:
+  quality:
+    name: Quality
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 11.17.0
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24.18.0
+          cache: pnpm
+
+      - name: Install (frozen lockfile)
+        run: pnpm install --frozen-lockfile
+
+      - name: Format check
+        run: pnpm format:check
+
+      - name: OpenAPI check
+        run: pnpm openapi:check
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+      - name: Workspace policy
+        run: pnpm --filter @aurora/workspace-policy test
+
+      - name: Boundaries
+        run: pnpm check:boundaries
+
+      - name: Unit tests
+        run: pnpm test
+
+      - name: Coverage
+        run: pnpm test:coverage
+
+      - name: Build
+        run: pnpm build
+
+      - name: Package entry (all SDK packages)
+        run: >-
+          pnpm --filter @aurora/event-schema test:package &&
+          pnpm --filter @aurora/core test:package &&
+          pnpm --filter @aurora/browser test:package &&
+          pnpm --filter @aurora/plugin-error test:package &&
+          pnpm --filter @aurora/plugin-request test:package &&
+          pnpm --filter @aurora/plugin-performance test:package
+
+  postgres-integration:
+    name: PostgreSQL Integration
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    services:
+      postgres:
+        image: postgres:17.10-alpine
+        env:
+          POSTGRES_USER: aurora
+          POSTGRES_PASSWORD: aurora_ci_test_pw
+          POSTGRES_DB: aurora_inbox_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U aurora -d aurora_inbox_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+    env:
+      AURORA_TEST_DATABASE_URL: postgresql://aurora:aurora_ci_test_pw@localhost:5432/aurora_inbox_test
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 11.17.0
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24.18.0
+          cache: pnpm
+
+      - name: Install (frozen lockfile)
+        run: pnpm install --frozen-lockfile
+
+      - name: Integration (ingestion-inbox)
+        run: pnpm --filter @aurora/ingestion-inbox test:integration
+
+      - name: Integration (ingestion-credentials)
+        run: pnpm --filter @aurora/ingestion-credentials test:integration
+
+      - name: Integration (processing-store)
+        run: pnpm --filter @aurora/processing-store test:integration
+
+      - name: Integration (ingestion-api)
+        run: pnpm --filter @aurora/ingestion-api test:integration
+
+      - name: Integration (ingestion-worker)
+        run: pnpm --filter @aurora/ingestion-worker test:integration
+
+      - name: Integration (ingestion-benchmark)
+        run: pnpm --filter @aurora/ingestion-benchmark test:integration
+
+  browser:
+    name: Browser (Chromium)
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 11.17.0
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24.18.0
+          cache: pnpm
+
+      - name: Install (frozen lockfile)
+        run: pnpm install --frozen-lockfile
+
+      - name: Install Chromium (with deps)
+        run: pnpm --filter @aurora/browser exec playwright install --with-deps chromium
+
+      - name: Browser (browser)
+        run: pnpm --filter @aurora/browser test:browser
+
+      - name: Browser (plugin-error)
+        run: pnpm --filter @aurora/plugin-error test:browser
+
+      - name: Browser (plugin-request)
+        run: pnpm --filter @aurora/plugin-request test:browser
+
+      - name: Browser (plugin-performance)
+        run: pnpm --filter @aurora/plugin-performance test:browser
