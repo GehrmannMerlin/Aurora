@@ -1,0 +1,63 @@
+import type { Pool } from 'pg';
+import {
+  ConsoleEmailAdapter,
+  type EmailDeliveryPort,
+  type OutboxRepository,
+} from '@aurora/platform-email';
+import { claimOutboxRows, insertOutboxRow, markOutboxResult } from '@aurora/platform-identity';
+import { buildPlatformWorker, type PlatformWorker } from './worker.js';
+
+export { loadPlatformWorkerConfig, type PlatformWorkerConfig } from './config.js';
+export { defaultSleeper, type SleeperPort } from './timers.js';
+export {
+  buildPlatformWorker,
+  type BuildPlatformWorkerInput,
+  type PlatformWorker,
+  type PlatformWorkerStatus,
+} from './worker.js';
+
+/**
+ * Compose the real outbox repository from `@aurora/platform-identity` (data).
+ * Each method receives the `pg` Pool/PoolClient at call time from the consumer,
+ * so no Pool is captured here. The worker is a service layer
+ * (`service → {protocol, data, tooling, contract}` per Workspace Policy
+ * `graph.ts`), so this data→data wiring is allowed and is the intended
+ * PLT-03 Task 8 composition.
+ */
+export function createPlatformOutboxRepository(): OutboxRepository {
+  return {
+    insertOutboxRow: (p, input) => insertOutboxRow(p, input),
+    claimOutboxRows: (p, input) => claimOutboxRows(p, input),
+    markOutboxResult: (p, input) => markOutboxResult(p, input),
+  };
+}
+
+/** Build the env-selected email delivery port (local/Preview console adapter). */
+export function createPlatformEmailPort(mode: string): EmailDeliveryPort {
+  return new ConsoleEmailAdapter({ mode });
+}
+
+export interface BuildPlatformWorkerCompositionInput {
+  readonly pool: Pool;
+  readonly emailDeliveryMode: string;
+  readonly pollIntervalMs: number;
+  readonly batchLimit: number;
+  readonly maxAttempts: number;
+}
+
+/**
+ * Composition root: wire the real outbox repository + the env-selected email
+ * port into the worker. Owns no Pool; `src/start.ts` creates and closes it.
+ */
+export function buildPlatformWorkerComposition(
+  input: BuildPlatformWorkerCompositionInput,
+): PlatformWorker {
+  return buildPlatformWorker({
+    pool: input.pool,
+    port: createPlatformEmailPort(input.emailDeliveryMode),
+    outboxRepo: createPlatformOutboxRepository(),
+    pollIntervalMs: input.pollIntervalMs,
+    batchLimit: input.batchLimit,
+    maxAttempts: input.maxAttempts,
+  });
+}
