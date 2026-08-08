@@ -4,16 +4,16 @@
 
 ## 模块定位
 
-本包属于 `contract` 层，以确定性、可复现的方式定义管理平台公开机器契约：公共与领域 Zod Schema、A1—D2 操作集的操作注册表、生成 `docs/api/platform-openapi-v1.yaml` 的确定性生成器，以及生成 Client/Server 适配器、漂移门禁和契约测试工具。
+本包属于 `contract` 层，以确定性、可复现的方式定义管理平台公开机器契约：公共与领域 Zod Schema、A1—D2 操作集的操作注册表、生成 `docs/api/platform-openapi-v1.yaml` 的确定性生成器，以及已生成的 Client/Server 适配器、契约测试工具与漂移门禁。
 
 ## 职责
 
-- 定义 Platform OpenAPI v1 的公共与领域 Schema；
-- 维护 A1—D2 操作集的操作注册表与预期操作清单；
-- 以确定性生成器产出机器可读 Platform OpenAPI（v1）与覆盖清单；
-- 生成 Client/Server 适配器（规划入口 `/client`、`/server`）；
-- 提供契约测试样本与辅助工具（规划入口 `/contract-testkit`）；
-- 通过漂移门禁保证生成物与契约源码逐字节一致，禁止手工修改生成物。
+- 定义 Platform OpenAPI v1 的公共与领域 Schema（`src/common`、`src/identity`）；
+- 维护 A1—D2 操作集的操作注册表与预期操作清单（`src/registry`）；
+- 以确定性生成器产出机器可读 Platform OpenAPI v1（`docs/api/platform-openapi-v1.yaml`）与覆盖清单（`docs/api/platform-openapi-v1.manifest.json`）；
+- 提供已生成的 Client 适配器（`/client`）与服务端适配器（`/server`）；
+- 提供契约测试样本与辅助工具（`/contract-testkit`）；
+- 通过漂移门禁（`tooling/platform-contract-drift`）保证生成物与契约源码逐字节一致，禁止手工修改生成物。
 
 ## 非职责
 
@@ -24,27 +24,83 @@
 
 ## 对外接口
 
-当前已存在根入口：
+包导出四个真实入口，全部指向 `dist/`（由 `pnpm --filter @aurora/platform-contract build` 生成）。生成器 `src/generator/` 是内部实现，不对外导出。
+
+### 根入口 `@aurora/platform-contract`
+
+公共与领域 Schema、标识符、操作注册表、预期清单与身份/导航契约形状：
 
 ```ts
-import { PLATFORM_CONTRACT_VERSION, type PlatformContractVersion } from '@aurora/platform-contract';
+import {
+  PLATFORM_CONTRACT_VERSION,
+  ROUTE_TARGET_IDS,
+  identityGetSessionResponse,
+  navigationGetContextResponse,
+  PLATFORM_OPERATIONS,
+  OPERATION_MANIFEST,
+  auroraProblem,
+  obj,
+  str,
+} from '@aurora/platform-contract';
+import type {
+  PlatformContractVersion,
+  OperationDef,
+  RouteTargetId,
+} from '@aurora/platform-contract';
 ```
 
-规划中的子路径由后续任务落地，当前尚未导出：
+### `/client` 入口
 
-- `@aurora/platform-contract/client` — 生成 Client 适配器；
-- `@aurora/platform-contract/server` — 生成服务端适配器；
-- `@aurora/platform-contract/contract-testkit` — 契约测试样本与辅助工具。
+生成的 Client 请求描述与响应校验：
 
-禁止导入 `src`、`internal`、测试文件或未导出的子路径。
+```ts
+import {
+  buildRequest,
+  parseResponse,
+  ClientInputError,
+  PLATFORM_OPERATIONS,
+} from '@aurora/platform-contract/client';
+import type { OperationRequest, OperationResult } from '@aurora/platform-contract/client';
+```
+
+### `/server` 入口
+
+生成的服务端输入校验与输出序列化：
+
+```ts
+import {
+  parseInput,
+  serializeOutput,
+  problemSchema,
+  listServerOperations,
+} from '@aurora/platform-contract/server';
+import type { HttpMethod, AuthLevel, OperationDef } from '@aurora/platform-contract/server';
+```
+
+### `/contract-testkit` 入口
+
+契约测试样本与辅助工具（无秘密）：
+
+```ts
+import {
+  validSessionSamples,
+  invalidSessionSamples,
+  validNavigationSamples,
+  invalidNavigationSamples,
+  validProblemSamples,
+  invalidProblemSamples,
+} from '@aurora/platform-contract/contract-testkit';
+```
+
+禁止导入 `src`、`generator`、`internal`、测试文件或未导出的子路径。
 
 ## 依赖边界
 
-本包属于 `contract` 层，只能依赖 `protocol` 层（`@aurora/event-schema`）或外部包；不得依赖 `service`、`data`、`sdk-*`、`tooling` 或任何 Aurora 本地业务包。当前增量尚未导入 `@aurora/event-schema`。
+本包属于 `contract` 层，只能依赖 `protocol` 层（`@aurora/event-schema`）或外部包；不得依赖 `service`、`data`、`sdk-*`、`tooling` 或任何 Aurora 本地业务包。当前增量只依赖外部 `zod`，未导入 `@aurora/event-schema`。Workspace Policy 的 `forbidden-layer-dependency` 与 `private-path-import` 规则由 `pnpm check:boundaries` 强制执行。
 
 ## 生成物与漂移门禁
 
-生成物（`docs/api/platform-openapi-v1.yaml`、Client/Server 适配器、覆盖清单、样本）带有“由契约源码生成、禁止手工修改”标记；重新生成必须逐字节相同，CI 通过漂移门禁校验生成物与契约源码保持一致。
+生成物（`docs/api/platform-openapi-v1.yaml`、`docs/api/platform-openapi-v1.manifest.json`、Client/Server 适配器、样本）带有“由契约源码生成、禁止手工修改”标记；重新生成必须逐字节相同，CI 通过漂移门禁（`tooling/platform-contract-drift`，经根 `openapi:check` 与 `platform-contract:drift`）校验生成物与契约源码保持一致。
 
 ## 命令
 
@@ -70,5 +126,7 @@ pnpm --filter @aurora/platform-contract test:package
 
 - [Platform Contract Foundation 规格](../../docs/architecture/platform-contract-foundation.md)
 - [平台 OpenAPI 与实现约束设计](../../docs/superpowers/specs/2026-07-30-aurora-platform-openapi-and-implementation-design.md)
+- [ADR-025](../../docs/adr/ADR-025-platform-frontend-technology-stack.md)
 - [ADR-026](../../docs/adr/ADR-026-platform-backend-runtime-and-contract-chain.md)
 - [ADR-027](../../docs/adr/ADR-027-platform-contract-codegen-tooling.md)
+- [ADR-028](../../docs/adr/ADR-028-platform-session-csrf-security.md)
