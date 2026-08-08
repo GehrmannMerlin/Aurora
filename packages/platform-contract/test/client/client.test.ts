@@ -39,4 +39,30 @@ describe('generated client', () => {
     const navOp = findOp('navigationGetContext');
     expect(() => buildRequest(navOp, { query: { bogus: 1 } })).toThrow(ClientInputError);
   });
+
+  it('fails closed on an undeclared request body', () => {
+    expect(() => buildRequest(sessionOp, { body: {} })).toThrow(ClientInputError);
+  });
+
+  it('returns ok:false for non-2xx and schema-mismatched responses', () => {
+    const problemRes = parseResponse(
+      sessionOp,
+      {
+        type: 'about:blank',
+        title: 'Unauthorized',
+        status: 401,
+        detail: 'x',
+        code: 'authentication',
+        requestId: 'r_1',
+      },
+      401,
+    );
+    expect(problemRes.ok).toBe(false);
+    if (!problemRes.ok)
+      expect(problemRes.problem).toMatchObject({ code: 'authentication', status: 401 });
+
+    const mismatchRes = parseResponse(sessionOp, { status: 'processing' }, 200);
+    expect(mismatchRes.ok).toBe(false);
+    if (!mismatchRes.ok) expect(mismatchRes.problem).toEqual({ code: 'structural_error' });
+  });
 });

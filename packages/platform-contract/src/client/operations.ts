@@ -22,7 +22,10 @@ export function buildRequest(
       throw new ClientInputError(`invalid query for ${op.operationId}`, r.error.issues);
   } else if (
     input.query !== undefined &&
-    Object.keys(input.query as Record<string, unknown>).length > 0
+    input.query !== null &&
+    typeof input.query === 'object' &&
+    !Array.isArray(input.query) &&
+    Object.keys(input.query).length > 0
   ) {
     throw new ClientInputError(`operation ${op.operationId} accepts no query parameters`, []);
   }
