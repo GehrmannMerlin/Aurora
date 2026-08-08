@@ -3,6 +3,9 @@
 # release and restart the stack. Does NOT roll back destructive DB migrations;
 # if the current code's migrations are not backward-compatible, it stops and
 # reports instead of pretending code rollback equals DB rollback.
+#
+# CI mode (CI=1): non-interactive (auto-confirms rollback, which the workflow
+# explicitly authorized), uses env-provided SSH key + known_hosts pinning.
 set -euo pipefail
 
 cd "$(dirname "$0")/../../.." # repo root
@@ -10,10 +13,11 @@ cd "$(dirname "$0")/../../.." # repo root
 SERVER="${AURORA_PREVIEW_SERVER:-47.238.145.24}"
 SERVER_USER="${AURORA_PREVIEW_SERVER_USER:-ecs-user}"
 SSH_KEY="${AURORA_PREVIEW_SSH_KEY:-$HOME/.ssh/lumina_ops_ed25519}"
+KNOWN_HOSTS="${AURORA_PREVIEW_KNOWN_HOSTS:-${HOME}/.ssh/known_hosts}"
 REMOTE_ROOT="${AURORA_PREVIEW_REMOTE_ROOT:-/opt/aurora-preview}"
 CURRENT_DIR="${REMOTE_ROOT}/current"
 
-SSH() { ssh -o BatchMode=yes -o ConnectTimeout=15 -o UserKnownHostsFile="${HOME}/.ssh/known_hosts" -i "$SSH_KEY" "${SERVER_USER}@${SERVER}" "$@"; }
+SSH() { ssh -o BatchMode=yes -o ConnectTimeout=15 -o UserKnownHostsFile="$KNOWN_HOSTS" -i "$SSH_KEY" "${SERVER_USER}@${SERVER}" "$@"; }
 
 echo "==> Public preview rollback"
 CURRENT="$(SSH "readlink -f '${CURRENT_DIR}'" 2>/dev/null || echo '')"
@@ -37,7 +41,11 @@ echo "==> Previous: ${PREVIOUS}"
 echo "==> DB migrations are NOT rolled back by this command."
 echo "==> If the current release applied forward-only migrations that the"
 echo "    previous release cannot run against, manual review is required."
-read -r -p "Confirm rollback to ${PREVIOUS}? [y/N] " CONFIRM
+if [ "${CI:-0}" = "1" ]; then
+  CONFIRM="y" # CI rollback is explicitly authorized by the workflow.
+else
+  read -r -p "Confirm rollback to ${PREVIOUS}? [y/N] " CONFIRM
+fi
 if [ "$CONFIRM" != "y" ] && [ "$CONFIRM" != "Y" ]; then
   echo "Rollback aborted."
   exit 1

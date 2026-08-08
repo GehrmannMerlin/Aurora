@@ -84,6 +84,8 @@ TLS 使用宿主机 certbot（Let's Encrypt，http-01 webroot，已有 Lumina �
 - 操作前先 `nginx -t` 预验证；仅当验证通过才生效；
 - Lumina 继续服务 `lumina.ac.cn`，零停机；未知域名仍返回 444 / `ssl_reject_handshake`。
 
+**nginx ownership 修复（2026-08-08）**：Lumina `deploy.sh` 重建 nginx 时原本只使用 `compose.prod.yml`，会把 Aurora vhost 挂载丢掉。已对 `/opt/lumina/app/deploy/scripts/deploy.sh` 做最小修改：新增 `AURORA_OVERRIDE`/`AURORA_COMPOSE`（含 `/opt/aurora-preview/deploy/compose.aurora-override.yml`），并让 nginx `up -d` 使用 `AURORA_COMPOSE`。Lumina 业务部署行为不变；备份为 `deploy.sh.bak-20260808`。这样 Aurora vhost ownership 独立于 Lumina 下次 deploy，不会因另一应用部署而下线。
+
 Aurora vhost 路由：
 
 - `aurora.ah.cn` → 明确标注的 Preview 状态页（不是产品 UI，不冒充 Console）；

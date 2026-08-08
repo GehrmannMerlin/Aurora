@@ -1,0 +1,160 @@
+# Aurora Preview Continuous Delivery — deploy the CI-passed main SHA to the
+# public preview server. Implements docs/operations/preview-continuous-delivery.md.
+#
+# Trigger model:
+#   - workflow_run: fires when Main Quality Gates completes. Deploys ONLY if
+#     the main workflow concluded success on branch main.
+#   - workflow_dispatch: re-deploy a known commit (recovery/debugging); only
+#     repository refs with prior main-quality evidence may use preview secrets.
+#
+# No PR deployment. Exact-SHA invariant: the deployed SHA is the CI-passed
+# workflow_run.head_sha, never "latest main".
+name: Preview Continuous Delivery
+
+on:
+  workflow_run:
+    workflows: ["Main Quality Gates"]
+    types: [completed]
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: 'Git ref (branch, tag, or SHA) with a passing main-quality run'
+        required: false
+        default: 'main'
+        type: string
+
+permissions:
+  contents: read
+  deployments: write
+
+concurrency:
+  group: aurora-preview-deployment
+  cancel-in-progress: false
+
+jobs:
+  deploy-preview:
+    name: Deploy Preview
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    environment: preview
+    steps:
+      - name: Determine deploy SHA
+        id: sha
+        env:
+          RUN_SHA: ${{ github.event.workflow_run.head_sha }}
+          RUN_CONCLUSION: ${{ github.event.workflow_run.conclusion }}
+          RUN_BRANCH: ${{ github.event.workflow_run.head_branch }}
+        run: |
+          if [ "${GITHUB_EVENT_NAME:-}" = "workflow_dispatch" ]; then
+            echo "sha=${GITHUB_SHA}" >> "$GITHUB_OUTPUT"
+            echo "mode=dispatch" >> "$GITHUB_OUTPUT"
+          else
+            echo "workflow_run: branch=${RUN_BRANCH} conclusion=${RUN_CONCLUSION}"
+            if [ "${RUN_BRANCH}" != "main" ]; then
+              echo "Skipping: workflow_run branch ${RUN_BRANCH} is not main"
+              exit 0
+            fi
+            if [ "${RUN_CONCLUSION}" != "success" ]; then
+              echo "Skipping: main quality conclusion is ${RUN_CONCLUSION}"
+              exit 0
+            fi
+            echo "sha=${RUN_SHA}" >> "$GITHUB_OUTPUT"
+            echo "mode=workflow_run" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Checkout exact SHA
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ steps.sha.outputs.sha }}
+          fetch-depth: 0
+
+      - name: Verify checked-out SHA matches CI-passed SHA
+        run: |
+          EXPECTED="${{ steps.sha.outputs.sha }}"
+          ACTUAL="$(git rev-parse HEAD)"
+          echo "expected=$EXPECTED actual=$ACTUAL"
+          if [ "$EXPECTED" != "$ACTUAL" ]; then
+            echo "FATAL: checked-out SHA does not match CI-passed SHA"
+            exit 1
+          fi
+          # CI deploys clean commits only.
+          DIRTY="$(git status --porcelain=v1 | wc -l)"
+          if [ "$DIRTY" -ne 0 ]; then
+            echo "FATAL: checkout is dirty ($DIRTY files); refusing to deploy"
+            exit 1
+          fi
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 11.17.0
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24.18.0
+          cache: pnpm
+
+      - name: Install (frozen lockfile)
+        run: pnpm install --frozen-lockfile
+
+      - name: Build workspace deps
+        run: pnpm build
+
+      - name: Write SSH key + known_hosts (not printed)
+        id: sshkey
+        env:
+          PREVIEW_SSH_PRIVATE_KEY: ${{ secrets.PREVIEW_SSH_PRIVATE_KEY }}
+        run: |
+          install -m 600 /dev/null "${RUNNER_TEMP}/preview_deploy_key"
+          printf '%s\n' "${PREVIEW_SSH_PRIVATE_KEY}" > "${RUNNER_TEMP}/preview_deploy_key"
+          chmod 600 "${RUNNER_TEMP}/preview_deploy_key"
+          echo "key_path=${RUNNER_TEMP}/preview_deploy_key" >> "$GITHUB_OUTPUT"
+
+      - name: Deploy to preview server
+        id: deploy
+        env:
+          AURORA_PREVIEW_SERVER: ${{ vars.PREVIEW_HOST }}
+          AURORA_PREVIEW_SERVER_USER: ${{ vars.PREVIEW_USER }}
+          AURORA_PREVIEW_SSH_KEY: ${{ steps.sshkey.outputs.key_path }}
+          AURORA_PREVIEW_KNOWN_HOSTS: ${{ github.workspace }}/deploy/preview/ssh/known_hosts
+          AURORA_PREVIEW_RELEASE_ID: cd-${{ steps.sha.outputs.sha }}
+          CI: '1'
+        run: |
+          bash deploy/preview/scripts/deploy-preview.sh
+          echo "release_id=${AURORA_PREVIEW_RELEASE_ID}" >> "$GITHUB_OUTPUT"
+
+      - name: Public smoke
+        env:
+          PREVIEW_HOST: ${{ vars.PREVIEW_HOST }}
+          DEPLOY_SHA: ${{ steps.sha.outputs.sha }}
+        run: |
+          echo "==> Public smoke for SHA ${DEPLOY_SHA}"
+          set -e
+          status() { curl -sS -o /dev/null -w '%{http_code}' --max-time 20 "$1" 2>/dev/null || echo 000; }
+          CODE="$(status https://aurora.ah.cn)"
+          echo "https://aurora.ah.cn -> $CODE"
+          [ "$CODE" = "200" ] || { echo "FATAL: aurora.ah.cn not 200"; exit 1; }
+          REDIR="$(curl -sS -o /dev/null -w '%{redirect_url}' --max-time 20 http://aurora.ah.cn 2>/dev/null || echo '')"
+          echo "http://aurora.ah.cn redirect -> $REDIR"
+          case "$REDIR" in https://aurora.ah.cn*) ;; *) echo "FATAL: no HTTPS redirect"; exit 1;; esac
+          INGEST="$(curl -sS -o /dev/null -w '%{http_code}' --max-time 20 -X POST https://ingest.aurora.ah.cn/v1/batches -H 'Content-Type: application/json' -d '{}' 2>/dev/null || echo 000)"
+          echo "https://ingest.aurora.ah.cn/v1/batches (no creds) -> $INGEST"
+          [ "$INGEST" = "401" ] || { echo "FATAL: ingest contract not 401"; exit 1; }
+
+      - name: Run summary evidence
+        if: always()
+        env:
+          DEPLOY_SHA: ${{ steps.sha.outputs.sha }}
+          RELEASE_ID: ${{ steps.deploy.outputs.release_id }}
+        run: |
+          {
+            echo "## Preview Continuous Delivery"
+            echo ""
+            echo "- Commit SHA: \`${{ steps.sha.outputs.sha }}\`"
+            echo "- Release ID: \`${RELEASE_ID}\`"
+            echo "- Deployment target: preview (https://aurora.ah.cn)"
+            echo "- Trigger: ${{ steps.sha.outputs.mode }}"
+            echo "- Deploy step: ${{ steps.deploy.outcome }}"
+            echo "- Smoke step: ${{ job.status }}"
+          } >> "$GITHUB_STEP_SUMMARY"

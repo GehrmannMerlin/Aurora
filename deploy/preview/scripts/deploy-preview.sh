@@ -4,6 +4,10 @@
 # server, migrates, starts the stack, then atomically points current. On
 # failure the previous release is preserved. Never deletes data, never exposes
 # secrets, never auto-deploys on file save.
+#
+# CI mode (CI=1): skips the local quality gate (CI already ran it), skips sudo
+# (a dedicated deploy user owns the preview dirs), and uses the env-provided
+# SSH key + known_hosts pinning. Non-interactive.
 set -euo pipefail
 
 cd "$(dirname "$0")/../../.." # repo root
@@ -12,12 +16,17 @@ cd "$(dirname "$0")/../../.." # repo root
 SERVER="${AURORA_PREVIEW_SERVER:-47.238.145.24}"
 SERVER_USER="${AURORA_PREVIEW_SERVER_USER:-ecs-user}"
 SSH_KEY="${AURORA_PREVIEW_SSH_KEY:-$HOME/.ssh/lumina_ops_ed25519}"
+# Host public-key pinning. In CI this is the checked-in known_hosts file; in
+# local manual mode it falls back to the user's known_hosts.
+KNOWN_HOSTS="${AURORA_PREVIEW_KNOWN_HOSTS:-${HOME}/.ssh/known_hosts}"
 REMOTE_ROOT="${AURORA_PREVIEW_REMOTE_ROOT:-/opt/aurora-preview}"
-RELEASE_ID="$(date +%Y%m%d-%H%M%S)"
+# CI sets a deterministic release id (timestamp-SHA); local manual defaults to
+# timestamp only.
+RELEASE_ID="${AURORA_PREVIEW_RELEASE_ID:-$(date +%Y%m%d-%H%M%S)}"
 RELEASE_DIR="${REMOTE_ROOT}/releases/${RELEASE_ID}"
 CURRENT_DIR="${REMOTE_ROOT}/current"
 
-SSH() { ssh -o BatchMode=yes -o ConnectTimeout=15 -o UserKnownHostsFile="${HOME}/.ssh/known_hosts" -i "$SSH_KEY" "${SERVER_USER}@${SERVER}" "$@"; }
+SSH() { ssh -o BatchMode=yes -o ConnectTimeout=15 -o UserKnownHostsFile="$KNOWN_HOSTS" -i "$SSH_KEY" "${SERVER_USER}@${SERVER}" "$@"; }
 
 echo "==> Public preview deploy: ${RELEASE_ID}"
 echo "==> Server: ${SERVER_USER}@${SERVER}  root: ${REMOTE_ROOT}"
@@ -30,14 +39,24 @@ echo "==> Git HEAD: $(git rev-parse --short HEAD)  branch: $(git branch --show-c
 CHANGED="$(git status --porcelain=v1 | wc -l | tr -d ' ')"
 echo "==> Working tree changed file count: ${CHANGED}"
 
-# 2. Local quality gate (fast, deployment-relevant).
-pnpm typecheck >/tmp/aurora-preview-typecheck.log 2>&1 || { echo "TYPE CHECK FAILED"; tail -30 /tmp/aurora-preview-typecheck.log; exit 1; }
-pnpm --filter @aurora/ingestion-api build >/tmp/aurora-preview-api-build.log 2>&1 || { echo "API BUILD FAILED"; tail -30 /tmp/aurora-preview-api-build.log; exit 1; }
-pnpm --filter @aurora/ingestion-worker build >/tmp/aurora-preview-worker-build.log 2>&1 || { echo "WORKER BUILD FAILED"; tail -30 /tmp/aurora-preview-worker-build.log; exit 1; }
-echo "==> Local quality gate passed (typecheck + app builds)"
+# 2. Local quality gate (fast, deployment-relevant). Skipped in CI mode: OPS-01
+#    main workflow already ran the full gate and only a CI-passed SHA is deployed.
+if [ "${CI:-0}" != "1" ]; then
+  pnpm typecheck >/tmp/aurora-preview-typecheck.log 2>&1 || { echo "TYPE CHECK FAILED"; tail -30 /tmp/aurora-preview-typecheck.log; exit 1; }
+  pnpm --filter @aurora/ingestion-api build >/tmp/aurora-preview-api-build.log 2>&1 || { echo "API BUILD FAILED"; tail -30 /tmp/aurora-preview-api-build.log; exit 1; }
+  pnpm --filter @aurora/ingestion-worker build >/tmp/aurora-preview-worker-build.log 2>&1 || { echo "WORKER BUILD FAILED"; tail -30 /tmp/aurora-preview-worker-build.log; exit 1; }
+  echo "==> Local quality gate passed (typecheck + app builds)"
+else
+  echo "==> CI mode: local quality gate skipped (OPS-01 main gate already passed for this SHA)"
+fi
 
-# 3. Create fresh release dir on server.
-SSH "sudo mkdir -p '${REMOTE_ROOT}/releases' '${REMOTE_ROOT}/shared' '${REMOTE_ROOT}/backups' && sudo chown -R ${SERVER_USER}:${SERVER_USER} '${REMOTE_ROOT}' && mkdir -p '${RELEASE_DIR}'" || { echo "FAILED to create release dir"; exit 1; }
+# 3. Create fresh release dir on server. In CI the dedicated deploy user owns
+#    the preview tree, so no sudo is needed.
+if [ "${CI:-0}" = "1" ]; then
+  SSH "mkdir -p '${REMOTE_ROOT}/releases' '${REMOTE_ROOT}/shared' '${REMOTE_ROOT}/backups' && mkdir -p '${RELEASE_DIR}'" || { echo "FAILED to create release dir"; exit 1; }
+else
+  SSH "sudo mkdir -p '${REMOTE_ROOT}/releases' '${REMOTE_ROOT}/shared' '${REMOTE_ROOT}/backups' && sudo chown -R ${SERVER_USER}:${SERVER_USER} '${REMOTE_ROOT}' && mkdir -p '${RELEASE_DIR}'" || { echo "FAILED to create release dir"; exit 1; }
+fi
 
 # 4. Ship source to the new release dir via tar-over-SSH (no rsync dependency,
 #    no --delete needed: the release dir is brand new). Exclude secrets and
