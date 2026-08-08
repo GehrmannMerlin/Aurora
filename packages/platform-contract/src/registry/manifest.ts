@@ -1,7 +1,30 @@
 import { ROUTE_TARGET_IDS, type RouteTargetId } from '../common/navigation.js';
-import { BLOCKED_OPERATIONS, PLATFORM_OPERATIONS } from './operations.js';
+import { BLOCKED_OPERATIONS, PLATFORM_OPERATIONS, type BlockedOperation } from './operations.js';
 
 export type CoverageKind = 'stable' | 'blocked' | 'unavailable';
+
+// Structural input shapes so validateManifest can be driven against injected (mismatched) data
+// in tests without touching module globals; defaults are the real registry collections.
+interface StableOpInput {
+  readonly operationId: string;
+  readonly page?: RouteTargetId;
+}
+
+// Mirrors BlockedOperation plus the request/response keys a blocked op must never carry, so the
+// guard can be exercised with injected schema-bearing entries.
+interface BlockedOpInput {
+  readonly operationId: string;
+  readonly domain?: string;
+  readonly reason?: string;
+  readonly responses?: unknown;
+  readonly request?: unknown;
+}
+
+export interface ManifestValidationInput {
+  readonly stableOps?: readonly StableOpInput[];
+  readonly blockedOps?: readonly (BlockedOperation | BlockedOpInput)[];
+  readonly coverage?: Readonly<Record<RouteTargetId, CoverageKind>>;
+}
 
 export interface OperationManifest {
   readonly stable: readonly string[];
@@ -83,26 +106,43 @@ export const OPERATION_MANIFEST: OperationManifest = {
   routeTargetCoverage: buildRouteTargetCoverage(),
 };
 
-export function validateManifest(): void {
+export function validateManifest(input: ManifestValidationInput = {}): void {
+  const stableOps = input.stableOps ?? PLATFORM_OPERATIONS;
+  const blockedOps = input.blockedOps ?? BLOCKED_OPERATIONS;
+  const coverage = input.coverage ?? OPERATION_MANIFEST.routeTargetCoverage;
+
   const seen = new Set<string>();
-  for (const op of PLATFORM_OPERATIONS) {
+  for (const op of stableOps) {
     if (seen.has(op.operationId)) throw new Error(`duplicate operationId: ${op.operationId}`);
     seen.add(op.operationId);
     if (!operationIdPattern.test(op.operationId))
       throw new Error(`invalid operationId format: ${op.operationId}`);
   }
-  for (const op of BLOCKED_OPERATIONS) {
+  // A route target may only be marked 'stable' when a PLATFORM_OPERATIONS entry actually emits
+  // it (every stable op is in the OpenAPI-emittable set by construction; this guard catches a
+  // future stable op that is registered in the coverage but not emitted as a path).
+  const stablePages = new Set(
+    stableOps.map((op) => op.page).filter((p): p is RouteTargetId => p !== undefined),
+  );
+  for (const op of blockedOps) {
     if (seen.has(op.operationId))
       throw new Error(`blocked op collides with stable op: ${op.operationId}`);
     seen.add(op.operationId);
     if (!operationIdPattern.test(op.operationId))
       throw new Error(`invalid blocked operationId: ${op.operationId}`);
+    // Blocked operations are metadata-only: they must never carry a request/response schema.
+    if ('responses' in op || 'request' in op)
+      throw new Error(`blocked op carries a schema: ${op.operationId}`);
   }
   for (const rt of ROUTE_TARGET_IDS) {
     // routeTargetCoverage is a full Record<RouteTargetId, CoverageKind>, so a missing key is
     // only possible through a data/construction divergence; guard it explicitly at runtime.
-    if (!Object.hasOwn(OPERATION_MANIFEST.routeTargetCoverage, rt)) {
+    if (!Object.hasOwn(coverage, rt)) {
       throw new Error(`route target not covered: ${rt}`);
+    }
+    const kind = coverage[rt];
+    if (kind === 'stable' && !stablePages.has(rt)) {
+      throw new Error(`route target marked stable without an emittable operation: ${rt}`);
     }
   }
 }

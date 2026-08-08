@@ -98,7 +98,26 @@ export function union(members: readonly SchemaDef[]): SchemaDef {
 }
 
 export function nullable(def_: SchemaDef): SchemaDef {
-  return def(z.nullable(def_.zod), { ...def_.openapi, nullable: true });
+  // OpenAPI 3.1 (JSON Schema 2020-12) has no `nullable` keyword: a nullable value is a
+  // two-member type union [T, 'null']. Drop the draft-04 `nullable` key and widen `type`;
+  // every other key (properties/items/enum/format/minLength/maxLength/etc.) is unchanged.
+  const { type, ...rest } = def_.openapi;
+  const openapi = Object.fromEntries(
+    Object.entries(rest).filter(([key]) => key !== 'nullable'),
+  ) as JsonSchemaObject;
+  const nullableType = widenNullableType(type);
+  return def(z.nullable(def_.zod), {
+    ...openapi,
+    ...(nullableType === undefined ? {} : { type: nullableType }),
+  });
+}
+
+function widenNullableType(
+  type: string | readonly string[] | undefined,
+): string | readonly string[] | undefined {
+  if (typeof type === 'string') return [type, 'null'];
+  if (type === undefined) return undefined;
+  return type.includes('null') ? type : [...type, 'null'];
 }
 
 export function optional(def_: SchemaDef): SchemaDef {

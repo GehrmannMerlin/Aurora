@@ -213,7 +213,6 @@ components:
               - projects
               - entry
         currentScope:
-          type: object
           properties:
             type:
               type: string
@@ -235,7 +234,9 @@ components:
           required:
             - type
             - lifecycle
-          nullable: true
+          type:
+            - object
+            - "null"
         defaultTarget: *a4
         safeExitTarget: *a4
       additionalProperties: false

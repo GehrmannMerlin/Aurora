@@ -120,7 +120,9 @@ pnpm --filter @aurora/platform-contract build
 pnpm --filter @aurora/platform-contract test:package
 ```
 
-覆盖率门槛为行 85%、分支 80%、函数 85%、语句 85%。
+覆盖率门槛为行 85%、分支 80%、函数 85%、语句 85%，由根 `pnpm test:coverage` 强制执行（本包已接入该链）。
+
+Schema 按 OpenAPI 3.1（JSON Schema 2020-12）语义导出：可空字段以 `type: [T, 'null']` 联合表达，不使用 draft-04 的 `nullable: true` 关键字。
 
 ## 关联文档
 
