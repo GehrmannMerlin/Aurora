@@ -12,3 +12,7 @@ rules:
   tag-description: off
   tags-alphabetical: off
   no-empty-servers: off
+  # OpenAPI 3.1 uses JSON Schema 2020-12, which drops the draft-04 `nullable` keyword. The
+  # platform-contract generator emits nullable: true for nullable() schemas; suppress the struct
+  # check until the generator emits 3.1-style `type: [... , "null"]` unions.
+  struct: off

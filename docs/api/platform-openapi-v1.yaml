@@ -1,0 +1,252 @@
+# 由契约源码生成、禁止手工修改
+openapi: 3.1.0
+info:
+  title: Aurora Platform API
+  version: v1
+servers:
+  - url: /api/platform/v1
+paths:
+  /session:
+    get:
+      operationId: identityGetSession
+      summary: Resolve the current account session projection and CSRF token
+      tags:
+        - identity
+        - session
+      responses:
+        "200":
+          description: 200 response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/identityGetSessionResponse"
+  /navigation/context:
+    get:
+      operationId: navigationGetContext
+      summary: Resolve the authorized navigation context for the current scope
+      tags:
+        - identity
+        - navigation
+      responses:
+        "200":
+          description: 200 response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/navigationGetContextResponse"
+components:
+  schemas:
+    identityGetSessionResponse:
+      type: object
+      properties:
+        account:
+          type: object
+          properties:
+            accountId: &a2
+              type: string
+              minLength: 3
+              maxLength: 64
+              description: AccountId
+            email:
+              type: string
+              minLength: 3
+              maxLength: 320
+            verified:
+              type: boolean
+          additionalProperties: false
+          required:
+            - accountId
+            - email
+            - verified
+        authentication:
+          type: string
+          enum:
+            - pending_verification
+            - authenticated
+            - restricted
+        session:
+          type: object
+          properties:
+            expiresAt: &a1
+              type: string
+              format: date-time
+            rotationDueAt: *a1
+          additionalProperties: false
+          required:
+            - expiresAt
+        csrf:
+          type: string
+          minLength: 1
+          maxLength: 256
+        navigation: &a3
+          type: array
+          items: &a4
+            type: object
+            properties:
+              routeId:
+                type: string
+                enum:
+                  - auth.register
+                  - auth.verify-email
+                  - auth.verify-email-confirm
+                  - auth.login
+                  - auth.forgot-password
+                  - auth.reset-password
+                  - invitation.accept
+                  - account.security
+                  - workspace.home
+                  - organization.project-create
+                  - organization.members
+                  - organization.settings
+                  - organization.usage
+                  - organization.tokens
+                  - organization.audit
+                  - organization.trash
+                  - project.onboarding
+                  - project.overview
+                  - project.issues
+                  - project.issue-detail
+                  - project.requests
+                  - project.performance
+                  - project.data-status
+                  - project.releases
+                  - project.release-detail
+                  - project.source-maps
+                  - project.alerts
+                  - project.alert-rule-create
+                  - project.alert-rule-edit
+                  - project.alert-instance-detail
+                  - project.access
+                  - project.client-keys
+                  - project.settings
+                  - project.lifecycle
+                  - account.notifications
+                  - platform.resource-policies
+              pathParams:
+                type: object
+                additionalProperties:
+                  type: string
+                  minLength: 1
+                  maxLength: 256
+              query:
+                type: object
+                additionalProperties:
+                  type: string
+                  minLength: 1
+                  maxLength: 512
+            additionalProperties: false
+            required:
+              - routeId
+              - pathParams
+              - query
+      additionalProperties: false
+      required:
+        - account
+        - authentication
+        - session
+        - csrf
+        - navigation
+    navigationGetContextResponse:
+      type: object
+      properties:
+        account:
+          type: object
+          properties:
+            accountId: *a2
+            email:
+              type: string
+              minLength: 3
+              maxLength: 320
+            verified:
+              type: boolean
+          additionalProperties: false
+          required:
+            - accountId
+            - email
+            - verified
+        workspace: *a3
+        organizations:
+          type: array
+          items:
+            type: object
+            properties:
+              organizationId:
+                type: string
+                minLength: 3
+                maxLength: 64
+                description: OrganizationId
+              name:
+                type: string
+                minLength: 1
+                maxLength: 128
+              projects:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    projectId:
+                      type: string
+                      minLength: 3
+                      maxLength: 64
+                      description: ProjectId
+                    name:
+                      type: string
+                      minLength: 1
+                      maxLength: 128
+                    lifecycle:
+                      type: string
+                      enum:
+                        - active
+                        - archived
+                    entry: *a4
+                  additionalProperties: false
+                  required:
+                    - projectId
+                    - name
+                    - lifecycle
+                    - entry
+              entry: *a4
+            additionalProperties: false
+            required:
+              - organizationId
+              - name
+              - projects
+              - entry
+        currentScope:
+          type: object
+          properties:
+            type:
+              type: string
+              enum:
+                - workspace
+                - organization
+                - project
+            id:
+              type: string
+              minLength: 1
+              maxLength: 64
+            lifecycle:
+              type: string
+              enum:
+                - active
+                - archived
+                - trash
+          additionalProperties: false
+          required:
+            - type
+            - lifecycle
+          nullable: true
+        defaultTarget: *a4
+        safeExitTarget: *a4
+      additionalProperties: false
+      required:
+        - account
+        - workspace
+        - organizations
+        - currentScope
+        - defaultTarget
+        - safeExitTarget
+tags:
+  - name: identity
+  - name: navigation
+  - name: session
