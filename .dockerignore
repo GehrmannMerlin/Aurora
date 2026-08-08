@@ -1,0 +1,21 @@
+# Aurora public-preview Docker build context exclusions.
+# The builder runs `pnpm install --frozen-lockfile` over the full workspace, so
+# individual workspace packages must stay in the context. Exclude only noise
+# and secrets.
+
+.git
+.gitignore
+node_modules
+coverage
+test-results
+.vitest
+.pnpm-store
+.artifacts
+*.tsbuildinfo
+*.log
+.env
+.env.*
+!.env.example
+.migrations-combined
+.migrations-combined-preview
+dist

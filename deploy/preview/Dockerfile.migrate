@@ -1,0 +1,20 @@
+# Aurora public-preview migration runner image.
+# Runs the repository's real formal migrations (inbox ×3, credentials ×1,
+# processing-store ×4) over the preview PostgreSQL. node-pg-migrate bundles
+# jiti, so the checked-in .ts migrations load without a separate TS runtime.
+FROM node:24.18.0-slim
+
+ENV PNPM_HOME=/pnpm
+ENV PATH="$PNPM_HOME:$PATH"
+ENV COREPACK_HOME=/corepack
+RUN npm i -g corepack && corepack enable && corepack prepare pnpm@11.17.0 --activate
+
+WORKDIR /workspace
+COPY . ./
+# Install the full workspace. The runner executes from apps/ingestion-api, whose
+# own node_modules resolve node-pg-migrate (which bundles jiti) and pg.
+RUN pnpm install --frozen-lockfile
+
+# Run from apps/ingestion-api so ESM resolution finds node-pg-migrate + pg.
+WORKDIR /workspace/apps/ingestion-api
+ENTRYPOINT ["node", "/workspace/deploy/preview/entry/migrate/run-preview-migrations.js"]

@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Aurora Public Preview — Status</title>
+  <style>
+    :root { color-scheme: light; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      margin: 0; padding: 0; background: #f7f7f5; color: #23211d;
+      display: flex; align-items: center; justify-content: center; min-height: 100vh;
+    }
+    .card {
+      background: #fff; border: 1px solid #e5e2db; border-radius: 12px;
+      max-width: 560px; width: 90%; padding: 40px 36px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+    }
+    .badge {
+      display: inline-block; font-size: 12px; letter-spacing: 0.08em;
+      text-transform: uppercase; font-weight: 600;
+      color: #8a6d1a; background: #fdf3d7; border: 1px solid #f0e0a8;
+      padding: 4px 10px; border-radius: 999px; margin-bottom: 20px;
+    }
+    h1 { font-size: 22px; margin: 0 0 8px; font-weight: 700; }
+    .sub { font-size: 14px; color: #6b665c; margin: 0 0 28px; }
+    .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #2f9e63; margin-right: 6px; }
+    .status { font-size: 15px; margin: 6px 0; }
+    ul { margin: 20px 0 0; padding-left: 20px; font-size: 14px; color: #4d493f; }
+    li { margin: 6px 0; }
+    code { background: #f1efe9; padding: 1px 6px; border-radius: 4px; font-size: 13px; }
+    .foot { margin-top: 28px; padding-top: 16px; border-top: 1px solid #eee; font-size: 12px; color: #999287; }
+  </style>
+</head>
+<body>
+  <main class="card">
+    <span class="badge">Public Preview · 非生产环境</span>
+    <h1>Aurora</h1>
+    <p class="sub">Backend preview environment</p>
+    <p class="status"><span class="dot"></span>Backend preview environment is online.</p>
+    <p class="status">Management console is not available in this build.</p>
+    <ul>
+      <li><code>ingest.aurora.ah.cn</code> — data ingestion API (<code>POST /v1/batches</code>)</li>
+      <li>数据接入、异步处理与 Inbox 链路在预览环境运行中</li>
+    </ul>
+    <p class="foot">
+      Aurora Public Preview 部署桥接（单主机，临时环境）。<br>
+      这不是正式生产架构，不提供 99.9% 可用性承诺。
+    </p>
+  </main>
+</body>
+</html>

@@ -1,0 +1,35 @@
+# Aurora ingestion-worker production image (multi-stage, non-root).
+# Node version from repository engines: >=24.18.0 <25. .node-version = 24.18.0.
+FROM node:24.18.0-slim AS build
+
+ENV PNPM_HOME=/pnpm
+ENV PATH="$PNPM_HOME:$PATH"
+ENV COREPACK_HOME=/corepack
+RUN npm i -g corepack && corepack enable && corepack prepare pnpm@11.17.0 --activate
+
+WORKDIR /workspace
+COPY . ./
+# Build the full workspace so workspace deps (event-schema, ingestion-inbox,
+# processing-store) have compiled dist for pnpm deploy to copy, then deploy
+# only the app's self-contained production node_modules to /out.
+RUN pnpm install --frozen-lockfile \
+  && pnpm build \
+  && pnpm --filter @aurora/ingestion-worker deploy --legacy --prod /out
+
+FROM node:24.18.0-slim AS runtime
+
+ENV NODE_ENV=production
+ENV PNPM_HOME=/pnpm
+ENV PATH="$PNPM_HOME:$PATH"
+
+RUN groupadd --system aurora && useradd --system --gid aurora --home-dir /home/aurora --create-home aurora \
+  && mkdir -p /app && chown -R aurora:aurora /app
+
+WORKDIR /app
+COPY --from=build --chown=aurora:aurora /out/ /app/
+# Deploy-only thin entrypoint (plain ESM) sits next to the app dist/index.js.
+# COPY paths are relative to the build context root (repo root).
+COPY deploy/preview/entry/ingestion-worker/start-preview.js /app/dist/start-preview.js
+
+USER aurora
+ENTRYPOINT ["node", "/app/dist/start-preview.js"]

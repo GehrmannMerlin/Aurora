@@ -1,0 +1,23 @@
+# Aurora public-preview shared-edge override (TLS ACTIVE).
+# Adds Aurora TLS vhosts + status page to the EXISTING Lumina nginx container
+# via read-only bind mounts. Applied with
+#   docker compose -f compose.prod.yml -f /opt/aurora-preview/deploy/compose.aurora-override.yml
+# Lives OUTSIDE /opt/lumina/app so Lumina's immutable-release worktree stays
+# clean. Do NOT edit Lumina's compose.prod.yml.
+#
+# NOTE: `docker compose up -d nginx` from Lumina's own deploy.sh will recreate
+# nginx WITHOUT this override, dropping the Aurora vhosts. Re-apply this
+# override after any Lumina redeploy (documented in
+# docs/operations/public-preview-single-host-deployment.md).
+
+services:
+  nginx:
+    volumes:
+      - type: bind
+        source: /opt/aurora-preview/deploy/nginx/conf.d/aurora-tls.conf
+        target: /etc/nginx/conf.d/zz-aurora-tls.conf
+        read_only: true
+      - type: bind
+        source: /opt/aurora-preview/deploy/nginx/www
+        target: /usr/share/nginx/html/aurora-preview
+        read_only: true

@@ -1,0 +1,120 @@
+# Aurora public-preview single-host Compose stack.
+# Temporary bridge, not production. Shares the Lumina nginx edge for TLS.
+# Only real, buildable Aurora apps run here. No fake services.
+name: aurora-preview
+
+x-logging: &default-logging
+  driver: json-file
+  options:
+    max-size: '20m'
+    max-file: '3'
+
+services:
+  postgres:
+    image: postgres:17.10-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: aurora_preview
+      POSTGRES_USER: aurora
+      POSTGRES_PASSWORD: ${PREVIEW_DB_PASSWORD:?PREVIEW_DB_PASSWORD is required}
+      TZ: UTC
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    networks:
+      - aurora-private
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U aurora -d aurora_preview']
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 10s
+    # No published ports: never exposed to the public network.
+    logging: *default-logging
+
+  migrate:
+    image: aurora-preview-migrate:${RELEASE_ID:?RELEASE_ID is required}
+    restart: 'no'
+    build:
+      context: ../..
+      dockerfile: deploy/preview/Dockerfile.migrate
+    environment:
+      DATABASE_URL: postgresql://aurora:${PREVIEW_DB_PASSWORD:?PREVIEW_DB_PASSWORD is required}@postgres:5432/aurora_preview
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - aurora-private
+    logging: *default-logging
+
+  ingestion-api:
+    image: aurora-preview-api:${RELEASE_ID:?RELEASE_ID is required}
+    build:
+      context: ../..
+      dockerfile: deploy/preview/Dockerfile.ingestion-api
+    restart: unless-stopped
+    environment:
+      HOST: 0.0.0.0
+      PORT: '8080'
+      REQUEST_BODY_LIMIT_BYTES: '1048576'
+      GRACEFUL_SHUTDOWN_TIMEOUT_MS: '15000'
+      DATABASE_URL: postgresql://aurora:${PREVIEW_DB_PASSWORD:?PREVIEW_DB_PASSWORD is required}@postgres:5432/aurora_preview
+      LOG_ENABLED: 'true'
+      LOG_LEVEL: info
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    healthcheck:
+      # No public /healthz route exists; probe the listening TCP port instead.
+      test:
+        [
+          'CMD-SHELL',
+          'node -e "require(''net'').connect(8080,''127.0.0.1'').on(''connect'',()=>process.exit(0)).on(''error'',()=>process.exit(1))"',
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 15s
+    # No published host port; reached only via Lumina nginx on the shared
+    # lumina-prod-internal network (attached below).
+    networks:
+      - aurora-private
+      - lumina-prod-internal
+    logging: *default-logging
+
+  ingestion-worker:
+    image: aurora-preview-worker:${RELEASE_ID:?RELEASE_ID is required}
+    build:
+      context: ../..
+      dockerfile: deploy/preview/Dockerfile.ingestion-worker
+    restart: unless-stopped
+    environment:
+      WORKER_ID: preview-worker-1
+      CLAIM_BATCH_SIZE: '10'
+      MAX_CONCURRENT_HANDLERS: '4'
+      LEASE_DURATION_MS: '30000'
+      LEASE_RENEW_INTERVAL_MS: '10000'
+      IDLE_POLL_INTERVAL_MS: '1000'
+      INFRASTRUCTURE_FAILURE_DELAY_MS: '1000'
+      SHUTDOWN_GRACE_PERIOD_MS: '15000'
+      MAX_PROCESSING_ATTEMPTS: '5'
+      DATABASE_URL: postgresql://aurora:${PREVIEW_DB_PASSWORD:?PREVIEW_DB_PASSWORD is required}@postgres:5432/aurora_preview
+      LOG_ENABLED: 'true'
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    # No published ports: never exposed to the public network.
+    networks:
+      - aurora-private
+    logging: *default-logging
+
+volumes:
+  postgres-data:
+    name: aurora-preview-postgres-data
+
+networks:
+  aurora-private:
+    name: aurora-preview-private
+    driver: bridge
+  lumina-prod-internal:
+    name: lumina-prod-internal
+    external: true

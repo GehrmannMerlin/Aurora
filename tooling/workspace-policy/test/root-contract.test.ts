@@ -30,10 +30,14 @@ describe('root Workspace contract', () => {
       throw new TypeError('Root package.json scripts must be an object');
     }
     expect(Object.keys(parsed.scripts).sort()).toEqual([
+      'benchmark:ingestion:baseline',
+      'benchmark:ingestion:smoke',
       'build',
       'check',
       'check:boundaries',
       'check:ci',
+      'deploy:preview',
+      'deploy:preview:rollback',
       'format:check',
       'lint',
       'openapi:check',
