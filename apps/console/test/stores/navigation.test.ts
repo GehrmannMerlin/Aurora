@@ -1,6 +1,7 @@
 import { createPinia, setActivePinia } from 'pinia';
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest';
-import { http, HttpResponse } from 'msw';
+import { http, HttpResponse, type JsonBodyType } from 'msw';
+import { validProblemSamples } from '@aurora/platform-contract/contract-testkit';
 import { invalidateScope } from '../../src/api/query.js';
 import { setMockScope } from '../../src/mocks/handlers.js';
 import { useNavigationStore } from '../../src/stores/navigation.js';
@@ -52,6 +53,36 @@ describe('Navigation Context consumer', () => {
     expect(store.status).toBe('unavailable');
     expect(store.organizations).toHaveLength(0);
     expect(store.currentScope).toBeNull();
+  });
+
+  it('enters a safe empty state on an RFC 9457 problem response', async () => {
+    mockServer.use(
+      http.get('/api/platform/v1/navigation/context', () =>
+        HttpResponse.json(validProblemSamples[0] as JsonBodyType, { status: 404 }),
+      ),
+    );
+    const store = useNavigationStore();
+    await store.load();
+    expect(store.status).toBe('unavailable');
+    expect(store.organizations).toHaveLength(0);
+    expect(store.currentScope).toBeNull();
+  });
+
+  it('returns null when the current project belongs to no organization', async () => {
+    setMockScope({ type: 'project', id: 'prj_unknown' });
+    const store = useNavigationStore();
+    await store.load();
+    expect(store.currentScope?.type).toBe('project');
+    expect(store.currentOrganizationId).toBeNull();
+  });
+
+  it('does not reload the projection once it is ready', async () => {
+    const store = useNavigationStore();
+    await store.load();
+    setMockScope({ type: 'workspace' });
+    await store.load();
+    expect(store.status).toBe('ready');
+    expect(store.currentScope?.type).toBe('project');
   });
 
   it('clear resets to the safe empty state', async () => {

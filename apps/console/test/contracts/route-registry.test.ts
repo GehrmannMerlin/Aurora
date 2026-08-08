@@ -37,6 +37,15 @@ describe('RouteTarget registry', () => {
     expect(result.path).toBe('/organizations/org_test_1/projects/prj_test_1/overview');
   });
 
+  it('serializes a non-empty query string onto the resolved path', () => {
+    const result = resolveRouteTarget({
+      routeId: 'project.overview',
+      pathParams: { organizationId: 'org_test_1', projectId: 'prj_test_1' },
+      query: { tab: 'events' },
+    });
+    expect(result.path).toBe('/organizations/org_test_1/projects/prj_test_1/overview?tab=events');
+  });
+
   it('rejects invalid params and unknown targets safely', () => {
     expect(
       resolveRouteTarget({ routeId: 'project.overview', pathParams: {}, query: {} }).error,

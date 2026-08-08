@@ -74,4 +74,13 @@ describe('Session Context consumer', () => {
     await store.restore();
     expect(handlerControls.sessionRequests).toBe(2);
   });
+
+  it('does not re-fetch while already authenticated', async () => {
+    const store = useSessionStore();
+    await store.restore();
+    expect(handlerControls.sessionRequests).toBe(1);
+    await store.restore();
+    expect(store.status).toBe('authenticated');
+    expect(handlerControls.sessionRequests).toBe(1);
+  });
 });
