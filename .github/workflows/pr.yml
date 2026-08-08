@@ -83,3 +83,12 @@ jobs:
 
       - name: Package entry (plugin-performance)
         run: pnpm --filter @aurora/plugin-performance test:package
+
+      # Console production-build gate (ADR-025 open-source PrimeVue line). This
+      # is a G09 post-deployment stabilization hotfix: PrimeVue 5.x's PrimeUI
+      # license machinery ("Invalid PrimeUI License" banner) was present in the
+      # deployed Preview because no console gate ran in CI. The package-entry
+      # gate asserts the production bundle carries no PrimeUI commercial
+      # license plumbing.
+      - name: Package entry (console)
+        run: pnpm --filter @aurora/console test:package
