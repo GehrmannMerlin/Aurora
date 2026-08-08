@@ -274,13 +274,12 @@ export type EmailIntentType = 'email_verification' | 'password_reset' | 'organiz
 
 export interface EmailDeliveryRequest {
   readonly intentType: EmailIntentType;
-  readonly toAddress: string;        // 规范化收件邮箱
+  readonly toAddress: string;        // 规范化收件邮箱（ADR-031 决定细节 2 记录于 Outbox）
   readonly toAddressMasked: string;  // 服务端掩码
-  readonly templateData: {           // 绝不含 token 明文/密码/secret
-    readonly maskedEmail: string;
-    readonly intentTokenReference: string; // 意图 ID（非 token）
-    readonly expiresInMinutes: number;
-  };
+  // 渲染所需数据。mailLinkUrl 内嵌一次性 token（spec §4.11 token 暂存语义）；此字段本身
+  // 是唯一允许携带原始 token 的位置，绝不作为独立字段，也绝不进入日志/前端/分析。
+  readonly mailLinkUrl: string;
+  readonly expiresInMinutes: number;
 }
 
 export interface EmailDeliveryPort {
