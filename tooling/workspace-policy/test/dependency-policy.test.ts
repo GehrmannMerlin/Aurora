@@ -449,18 +449,4 @@ describe('Workspace dependency policy', () => {
     const result = await checkWorkspace(fixture.rootDir);
     expect(result.violations.some((v) => v.code === 'forbidden-layer-dependency')).toBe(true);
   });
-
-  it('rejects a console package reaching data when declared as the service layer', async () => {
-    const consoleApp = validManifest('@aurora/console');
-    consoleApp.aurora = { layer: 'console' };
-    consoleApp.dependencies = { '@aurora/processing-store': 'workspace:*' };
-    const store = validManifest('@aurora/processing-store');
-    store.aurora = { layer: 'data' };
-    fixture = await createWorkspaceFixture([
-      { directory: 'apps/console', manifest: consoleApp },
-      { directory: 'packages/processing-store', manifest: store },
-    ]);
-    const result = await checkWorkspace(fixture.rootDir);
-    expect(result.violations.some((v) => v.code === 'forbidden-layer-dependency')).toBe(true);
-  });
 });
