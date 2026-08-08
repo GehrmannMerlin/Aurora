@@ -37,6 +37,11 @@ jobs:
       - name: Install (frozen lockfile)
         run: pnpm install --frozen-lockfile
 
+      # Build before type-aware lint: workspace deps' dist is gitignored, so a
+      # fresh checkout has no compiled types; lint's no-unsafe-* rules need them.
+      - name: Build (workspace deps for type-aware lint)
+        run: pnpm build
+
       - name: Format check
         run: pnpm format:check
 
@@ -74,9 +79,19 @@ jobs:
           pnpm --filter @aurora/plugin-performance test:package
 
   postgres-integration:
-    name: PostgreSQL Integration
+    name: PostgreSQL Integration (${{ matrix.suite }})
     runs-on: ubuntu-latest
     timeout-minutes: 40
+    strategy:
+      fail-fast: false
+      matrix:
+        suite:
+          - ingestion-inbox
+          - ingestion-credentials
+          - processing-store
+          - ingestion-api
+          - ingestion-worker
+          - ingestion-benchmark
     services:
       postgres:
         image: postgres:17.10-alpine
@@ -111,23 +126,13 @@ jobs:
       - name: Install (frozen lockfile)
         run: pnpm install --frozen-lockfile
 
-      - name: Integration (ingestion-inbox)
-        run: pnpm --filter @aurora/ingestion-inbox test:integration
-
-      - name: Integration (ingestion-credentials)
-        run: pnpm --filter @aurora/ingestion-credentials test:integration
-
-      - name: Integration (processing-store)
-        run: pnpm --filter @aurora/processing-store test:integration
-
-      - name: Integration (ingestion-api)
-        run: pnpm --filter @aurora/ingestion-api test:integration
-
-      - name: Integration (ingestion-worker)
-        run: pnpm --filter @aurora/ingestion-worker test:integration
-
-      - name: Integration (ingestion-benchmark)
-        run: pnpm --filter @aurora/ingestion-benchmark test:integration
+      # Each suite runs against its own PostgreSQL service container. Some
+      # suites (ingestion-api, ingestion-credentials) apply migrations without
+      # a schema reset, so a shared DB with prior-suite pgmigrations would trip
+      # node-pg-migrate's checkOrder. Per-suite isolation removes ordering
+      # dependence (OPS-01 spec §5.2).
+      - name: Integration
+        run: pnpm --filter @aurora/${{ matrix.suite }} test:integration
 
   browser:
     name: Browser (Chromium)
@@ -150,6 +155,9 @@ jobs:
 
       - name: Install (frozen lockfile)
         run: pnpm install --frozen-lockfile
+
+      - name: Build (workspace deps for browser tests)
+        run: pnpm build
 
       - name: Install Chromium (with deps)
         run: pnpm --filter @aurora/browser exec playwright install --with-deps chromium

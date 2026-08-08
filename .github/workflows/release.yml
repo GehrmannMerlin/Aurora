@@ -24,22 +24,7 @@ jobs:
     name: Release Gate
     runs-on: ubuntu-latest
     timeout-minutes: 45
-    services:
-      postgres:
-        image: postgres:17.10-alpine
-        env:
-          POSTGRES_USER: aurora
-          POSTGRES_PASSWORD: aurora_ci_test_pw
-          POSTGRES_DB: aurora_inbox_test
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd "pg_isready -U aurora -d aurora_inbox_test"
-          --health-interval 5s
-          --health-timeout 5s
-          --health-retries 20
     env:
-      AURORA_TEST_DATABASE_URL: postgresql://aurora:aurora_ci_test_pw@localhost:5432/aurora_inbox_test
       RELEASE_VERSION: ${{ inputs.version }}
     steps:
       - name: Checkout
@@ -58,6 +43,11 @@ jobs:
 
       - name: Install (frozen lockfile)
         run: pnpm install --frozen-lockfile
+
+      # Build before type-aware lint: workspace deps' dist is gitignored, so a
+      # fresh checkout has no compiled types; lint's no-unsafe-* rules need them.
+      - name: Build (workspace deps for type-aware lint)
+        run: pnpm build
 
       - name: Format check
         run: pnpm format:check
@@ -95,17 +85,64 @@ jobs:
           pnpm --filter @aurora/plugin-request test:package &&
           pnpm --filter @aurora/plugin-performance test:package
 
-      - name: Integration (all suites)
-        run: >-
-          pnpm --filter @aurora/ingestion-inbox test:integration &&
-          pnpm --filter @aurora/ingestion-credentials test:integration &&
-          pnpm --filter @aurora/processing-store test:integration &&
-          pnpm --filter @aurora/ingestion-api test:integration &&
-          pnpm --filter @aurora/ingestion-worker test:integration &&
-          pnpm --filter @aurora/ingestion-benchmark test:integration
-
       - name: Release gate notice
         run: |
           echo "Release gate passed for version: $RELEASE_VERSION"
           echo "No artifact published in this OPS-01 round."
           echo "OPS-05 (deploy pipeline) and G15 (SDK publish) will add publish steps."
+
+  postgres-integration:
+    name: Release PostgreSQL Integration (${{ matrix.suite }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    strategy:
+      fail-fast: false
+      matrix:
+        suite:
+          - ingestion-inbox
+          - ingestion-credentials
+          - processing-store
+          - ingestion-api
+          - ingestion-worker
+          - ingestion-benchmark
+    services:
+      postgres:
+        image: postgres:17.10-alpine
+        env:
+          POSTGRES_USER: aurora
+          POSTGRES_PASSWORD: aurora_ci_test_pw
+          POSTGRES_DB: aurora_inbox_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U aurora -d aurora_inbox_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+    env:
+      AURORA_TEST_DATABASE_URL: postgresql://aurora:aurora_ci_test_pw@localhost:5432/aurora_inbox_test
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 11.17.0
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24.18.0
+          cache: pnpm
+
+      - name: Install (frozen lockfile)
+        run: pnpm install --frozen-lockfile
+
+      # Each suite runs against its own PostgreSQL service container. Some
+      # suites (ingestion-api, ingestion-credentials) apply migrations without
+      # a schema reset, so a shared DB with prior-suite pgmigrations would trip
+      # node-pg-migrate's checkOrder. Per-suite isolation removes ordering
+      # dependence (OPS-01 spec §5.2).
+      - name: Integration
+        run: pnpm --filter @aurora/${{ matrix.suite }} test:integration
