@@ -11,6 +11,9 @@ async function bootstrap(): Promise<void> {
     await setupMockServer();
   }
   const app = createApp(App);
+  app.config.errorHandler = (error) => {
+    console.error('[console]', error instanceof Error ? error.message : 'unknown');
+  };
   app.use(pinia);
   app.use(router);
   app.mount('#app');

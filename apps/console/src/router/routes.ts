@@ -10,15 +10,30 @@ export const appRoutes: readonly RouteRecordRaw[] = [
       {
         path: '',
         name: 'root',
-        component: () => import('../components/pages/WorkspaceHomeView.vue'),
+        component: () => import('../components/pages/RootView.vue'),
         meta: { label: '工作空间', routeId: 'workspace.home', scope: 'workspace' },
       },
       ...ROUTE_REGISTRY.map((entry) => ({
         path: entry.path.replace(/^\/+/, '') || '',
         name: entry.routeId,
-        component: entry.lazy,
+        component:
+          entry.routeId === 'auth.login'
+            ? () => import('../components/pages/AuthUnavailableView.vue')
+            : entry.lazy,
         meta: { label: entry.label, routeId: entry.routeId, scope: entry.scope },
       })),
+      {
+        path: 'route-error',
+        name: 'route-error',
+        component: () => import('../components/pages/RouteErrorView.vue'),
+        meta: { label: '页面加载失败', scope: 'public' },
+      },
+      {
+        path: 'forbidden',
+        name: 'forbidden',
+        component: () => import('../components/pages/ForbiddenView.vue'),
+        meta: { label: '无权限访问', scope: 'public' },
+      },
       {
         path: ':pathMatch(.*)*',
         name: 'not-found',

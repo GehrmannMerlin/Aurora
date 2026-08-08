@@ -10,3 +10,7 @@ export const router = createRouter({
 
 installSessionGuard(router);
 installFocusManagement(router);
+
+router.onError(() => {
+  void router.replace({ name: 'route-error' });
+});
