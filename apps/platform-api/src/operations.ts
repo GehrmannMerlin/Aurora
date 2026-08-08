@@ -1,4 +1,8 @@
-import { listServerOperations, type AuthLevel, type OperationDef } from '@aurora/platform-contract/server';
+import {
+  listServerOperations,
+  type AuthLevel,
+  type OperationDef,
+} from '@aurora/platform-contract/server';
 
 const operationsById = new Map<string, OperationDef>(
   listServerOperations().map((operation) => [operation.operationId, operation]),

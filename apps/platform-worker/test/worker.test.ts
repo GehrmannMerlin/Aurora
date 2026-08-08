@@ -7,7 +7,7 @@ import type { SleeperPort } from '../src/timers.js';
 const fakePool = {} as Pool;
 
 const enqueuePort: EmailDeliveryPort = {
-  deliver: async () => ({ status: 'enqueued' as const }),
+  deliver: () => Promise.resolve({ status: 'enqueued' as const }),
 };
 
 interface NothingToClaimRepo {
@@ -18,12 +18,12 @@ interface NothingToClaimRepo {
 function createNothingToClaimRepo(): NothingToClaimRepo {
   let claims = 0;
   const repo: OutboxRepository = {
-    insertOutboxRow: async () => ({ status: 'success' as const, outboxId: 'outbox-1' }),
-    claimOutboxRows: async () => {
+    insertOutboxRow: () => Promise.resolve({ status: 'success' as const, outboxId: 'outbox-1' }),
+    claimOutboxRows: () => {
       claims += 1;
-      return { status: 'nothingToClaim' as const };
+      return Promise.resolve({ status: 'nothingToClaim' as const });
     },
-    markOutboxResult: async () => ({ status: 'success' as const }),
+    markOutboxResult: () => Promise.resolve({ status: 'success' as const }),
   };
   return { repo, claimCount: () => claims };
 }
@@ -142,13 +142,14 @@ describe('platform-worker poll loop', () => {
       let shouldFail = true;
       let claims = 0;
       const repo: OutboxRepository = {
-        insertOutboxRow: async () => ({ status: 'success' as const, outboxId: 'outbox-1' }),
-        claimOutboxRows: async () => {
+        insertOutboxRow: () =>
+          Promise.resolve({ status: 'success' as const, outboxId: 'outbox-1' }),
+        claimOutboxRows: () => {
           claims += 1;
-          if (shouldFail) throw new Error('database unreachable');
-          return { status: 'nothingToClaim' as const };
+          if (shouldFail) return Promise.reject(new Error('database unreachable'));
+          return Promise.resolve({ status: 'nothingToClaim' as const });
         },
-        markOutboxResult: async () => ({ status: 'success' as const }),
+        markOutboxResult: () => Promise.resolve({ status: 'success' as const }),
       };
       const { sleeper } = tickSleeper();
       const worker = buildPlatformWorker({

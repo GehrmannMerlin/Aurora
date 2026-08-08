@@ -14,7 +14,12 @@ import { operationById } from '../operations.js';
 import { sendProblem } from '../error-mapper.js';
 import { clearIntentCookieOnReply } from '../intent-cookie.js';
 import { maskEmail } from '../email-mask.js';
-import { runIdempotentCommand, lookupIdempotency, requestDigest, type IdempotentCommandResult } from '../idempotency.js';
+import {
+  runIdempotentCommand,
+  lookupIdempotency,
+  requestDigest,
+  type IdempotentCommandResult,
+} from '../idempotency.js';
 import { ServiceError, sendMappedError } from '../service-error.js';
 import type { PlatformApiRouteDependencies } from '../route-deps.js';
 
@@ -55,7 +60,13 @@ export async function handleAcceptInvitation(
 
   const parsed = parseInput(ACCEPT_INVITATION_OPERATION, { body: request.body });
   if (!parsed.ok) {
-    await sendProblem(reply, requestId, 400, 'structural_error', 'Request does not match the public contract.');
+    await sendProblem(
+      reply,
+      requestId,
+      400,
+      'structural_error',
+      'Request does not match the public contract.',
+    );
     return;
   }
   const input = parsed.data.body as AcceptInvitationBody;
@@ -68,7 +79,7 @@ export async function handleAcceptInvitation(
   }
 
   const intentPayload = request.intentPayload;
-  if (intentPayload === null || intentPayload.kind !== 'organization_invitation') {
+  if (intentPayload?.kind !== 'organization_invitation') {
     await sendProblem(reply, requestId, 404, 'not_found', 'The invitation intent was not found.');
     return;
   }
@@ -77,7 +88,13 @@ export async function handleAcceptInvitation(
   try {
     invitation = await findInvitationByDigest(deps.pool, digestOf(intentPayload.token));
   } catch {
-    await sendProblem(reply, requestId, 503, 'authority_unavailable', 'Account store is temporarily unavailable.');
+    await sendProblem(
+      reply,
+      requestId,
+      503,
+      'authority_unavailable',
+      'Account store is temporarily unavailable.',
+    );
     return;
   }
   if (invitation === null) {
@@ -96,7 +113,13 @@ export async function handleAcceptInvitation(
   try {
     account = await getAccountById(deps.pool, session.accountId);
   } catch {
-    await sendProblem(reply, requestId, 503, 'authority_unavailable', 'Account store is temporarily unavailable.');
+    await sendProblem(
+      reply,
+      requestId,
+      503,
+      'authority_unavailable',
+      'Account store is temporarily unavailable.',
+    );
     return;
   }
   if (account === null) {
@@ -160,49 +183,49 @@ export async function handleAcceptInvitation(
       operation: OPERATION_ID_ACCEPT_INVITATION,
       digest: probeDigest,
       execute: async (client) => {
-      // Re-check pending + unexpired inside the transaction so a concurrent
-      // accept cannot create a membership from a stale invitation.
-      const fresh = await findInvitationByDigest(client, digestOf(intentPayload.token));
-      if (
-        fresh === null ||
-        fresh.status !== 'pending' ||
-        Date.parse(fresh.expiresAt) <= now.getTime()
-      ) {
-        throw new ServiceError(404, 'not_found', 'The invitation is no longer valid.');
-      }
+        // Re-check pending + unexpired inside the transaction so a concurrent
+        // accept cannot create a membership from a stale invitation.
+        const fresh = await findInvitationByDigest(client, digestOf(intentPayload.token));
+        if (fresh?.status !== 'pending' || Date.parse(fresh.expiresAt) <= now.getTime()) {
+          throw new ServiceError(404, 'not_found', 'The invitation is no longer valid.');
+        }
 
-      const membership = await insertOrganizationMembership(client, {
-        organizationId,
-        accountId,
-        role: orgRole,
-      });
-      if (membership.status === 'already_member') {
-        throw new ServiceError(409, 'business_validation', 'You are already a member of this organization.');
-      }
+        const membership = await insertOrganizationMembership(client, {
+          organizationId,
+          accountId,
+          role: orgRole,
+        });
+        if (membership.status === 'already_member') {
+          throw new ServiceError(
+            409,
+            'business_validation',
+            'You are already a member of this organization.',
+          );
+        }
 
-      // PLT-03 invitation carries no project data (see module doc) — no project
-      // membership rows to write in this increment.
-      // await insertProjectMembership(client, { projectId, accountId, role });
+        // PLT-03 invitation carries no project data (see module doc) — no project
+        // membership rows to write in this increment.
+        // await insertProjectMembership(client, { projectId, accountId, role });
 
-      await updateInvitationStatus(client, invitationId, 'accepted', now);
+        await updateInvitationStatus(client, invitationId, 'accepted', now);
 
-      await insertAuditEvent(client, {
-        organizationId,
-        actorAccountId: accountId,
-        action: 'invitation.accepted',
-        targetAccountId: accountId,
-        details: { role: orgRole },
-      });
+        await insertAuditEvent(client, {
+          organizationId,
+          actorAccountId: accountId,
+          action: 'invitation.accepted',
+          targetAccountId: accountId,
+          details: { role: orgRole },
+        });
 
-      const org = await findOrganizationById(client, organizationId);
-      if (org === null) {
-        throw new ServiceError(404, 'not_found', 'The organization was not found.');
-      }
+        const org = await findOrganizationById(client, organizationId);
+        if (org === null) {
+          throw new ServiceError(404, 'not_found', 'The organization was not found.');
+        }
 
-      return {
-        organization: { organizationId, name: org.name, role: orgRole },
-        navigationTargets: [{ routeId: 'workspace.home', pathParams: {}, query: {} }],
-      };
+        return {
+          organization: { organizationId, name: org.name, role: orgRole },
+          navigationTargets: [{ routeId: 'workspace.home', pathParams: {}, query: {} }],
+        };
       },
     });
   } catch (error) {

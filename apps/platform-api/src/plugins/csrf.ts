@@ -19,26 +19,46 @@ export function applyCsrfPlugin(app: FastifyInstance): void {
   app.addHook('onRequest', async (request: FastifyRequest, reply) => {
     if (SAFE_METHODS.has(request.method)) return;
     const info = routeInfo(request.method, request.url);
-    if (info === undefined || !info.csrf) return;
+    if (!info?.csrf) return;
 
     let secret: string;
     if (info.authLevel === 'intent') {
       if (request.intentPayload === null) {
-        await sendProblem(reply, request.platformRequestId, 401, 'authentication', 'Authentication is required.', {
-          recoveryTarget: 'auth.login',
-        });
+        await sendProblem(
+          reply,
+          request.platformRequestId,
+          401,
+          'authentication',
+          'Authentication is required.',
+          {
+            recoveryTarget: 'auth.login',
+          },
+        );
         return;
       }
       secret = request.intentPayload.csrfSecret;
     } else if (info.authLevel === 'session') {
       if (request.sessionUnavailable) {
-        await sendProblem(reply, request.platformRequestId, 503, 'authority_unavailable', 'Session authority is temporarily unavailable.');
+        await sendProblem(
+          reply,
+          request.platformRequestId,
+          503,
+          'authority_unavailable',
+          'Session authority is temporarily unavailable.',
+        );
         return;
       }
       if (request.sessionPayload === null) {
-        await sendProblem(reply, request.platformRequestId, 401, 'authentication', 'Authentication is required.', {
-          recoveryTarget: 'auth.login',
-        });
+        await sendProblem(
+          reply,
+          request.platformRequestId,
+          401,
+          'authentication',
+          'Authentication is required.',
+          {
+            recoveryTarget: 'auth.login',
+          },
+        );
         return;
       }
       secret = request.sessionPayload.csrfSecret;
@@ -49,7 +69,13 @@ export function applyCsrfPlugin(app: FastifyInstance): void {
 
     const token = request.headers['x-aurora-csrf'];
     if (typeof token !== 'string' || !verifyCsrf(secret, token)) {
-      await sendProblem(reply, request.platformRequestId, 403, 'authorization', 'CSRF token verification failed.');
+      await sendProblem(
+        reply,
+        request.platformRequestId,
+        403,
+        'authorization',
+        'CSRF token verification failed.',
+      );
     }
   });
 }

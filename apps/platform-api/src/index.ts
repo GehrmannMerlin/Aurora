@@ -7,10 +7,7 @@ import type { PlatformApiConfig } from './config.js';
 
 export { buildPlatformApi, type PlatformApiDependencies } from './app.js';
 export { loadPlatformApiConfig, type PlatformApiConfig } from './config.js';
-export {
-  defaultRequestIdProvider,
-  type PlatformRequestIdProvider,
-} from './request-id.js';
+export { defaultRequestIdProvider, type PlatformRequestIdProvider } from './request-id.js';
 export {
   mapErrorToProblem,
   problem,

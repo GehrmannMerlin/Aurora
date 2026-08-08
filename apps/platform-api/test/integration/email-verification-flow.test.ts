@@ -1,6 +1,6 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { randomUUID } from 'node:crypto';
-import { Pool } from 'pg';
+import type { Pool } from 'pg';
 import type { FastifyInstance } from 'fastify';
 import {
   createIntentToken,
@@ -27,6 +27,23 @@ const hasRedis = process.env.AURORA_TEST_REDIS_URL !== undefined;
 const describeDb = hasDb && hasRedis ? describe : describe.skip;
 
 const FIXED_NOW = new Date('2026-08-09T00:00:00.000Z');
+
+interface IntentLinkBody {
+  csrf?: string;
+}
+
+interface ConfirmEmailBody {
+  verificationStatus?: { verified: boolean };
+  account?: { verified: boolean; accountId: string };
+}
+
+interface SessionBody {
+  authentication: string;
+}
+
+interface ProblemBody {
+  code: string;
+}
 
 describeDb('email verification flow (real PostgreSQL 17 + Redis)', () => {
   let pool: Pool;
@@ -73,7 +90,11 @@ describeDb('email verification flow (real PostgreSQL 17 + Redis)', () => {
       method: 'POST',
       url: '/api/platform/v1/auth/register',
       headers: { 'content-type': 'application/json' },
-      payload: JSON.stringify({ email, password: 's3cure-Passw0rd!', idempotencyKey: randomUUID() }),
+      payload: JSON.stringify({
+        email,
+        password: 's3cure-Passw0rd!',
+        idempotencyKey: randomUUID(),
+      }),
     });
     expect(response.statusCode).toBe(200);
     return extractSessionCookie(response.headers['set-cookie']);
@@ -82,9 +103,9 @@ describeDb('email verification flow (real PostgreSQL 17 + Redis)', () => {
   async function establishVerifyIntent(app: FastifyInstance, token: string) {
     const link = await app.inject({ method: 'GET', url: `/api/platform/v1/auth/verify/${token}` });
     expect(link.statusCode).toBe(200);
-    const body = link.json() as { csrf?: string };
+    const body: IntentLinkBody = link.json();
     const setCookie = link.headers['set-cookie'];
-    const cookieValue = Array.isArray(setCookie) ? setCookie[0] : (setCookie as string | undefined);
+    const cookieValue = Array.isArray(setCookie) ? setCookie[0] : setCookie;
     const match = /^aurora_intent=([^;]+)/.exec(cookieValue ?? '');
     expect(match).not.toBeNull();
     return { cookie: match?.[1] ?? '', csrf: body.csrf ?? '' };
@@ -109,10 +130,7 @@ describeDb('email verification flow (real PostgreSQL 17 + Redis)', () => {
       payload: JSON.stringify({ idempotencyKey: randomUUID() }),
     });
     expect(confirm.statusCode).toBe(200);
-    const body = confirm.json() as {
-      verificationStatus?: { verified?: boolean };
-      account?: { accountId?: string; verified?: boolean };
-    };
+    const body: ConfirmEmailBody = confirm.json();
     expect(body.verificationStatus?.verified).toBe(true);
     expect(body.account?.verified).toBe(true);
     expect(typeof body.account?.accountId).toBe('string');
@@ -135,7 +153,8 @@ describeDb('email verification flow (real PostgreSQL 17 + Redis)', () => {
       headers: { cookie: `aurora_session=${newCookie}` },
     });
     expect(rotated.statusCode).toBe(200);
-    expect((rotated.json() as { authentication?: string }).authentication).toBe('authenticated');
+    const rotatedBody: SessionBody = rotated.json();
+    expect(rotatedBody.authentication).toBe('authenticated');
 
     // The old pending-verification session is gone.
     const stale = await app.inject({
@@ -156,18 +175,21 @@ describeDb('email verification flow (real PostgreSQL 17 + Redis)', () => {
       [normalizeEmail(email)],
     );
     const accountId = account.rows[0]?.account_id;
-    expect(accountId).toBeDefined();
+    if (accountId === undefined) {
+      throw new Error('expected a verification account row');
+    }
 
     const { token, digest } = createIntentToken();
     await insertEmailVerificationIntent(pool, {
-      accountId: accountId as string,
+      accountId,
       tokenDigest: digest,
       expiresAt: new Date(FIXED_NOW.getTime() - 1000),
     });
 
     const link = await app.inject({ method: 'GET', url: `/api/platform/v1/auth/verify/${token}` });
     expect(link.statusCode).toBe(409);
-    expect((link.json() as { code?: string }).code).toBe('business_validation');
+    const problem: ProblemBody = link.json();
+    expect(problem.code).toBe('business_validation');
     await app.close();
   });
 });

@@ -30,15 +30,22 @@ export class ConsoleEmailAdapter implements EmailDeliveryPort {
   private readonly log: (message: string) => void;
 
   constructor(private readonly options: ConsoleEmailAdapterOptions = {}) {
-    this.log = options.log ?? ((message: string) => console.log(message));
+    this.log =
+      options.log ??
+      ((message: string) => {
+        console.log(message);
+      });
   }
 
-  async deliver(request: EmailDeliveryRequest): Promise<EmailDeliveryResult> {
+  deliver(request: EmailDeliveryRequest): Promise<EmailDeliveryResult> {
     const mode = (this.options.mode ?? process.env.EMAIL_DELIVERY_MODE ?? '').trim().toLowerCase();
     if (mode !== '' && mode !== 'console') {
-      return { status: 'failed', reason: 'EMAIL_PROVIDER_CREDENTIAL_ACTION_REQUIRED' };
+      return Promise.resolve({
+        status: 'failed',
+        reason: 'EMAIL_PROVIDER_CREDENTIAL_ACTION_REQUIRED',
+      });
     }
     this.log(`[email] queued ${request.intentType} to ${request.toAddressMasked}`);
-    return { status: 'enqueued' };
+    return Promise.resolve({ status: 'enqueued' });
   }
 }

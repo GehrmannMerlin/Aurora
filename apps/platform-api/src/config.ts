@@ -80,6 +80,18 @@ function optionalOriginList(env: NodeJS.ProcessEnv, key: string): readonly strin
 }
 
 /**
+ * First truthy string among the arguments, or `''` when none is set. Empty
+ * strings are treated as absent so the console origin falls back to the first
+ * app origin and then to an empty string (falsy-first chain preserved).
+ */
+function firstDefined(...values: (string | undefined)[]): string {
+  for (const value of values) {
+    if (value !== undefined && value !== '') return value;
+  }
+  return '';
+}
+
+/**
  * Read untrusted environment strings once and freeze a validated typed config.
  */
 export function loadPlatformApiConfig(env: NodeJS.ProcessEnv): PlatformApiConfig {
@@ -93,8 +105,10 @@ export function loadPlatformApiConfig(env: NodeJS.ProcessEnv): PlatformApiConfig
     cookieSecure: optionalBoolean(env, 'COOKIE_SECURE', false),
     emailDeliveryMode: env.EMAIL_DELIVERY_MODE ?? 'console',
     appOrigins: optionalOriginList(env, 'APP_ORIGIN'),
-    consoleOrigin:
-      env.CONSOLE_ORIGIN?.trim() || optionalOriginList(env, 'APP_ORIGIN')[0] || '',
+    consoleOrigin: firstDefined(
+      env.CONSOLE_ORIGIN?.trim(),
+      optionalOriginList(env, 'APP_ORIGIN')[0],
+    ),
     rateLimitWindowMs: optionalPositiveInt(env, 'RATE_LIMIT_WINDOW_MS', 60_000),
     rateLimitMax: optionalPositiveInt(env, 'RATE_LIMIT_MAX', 10),
     gracefulShutdownTimeoutMs: optionalPositiveInt(env, 'GRACEFUL_SHUTDOWN_TIMEOUT_MS', 5000),

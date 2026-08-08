@@ -10,7 +10,10 @@ export interface InsertAuditEventInput {
   readonly details?: Readonly<Record<string, unknown>>;
 }
 
-export type InsertAuditEventResult = { readonly status: 'success'; readonly eventId: string };
+export interface InsertAuditEventResult {
+  readonly status: 'success';
+  readonly eventId: string;
+}
 
 /**
  * Persist a security audit event. `security_audit_events` is FK-free by design
@@ -34,7 +37,7 @@ export async function insertAuditEvent(
         input.actorAccountId ?? null,
         input.action,
         input.targetAccountId ?? null,
-        input.details === undefined ? {} : input.details,
+        input.details ?? {},
       ],
     );
     const row = result.rows[0];

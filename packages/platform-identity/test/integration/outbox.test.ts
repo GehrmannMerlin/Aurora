@@ -1,10 +1,6 @@
 import type { Pool } from 'pg';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import {
-  claimOutboxRows,
-  insertOutboxRow,
-  markOutboxResult,
-} from '../../src/index.js';
+import { claimOutboxRows, insertOutboxRow, markOutboxResult } from '../../src/index.js';
 import {
   assertIsTestDatabase,
   createTestPool,
@@ -52,7 +48,6 @@ describeDb('platform-identity outbox repository (real PostgreSQL 17)', () => {
       payload: { intentType: 'email_verification', toMasked: 'u***@example.com' },
     });
     expect(result.status).toBe('success');
-    if (result.status !== 'success') return;
     const row = await queryRow<{ aggregate_type: string; status: string; attempt_count: number }>(
       pool,
       'SELECT aggregate_type, status, attempt_count FROM outbox WHERE outbox_id = $1',
@@ -69,7 +64,6 @@ describeDb('platform-identity outbox repository (real PostgreSQL 17)', () => {
       aggregateType: 'email.password_reset',
       payload: { intentType: 'password_reset', toMasked: 'a***@example.com' },
     });
-    if (inserted.status !== 'success') throw new Error('expected outbox insert');
     const claimed = await claimOutboxRows(pool, { limit: 10, now: claimNow() });
     expect(claimed.status).toBe('claimed');
     if (claimed.status !== 'claimed') return;
@@ -101,20 +95,17 @@ describeDb('platform-identity outbox repository (real PostgreSQL 17)', () => {
       aggregateType: 'email.verification',
       payload: { future: true },
     });
-    await pool.query(
-      "UPDATE outbox SET available_at = now() + interval '10 minutes'",
-    );
+    await pool.query("UPDATE outbox SET available_at = now() + interval '10 minutes'");
     const claimed = await claimOutboxRows(pool, { limit: 10, now: claimNow() });
     expect(claimed).toEqual({ status: 'nothingToClaim' });
   });
 
   it('does not re-claim an already claimed row', async () => {
     await pool.query('DELETE FROM outbox');
-    const inserted = await insertOutboxRow(pool, {
+    await insertOutboxRow(pool, {
       aggregateType: 'email.verification',
       payload: { once: true },
     });
-    if (inserted.status !== 'success') throw new Error('expected outbox insert');
     const first = await claimOutboxRows(pool, { limit: 10, now: claimNow() });
     expect(first.status).toBe('claimed');
     const second = await claimOutboxRows(pool, { limit: 10, now: claimNow() });
@@ -126,7 +117,6 @@ describeDb('platform-identity outbox repository (real PostgreSQL 17)', () => {
       aggregateType: 'email.verification',
       payload: { settle: true },
     });
-    if (inserted.status !== 'success') throw new Error('expected outbox insert');
     const settled = await markOutboxResult(pool, {
       outboxId: inserted.outboxId,
       status: 'dead_lettered',
@@ -149,12 +139,12 @@ describeDb('platform-identity outbox repository (real PostgreSQL 17)', () => {
   });
 
   it('validate claim limit bounds', async () => {
-    await expect(
-      claimOutboxRows(pool, { limit: 0, now: new Date() }),
-    ).rejects.toMatchObject({ kind: 'invalid_input' });
-    await expect(
-      claimOutboxRows(pool, { limit: 101, now: new Date() }),
-    ).rejects.toMatchObject({ kind: 'invalid_input' });
+    await expect(claimOutboxRows(pool, { limit: 0, now: new Date() })).rejects.toMatchObject({
+      kind: 'invalid_input',
+    });
+    await expect(claimOutboxRows(pool, { limit: 101, now: new Date() })).rejects.toMatchObject({
+      kind: 'invalid_input',
+    });
   });
 
   it('stores the transient token payload for email link rendering (persisted verbatim)', async () => {
@@ -172,13 +162,13 @@ describeDb('platform-identity outbox repository (real PostgreSQL 17)', () => {
     const rows = await queryRows<{ payload: unknown }>(
       pool,
       'SELECT payload FROM outbox WHERE outbox_id = $1',
-      [inserted.status === 'success' ? inserted.outboxId : ''],
+      [inserted.outboxId],
     );
     expect(rows[0]?.payload).toEqual(payload);
     const count = await queryRows<CountRow>(
       pool,
       'SELECT count(*)::int AS n FROM outbox WHERE outbox_id = $1',
-      [inserted.status === 'success' ? inserted.outboxId : ''],
+      [inserted.outboxId],
     );
     expect(count[0]?.n).toBe(1);
   });

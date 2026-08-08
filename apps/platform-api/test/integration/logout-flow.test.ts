@@ -1,6 +1,6 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { randomUUID } from 'node:crypto';
-import { Pool } from 'pg';
+import type { Pool } from 'pg';
 import type { FastifyInstance } from 'fastify';
 import { createSessionStore, type SessionStore } from '@aurora/platform-session';
 import { ConsoleEmailAdapter } from '@aurora/platform-email';
@@ -21,6 +21,18 @@ const hasRedis = process.env.AURORA_TEST_REDIS_URL !== undefined;
 const describeDb = hasDb && hasRedis ? describe : describe.skip;
 
 const FIXED_NOW = new Date('2026-08-09T00:00:00.000Z');
+
+interface SessionBody {
+  csrf?: string;
+}
+
+interface LogoutBody {
+  status: string;
+}
+
+interface ProblemBody {
+  code: string;
+}
 
 describeDb('logout flow (real PostgreSQL 17 + Redis)', () => {
   let pool: Pool;
@@ -91,7 +103,8 @@ describeDb('logout flow (real PostgreSQL 17 + Redis)', () => {
 
     const session = await getSession(app, cookie);
     expect(session.statusCode).toBe(200);
-    const csrf = (session.json() as { csrf?: string }).csrf;
+    const sessionBody: SessionBody = session.json();
+    const csrf = sessionBody.csrf;
     expect(typeof csrf).toBe('string');
 
     const logout = await app.inject({
@@ -105,13 +118,14 @@ describeDb('logout flow (real PostgreSQL 17 + Redis)', () => {
       payload: JSON.stringify({}),
     });
     expect(logout.statusCode).toBe(200);
-    const body = logout.json() as { status?: string };
+    const body: LogoutBody = logout.json();
     expect(body.status).toBe('succeeded');
 
     // The revoked cookie is now unauthenticated (no session in Redis).
     const after = await getSession(app, cookie);
     expect(after.statusCode).toBe(401);
-    expect((after.json() as { code?: string }).code).toBe('authentication');
+    const problem: ProblemBody = after.json();
+    expect(problem.code).toBe('authentication');
     await app.close();
   });
 
@@ -125,7 +139,8 @@ describeDb('logout flow (real PostgreSQL 17 + Redis)', () => {
       payload: JSON.stringify({}),
     });
     expect(logout.statusCode).toBe(403);
-    expect((logout.json() as { code?: string }).code).toBe('authorization');
+    const problem: ProblemBody = logout.json();
+    expect(problem.code).toBe('authorization');
     await app.close();
   });
 });

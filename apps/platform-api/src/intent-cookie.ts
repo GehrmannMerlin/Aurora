@@ -33,13 +33,14 @@ export function serializeIntentCookie(
   options: SessionCookieOptions,
   maxAgeMs: number,
 ): string {
-  const parts = [
-    `${INTENT_COOKIE_NAME}=${kind}:${token}:${csrfSecret}`,
-    'HttpOnly',
-  ];
+  const parts = [`${INTENT_COOKIE_NAME}=${kind}:${token}:${csrfSecret}`, 'HttpOnly'];
   if (options.secure) parts.push('Secure');
   const sameSite = options.sameSite.charAt(0).toUpperCase() + options.sameSite.slice(1);
-  parts.push(`SameSite=${sameSite}`, `Path=${options.path}`, `Max-Age=${Math.max(0, Math.floor(maxAgeMs / 1000))}`);
+  parts.push(
+    `SameSite=${sameSite}`,
+    `Path=${options.path}`,
+    `Max-Age=${String(Math.max(0, Math.floor(maxAgeMs / 1000)))}`,
+  );
   return parts.join('; ');
 }
 

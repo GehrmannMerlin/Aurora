@@ -13,7 +13,10 @@ export interface InsertOutboxRowInput {
   readonly payload: Readonly<Record<string, unknown>>;
 }
 
-export type InsertOutboxRowResult = { readonly status: 'success'; readonly outboxId: string };
+export interface InsertOutboxRowResult {
+  readonly status: 'success';
+  readonly outboxId: string;
+}
 
 /** camelCase projection of the outbox table. */
 export interface OutboxRow {
@@ -43,7 +46,8 @@ export interface MarkOutboxResultInput {
   readonly attemptCount: number;
 }
 
-export type MarkOutboxResultResult = { readonly status: 'success' } | { readonly status: 'not_found' };
+export type MarkOutboxResultResult =
+  { readonly status: 'success' } | { readonly status: 'not_found' };
 
 interface OutboxRowShape {
   outbox_id: string;
@@ -65,9 +69,9 @@ function toOutboxRow(row: OutboxRowShape): OutboxRow {
     payload: row.payload,
     status: row.status,
     attemptCount: row.attempt_count,
-    availableAt: isoTimestamp(row.available_at) as string,
-    createdAt: isoTimestamp(row.created_at) as string,
-    updatedAt: isoTimestamp(row.updated_at) as string,
+    availableAt: isoTimestamp(row.available_at),
+    createdAt: isoTimestamp(row.created_at),
+    updatedAt: isoTimestamp(row.updated_at),
   };
 }
 

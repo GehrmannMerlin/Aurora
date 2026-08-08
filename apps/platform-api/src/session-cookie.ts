@@ -29,10 +29,7 @@ export function setSessionCookie(
 }
 
 /** Expire the session cookie immediately (logout / revocation). */
-export function clearSessionCookie(
-  reply: FastifyReply,
-  options: SessionCookieOptions,
-): void {
+export function clearSessionCookie(reply: FastifyReply, options: SessionCookieOptions): void {
   const expired = `${serializeSessionCookie(SESSION_COOKIE_NAME, '', options)}; Max-Age=0; Expires=Thu, 01 Jan 1970 00:00:00 GMT`;
   appendSetCookie(reply, expired);
 }

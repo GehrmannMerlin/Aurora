@@ -74,7 +74,7 @@ describe('ConsoleEmailAdapter', () => {
       const result = await adapter.deliver(request());
       expect(result).toEqual({ status: 'enqueued' });
       expect(spy).toHaveBeenCalledWith('[email] queued email_verification to u***@example.com');
-      expect(spy.mock.calls.map((call) => call[0]).join('\n')).not.toContain(
+      expect(spy.mock.calls.map((call) => call[0] as string).join('\n')).not.toContain(
         'short-lived-transient-token',
       );
     } finally {

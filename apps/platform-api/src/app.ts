@@ -164,7 +164,13 @@ export function buildPlatformApi(deps: PlatformApiDependencies): FastifyInstance
   app.setErrorHandler((error, request, reply) => {
     const requestId = request.platformRequestId || defaultRequestIdProvider();
     if (isStructuralParseError(error)) {
-      return sendProblem(reply, requestId, 400, 'structural_error', 'Request body is not valid JSON.');
+      return sendProblem(
+        reply,
+        requestId,
+        400,
+        'structural_error',
+        'Request body is not valid JSON.',
+      );
     }
     return sendProblem(reply, requestId, 500, 'internal_error', 'An internal error occurred.');
   });

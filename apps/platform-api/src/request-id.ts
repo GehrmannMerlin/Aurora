@@ -25,7 +25,8 @@ declare module 'fastify' {
 export function requestIdHook(
   provider: PlatformRequestIdProvider,
 ): (request: FastifyRequest) => Promise<void> {
-  return async (request: FastifyRequest): Promise<void> => {
+  return (request: FastifyRequest): Promise<void> => {
     request.platformRequestId = provider();
+    return Promise.resolve();
   };
 }

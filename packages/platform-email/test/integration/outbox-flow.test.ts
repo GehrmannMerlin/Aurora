@@ -139,7 +139,6 @@ describeDb('platform-email outbox flow (real PostgreSQL 17)', () => {
       aggregateType: 'email.verification',
       payload: emailPayload,
     });
-    if (inserted.status !== 'success') throw new Error('expected outbox insert');
 
     const port: EmailDeliveryPort = new ConsoleEmailAdapter({
       mode: 'console',
@@ -164,13 +163,12 @@ describeDb('platform-email outbox flow (real PostgreSQL 17)', () => {
       aggregateType: 'email.password_reset',
       payload: { ...emailPayload, intentType: 'password_reset' },
     });
-    if (inserted.status !== 'success') throw new Error('expected outbox insert');
     await pool.query('UPDATE outbox SET attempt_count = 2 WHERE outbox_id = $1', [
       inserted.outboxId,
     ]);
 
     const port: EmailDeliveryPort = {
-      deliver: async () => ({ status: 'failed' as const, reason: 'provider_unavailable' }),
+      deliver: () => Promise.resolve({ status: 'failed' as const, reason: 'provider_unavailable' }),
     };
     const result = await consumeOutboxEmails({
       pool,
@@ -191,9 +189,10 @@ describeDb('platform-email outbox flow (real PostgreSQL 17)', () => {
       aggregateType: 'email.invitation',
       payload: { broken: true },
     });
-    if (inserted.status !== 'success') throw new Error('expected outbox insert');
 
-    const port: EmailDeliveryPort = { deliver: async () => ({ status: 'enqueued' as const }) };
+    const port: EmailDeliveryPort = {
+      deliver: () => Promise.resolve({ status: 'enqueued' as const }),
+    };
     const result = await consumeOutboxEmails({
       pool,
       port,

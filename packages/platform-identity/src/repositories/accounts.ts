@@ -1,5 +1,10 @@
 import type { Pool, PoolClient } from 'pg';
-import { isForeignKeyViolation, isUniqueViolation, PlatformIdentityError, toStableError } from '../errors.js';
+import {
+  isForeignKeyViolation,
+  isUniqueViolation,
+  PlatformIdentityError,
+  toStableError,
+} from '../errors.js';
 import { normalizeEmail } from '../intent-token.js';
 import { isoTimestamp } from './timestamp.js';
 import { isPoolClient, withTransaction } from './transaction.js';
@@ -27,8 +32,7 @@ export interface CreateAccountInput {
 }
 
 export type CreateAccountResult =
-  | { readonly status: 'success'; readonly account: AccountRow }
-  | { readonly status: 'conflict' };
+  { readonly status: 'success'; readonly account: AccountRow } | { readonly status: 'conflict' };
 
 export interface UpsertAccountCredentialInput {
   readonly accountId: string;
@@ -36,7 +40,8 @@ export interface UpsertAccountCredentialInput {
   readonly passwordVersion: number;
 }
 
-export type AccountMutationResult = { readonly status: 'success' } | { readonly status: 'not_found' };
+export type AccountMutationResult =
+  { readonly status: 'success' } | { readonly status: 'not_found' };
 
 interface AccountRowShape {
   account_id: string;
@@ -61,8 +66,8 @@ function toAccountRow(row: AccountRowShape): AccountRow {
     verifiedAt: isoTimestamp(row.verified_at),
     securityVersion: row.security_version,
     status: row.status,
-    createdAt: isoTimestamp(row.created_at) as string,
-    updatedAt: isoTimestamp(row.updated_at) as string,
+    createdAt: isoTimestamp(row.created_at),
+    updatedAt: isoTimestamp(row.updated_at),
   };
 }
 
@@ -161,10 +166,9 @@ export async function getAccountById(
   accountId: string,
 ): Promise<AccountRow | null> {
   try {
-    const result = await pool.query<AccountRowShape>(
-      `${ACCOUNT_SELECT} WHERE a.account_id = $1`,
-      [accountId],
-    );
+    const result = await pool.query<AccountRowShape>(`${ACCOUNT_SELECT} WHERE a.account_id = $1`, [
+      accountId,
+    ]);
     const row = result.rows[0];
     return row === undefined ? null : toAccountRow(row);
   } catch (error) {
@@ -193,7 +197,10 @@ export async function updateAccountVerifiedAt(
 export async function incrementSecurityVersion(
   pool: Pool | PoolClient,
   accountId: string,
-): Promise<{ readonly status: 'success'; readonly securityVersion: number } | { readonly status: 'not_found' }> {
+): Promise<
+  | { readonly status: 'success'; readonly securityVersion: number }
+  | { readonly status: 'not_found' }
+> {
   try {
     const result = await pool.query<{ security_version: number }>(
       `UPDATE accounts SET security_version = security_version + 1, updated_at = now()
@@ -201,7 +208,9 @@ export async function incrementSecurityVersion(
       [accountId],
     );
     const row = result.rows[0];
-    return row === undefined ? { status: 'not_found' } : { status: 'success', securityVersion: row.security_version };
+    return row === undefined
+      ? { status: 'not_found' }
+      : { status: 'success', securityVersion: row.security_version };
   } catch (error) {
     throw toStableError(error);
   }

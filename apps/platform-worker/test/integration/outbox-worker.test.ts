@@ -59,7 +59,9 @@ async function waitForStatus(
     const row = await selectRow(pool, outboxId);
     if (row.status === status) return;
     if (Date.now() > deadline) {
-      throw new Error(`timed out waiting for outbox ${outboxId} to reach ${status}; current=${row.status}`);
+      throw new Error(
+        `timed out waiting for outbox ${outboxId} to reach ${status}; current=${row.status}`,
+      );
     }
     await new Promise<void>((resolve) => setTimeout(resolve, 10));
   }
@@ -114,7 +116,7 @@ describeDb('apps/platform-worker outbox consumer (real PostgreSQL 17)', () => {
     await pool.query('UPDATE outbox SET attempt_count = 2 WHERE outbox_id = $1', [id]);
 
     const failingPort: EmailDeliveryPort = {
-      deliver: async () => ({ status: 'failed' as const, reason: 'provider_unavailable' }),
+      deliver: () => Promise.resolve({ status: 'failed' as const, reason: 'provider_unavailable' }),
     };
 
     const worker = buildPlatformWorker({

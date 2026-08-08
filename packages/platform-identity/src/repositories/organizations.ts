@@ -22,8 +22,7 @@ export interface CreatePersonalOrganizationInput {
 }
 
 export type CreatePersonalOrganizationResult =
-  | { readonly status: 'success'; readonly organizationId: string }
-  | { readonly status: 'conflict' };
+  { readonly status: 'success'; readonly organizationId: string } | { readonly status: 'conflict' };
 
 export interface InsertMembershipInput {
   readonly organizationId: string;
@@ -38,8 +37,7 @@ export interface InsertProjectMembershipInput {
 }
 
 export type MembershipMutationResult =
-  | { readonly status: 'success' }
-  | { readonly status: 'already_member' };
+  { readonly status: 'success' } | { readonly status: 'already_member' };
 
 /** camelCase projection of the organization_invitations table. */
 export interface InvitationRow {
@@ -63,10 +61,10 @@ export interface CreateInvitationInput {
 }
 
 export type CreateInvitationResult =
-  | { readonly status: 'success'; readonly invitationId: string }
-  | { readonly status: 'conflict' };
+  { readonly status: 'success'; readonly invitationId: string } | { readonly status: 'conflict' };
 
-export type InvitationMutationResult = { readonly status: 'success' } | { readonly status: 'not_found' };
+export type InvitationMutationResult =
+  { readonly status: 'success' } | { readonly status: 'not_found' };
 
 interface OrganizationRowShape {
   organization_id: string;
@@ -95,8 +93,8 @@ function toOrganizationRow(row: OrganizationRowShape): OrganizationRow {
     name: row.name,
     kind: row.kind,
     timezone: row.timezone,
-    createdAt: isoTimestamp(row.created_at) as string,
-    updatedAt: isoTimestamp(row.updated_at) as string,
+    createdAt: isoTimestamp(row.created_at),
+    updatedAt: isoTimestamp(row.updated_at),
   };
 }
 
@@ -107,10 +105,10 @@ function toInvitationRow(row: InvitationRowShape): InvitationRow {
     invitedEmail: row.invited_email,
     orgRole: row.org_role,
     tokenDigest: row.token_digest,
-    expiresAt: isoTimestamp(row.expires_at) as string,
+    expiresAt: isoTimestamp(row.expires_at),
     status: row.status,
     acceptedAt: isoTimestamp(row.accepted_at),
-    createdAt: isoTimestamp(row.created_at) as string,
+    createdAt: isoTimestamp(row.created_at),
   };
 }
 

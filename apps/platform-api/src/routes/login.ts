@@ -5,13 +5,17 @@ import {
   verifyPassword,
   type AccountRow,
 } from '@aurora/platform-identity';
-import { createSession, rotateSession, type SessionAuthLevel } from '@aurora/platform-session';
+import { createSession, rotateSession } from '@aurora/platform-session';
 import { OPERATION_ID_LOGIN } from '@aurora/platform-contract';
 import { parseInput, serializeOutput, type OperationDef } from '@aurora/platform-contract/server';
 import { operationById } from '../operations.js';
 import { sendProblem } from '../error-mapper.js';
 import { setSessionCookie } from '../session-cookie.js';
-import { runIdempotentCommand, requestDigest, type IdempotentCommandResult } from '../idempotency.js';
+import {
+  runIdempotentCommand,
+  requestDigest,
+  type IdempotentCommandResult,
+} from '../idempotency.js';
 import { sendMappedError } from '../service-error.js';
 import type { PlatformApiRouteDependencies } from '../route-deps.js';
 
@@ -31,11 +35,17 @@ interface LoginCommandResult {
     pathParams: Record<string, string>;
     query: Record<string, string>;
   }[];
-  readonly continuation?: { target: { routeId: string; pathParams: Record<string, string>; query: Record<string, string> }; kind: 'invitation' | 'return_to' };
+  readonly continuation?: {
+    target: { routeId: string; pathParams: Record<string, string>; query: Record<string, string> };
+    kind: 'invitation' | 'return_to';
+  };
 }
 
 /** Uniform unauthenticated failure — identical for nonexistent and wrong-password (anti-enumeration). */
-async function sendAuthenticationFailed(reply: FastifyReply, requestId: string): Promise<FastifyReply> {
+async function sendAuthenticationFailed(
+  reply: FastifyReply,
+  requestId: string,
+): Promise<FastifyReply> {
   return sendProblem(reply, requestId, 401, 'authentication', 'Invalid email or password.', {
     recoveryTarget: 'auth.login',
   });
@@ -60,7 +70,13 @@ export async function handleLogin(
 
   const parsed = parseInput(LOGIN_OPERATION, { body: request.body });
   if (!parsed.ok) {
-    await sendProblem(reply, requestId, 400, 'structural_error', 'Request does not match the public contract.');
+    await sendProblem(
+      reply,
+      requestId,
+      400,
+      'structural_error',
+      'Request does not match the public contract.',
+    );
     return;
   }
   const input = parsed.data.body as LoginBody;
@@ -81,7 +97,13 @@ export async function handleLogin(
   try {
     account = await findAccountByEmailNormalized(deps.pool, emailNormalized);
   } catch {
-    await sendProblem(reply, requestId, 503, 'authority_unavailable', 'Account store is temporarily unavailable.');
+    await sendProblem(
+      reply,
+      requestId,
+      503,
+      'authority_unavailable',
+      'Account store is temporarily unavailable.',
+    );
     return;
   }
 
@@ -94,7 +116,10 @@ export async function handleLogin(
   } else {
     // Uniform timing/failure: still burn an Argon2id verify for a nonexistent
     // account so the response is indistinguishable from a wrong password.
-    await verifyPassword(input.password, '$argon2id$v=19$m=19456,t=2,p=1$AAAAAAAAAAAAAAAAAAAAAA$AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA');
+    await verifyPassword(
+      input.password,
+      '$argon2id$v=19$m=19456,t=2,p=1$AAAAAAAAAAAAAAAAAAAAAA$AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
+    );
     await sendAuthenticationFailed(reply, requestId);
     return;
   }
@@ -108,7 +133,7 @@ export async function handleLogin(
       key: input.idempotencyKey,
       operation: OPERATION_ID_LOGIN,
       digest: requestDigest({ ...input, emailNormalized }),
-      execute: async () => commandResult,
+      execute: () => Promise.resolve(commandResult),
     });
   } catch (error) {
     if (await sendMappedError(reply, requestId, error)) return;
@@ -121,7 +146,7 @@ export async function handleLogin(
   }
 
   const stored = idempotency.resultData as LoginCommandResult;
-  const authLevel = stored.authentication as SessionAuthLevel;
+  const authLevel = stored.authentication;
 
   // Create a fresh session, or rotate the pre-existing one on login
   // (ADR-030 决定细节 3: login rotates the session id).
@@ -135,7 +160,12 @@ export async function handleLogin(
       absoluteMs: deps.config.sessionAbsoluteMs,
     };
     if (request.sessionCookieValue !== null && request.sessionPayload !== null) {
-      const rotated = await rotateSession(deps.sessionStore, request.sessionCookieValue, now, sessionInput);
+      const rotated = await rotateSession(
+        deps.sessionStore,
+        request.sessionCookieValue,
+        now,
+        sessionInput,
+      );
       if (rotated === null) {
         session = await createSession(deps.sessionStore, sessionInput);
       } else {
@@ -145,7 +175,13 @@ export async function handleLogin(
       session = await createSession(deps.sessionStore, sessionInput);
     }
   } catch {
-    await sendProblem(reply, requestId, 503, 'authority_unavailable', 'Session authority is temporarily unavailable.');
+    await sendProblem(
+      reply,
+      requestId,
+      503,
+      'authority_unavailable',
+      'Session authority is temporarily unavailable.',
+    );
     return;
   }
 
@@ -182,7 +218,10 @@ function buildLoginCommandResult(account: AccountRow, request: FastifyRequest): 
   // after login; otherwise no continuation (the client defaults to /workspace).
   const continuation =
     request.intentPayload?.kind === 'organization_invitation'
-      ? { target: { routeId: 'invitation.accept', pathParams: {}, query: {} }, kind: 'invitation' as const }
+      ? {
+          target: { routeId: 'invitation.accept', pathParams: {}, query: {} },
+          kind: 'invitation' as const,
+        }
       : undefined;
 
   return {

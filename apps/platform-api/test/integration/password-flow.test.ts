@@ -1,6 +1,6 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { randomUUID } from 'node:crypto';
-import { Pool } from 'pg';
+import type { Pool } from 'pg';
 import type { FastifyInstance } from 'fastify';
 import {
   createIntentToken,
@@ -28,6 +28,27 @@ const describeDb = hasDb && hasRedis ? describe : describe.skip;
 
 const FIXED_NOW = new Date('2026-08-09T00:00:00.000Z');
 const PASSWORD = 's3cure-Passw0rd!';
+
+interface ResetLinkBody {
+  csrf?: string;
+}
+
+interface ConfirmResetBody {
+  status: string;
+}
+
+interface ChangePasswordBody {
+  status: string;
+  sessionImpact: string;
+}
+
+interface SessionBody {
+  csrf?: string;
+}
+
+interface ProblemBody {
+  code: string;
+}
 
 describeDb('password flow (real PostgreSQL 17 + Redis)', () => {
   let pool: Pool;
@@ -92,9 +113,9 @@ describeDb('password flow (real PostgreSQL 17 + Redis)', () => {
   async function establishResetIntent(app: FastifyInstance, token: string) {
     const link = await app.inject({ method: 'GET', url: `/api/platform/v1/auth/reset/${token}` });
     expect(link.statusCode).toBe(200);
-    const body = link.json() as { csrf?: string };
+    const body: ResetLinkBody = link.json();
     const setCookie = link.headers['set-cookie'];
-    const cookieValue = Array.isArray(setCookie) ? setCookie[0] : (setCookie as string | undefined);
+    const cookieValue = Array.isArray(setCookie) ? setCookie[0] : setCookie;
     const match = /^aurora_intent=([^;]+)/.exec(cookieValue ?? '');
     expect(match).not.toBeNull();
     return { cookie: match?.[1] ?? '', csrf: body.csrf ?? '' };
@@ -118,7 +139,9 @@ describeDb('password flow (real PostgreSQL 17 + Redis)', () => {
     expect(forMissing.json()).toHaveProperty('serverTime');
 
     // Only the existing account wrote a reset outbox row.
-    const outbox = await pool.query(`SELECT payload FROM outbox WHERE aggregate_type = 'email.password_reset'`);
+    const outbox = await pool.query(
+      `SELECT payload FROM outbox WHERE aggregate_type = 'email.password_reset'`,
+    );
     expect(outbox.rows.length).toBe(1);
     await app.close();
   });
@@ -140,10 +163,13 @@ describeDb('password flow (real PostgreSQL 17 + Redis)', () => {
         'content-type': 'application/json',
         'x-aurora-csrf': intent.csrf,
       },
-      payload: JSON.stringify({ newPassword: 'new-s3cure-Passw0rd!', idempotencyKey: randomUUID() }),
+      payload: JSON.stringify({
+        newPassword: 'new-s3cure-Passw0rd!',
+        idempotencyKey: randomUUID(),
+      }),
     });
     expect(confirm.statusCode).toBe(200);
-    const body = confirm.json() as { status?: string };
+    const body: ConfirmResetBody = confirm.json();
     expect(body.status).toBe('succeeded');
 
     // The previous session (from register) is revoked.
@@ -156,7 +182,7 @@ describeDb('password flow (real PostgreSQL 17 + Redis)', () => {
 
     // No auto-login: the confirm response must not establish a session cookie.
     const setCookie = confirm.headers['set-cookie'];
-    const cookieHeader = Array.isArray(setCookie) ? setCookie[0] : (setCookie as string | undefined);
+    const cookieHeader = Array.isArray(setCookie) ? setCookie[0] : setCookie;
     expect(cookieHeader ?? '').not.toContain('aurora_session=');
 
     // The new password works; the old one does not.
@@ -164,7 +190,11 @@ describeDb('password flow (real PostgreSQL 17 + Redis)', () => {
       method: 'POST',
       url: '/api/platform/v1/auth/login',
       headers: { 'content-type': 'application/json' },
-      payload: JSON.stringify({ email, password: 'new-s3cure-Passw0rd!', idempotencyKey: randomUUID() }),
+      payload: JSON.stringify({
+        email,
+        password: 'new-s3cure-Passw0rd!',
+        idempotencyKey: randomUUID(),
+      }),
     });
     expect(loginNew.statusCode).toBe(200);
     const loginOld = await app.inject({
@@ -193,7 +223,10 @@ describeDb('password flow (real PostgreSQL 17 + Redis)', () => {
         'content-type': 'application/json',
         'x-aurora-csrf': intent.csrf,
       },
-      payload: JSON.stringify({ newPassword: 'new-s3cure-Passw0rd!', idempotencyKey: randomUUID() }),
+      payload: JSON.stringify({
+        newPassword: 'new-s3cure-Passw0rd!',
+        idempotencyKey: randomUUID(),
+      }),
     });
     expect(first.statusCode).toBe(200);
 
@@ -205,10 +238,14 @@ describeDb('password flow (real PostgreSQL 17 + Redis)', () => {
         'content-type': 'application/json',
         'x-aurora-csrf': intent.csrf,
       },
-      payload: JSON.stringify({ newPassword: 'another-new-Passw0rd!', idempotencyKey: randomUUID() }),
+      payload: JSON.stringify({
+        newPassword: 'another-new-Passw0rd!',
+        idempotencyKey: randomUUID(),
+      }),
     });
     expect(second.statusCode).toBe(409);
-    expect((second.json() as { code?: string }).code).toBe('business_validation');
+    const problem: ProblemBody = second.json();
+    expect(problem.code).toBe('business_validation');
     await app.close();
   });
 
@@ -221,18 +258,21 @@ describeDb('password flow (real PostgreSQL 17 + Redis)', () => {
       [normalizeEmail(email)],
     );
     const accountId = account.rows[0]?.account_id;
-    expect(accountId).toBeDefined();
+    if (accountId === undefined) {
+      throw new Error('expected a reset account row');
+    }
 
     const { token, digest } = createIntentToken();
     await insertPasswordResetIntent(pool, {
-      accountId: accountId as string,
+      accountId,
       tokenDigest: digest,
       expiresAt: new Date(FIXED_NOW.getTime() - 1000),
     });
 
     const link = await app.inject({ method: 'GET', url: `/api/platform/v1/auth/reset/${token}` });
     expect(link.statusCode).toBe(409);
-    expect((link.json() as { code?: string }).code).toBe('business_validation');
+    const problem: ProblemBody = link.json();
+    expect(problem.code).toBe('business_validation');
     await app.close();
   });
 
@@ -247,7 +287,8 @@ describeDb('password flow (real PostgreSQL 17 + Redis)', () => {
       headers: { cookie: `aurora_session=${cookie}` },
     });
     expect(session.statusCode).toBe(200);
-    const csrf = (session.json() as { csrf?: string }).csrf;
+    const sessionBody: SessionBody = session.json();
+    const csrf = sessionBody.csrf;
     expect(typeof csrf).toBe('string');
 
     const change = await app.inject({
@@ -265,7 +306,7 @@ describeDb('password flow (real PostgreSQL 17 + Redis)', () => {
       }),
     });
     expect(change.statusCode).toBe(200);
-    const body = change.json() as { status?: string; sessionImpact?: string };
+    const body: ChangePasswordBody = change.json();
     expect(body.status).toBe('succeeded');
     expect(body.sessionImpact).toBe('revoked_all');
 
@@ -282,7 +323,11 @@ describeDb('password flow (real PostgreSQL 17 + Redis)', () => {
       method: 'POST',
       url: '/api/platform/v1/auth/login',
       headers: { 'content-type': 'application/json' },
-      payload: JSON.stringify({ email, password: 'changed-s3cure-Passw0rd!', idempotencyKey: randomUUID() }),
+      payload: JSON.stringify({
+        email,
+        password: 'changed-s3cure-Passw0rd!',
+        idempotencyKey: randomUUID(),
+      }),
     });
     expect(loginNew.statusCode).toBe(200);
     await app.close();
@@ -297,7 +342,8 @@ describeDb('password flow (real PostgreSQL 17 + Redis)', () => {
       url: '/api/platform/v1/session',
       headers: { cookie: `aurora_session=${cookie}` },
     });
-    const csrf = (session.json() as { csrf?: string }).csrf ?? '';
+    const sessionBody: SessionBody = session.json();
+    const csrf = sessionBody.csrf ?? '';
 
     const change = await app.inject({
       method: 'POST',
@@ -314,7 +360,8 @@ describeDb('password flow (real PostgreSQL 17 + Redis)', () => {
       }),
     });
     expect(change.statusCode).toBe(403);
-    expect((change.json() as { code?: string }).code).toBe('authorization');
+    const problem: ProblemBody = change.json();
+    expect(problem.code).toBe('authorization');
     await app.close();
   });
 });

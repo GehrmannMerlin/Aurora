@@ -11,7 +11,8 @@ export interface CreateIdempotencyRecordInput {
   readonly status: IdempotencyStatus;
 }
 
-export type CreateIdempotencyRecordResult = { readonly status: 'created' } | { readonly status: 'conflict' };
+export type CreateIdempotencyRecordResult =
+  { readonly status: 'created' } | { readonly status: 'conflict' };
 
 /** camelCase projection of the idempotency_records table. */
 export interface IdempotencyRecordRow {
@@ -30,7 +31,8 @@ export interface UpdateIdempotencyResultInput {
   readonly resultData: Readonly<Record<string, unknown>> | null;
 }
 
-export type UpdateIdempotencyResultResult = { readonly status: 'success' } | { readonly status: 'not_found' };
+export type UpdateIdempotencyResultResult =
+  { readonly status: 'success' } | { readonly status: 'not_found' };
 
 interface IdempotencyRecordRowShape {
   idempotency_key: string;
@@ -49,8 +51,8 @@ function toIdempotencyRecordRow(row: IdempotencyRecordRowShape): IdempotencyReco
     requestDigest: row.request_digest,
     status: row.status,
     resultData: row.result_data,
-    createdAt: isoTimestamp(row.created_at) as string,
-    updatedAt: isoTimestamp(row.updated_at) as string,
+    createdAt: isoTimestamp(row.created_at),
+    updatedAt: isoTimestamp(row.updated_at),
   };
 }
 

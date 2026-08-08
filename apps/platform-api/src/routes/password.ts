@@ -27,7 +27,12 @@ import { sendProblem } from '../error-mapper.js';
 import { clearSessionCookie } from '../session-cookie.js';
 import { clearIntentCookieOnReply } from '../intent-cookie.js';
 import { maskEmail } from '../email-mask.js';
-import { runIdempotentCommand, lookupIdempotency, requestDigest, type IdempotentCommandResult } from '../idempotency.js';
+import {
+  runIdempotentCommand,
+  lookupIdempotency,
+  requestDigest,
+  type IdempotentCommandResult,
+} from '../idempotency.js';
 import { ServiceError, sendMappedError } from '../service-error.js';
 import type { PlatformApiRouteDependencies } from '../route-deps.js';
 
@@ -102,7 +107,13 @@ export async function handleRequestPasswordReset(
 
   const parsed = parseInput(REQUEST_RESET_OPERATION, { body: request.body });
   if (!parsed.ok) {
-    await sendProblem(reply, requestId, 400, 'structural_error', 'Request does not match the public contract.');
+    await sendProblem(
+      reply,
+      requestId,
+      400,
+      'structural_error',
+      'Request does not match the public contract.',
+    );
     return;
   }
   const input = parsed.data.body as RequestResetBody;
@@ -123,7 +134,13 @@ export async function handleRequestPasswordReset(
   try {
     account = await findAccountByEmailNormalized(deps.pool, emailNormalized);
   } catch {
-    await sendProblem(reply, requestId, 503, 'authority_unavailable', 'Account store is temporarily unavailable.');
+    await sendProblem(
+      reply,
+      requestId,
+      503,
+      'authority_unavailable',
+      'Account store is temporarily unavailable.',
+    );
     return;
   }
 
@@ -191,13 +208,19 @@ export async function handleConfirmPasswordReset(
 
   const parsed = parseInput(CONFIRM_RESET_OPERATION, { body: request.body });
   if (!parsed.ok) {
-    await sendProblem(reply, requestId, 400, 'structural_error', 'Request does not match the public contract.');
+    await sendProblem(
+      reply,
+      requestId,
+      400,
+      'structural_error',
+      'Request does not match the public contract.',
+    );
     return;
   }
   const input = parsed.data.body as ConfirmResetBody;
 
   const intentPayload = request.intentPayload;
-  if (intentPayload === null || intentPayload.kind !== 'password_reset') {
+  if (intentPayload?.kind !== 'password_reset') {
     await sendProblem(reply, requestId, 404, 'not_found', 'The reset intent was not found.');
     return;
   }
@@ -206,7 +229,13 @@ export async function handleConfirmPasswordReset(
   try {
     intent = await findPasswordResetIntentByDigest(deps.pool, digestOf(intentPayload.token));
   } catch {
-    await sendProblem(reply, requestId, 503, 'authority_unavailable', 'Account store is temporarily unavailable.');
+    await sendProblem(
+      reply,
+      requestId,
+      503,
+      'authority_unavailable',
+      'Account store is temporarily unavailable.',
+    );
     return;
   }
   if (intent === null) {
@@ -231,32 +260,36 @@ export async function handleConfirmPasswordReset(
       operation: OPERATION_ID_CONFIRM_PASSWORD_RESET,
       digest: requestDigest(input),
       execute: async (client) => {
-      const consumed = await consumeIntent(client, {
-        kind: 'password_reset',
-        intentId: intent.intentId,
-        now,
-      });
-      if (consumed.status === 'already_consumed' || consumed.status === 'expired') {
-        throw new ServiceError(409, 'business_validation', 'The reset intent is no longer valid.');
-      }
-      if (consumed.status === 'not_found') {
-        throw new ServiceError(404, 'not_found', 'The reset intent was not found.');
-      }
+        const consumed = await consumeIntent(client, {
+          kind: 'password_reset',
+          intentId: intent.intentId,
+          now,
+        });
+        if (consumed.status === 'already_consumed' || consumed.status === 'expired') {
+          throw new ServiceError(
+            409,
+            'business_validation',
+            'The reset intent is no longer valid.',
+          );
+        }
+        if (consumed.status === 'not_found') {
+          throw new ServiceError(404, 'not_found', 'The reset intent was not found.');
+        }
 
-      const account = await getAccountById(client, accountId);
-      if (account === null) {
-        throw new ServiceError(404, 'not_found', 'The account was not found.');
-      }
-      accountId = account.accountId;
+        const account = await getAccountById(client, accountId);
+        if (account === null) {
+          throw new ServiceError(404, 'not_found', 'The account was not found.');
+        }
+        accountId = account.accountId;
 
-      await upsertAccountCredential(client, {
-        accountId,
-        passwordHash: newHash,
-        passwordVersion: (account.passwordVersion ?? 1) + 1,
-      });
-      await incrementSecurityVersion(client, accountId);
+        await upsertAccountCredential(client, {
+          accountId,
+          passwordHash: newHash,
+          passwordVersion: (account.passwordVersion ?? 1) + 1,
+        });
+        await incrementSecurityVersion(client, accountId);
 
-      return { status: 'succeeded' as const, serverTime: now.toISOString() };
+        return { status: 'succeeded' as const, serverTime: now.toISOString() };
       },
     });
   } catch (error) {
@@ -273,7 +306,13 @@ export async function handleConfirmPasswordReset(
   try {
     await revokeAllAccountSessions(deps.sessionStore, accountId);
   } catch {
-    await sendProblem(reply, requestId, 503, 'authority_unavailable', 'Session authority is temporarily unavailable.');
+    await sendProblem(
+      reply,
+      requestId,
+      503,
+      'authority_unavailable',
+      'Session authority is temporarily unavailable.',
+    );
     return;
   }
 
@@ -303,7 +342,13 @@ export async function handleChangePassword(
 
   const parsed = parseInput(CHANGE_PASSWORD_OPERATION, { body: request.body });
   if (!parsed.ok) {
-    await sendProblem(reply, requestId, 400, 'structural_error', 'Request does not match the public contract.');
+    await sendProblem(
+      reply,
+      requestId,
+      400,
+      'structural_error',
+      'Request does not match the public contract.',
+    );
     return;
   }
   const input = parsed.data.body as ChangePasswordBody;
@@ -319,7 +364,13 @@ export async function handleChangePassword(
   try {
     account = await getAccountById(deps.pool, session.accountId);
   } catch {
-    await sendProblem(reply, requestId, 503, 'authority_unavailable', 'Account store is temporarily unavailable.');
+    await sendProblem(
+      reply,
+      requestId,
+      503,
+      'authority_unavailable',
+      'Account store is temporarily unavailable.',
+    );
     return;
   }
   if (account === null) {
@@ -331,7 +382,13 @@ export async function handleChangePassword(
 
   const currentOk = await verifyPassword(input.currentPassword, account.passwordHash ?? '');
   if (!currentOk) {
-    await sendProblem(reply, requestId, 403, 'authorization', 'Current password verification failed.');
+    await sendProblem(
+      reply,
+      requestId,
+      403,
+      'authorization',
+      'Current password verification failed.',
+    );
     return;
   }
 
@@ -354,7 +411,13 @@ export async function handleChangePassword(
     return;
   }
   if (probe.outcome === 'conflict') {
-    await sendProblem(reply, requestId, 409, 'idempotency_conflict', 'Idempotency key was used with a different request.');
+    await sendProblem(
+      reply,
+      requestId,
+      409,
+      'idempotency_conflict',
+      'Idempotency key was used with a different request.',
+    );
     return;
   }
 
@@ -396,7 +459,13 @@ export async function handleChangePassword(
   try {
     await revokeAllAccountSessions(deps.sessionStore, accountId);
   } catch {
-    await sendProblem(reply, requestId, 503, 'authority_unavailable', 'Session authority is temporarily unavailable.');
+    await sendProblem(
+      reply,
+      requestId,
+      503,
+      'authority_unavailable',
+      'Session authority is temporarily unavailable.',
+    );
     return;
   }
 

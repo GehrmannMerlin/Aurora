@@ -27,7 +27,13 @@ export async function handleLogout(
     try {
       await revokeSession(deps.sessionStore, cookieValue);
     } catch {
-      await sendProblem(reply, requestId, 503, 'authority_unavailable', 'Session authority is temporarily unavailable.');
+      await sendProblem(
+        reply,
+        requestId,
+        503,
+        'authority_unavailable',
+        'Session authority is temporarily unavailable.',
+      );
       return;
     }
   }

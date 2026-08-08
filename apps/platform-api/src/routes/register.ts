@@ -15,7 +15,11 @@ import { operationById } from '../operations.js';
 import { sendProblem } from '../error-mapper.js';
 import { setSessionCookie } from '../session-cookie.js';
 import { maskEmail } from '../email-mask.js';
-import { runIdempotentCommand, requestDigest, type IdempotentCommandResult } from '../idempotency.js';
+import {
+  runIdempotentCommand,
+  requestDigest,
+  type IdempotentCommandResult,
+} from '../idempotency.js';
 import { ServiceError, sendMappedError } from '../service-error.js';
 import type { PlatformApiRouteDependencies } from '../route-deps.js';
 
@@ -58,7 +62,13 @@ export async function handleRegister(
 
   const parsed = parseInput(REGISTER_OPERATION, { body: request.body });
   if (!parsed.ok) {
-    await sendProblem(reply, requestId, 400, 'structural_error', 'Request does not match the public contract.');
+    await sendProblem(
+      reply,
+      requestId,
+      400,
+      'structural_error',
+      'Request does not match the public contract.',
+    );
     return;
   }
   const input = parsed.data.body as RegisterBody;
@@ -91,52 +101,56 @@ export async function handleRegister(
       operation: OPERATION_ID_REGISTER,
       digest: requestDigest({ ...input, emailNormalized }),
       execute: async (client) => {
-      const account = await createAccount(client, {
-        email: input.email,
-        emailNormalized,
-        passwordHash,
-        status: 'pending_verification',
-      });
-      if (account.status === 'conflict') {
-        throw new ServiceError(409, 'business_validation', 'An account with this email already exists.');
-      }
-      const workspace = await createPersonalOrganization(client, {
-        name: 'My Workspace',
-        accountId: account.account.accountId,
-      });
-      if (workspace.status === 'conflict') {
-        throw new ServiceError(409, 'business_validation', 'Workspace creation failed.');
-      }
+        const account = await createAccount(client, {
+          email: input.email,
+          emailNormalized,
+          passwordHash,
+          status: 'pending_verification',
+        });
+        if (account.status === 'conflict') {
+          throw new ServiceError(
+            409,
+            'business_validation',
+            'An account with this email already exists.',
+          );
+        }
+        const workspace = await createPersonalOrganization(client, {
+          name: 'My Workspace',
+          accountId: account.account.accountId,
+        });
+        if (workspace.status === 'conflict') {
+          throw new ServiceError(409, 'business_validation', 'Workspace creation failed.');
+        }
 
-      const { token, digest } = createIntentToken();
-      const expiresAt = new Date(now.getTime() + VERIFY_INTENT_TTL_MS);
-      await insertEmailVerificationIntent(client, {
-        accountId: account.account.accountId,
-        tokenDigest: digest,
-        expiresAt,
-      });
+        const { token, digest } = createIntentToken();
+        const expiresAt = new Date(now.getTime() + VERIFY_INTENT_TTL_MS);
+        await insertEmailVerificationIntent(client, {
+          accountId: account.account.accountId,
+          tokenDigest: digest,
+          expiresAt,
+        });
 
-      const masked = maskEmail(emailNormalized);
-      const base = deps.config.consoleOrigin.replace(/\/$/, '');
-      await insertOutboxRow(client, {
-        aggregateType: 'email.verification',
-        aggregateId: account.account.accountId,
-        payload: {
-          intentType: 'email_verification',
-          toAddress: emailNormalized,
-          toMasked: masked,
-          mailLinkUrl: `${base}/verify-email/confirm?token=${token}`,
-          expiresInMinutes: VERIFY_INTENT_MINUTES,
-        },
-      });
+        const masked = maskEmail(emailNormalized);
+        const base = deps.config.consoleOrigin.replace(/\/$/, '');
+        await insertOutboxRow(client, {
+          aggregateType: 'email.verification',
+          aggregateId: account.account.accountId,
+          payload: {
+            intentType: 'email_verification',
+            toAddress: emailNormalized,
+            toMasked: masked,
+            mailLinkUrl: `${base}/verify-email/confirm?token=${token}`,
+            expiresInMinutes: VERIFY_INTENT_MINUTES,
+          },
+        });
 
-      return {
-        accountId: account.account.accountId,
-        workspaceId: { organizationId: workspace.organizationId },
-        emailMasked: masked,
-        verificationStatus: { verified: false, reason: 'email_verification_pending' },
-        serverTime: now.toISOString(),
-      };
+        return {
+          accountId: account.account.accountId,
+          workspaceId: { organizationId: workspace.organizationId },
+          emailMasked: masked,
+          verificationStatus: { verified: false, reason: 'email_verification_pending' },
+          serverTime: now.toISOString(),
+        };
       },
     });
   } catch (error) {
@@ -171,7 +185,13 @@ export async function handleRegister(
   } catch {
     // Redis is the session authority; fail closed with a consistent 503
     // (ADR-028 决定细节 7, PLT-03 Task 7 carry-forward).
-    await sendProblem(reply, requestId, 503, 'authority_unavailable', 'Session authority is temporarily unavailable.');
+    await sendProblem(
+      reply,
+      requestId,
+      503,
+      'authority_unavailable',
+      'Session authority is temporarily unavailable.',
+    );
     return;
   }
 

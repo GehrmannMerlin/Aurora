@@ -14,7 +14,8 @@ import { withTransaction } from './db.js';
  * same key + different request -> different digest (409 idempotency_conflict).
  */
 export function requestDigest(input: object): string {
-  const { idempotencyKey: _ignored, ...rest } = input as Readonly<Record<string, unknown>>;
+  const rest = { ...(input as Readonly<Record<string, unknown>>) };
+  delete rest.idempotencyKey;
   return createHash('sha256').update(JSON.stringify(rest)).digest('hex');
 }
 
@@ -105,7 +106,7 @@ export async function runIdempotentCommand(
       // A concurrent same-key transaction committed first. Re-read and decide
       // between replay (same digest) and conflict (different digest).
       const record = await findIdempotencyRecord(input.pool, input.key);
-      if (record === null || record.requestDigest !== input.digest) {
+      if (record?.requestDigest !== input.digest) {
         return { outcome: 'conflict' };
       }
       if (record.status === 'succeeded' && record.resultData !== null) {

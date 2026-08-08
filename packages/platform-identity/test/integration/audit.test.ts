@@ -36,7 +36,6 @@ describeDb('platform-identity audit repository (real PostgreSQL 17)', () => {
       details: { reason: 'register' },
     });
     expect(result.status).toBe('success');
-    if (result.status !== 'success') return;
     const row = await queryRow<{
       action: string;
       actor_account_id: string | null;
@@ -56,7 +55,6 @@ describeDb('platform-identity audit repository (real PostgreSQL 17)', () => {
       action: 'email.verified',
     });
     expect(result.status).toBe('success');
-    if (result.status !== 'success') return;
     const row = await queryRow<{
       organization_id: string | null;
       actor_account_id: string | null;
@@ -81,7 +79,6 @@ describeDb('platform-identity audit repository (real PostgreSQL 17)', () => {
       targetAccountId: crypto.randomUUID(),
     });
     expect(result.status).toBe('success');
-    if (result.status !== 'success') return;
     const row = await queryRow<{ organization_id: string | null }>(
       pool,
       'SELECT organization_id FROM security_audit_events WHERE event_id = $1',

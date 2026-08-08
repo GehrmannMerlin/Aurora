@@ -1,6 +1,6 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { randomUUID } from 'node:crypto';
-import { Pool } from 'pg';
+import type { Pool } from 'pg';
 import type { FastifyInstance } from 'fastify';
 import { createSessionStore, type SessionStore } from '@aurora/platform-session';
 import { ConsoleEmailAdapter } from '@aurora/platform-email';
@@ -21,6 +21,25 @@ const hasRedis = process.env.AURORA_TEST_REDIS_URL !== undefined;
 const describeDb = hasDb && hasRedis ? describe : describe.skip;
 
 const FIXED_NOW = new Date('2026-08-09T00:00:00.000Z');
+
+interface LoginResponse {
+  account?: { email: string; verified: boolean };
+  authentication: string;
+  csrf?: string;
+  session?: { expiresAt: string };
+  navigation?: readonly { routeId: string }[];
+}
+
+interface ProblemBody {
+  code: string;
+  detail: string;
+  recoveryTarget: string;
+}
+
+interface RateLimitBody {
+  code: string;
+  retryAfter: number;
+}
 
 describeDb('login flow (real PostgreSQL 17 + Redis)', () => {
   let pool: Pool;
@@ -93,14 +112,7 @@ describeDb('login flow (real PostgreSQL 17 + Redis)', () => {
 
     const response = await login(app, email, 's3cure-Passw0rd!');
     expect(response.statusCode).toBe(200);
-    const body = response.json() as {
-      account?: { email?: string; verified?: boolean };
-      authentication?: string;
-      csrf?: string;
-      session?: { expiresAt?: string };
-      navigation?: Array<{ routeId?: string }>;
-      continuation?: unknown;
-    };
+    const body: LoginResponse = response.json();
     expect(body.account?.email).toBe(email);
     expect(body.account?.verified).toBe(false);
     expect(body.authentication).toBe('pending_verification');
@@ -126,8 +138,8 @@ describeDb('login flow (real PostgreSQL 17 + Redis)', () => {
 
     expect(wrongPassword.statusCode).toBe(401);
     expect(nonexistent.statusCode).toBe(401);
-    const a = wrongPassword.json() as { code?: string; detail?: string; recoveryTarget?: string | null };
-    const b = nonexistent.json() as { code?: string; detail?: string; recoveryTarget?: string | null };
+    const a: ProblemBody = wrongPassword.json();
+    const b: ProblemBody = nonexistent.json();
     expect(a.code).toBe('authentication');
     expect(b.code).toBe('authentication');
     expect(a.detail).toBe(b.detail);
@@ -162,7 +174,7 @@ describeDb('login flow (real PostgreSQL 17 + Redis)', () => {
     expect(status).toBe(429);
     const last = await login(app, email, 's3cure-Passw0rd!');
     expect(last.statusCode).toBe(429);
-    const body = last.json() as { code?: string; retryAfter?: number };
+    const body: RateLimitBody = last.json();
     expect(body.code).toBe('rate_limited');
     expect(typeof body.retryAfter).toBe('number');
     await app.close();

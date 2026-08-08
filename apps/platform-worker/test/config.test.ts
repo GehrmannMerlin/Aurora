@@ -36,7 +36,9 @@ describe('loadPlatformWorkerConfig', () => {
   });
 
   it('rejects a missing DATABASE_URL', () => {
-    expect(() => loadPlatformWorkerConfig({})).toThrow('missing required configuration: DATABASE_URL');
+    expect(() => loadPlatformWorkerConfig({})).toThrow(
+      'missing required configuration: DATABASE_URL',
+    );
   });
 
   it('rejects a non-integer OUTBOX_POLL_INTERVAL_MS', () => {
@@ -46,9 +48,9 @@ describe('loadPlatformWorkerConfig', () => {
   });
 
   it('rejects an OUTBOX_BATCH_LIMIT above the repository maximum', () => {
-    expect(() =>
-      loadPlatformWorkerConfig({ DATABASE_URL, OUTBOX_BATCH_LIMIT: '101' }),
-    ).toThrow('OUTBOX_BATCH_LIMIT must not exceed');
+    expect(() => loadPlatformWorkerConfig({ DATABASE_URL, OUTBOX_BATCH_LIMIT: '101' })).toThrow(
+      'OUTBOX_BATCH_LIMIT must not exceed',
+    );
   });
 
   it('freezes the returned config', () => {

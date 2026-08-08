@@ -97,11 +97,8 @@ describe('consumeOutboxEmails', () => {
 
     await consumeOutboxEmails({ pool, port: { deliver }, outboxRepo: repo, now: new Date() });
 
-    const request = deliver.mock.calls[0]?.[0] as {
-      toAddress?: string;
-      toAddressMasked?: string;
-      toMasked?: string;
-    };
+    const request = deliver.mock.calls[0]?.[0] as
+      { toAddress?: string; toAddressMasked?: string; toMasked?: string } | undefined;
     expect(request?.toAddressMasked).toBe('u***@example.com');
     expect(request?.toAddress).toBe('user@example.com');
     expect(request?.toMasked).toBeUndefined();
@@ -176,7 +173,7 @@ describe('consumeOutboxEmails', () => {
     });
   });
 
-  const invalidPayloadCases: ReadonlyArray<readonly [string, Record<string, unknown>]> = [
+  const invalidPayloadCases: readonly (readonly [string, Record<string, unknown>])[] = [
     [
       'intentType',
       { toAddress: 'a@b.co', toMasked: 'a***', mailLinkUrl: 'u', expiresInMinutes: 5 },

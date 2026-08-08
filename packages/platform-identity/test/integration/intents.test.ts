@@ -57,7 +57,6 @@ describeDb('platform-identity intents repository (real PostgreSQL 17)', () => {
       expiresAt,
     });
     expect(result.status).toBe('success');
-    if (result.status !== 'success') return;
     const row = await queryRow<{
       token_digest: string;
       consumed_at: string | null;
@@ -80,7 +79,6 @@ describeDb('platform-identity intents repository (real PostgreSQL 17)', () => {
       expiresAt: new Date(Date.now() + 2 * 60 * 60 * 1000),
     });
     expect(result.status).toBe('success');
-    if (result.status !== 'success') return;
     const row = await queryRow<{ token_digest: string }>(
       pool,
       'SELECT token_digest FROM password_reset_intents WHERE intent_id = $1',
@@ -123,7 +121,6 @@ describeDb('platform-identity intents repository (real PostgreSQL 17)', () => {
       tokenDigest: 'g'.repeat(64),
       expiresAt: new Date(Date.now() + 3_600_000),
     });
-    if (inserted.status !== 'success') throw new Error('expected intent insert');
     const now = new Date(Date.now() + 60_000);
     const first = await consumeIntent(pool, {
       kind: 'email_verification',
@@ -154,7 +151,6 @@ describeDb('platform-identity intents repository (real PostgreSQL 17)', () => {
       tokenDigest: 'h'.repeat(64),
       expiresAt: past,
     });
-    if (inserted.status !== 'success') throw new Error('expected intent insert');
     const result = await consumeIntent(pool, {
       kind: 'password_reset',
       intentId: inserted.intentId,
@@ -185,7 +181,6 @@ describeDb('platform-identity intents repository (real PostgreSQL 17)', () => {
       tokenDigest: 'i'.repeat(64),
       expiresAt: new Date(Date.now() + 3_600_000),
     });
-    if (inserted.status !== 'success') throw new Error('expected intent insert');
     // Same id, wrong table => not_found.
     const wrong = await consumeIntent(pool, {
       kind: 'password_reset',

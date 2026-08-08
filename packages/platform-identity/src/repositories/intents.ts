@@ -21,7 +21,10 @@ export interface InsertIntentInput {
   readonly expiresAt: Date;
 }
 
-export type InsertIntentResult = { readonly status: 'success'; readonly intentId: string };
+export interface InsertIntentResult {
+  readonly status: 'success';
+  readonly intentId: string;
+}
 
 export interface ConsumeIntentInput {
   readonly kind: IntentKind;
@@ -42,11 +45,8 @@ const INTENT_TABLES: Readonly<Record<IntentKind, string>> = {
 };
 
 function intentTable(kind: IntentKind): string {
-  const table = INTENT_TABLES[kind];
-  if (table === undefined) {
-    throw new PlatformIdentityError('invalid_input', `unknown intent kind: ${String(kind)}`);
-  }
-  return table;
+  // INTENT_TABLES is a complete Record over IntentKind, so lookup always succeeds.
+  return INTENT_TABLES[kind];
 }
 
 interface IntentRowShape {
@@ -63,9 +63,9 @@ function toIntentRow(row: IntentRowShape): IntentRow {
     intentId: row.intent_id,
     accountId: row.account_id,
     tokenDigest: row.token_digest,
-    expiresAt: isoTimestamp(row.expires_at) as string,
+    expiresAt: isoTimestamp(row.expires_at),
     consumedAt: isoTimestamp(row.consumed_at),
-    createdAt: isoTimestamp(row.created_at) as string,
+    createdAt: isoTimestamp(row.created_at),
   };
 }
 
@@ -173,10 +173,10 @@ export async function consumeIntent(
 ): Promise<ConsumeIntentResult> {
   try {
     const table = intentTable(input.kind);
-    const consumed = await pool.query(
-      CONSUME_SQL.replace('%s', table),
-      [input.intentId, input.now.toISOString()],
-    );
+    const consumed = await pool.query(CONSUME_SQL.replace('%s', table), [
+      input.intentId,
+      input.now.toISOString(),
+    ]);
     if (consumed.rows.length > 0) return { status: 'success' };
     const row = await pool.query<{ consumed_at: string | null; expires_at: string }>(
       CLASSIFY_SQL.replace('%s', table),

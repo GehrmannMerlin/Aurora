@@ -13,11 +13,17 @@ import { operationById } from '../operations.js';
 import { sendProblem } from '../error-mapper.js';
 import { setSessionCookie } from '../session-cookie.js';
 import { clearIntentCookieOnReply } from '../intent-cookie.js';
-import { runIdempotentCommand, requestDigest, type IdempotentCommandResult } from '../idempotency.js';
+import {
+  runIdempotentCommand,
+  requestDigest,
+  type IdempotentCommandResult,
+} from '../idempotency.js';
 import { ServiceError, sendMappedError } from '../service-error.js';
 import type { PlatformApiRouteDependencies } from '../route-deps.js';
 
-const CONFIRM_EMAIL_OPERATION: OperationDef = operationById(OPERATION_ID_CONFIRM_EMAIL_VERIFICATION);
+const CONFIRM_EMAIL_OPERATION: OperationDef = operationById(
+  OPERATION_ID_CONFIRM_EMAIL_VERIFICATION,
+);
 
 interface ConfirmEmailBody {
   readonly idempotencyKey: string;
@@ -46,13 +52,19 @@ export async function handleConfirmEmailVerification(
 
   const parsed = parseInput(CONFIRM_EMAIL_OPERATION, { body: request.body });
   if (!parsed.ok) {
-    await sendProblem(reply, requestId, 400, 'structural_error', 'Request does not match the public contract.');
+    await sendProblem(
+      reply,
+      requestId,
+      400,
+      'structural_error',
+      'Request does not match the public contract.',
+    );
     return;
   }
   const input = parsed.data.body as ConfirmEmailBody;
 
   const intentPayload = request.intentPayload;
-  if (intentPayload === null || intentPayload.kind !== 'email_verification') {
+  if (intentPayload?.kind !== 'email_verification') {
     await sendProblem(reply, requestId, 404, 'not_found', 'The verification intent was not found.');
     return;
   }
@@ -61,7 +73,13 @@ export async function handleConfirmEmailVerification(
   try {
     intent = await findEmailVerificationIntentByDigest(deps.pool, digestOf(intentPayload.token));
   } catch {
-    await sendProblem(reply, requestId, 503, 'authority_unavailable', 'Account store is temporarily unavailable.');
+    await sendProblem(
+      reply,
+      requestId,
+      503,
+      'authority_unavailable',
+      'Account store is temporarily unavailable.',
+    );
     return;
   }
   if (intent === null) {
@@ -83,7 +101,11 @@ export async function handleConfirmEmailVerification(
           now,
         });
         if (consumed.status === 'already_consumed' || consumed.status === 'expired') {
-          throw new ServiceError(409, 'business_validation', 'The verification intent is no longer valid.');
+          throw new ServiceError(
+            409,
+            'business_validation',
+            'The verification intent is no longer valid.',
+          );
         }
         if (consumed.status === 'not_found') {
           throw new ServiceError(404, 'not_found', 'The verification intent was not found.');
@@ -147,7 +169,13 @@ export async function handleConfirmEmailVerification(
           setSessionCookie(reply, rotated.cookieValue, deps.cookieOptions);
         }
       } catch {
-        await sendProblem(reply, requestId, 503, 'authority_unavailable', 'Session authority is temporarily unavailable.');
+        await sendProblem(
+          reply,
+          requestId,
+          503,
+          'authority_unavailable',
+          'Session authority is temporarily unavailable.',
+        );
         return;
       }
     }

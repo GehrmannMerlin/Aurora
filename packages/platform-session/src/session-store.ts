@@ -39,7 +39,7 @@ export interface CreateSessionInput {
 }
 
 /** Rotation re-creates a session from scratch and accepts the same inputs as create. */
-export interface RotateSessionInput extends CreateSessionInput {}
+export type RotateSessionInput = CreateSessionInput;
 
 const DEFAULT_KEY_PREFIX = 'aurora:platform:session' as const;
 
@@ -63,7 +63,9 @@ function accountKey(store: SessionStore, accountId: string): string {
  * when shutting down. `client.connect()` failures (Redis unreachable) reject —
  * fail-closed 503 mapping is the platform-api layer's concern (PLT-03 Task 6).
  */
-export async function createSessionStore(options: CreateSessionStoreOptions): Promise<SessionStore> {
+export async function createSessionStore(
+  options: CreateSessionStoreOptions,
+): Promise<SessionStore> {
   const client = createClient({ url: options.url });
   client.on('error', () => undefined);
   await client.connect();

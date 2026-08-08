@@ -81,22 +81,42 @@ export function applyCookieSessionPlugin(
 
     if (info.authLevel === 'session') {
       if (request.sessionUnavailable) {
-        await sendProblem(reply, request.platformRequestId, 503, 'authority_unavailable', 'Session authority is temporarily unavailable.');
+        await sendProblem(
+          reply,
+          request.platformRequestId,
+          503,
+          'authority_unavailable',
+          'Session authority is temporarily unavailable.',
+        );
         return;
       }
       if (request.sessionPayload === null) {
-        await sendProblem(reply, request.platformRequestId, 401, 'authentication', 'Authentication is required.', {
-          recoveryTarget: 'auth.login',
-        });
+        await sendProblem(
+          reply,
+          request.platformRequestId,
+          401,
+          'authentication',
+          'Authentication is required.',
+          {
+            recoveryTarget: 'auth.login',
+          },
+        );
       }
       return;
     }
 
     if (info.authLevel === 'intent') {
       if (request.intentPayload === null) {
-        await sendProblem(reply, request.platformRequestId, 401, 'authentication', 'A valid verification intent is required.', {
-          recoveryTarget: 'auth.login',
-        });
+        await sendProblem(
+          reply,
+          request.platformRequestId,
+          401,
+          'authentication',
+          'A valid verification intent is required.',
+          {
+            recoveryTarget: 'auth.login',
+          },
+        );
       }
     }
   });

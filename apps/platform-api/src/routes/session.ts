@@ -22,7 +22,13 @@ export async function handleGetSession(
   const requestId = deps.requestIdProvider();
 
   if (request.sessionUnavailable) {
-    await sendProblem(reply, requestId, 503, 'authority_unavailable', 'Session authority is temporarily unavailable.');
+    await sendProblem(
+      reply,
+      requestId,
+      503,
+      'authority_unavailable',
+      'Session authority is temporarily unavailable.',
+    );
     return;
   }
   if (request.sessionPayload === null) {

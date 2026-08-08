@@ -27,13 +27,25 @@ export function applyOriginPlugin(app: FastifyInstance, options: OriginPluginOpt
       origin !== 'null' &&
       !allowedOrigins.has(origin)
     ) {
-      await sendProblem(reply, request.platformRequestId, 403, 'authorization', 'Request origin is not allowed.');
+      await sendProblem(
+        reply,
+        request.platformRequestId,
+        403,
+        'authorization',
+        'Request origin is not allowed.',
+      );
       return;
     }
 
     const fetchSite = request.headers['sec-fetch-site'];
     if (typeof fetchSite === 'string' && fetchSite === 'cross-site') {
-      await sendProblem(reply, request.platformRequestId, 403, 'authorization', 'Cross-site request is not allowed.');
+      await sendProblem(
+        reply,
+        request.platformRequestId,
+        403,
+        'authorization',
+        'Cross-site request is not allowed.',
+      );
       return;
     }
   });

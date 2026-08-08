@@ -40,9 +40,9 @@ describeDb('platform-identity accounts repository (real PostgreSQL 17)', () => {
     await pool.end();
   });
 
-  async function freshAccountEmail(): Promise<string> {
+  function freshAccountEmail(): Promise<string> {
     const suffix = crypto.randomUUID();
-    return `user-${suffix}@example.com`;
+    return Promise.resolve(`user-${suffix}@example.com`);
   }
 
   it('createAccount inserts the account and its initial credential', async () => {
@@ -91,7 +91,7 @@ describeDb('platform-identity accounts repository (real PostgreSQL 17)', () => {
     expect(second.status).toBe('conflict');
     const rows = await queryRows<CountRow>(
       pool,
-      "SELECT count(*)::int AS n FROM accounts WHERE email_normalized = $1",
+      'SELECT count(*)::int AS n FROM accounts WHERE email_normalized = $1',
       [email.toLowerCase()],
     );
     expect(rows[0]?.n).toBe(1);

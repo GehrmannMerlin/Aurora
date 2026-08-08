@@ -88,7 +88,7 @@ describeDb('platform-identity idempotency repository (real PostgreSQL 17)', () =
     expect(result).toEqual({ status: 'success' });
     const found = await findIdempotencyRecord(pool, key);
     expect(found?.status).toBe('succeeded');
-    expect(found?.resultData).toEqual({ accountId: expect.any(String) });
+    expect(found?.resultData).toEqual({ accountId: expect.any(String) as string });
     const missing = await updateIdempotencyResult(pool, {
       key: freshKey(),
       status: 'failed',

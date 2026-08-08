@@ -57,7 +57,10 @@ describeRedis('platform-session Redis store', () => {
     const raw = await store.client.get(sessionKey);
     expect(raw).not.toBeNull();
     expect(raw).not.toContain(created.cookieValue);
-    const parsed = JSON.parse(raw as string) as {
+    if (raw === null) {
+      throw new Error('expected session payload');
+    }
+    const parsed = JSON.parse(raw) as {
       accountId: string;
       authLevel: string;
       csrfSecret: string;
@@ -77,11 +80,7 @@ describeRedis('platform-session Redis store', () => {
       idleMs,
       absoluteMs,
     });
-    const payload = await getSession(
-      store,
-      created.cookieValue,
-      new Date(now.getTime() + 60_000),
-    );
+    const payload = await getSession(store, created.cookieValue, new Date(now.getTime() + 60_000));
     expect(payload).not.toBeNull();
     expect(payload?.accountId).toBe(accountId);
     expect(payload?.authLevel).toBe('authenticated');
@@ -117,11 +116,7 @@ describeRedis('platform-session Redis store', () => {
     expect(
       await getSession(store, created.cookieValue, new Date(later.getTime() + 1_000)),
     ).toBeNull();
-    const payload = await getSession(
-      store,
-      rotated.cookieValue,
-      new Date(later.getTime() + 1_000),
-    );
+    const payload = await getSession(store, rotated.cookieValue, new Date(later.getTime() + 1_000));
     expect(payload?.authLevel).toBe('authenticated');
   });
 
@@ -175,9 +170,7 @@ describeRedis('platform-session Redis store', () => {
       absoluteMs,
     });
     await revokeAllAccountSessions(store, accountId);
-    expect(
-      await getSession(store, first.cookieValue, new Date(now.getTime() + 60_000)),
-    ).toBeNull();
+    expect(await getSession(store, first.cookieValue, new Date(now.getTime() + 60_000))).toBeNull();
     expect(
       await getSession(store, second.cookieValue, new Date(now.getTime() + 60_000)),
     ).toBeNull();

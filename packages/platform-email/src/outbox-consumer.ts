@@ -51,7 +51,10 @@ export interface InsertOutboxRowInput {
   readonly payload: Readonly<Record<string, unknown>>;
 }
 
-export type InsertOutboxRowResult = { readonly status: 'success'; readonly outboxId: string };
+export interface InsertOutboxRowResult {
+  readonly status: 'success';
+  readonly outboxId: string;
+}
 
 /** The subset of outbox repository functions the consumer needs (injected). */
 export interface OutboxRepository {

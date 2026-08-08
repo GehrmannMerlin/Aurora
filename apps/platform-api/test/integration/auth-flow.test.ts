@@ -2,11 +2,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { randomUUID } from 'node:crypto';
 import { Pool } from 'pg';
 import type { FastifyInstance } from 'fastify';
-import {
-  createSession,
-  createSessionStore,
-  type SessionStore,
-} from '@aurora/platform-session';
+import { createSession, createSessionStore, type SessionStore } from '@aurora/platform-session';
 import { ConsoleEmailAdapter } from '@aurora/platform-email';
 import { buildPlatformApi } from '../../src/app.js';
 import { loadPlatformApiConfig } from '../../src/config.js';
@@ -24,6 +20,25 @@ const hasRedis = process.env.AURORA_TEST_REDIS_URL !== undefined;
 const describeDb = hasDb && hasRedis ? describe : describe.skip;
 
 const FIXED_NOW = new Date('2026-08-09T00:00:00.000Z');
+
+interface ProblemBody {
+  code: string;
+  recoveryTarget?: string;
+}
+
+interface RegisterResponse {
+  accountId: string;
+  workspaceId?: { organizationId: string };
+  emailMasked: string;
+  verificationStatus?: { verified: boolean };
+}
+
+interface SessionResponse {
+  account?: { email: string; verified: boolean };
+  csrf?: string;
+  authentication: string;
+  navigation: unknown[];
+}
 
 describeDb('platform-api real PostgreSQL 17 + Redis integration', () => {
   let pool: Pool;
@@ -82,7 +97,7 @@ describeDb('platform-api real PostgreSQL 17 + Redis integration', () => {
     const app = buildApp();
     const response = await app.inject({ method: 'GET', url: '/api/platform/v1/session' });
     expect(response.statusCode).toBe(401);
-    const body = response.json() as { code?: string; recoveryTarget?: string | null };
+    const body: ProblemBody = response.json();
     expect(body.code).toBe('authentication');
     expect(body.recoveryTarget).toBe('auth.login');
     await app.close();
@@ -97,12 +112,7 @@ describeDb('platform-api real PostgreSQL 17 + Redis integration', () => {
       payload: JSON.stringify(registerPayload()),
     });
     expect(response.statusCode).toBe(200);
-    const body = response.json() as {
-      accountId?: string;
-      workspaceId?: { organizationId?: string };
-      emailMasked?: string;
-      verificationStatus?: { verified?: boolean };
-    };
+    const body: RegisterResponse = response.json();
     expect(typeof body.accountId).toBe('string');
     expect(typeof body.workspaceId?.organizationId).toBe('string');
     expect(body.emailMasked).toContain('@example.com');
@@ -110,7 +120,7 @@ describeDb('platform-api real PostgreSQL 17 + Redis integration', () => {
 
     const setCookie = response.headers['set-cookie'];
     expect(setCookie).toBeDefined();
-    const cookieHeader = Array.isArray(setCookie) ? setCookie[0] : (setCookie as string | undefined);
+    const cookieHeader = Array.isArray(setCookie) ? setCookie[0] : setCookie;
     expect(cookieHeader).toContain('HttpOnly');
     expect(cookieHeader).toContain('SameSite=Lax');
     expect(cookieHeader).toContain('Path=/');
@@ -134,12 +144,7 @@ describeDb('platform-api real PostgreSQL 17 + Redis integration', () => {
       headers: { cookie: `aurora_session=${cookieValue}` },
     });
     expect(session.statusCode).toBe(200);
-    const body = session.json() as {
-      account?: { email?: string; verified?: boolean };
-      csrf?: string;
-      authentication?: string;
-      navigation?: readonly unknown[];
-    };
+    const body: SessionResponse = session.json();
     expect(body.account?.email).toBe('bob@example.com');
     expect(body.account?.verified).toBe(false);
     expect(typeof body.csrf).toBe('string');
@@ -163,7 +168,7 @@ describeDb('platform-api real PostgreSQL 17 + Redis integration', () => {
       headers: { cookie: 'aurora_session=some-session-cookie-value' },
     });
     expect(response.statusCode).toBe(503);
-    const body = response.json() as { code?: string };
+    const body: ProblemBody = response.json();
     expect(body.code).toBe('authority_unavailable');
     await app.close();
   });
@@ -187,7 +192,7 @@ describeDb('platform-api real PostgreSQL 17 + Redis integration', () => {
       headers: { cookie: `aurora_session=${session.cookieValue}` },
     });
     expect(response.statusCode).toBe(503);
-    const body = response.json() as { code?: string };
+    const body: ProblemBody = response.json();
     expect(body.code).toBe('authority_unavailable');
     await badPool.end();
     await app.close();

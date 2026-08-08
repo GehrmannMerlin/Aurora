@@ -98,7 +98,11 @@ export const up = (pgm: MigrationBuilder): void => {
     invited_email: { type: 'text', notNull: true },
     org_role: { type: 'text', notNull: true },
     token_digest: { type: 'text', notNull: true, unique: true },
-    expires_at: { type: 'timestamptz', notNull: true, default: pgm.func("now() + interval '7 days'") },
+    expires_at: {
+      type: 'timestamptz',
+      notNull: true,
+      default: pgm.func("now() + interval '7 days'"),
+    },
     status: { type: 'text', notNull: true, default: 'pending' },
     accepted_at: { type: 'timestamptz' },
     created_at: { type: 'timestamptz', notNull: true, default: pgm.func('now()') },

@@ -95,12 +95,22 @@ export function mapErrorToProblem(
       case 'statement_failed':
         return {
           status: 503,
-          problem: problem(requestId, 503, 'authority_unavailable', 'Authority is temporarily unavailable.'),
+          problem: problem(
+            requestId,
+            503,
+            'authority_unavailable',
+            'Authority is temporarily unavailable.',
+          ),
         };
       case 'invalid_input':
         return {
           status: 400,
-          problem: problem(requestId, 400, 'structural_error', 'Request does not match the public contract.'),
+          problem: problem(
+            requestId,
+            400,
+            'structural_error',
+            'Request does not match the public contract.',
+          ),
         };
     }
   }

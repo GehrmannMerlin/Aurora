@@ -50,16 +50,24 @@ export async function handleVerifyEmailLink(
   try {
     intent = await findEmailVerificationIntentByDigest(deps.pool, digestOf(token));
   } catch {
-    await sendProblem(reply, requestId, 503, 'authority_unavailable', 'Account store is temporarily unavailable.');
+    await sendProblem(
+      reply,
+      requestId,
+      503,
+      'authority_unavailable',
+      'Account store is temporarily unavailable.',
+    );
     return;
   }
   const now = deps.now().getTime();
-  if (
-    intent === null ||
-    intent.consumedAt !== null ||
-    Date.parse(intent.expiresAt) <= now
-  ) {
-    await sendProblem(reply, requestId, 409, 'business_validation', 'The verification intent is no longer valid.');
+  if (intent?.consumedAt !== null || Date.parse(intent.expiresAt) <= now) {
+    await sendProblem(
+      reply,
+      requestId,
+      409,
+      'business_validation',
+      'The verification intent is no longer valid.',
+    );
     return;
   }
 
@@ -100,16 +108,24 @@ export async function handleResetPasswordLink(
   try {
     intent = await findPasswordResetIntentByDigest(deps.pool, digestOf(token));
   } catch {
-    await sendProblem(reply, requestId, 503, 'authority_unavailable', 'Account store is temporarily unavailable.');
+    await sendProblem(
+      reply,
+      requestId,
+      503,
+      'authority_unavailable',
+      'Account store is temporarily unavailable.',
+    );
     return;
   }
   const now = deps.now().getTime();
-  if (
-    intent === null ||
-    intent.consumedAt !== null ||
-    Date.parse(intent.expiresAt) <= now
-  ) {
-    await sendProblem(reply, requestId, 409, 'business_validation', 'The reset intent is no longer valid.');
+  if (intent?.consumedAt !== null || Date.parse(intent.expiresAt) <= now) {
+    await sendProblem(
+      reply,
+      requestId,
+      409,
+      'business_validation',
+      'The reset intent is no longer valid.',
+    );
     return;
   }
 
@@ -141,22 +157,37 @@ export async function handleInvitationLink(
   try {
     invitation = await findInvitationByDigest(deps.pool, digestOf(token));
   } catch {
-    await sendProblem(reply, requestId, 503, 'authority_unavailable', 'Account store is temporarily unavailable.');
+    await sendProblem(
+      reply,
+      requestId,
+      503,
+      'authority_unavailable',
+      'Account store is temporarily unavailable.',
+    );
     return;
   }
   const now = deps.now().getTime();
-  if (
-    invitation === null ||
-    invitation.status !== 'pending' ||
-    Date.parse(invitation.expiresAt) <= now
-  ) {
-    await sendProblem(reply, requestId, 409, 'business_validation', 'The invitation is no longer valid.');
+  if (invitation?.status !== 'pending' || Date.parse(invitation.expiresAt) <= now) {
+    await sendProblem(
+      reply,
+      requestId,
+      409,
+      'business_validation',
+      'The invitation is no longer valid.',
+    );
     return;
   }
 
   const csrfSecret = createCsrfSecret();
   const remainingMs = Math.max(60_000, Date.parse(invitation.expiresAt) - now);
-  setIntentCookie(reply, 'organization_invitation', token, csrfSecret, deps.cookieOptions, remainingMs);
+  setIntentCookie(
+    reply,
+    'organization_invitation',
+    token,
+    csrfSecret,
+    deps.cookieOptions,
+    remainingMs,
+  );
 
   // N7/N2 reconciliation: the accept page needs the masked invited email (never the
   // raw address) and a read-only permission summary (org name + granted role) to render
@@ -170,11 +201,14 @@ export async function handleInvitationLink(
     // The intent is valid; the org display name is best-effort and never a blocker.
   }
 
-  void reply.header('x-aurora-request-id', requestId).code(200).send({
-    status: 'valid',
-    csrf: csrfSecret,
-    maskedEmail: maskEmail(invitation.invitedEmail),
-    organizationName,
-    role: invitation.orgRole,
-  });
+  void reply
+    .header('x-aurora-request-id', requestId)
+    .code(200)
+    .send({
+      status: 'valid',
+      csrf: csrfSecret,
+      maskedEmail: maskEmail(invitation.invitedEmail),
+      organizationName,
+      role: invitation.orgRole,
+    });
 }

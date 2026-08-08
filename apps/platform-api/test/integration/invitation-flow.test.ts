@@ -1,6 +1,6 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { randomUUID } from 'node:crypto';
-import { Pool } from 'pg';
+import type { Pool } from 'pg';
 import type { FastifyInstance } from 'fastify';
 import {
   createAccount,
@@ -28,6 +28,20 @@ const hasRedis = process.env.AURORA_TEST_REDIS_URL !== undefined;
 const describeDb = hasDb && hasRedis ? describe : describe.skip;
 
 const FIXED_NOW = new Date('2026-08-09T00:00:00.000Z');
+
+interface SessionBody {
+  csrf?: string;
+}
+
+interface AcceptInvitationBody {
+  organization?: { name: string; role: string; organizationId: string };
+  navigationTargets?: readonly { routeId: string }[];
+}
+
+interface ProblemBody {
+  code: string;
+  detail: string;
+}
 
 describeDb('invitation accept flow (real PostgreSQL 17 + Redis)', () => {
   let pool: Pool;
@@ -74,7 +88,11 @@ describeDb('invitation accept flow (real PostgreSQL 17 + Redis)', () => {
       method: 'POST',
       url: '/api/platform/v1/auth/register',
       headers: { 'content-type': 'application/json' },
-      payload: JSON.stringify({ email, password: 's3cure-Passw0rd!', idempotencyKey: randomUUID() }),
+      payload: JSON.stringify({
+        email,
+        password: 's3cure-Passw0rd!',
+        idempotencyKey: randomUUID(),
+      }),
     });
     expect(response.statusCode).toBe(200);
     return extractSessionCookie(response.headers['set-cookie']);
@@ -87,7 +105,8 @@ describeDb('invitation accept flow (real PostgreSQL 17 + Redis)', () => {
       headers: { cookie: `aurora_session=${cookie}` },
     });
     expect(session.statusCode).toBe(200);
-    const csrf = (session.json() as { csrf?: string }).csrf;
+    const sessionBody: SessionBody = session.json();
+    const csrf = sessionBody.csrf;
     expect(typeof csrf).toBe('string');
     return csrf ?? '';
   }
@@ -122,10 +141,13 @@ describeDb('invitation accept flow (real PostgreSQL 17 + Redis)', () => {
   }
 
   async function establishInvitationIntent(app: FastifyInstance, token: string): Promise<string> {
-    const link = await app.inject({ method: 'GET', url: `/api/platform/v1/auth/invitations/${token}` });
+    const link = await app.inject({
+      method: 'GET',
+      url: `/api/platform/v1/auth/invitations/${token}`,
+    });
     expect(link.statusCode).toBe(200);
     const setCookie = link.headers['set-cookie'];
-    const cookieValue = Array.isArray(setCookie) ? setCookie[0] : (setCookie as string | undefined);
+    const cookieValue = Array.isArray(setCookie) ? setCookie[0] : setCookie;
     const match = /^aurora_intent=([^;]+)/.exec(cookieValue ?? '');
     expect(match).not.toBeNull();
     return match?.[1] ?? '';
@@ -151,10 +173,7 @@ describeDb('invitation accept flow (real PostgreSQL 17 + Redis)', () => {
       payload: JSON.stringify({ idempotencyKey: randomUUID() }),
     });
     expect(accept.statusCode).toBe(200);
-    const body = accept.json() as {
-      organization?: { organizationId?: string; name?: string; role?: string };
-      navigationTargets?: Array<{ routeId?: string }>;
-    };
+    const body: AcceptInvitationBody = accept.json();
     expect(body.organization?.name).toBe('Acme Org');
     expect(body.organization?.role).toBe('member');
     expect(typeof body.organization?.organizationId).toBe('string');
@@ -203,12 +222,12 @@ describeDb('invitation accept flow (real PostgreSQL 17 + Redis)', () => {
       payload: JSON.stringify({ idempotencyKey: randomUUID() }),
     });
     expect(accept.statusCode).toBe(404);
-    const body = accept.json() as { code?: string; detail?: string };
+    const body: ProblemBody = accept.json();
     expect(body.code).toBe('not_found');
     // Only the masked invited email appears — never the org name or full email.
     expect(body.detail).toContain('@example.com');
     expect(body.detail).not.toContain('Acme Org');
-    expect(body.detail ?? '').not.toContain(invitedEmail);
+    expect(body.detail).not.toContain(invitedEmail);
     await app.close();
   });
 
@@ -231,7 +250,8 @@ describeDb('invitation accept flow (real PostgreSQL 17 + Redis)', () => {
       payload: JSON.stringify({ idempotencyKey: randomUUID() }),
     });
     expect(accept.statusCode).toBe(404);
-    expect((accept.json() as { code?: string }).code).toBe('not_found');
+    const problem: ProblemBody = accept.json();
+    expect(problem.code).toBe('not_found');
     await app.close();
   });
 });
