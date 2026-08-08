@@ -113,7 +113,7 @@ A5-001—A5-011 已批准，长期规则见[账号注销与数据生命周期](d
 
 有限决策清单的全部单项一旦获得用户明确批准，即按整体批准同步，不再重复请求完整方案批准；只有权威冲突或不可逆安全、隐私、数据丢失风险可以重新阻断。
 
-仓库已有根文档入口与真实内部包（`@aurora/workspace-policy`、`@aurora/event-schema` 协议基础加错误、请求与性能事件契约第一增量、`@aurora/core` 基础增量、`@aurora/browser` 浏览器环境/生命周期/错误源/请求观测/性能观测基础增量、`@aurora/plugin-error` 错误采集插件第一增量、`@aurora/plugin-request` 请求采集插件第一增量、`@aurora/plugin-performance` 性能采集插件第一增量、`@aurora/ingestion-inbox`、`@aurora/ingestion-credentials`、`@aurora/processing-store`、`@aurora/ingestion-benchmark`），真实应用 `apps/ingestion-api` 与 `apps/ingestion-worker`（Worker 运行时、错误/请求事件处理器、请求处理规则/配置 adapter、retry/backoff、样本选择策略）；但仍没有通用资源事件正文（product scope deferred）、行为事件正文、采样算法、机器平台 API/模型、管理平台实现、CI、IaC、云资源或部署结果。`writing-plans` 采用逐模块门禁：Monorepo、event-schema 协议基础、错误事件契约、请求事件契约、性能事件契约、SDK Core 基础、Browser 环境基础、错误源订阅、请求观测能力第一增量、性能事实观测能力第一增量、错误采集插件第一增量、请求采集插件第一增量与性能采集插件第一增量已实施；采样算法、行为等其他具体插件、框架适配、队列、传输和持久化继续 blocked。
+仓库已有根文档入口与真实内部包（`@aurora/workspace-policy`、`@aurora/event-schema` 协议基础加错误、请求与性能事件契约第一增量、`@aurora/core` 基础增量、`@aurora/browser` 浏览器环境/生命周期/错误源/请求观测/性能观测基础增量、`@aurora/plugin-error` 错误采集插件第一增量、`@aurora/plugin-request` 请求采集插件第一增量、`@aurora/plugin-performance` 性能采集插件第一增量、`@aurora/ingestion-inbox`、`@aurora/ingestion-credentials`、`@aurora/processing-store`、`@aurora/ingestion-benchmark`、`@aurora/platform-contract` 契约基础第一增量、`@aurora/platform-contract-drift` 漂移门禁），真实应用 `apps/ingestion-api` 与 `apps/ingestion-worker`（Worker 运行时、错误/请求事件处理器、请求处理规则/配置 adapter、retry/backoff、样本选择策略）；但仍没有通用资源事件正文（product scope deferred）、行为事件正文、采样算法、可执行平台数据模型、管理平台实现、CI、IaC、云资源或部署结果。`writing-plans` 采用逐模块门禁：Monorepo、event-schema 协议基础、错误事件契约、请求事件契约、性能事件契约、SDK Core 基础、Browser 环境基础、错误源订阅、请求观测能力第一增量、性能事实观测能力第一增量、错误采集插件第一增量、请求采集插件第一增量与性能采集插件第一增量已实施；采样算法、行为等其他具体插件、框架适配、队列、传输和持久化继续 blocked。
 
 ## 5. 第一版边界摘要
 
