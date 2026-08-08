@@ -27,23 +27,32 @@ ADR-001—ADR-006 从已批准架构规范中的 ARCH-001—ARCH-006 提取，AD
 
 ## 当前 ADR
 
-| 编号                                                            | 标题                                     | 决策状态 | 实施状态    | 关联规则           |
-| --------------------------------------------------------------- | ---------------------------------------- | -------- | ----------- | ------------------ |
-| [ADR-001](ADR-001-use-monorepo.md)                              | 使用统一 Monorepo                        | accepted | in-progress | ARCH-001           |
-| [ADR-002](ADR-002-five-system-boundaries.md)                    | 划分五大系统边界                         | accepted | not-started | ARCH-002           |
-| [ADR-003](ADR-003-sdk-plugin-architecture.md)                   | SDK 分层插件架构                         | accepted | in-progress | ARCH-003           |
-| [ADR-004](ADR-004-asynchronous-event-processing.md)             | 可靠接收与异步处理                       | accepted | not-started | ARCH-004           |
-| [ADR-005](ADR-005-event-schema-source-of-truth.md)              | event-schema 单一来源                    | accepted | in-progress | ARCH-005           |
-| [ADR-006](ADR-006-one-way-dependencies.md)                      | 单向依赖与自动约束                       | accepted | in-progress | ARCH-006           |
-| [ADR-007](ADR-007-workspace-package-and-task-tooling.md)        | pnpm Workspace 与原生任务入口            | accepted | implemented | 首模块工程工具     |
-| [ADR-008](ADR-008-ingestion-durable-buffering.md)               | 数据接入可靠缓冲与异步处理的物理技术     | accepted | in-progress | 数据接入物理缓冲   |
-| [ADR-009](ADR-009-ingestion-transport-and-client-credential.md) | 数据接入公开传输与客户端上报密钥安全语义 | accepted | in-progress | 数据接入传输/凭证  |
-| [ADR-010](ADR-010-postgresql-access-and-migration-tooling.md)   | 数据接入数据库访问与 Migration 工具链    | accepted | implemented | 数据接入数据库工具 |
-| [ADR-011](ADR-011-ingestion-http-service-runtime.md)            | 数据接入同步 HTTP 服务的运行时与应用边界 | accepted | in-progress | 数据接入 HTTP 服务 |
-| [ADR-012](ADR-012-ingestion-worker-runtime.md)                  | 数据接入 Worker 应用的运行时与应用边界   | accepted | in-progress | 数据接入 Worker 运行时 |
-| [ADR-013](ADR-013-ingestion-client-credential-storage-and-verification.md) | 客户端上报凭证存储与验证 | accepted | implemented | 数据接入凭证存储/验证 |
-| [ADR-014](ADR-014-ingestion-client-credential-lifecycle.md)                  | 客户端上报凭证生命周期服务 | accepted | implemented | 数据接入凭证生命周期 |
-| [ADR-015](ADR-015-ingestion-worker-retry-budget-policy.md)                    | Worker 重试预算与自动死信策略 | accepted | implemented | Worker retry policy |
+| 编号                                                                                  | 标题                                                   | 决策状态 | 实施状态    | 关联规则                                      |
+| ------------------------------------------------------------------------------------- | ------------------------------------------------------ | -------- | ----------- | --------------------------------------------- |
+| [ADR-001](ADR-001-use-monorepo.md)                                                    | 使用统一 Monorepo                                      | accepted | in-progress | ARCH-001                                      |
+| [ADR-002](ADR-002-five-system-boundaries.md)                                          | 划分五大系统边界                                       | accepted | not-started | ARCH-002                                      |
+| [ADR-003](ADR-003-sdk-plugin-architecture.md)                                         | SDK 分层插件架构                                       | accepted | in-progress | ARCH-003                                      |
+| [ADR-004](ADR-004-asynchronous-event-processing.md)                                   | 可靠接收与异步处理                                     | accepted | not-started | ARCH-004                                      |
+| [ADR-005](ADR-005-event-schema-source-of-truth.md)                                    | event-schema 单一来源                                  | accepted | in-progress | ARCH-005                                      |
+| [ADR-006](ADR-006-one-way-dependencies.md)                                            | 单向依赖与自动约束                                     | accepted | in-progress | ARCH-006                                      |
+| [ADR-007](ADR-007-workspace-package-and-task-tooling.md)                              | pnpm Workspace 与原生任务入口                          | accepted | implemented | 首模块工程工具                                |
+| [ADR-008](ADR-008-ingestion-durable-buffering.md)                                     | 数据接入可靠缓冲与异步处理的物理技术                   | accepted | in-progress | 数据接入物理缓冲                              |
+| [ADR-009](ADR-009-ingestion-transport-and-client-credential.md)                       | 数据接入公开传输与客户端上报密钥安全语义               | accepted | in-progress | 数据接入传输/凭证                             |
+| [ADR-010](ADR-010-postgresql-access-and-migration-tooling.md)                         | 数据接入数据库访问与 Migration 工具链                  | accepted | implemented | 数据接入数据库工具                            |
+| [ADR-011](ADR-011-ingestion-http-service-runtime.md)                                  | 数据接入同步 HTTP 服务的运行时与应用边界               | accepted | in-progress | 数据接入 HTTP 服务                            |
+| [ADR-012](ADR-012-ingestion-worker-runtime.md)                                        | 数据接入 Worker 应用的运行时与应用边界                 | accepted | in-progress | 数据接入 Worker 运行时                        |
+| [ADR-013](ADR-013-ingestion-client-credential-storage-and-verification.md)            | 客户端上报凭证存储与验证                               | accepted | implemented | 数据接入凭证存储/验证                         |
+| [ADR-014](ADR-014-ingestion-client-credential-lifecycle.md)                           | 客户端上报凭证生命周期服务                             | accepted | implemented | 数据接入凭证生命周期                          |
+| [ADR-015](ADR-015-ingestion-worker-retry-budget-policy.md)                            | Worker 重试预算与自动死信策略                          | accepted | implemented | Worker retry policy                           |
+| [ADR-016](ADR-016-ingestion-worker-retry-backoff-schedule.md)                         | Worker 重试退避调度策略                                | accepted | implemented | Worker retry backoff                          |
+| [ADR-017](ADR-017-ingestion-dead-letter-manual-replay.md)                             | Worker 死信人工重放核心                                | accepted | implemented | Inbox dead-letter replay                      |
+| [ADR-018](ADR-018-error-event-occurrence-processing-storage.md)                       | 错误事件 occurrence 处理存储                           | accepted | implemented | processing-store occurrence                   |
+| [ADR-019](ADR-019-request-event-aggregation-and-bounded-diagnostic-sample-storage.md) | 请求事件聚合与有界诊断样本存储                         | accepted | in-progress | processing-store request sample               |
+| [ADR-020](ADR-020-idempotent-request-metric-bucket-aggregation.md)                    | 幂等请求指标桶聚合                                     | accepted | implemented | processing-store request metric               |
+| [ADR-021](ADR-021-performance-aggregate-and-bounded-sample-storage.md)                | 性能指标聚合与有界诊断样本存储                         | accepted | implemented | processing-store performance aggregate/sample |
+| [ADR-022](ADR-022-aws-account-region-network-and-iac.md)                              | AWS 账号、区域、网络与 IaC 基础设施基础                | proposed | not-started | OPS-04 云基础设施基础                         |
+| [ADR-023](ADR-023-managed-compute-and-managed-data-services.md)                       | 托管计算与托管数据服务（ECS/Fargate、RDS、Redis 边界） | proposed | not-started | OPS-04 托管计算/数据服务                      |
+| [ADR-024](ADR-024-edge-dns-tls-secrets-and-encryption.md)                             | 边缘、DNS、TLS、秘密与加密                             | proposed | not-started | OPS-04 边缘/安全基础                          |
 
 > 状态说明：ADR-008 于 2026-08-01 由用户批准（`accepted / in-progress / approved`），推荐方案 A（PostgreSQL 事务性 Inbox），批准以六项校正为准。批次/接收结果协议、数据接入 OpenAPI 与 Inbox 数据模型已实施；接入服务、Worker 与容量证据未实现。
 
@@ -60,6 +69,10 @@ ADR-001—ADR-006 从已批准架构规范中的 ARCH-001—ARCH-006 提取，AD
 > 状态说明：ADR-014 于 2026-08-02 由用户批准（`accepted / implemented / approved`）。最终决定：扩展现有 `@aurora/ingestion-credentials` 包；创建、轮换、停用、启用、撤销；disabled 可恢复；revoked 永久终态；expired 动态推导；create/rotate 一次性返回完整密钥；secret 永不持久化；rotate 原子创建新凭证并立即撤销旧凭证；rotate 原样继承策略和 expiresAt；无 grace period；PostgreSQL 行锁和事务并发保护；不实现管理 HTTP API、平台身份或完整审计。凭证生命周期服务第一增量已实施并通过真实 PostgreSQL 17.10 创建/轮换/状态/并发验证；管理 HTTP API、平台 UI、管理员授权、完整审计、CI、RDS 与 IaC 未实现。
 
 > 状态说明：ADR-015 于 2026-08-02 由用户批准（`accepted / implemented / approved`）。最终决定：策略位于 ingestion-worker；不创建新包；processor 结果保持 processed/retry/dead-letter；`maxProcessingAttempts` 为必填运行配置；attemptCount 使用 Inbox 既有语义；budget 未耗尽时沿用 processor availableAt；budget 耗尽时自动 dead-letter；最终错误码 `retry_budget_exhausted`；processor 异常不自动 retry/dead-letter；不实现退避算法；不实现人工重放；不新增 Inbox 状态或 Schema。Worker 重试预算与自动死信策略第一增量已实施并通过真实 PostgreSQL 17.10 集成验证；人工重放、具体 processor、容量 benchmark、CI、RDS 与 IaC 未实现。
+
+> 状态说明：ADR-022、ADR-023、ADR-024 于 2026-08-07 由 G16/OPS-04 前置门禁创建为 `proposed / not-started / awaiting-user-approval`。门禁确认：AWS 主云方向已 approved，但主区域、账号/环境细化、网络模型、IaC 工具、托管计算/数据服务、边缘/DNS/TLS/秘密/加密均无 accepted 决策（deployment.md 标为 `deferred`/`requires-accepted-adr`）。三者只用于讨论和评审，**不得约束任何正式实现**；不创建 IaC、不创建 AWS 资源、不运行 `writing-plans`。独立评审（架构/安全/运维/成本/测试五域）已完成，结论为 PASS-WITH-CONCERNS（无 blocking）；评审只是决策材料，**不等同于 accepted ADR，也不等同用户批准**。用户批准 G16/OPS-04 Cloud Decision Package 后，才可更新为 `accepted` 并进入后续实施门禁。
+
+> **临时部署路径（2026-08-08）**：用户选择先使用阿里云单主机公网预览桥接（`public-preview`，见 [public-preview-single-host-deployment.md](../operations/public-preview-single-host-deployment.md)），以获得当前已实现应用的公网运行环境。这**不表示接受或拒绝 AWS 生产 ADR**；ADR-022/023/024 保持 `proposed / not-started`。G16 状态只记录为 `started / temporary-preview-bridge-active`，OPS-04 不因本桥接标记 completed；当 G16/OPS-05 重新评估正式基础设施时，再更新这些 ADR。
 
 ## 评审门禁
 

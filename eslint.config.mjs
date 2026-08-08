@@ -10,6 +10,7 @@ export default tseslint.config(
     files: [
       'tooling/workspace-policy/**/*.ts',
       'tooling/ingestion-openapi-contract/**/*.ts',
+      'tooling/ingestion-benchmark/**/*.ts',
       'packages/event-schema/**/*.ts',
       'packages/core/**/*.ts',
       'packages/browser/**/*.ts',
@@ -18,6 +19,7 @@ export default tseslint.config(
       'packages/plugin-performance/**/*.ts',
       'packages/ingestion-credentials/**/*.ts',
       'packages/ingestion-inbox/**/*.ts',
+      'packages/processing-store/**/*.ts',
       'apps/ingestion-api/**/*.ts',
       'apps/ingestion-worker/**/*.ts',
     ],
