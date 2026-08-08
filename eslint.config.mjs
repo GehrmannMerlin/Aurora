@@ -10,6 +10,7 @@ export default tseslint.config(
     files: [
       'tooling/workspace-policy/**/*.ts',
       'tooling/ingestion-openapi-contract/**/*.ts',
+      'tooling/platform-contract-drift/**/*.ts',
       'tooling/ingestion-benchmark/**/*.ts',
       'packages/event-schema/**/*.ts',
       'packages/core/**/*.ts',
