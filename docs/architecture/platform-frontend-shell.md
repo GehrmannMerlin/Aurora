@@ -124,6 +124,7 @@ review-cycle: frontend-shell-router-or-accessibility-change
 - 每个 RouteTarget 至少声明：`routeId`、路径模板、作用域（公开/账号/工作空间/组织/项目/平台）、一级菜单或子路由、父路由与面包屑来源、参数和 Query Schema、页面懒加载入口、无效参数和目标失效的安全处理、可访问性焦点目标。
 - 注册表不得包含角色判断或服务端资源存在性推断。
 - **"全部 RouteTarget 可达性"** 不是所有业务页面已实现，而是：RouteTarget 契约与导航壳层能正确解析/保护/表示对应目标，且不通过手输隐藏 URL 才能进入。
+- **可达性执行（approved 门禁）**：每个由壳层实际渲染的导航入口（顶栏、组织/项目侧栏、作用域切换入口、D1/A5 入口骨架）必须由真实 UI 操作（点击/键盘）到达目标，并由 Playwright 真实浏览器交互断言；仅 `page.goto()` 直达不满足可达性门禁（UX/UI §12.9、总体 OpenAPI §17.5、平台前端架构 §3.1）。未由壳层渲染的业务页面（G10—G13）在该门禁内以"目标可解析/保护/表示＋明确 unavailable/blocked"验收，不要求其业务内容已实现。
 
 ## 8. 未实现页面处理
 
@@ -168,7 +169,8 @@ review-cycle: frontend-shell-router-or-accessibility-change
 
 - 浅色内容区（`#F8FAFC`）、白色工作表面（`#FFFFFF`）；
 - 深石墨顶栏（`#111827`，前景 `#F8FAFC`）；
-- 纯色琥珀橙侧栏（`#D47A16`，前景 `#17120D`），当前路由浅奶油选中行（`#FFF4DC`）＋深色前景＋左侧蓝色 3px 标识（`#1D4ED8`）；
+- 纯色琥珀橙侧栏（`#D47A16`，前景 `#17120D`）；当前路由浅奶油选中行背景（`#FFF4DC`）＋选中行前景（`#172033`）＋左侧蓝色 3px 标识（`#1D4ED8`）；
+- 默认边界（`#CBD5E1`）用于控件和分区的 1px 边界；
 - 深色前景（`#111827`）/辅助文字（`#475569`）；
 - 主操作蓝 `#2563EB`、异常红 `#D92D20`、成功绿 `#15803D`；
 - 中高信息密度；基础间距 4/8/12/16/24/32px；常规控件 40px、主导航 44px；圆角 6px 基线；系统无衬线字体栈（`system-ui`、`Segoe UI`、`PingFang SC`、`Microsoft YaHei`）；
@@ -196,7 +198,8 @@ Vitest、Vue Testing Library、MSW（正式契约驱动）、Playwright、axe、
 - no fake data（断言无 mock 产品数据作为生产 UI）；
 - generated client consumption（壳层通过生成 Client 描述请求，不手写 fetch）；
 - request cancellation（如适用）；
-- route/query authority semantics（URL 不是授权；路由守卫只做导航体验控制）。
+- route/query authority semantics（URL 不是授权；路由守卫只做导航体验控制）；
+- **reachability enforcement（approved 门禁，Playwright 真实浏览器）**：每个壳层实际渲染的导航入口（顶栏、组织/项目侧栏、作用域切换入口、D1/A5 入口骨架）通过真实 UI 点击/键盘操作到达目标并断言目标路由正确；测试显式排除"仅 `page.goto()` 直达"作为通过证据；未由壳层渲染的业务目标（G10—G13）断言其解析/保护/表示与明确 unavailable/blocked 状态。
 
 ### 12.3 禁止
 
@@ -248,8 +251,8 @@ PLT-02 完成当且仅当：
 3. Navigation Context 消费契约，不复制角色权限，作用域切换清理语义真实；
 4. 36 个 RouteTarget 全部在注册表声明并映射；未实现业务目标可解析/保护/表示，且不通过手输隐藏 URL 才能进入；
 5. 后续模块页面只显示 feature/dependency/permission unavailable 或 not-found，无 fake data/lorem ipsum；
-6. 视觉语言合规：浅色内容区、深石墨顶栏、纯色琥珀橙侧栏、深色前景、中高信息密度、禁止渐变；令牌不散落页面；
-7. 测试覆盖 bootstrap/router/route-target/navigation/unauthorized/unauthenticated/unavailable/404/keyboard/focus/axe/responsive/no-fake-data/client-consumption；Playwright 真实浏览器通过；axe 通过；
+6. 视觉语言合规：浅色内容区、深石墨顶栏、纯色琥珀橙侧栏（`#D47A16`）、选中行前景 `#172033`、边界 `#CBD5E1`、深色前景、中高信息密度、禁止渐变；令牌不散落页面；
+7. 测试覆盖 bootstrap/router/route-target/navigation/unauthorized/unauthenticated/unavailable/404/keyboard/focus/axe/responsive/no-fake-data/client-consumption/reachability；**每个壳层渲染的导航入口经真实 UI 操作到达（Playwright 交互断言，非 `page.goto()` 直达）**；Playwright 真实浏览器通过；axe 通过；
 8. 构建：`vue-tsc`、ESLint、Vite production build 通过；`index.html` no-cache、assets 可缓存；
 9. Preview serving 从静态状态页切换为真实 built SPA，`ingest.aurora.ah.cn` 回归不破坏；
 10. 不包含 G10 身份业务、无 mock 产品数据、无数据库/队列直连；
@@ -266,3 +269,15 @@ PLT-02 完成当且仅当：
 | 是否实现 G10 | 否；明确排除 |
 | 是否需要 ADR | 是；ADR-025/026/027/028 未 accepted 且 PLT-01 未通过前不得实施 |
 | 是否进入 writing-plans | 否；PLT-01 通过 + ADR accepted 且用户批准后才进入 |
+
+## 19. 评审记录
+
+### 2026-08-08：独立评审（reviewer subagent，记录用，不代替正式批准）
+
+> 本节点记录 reviewer subagent 意见。意见只用于改进设计材料，不改变本规格的 draft 状态。正式批准必须由用户完成。
+
+- **前端评审**：`ACCEPT-WITH-REVISIONS`（无正确性阻断）。壳层先行范围、Session 安全、视觉语言映射正确；ADR-025 忠实形式化 FE-STACK-001—004 无静默改变。
+  - **Load-bearing finding R1**：可达性门禁执行不足——"每个壳层渲染导航入口经真实 UI 操作到达、仅 `page.goto()` 不满足"未在测试/验收中显式编码。修正：本规格 §7、§12.2、§17 已落实 reachability enforcement（Playwright 真实浏览器交互断言，显式排除 page.goto-only）。
+  - **Load-bearing finding R2**：视觉令牌精度——选中行前景应为 `#172033` 而非泛"深色前景"，且补 `#CBD5E1` 边界令牌。修正：§11、§17 已落实。
+- **安全评审（交叉）**：PLT-02 §5 的 unauthenticated/unavailable 状态安全成立；无 blocking finding；N1 壳层 unavailable 状态不得被任何路由守卫当作 authenticated；N2 壳层在 G09 期间不得发出任何 cookie/token（本规格已隐含）。
+- **评审落实**：R1/R2/N1/N2 已落实（见 §7/§11/§12.2/§17）。

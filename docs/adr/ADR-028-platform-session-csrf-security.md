@@ -153,7 +153,8 @@ Aurora 管理平台浏览器通过公开 `platform-api` 使用服务端能力。
 - Session 不保存密码、私密令牌、客户端密钥明文、完整邀请/重置令牌或长期下游能力令牌；
 - 密码重置与 A5 注销按已批准规则撤销相应 Session；
 - 内部能力令牌限定目标服务、资源、动作、主体与操作关联，不转发浏览器 Cookie；
-- 日志、错误报告、MSW fixture、Playwright trace 不记录 Cookie、Session ID、CSRF 令牌、密码或令牌明文。
+- 日志、错误报告、MSW fixture、Playwright trace 不记录 Cookie、Session ID、CSRF 令牌、密码或令牌明文；
+- 验证、重置、邀请原始令牌只在客户端短暂交换，服务端保存摘要；日志和 Referrer 不得包含原始令牌值；必要时消费后重定向清除地址栏令牌。
 
 ## 迁移方案
 
@@ -192,3 +193,11 @@ Aurora 管理平台浏览器通过公开 `platform-api` 使用服务端能力。
 - 只冻结公开传输契约形状；物理参数与 Redis 基础设施保持 deferred/G10 门禁；
 - 未调用 writing-plans、未创建 Session 后端、未创建 Cookie/CSRF/Redis 实现、未实施代码；
 - 等待独立评审与用户正式批准，不自动批准、不实施。
+
+### 2026-08-08：独立评审（reviewer subagent，记录用，不代替正式批准）
+
+> 本节点记录 reviewer subagent 意见。意见只用于改进决策材料，不改变 ADR 状态。正式接受必须由用户完成。
+
+- **安全评审**：`ACCEPT`（无 blocking finding）。范围边界正确（只冻结公开传输契约形状，物理参数 defer 到 G10）；冻结决策安全可靠（HttpOnly 主机限定 Cookie、服务端权威不透明 Session、同步 CSRF＋Origin/Fetch Metadata、Redis 权威不可用 503 失败关闭不伪装 401、统一 401、安全 403/404、A5/密码重置全部 Session 终止、短期受限内部能力令牌不转发浏览器 Cookie）；泄露控制与 PLT-01 §15/§16/§25、PLT-02 §5.3 交叉核对干净；PLT-02"unavailable 壳层"区分安全成立；无任何物理值需在 PLT-02 壳层验收前锁定。
+- **非阻断观察**（建议接受时一并纳入，不 blocking）：N1 后端设计 §7.3"日志和 Referrer 不得包含原始值"未在实施约束复述——建议补"Referrer 不得包含原始令牌值"；N2 无配套威胁模型决策包（ADR-009/013 先例有）——建议补短威胁模型附件（XSS→CSRF 令牌窃取、session fixation、Redis 泄露、A5 复活、枚举）；N3 `identityGetSession` 导航目标与 `navigationGetContext` 重叠（源自 approved 设计，非本 ADR 缺陷）；N4 建议明确 `identityGetSession` 为可无 Session 调用的公开 Query、401 表示未认证（防 G10 意外）；N5 ADR-025—028 应登记进 ADR 索引；N6 Session-ID 摘要存储（后端设计 §7.2）属 G10 存储决策；N7 CSRF 令牌不进共享/持久化请求缓存层。
+- **评审落实**：N1 已补入实施约束（Referrer 不得包含原始令牌值）。N2—N7 作为非阻断建议记录，随接受/实施推进。

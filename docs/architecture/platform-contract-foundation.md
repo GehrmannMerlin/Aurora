@@ -301,21 +301,23 @@ PLT-01 **不**实现：
 
 ## 37. completion definition
 
+**PLT-01 的操作注册表范围**：与总体 OpenAPI 设计 §19 第 1 步一致，PLT-01 登记 **A1—D2 完整操作集的操作注册表**（operationId、认证级别、权限、输入/输出 Schema、错误、幂等/并发、页面/权限元数据——全部无 handler、无业务实现），并实现 common 基础 Schema 与生成器/testkit/漂移门禁。业务 handler 不属于 PLT-01（后续模块）。"完整"以**契约覆盖清单（expected-operation manifest）** 界定：manifest 按领域逐 operation 枚举所需操作（identity/organization/project-governance/credentials/releases/issues-and-alerts/usage-and-policy/audit/operations/navigation + common），并列出每个 named 契约能力（RFC 9457 错误、Session/CSRF 传输形状、分页、时间、排序、幂等/并发、RouteTarget、capability projection、unavailable/partial/stale）对应的具体 Schema/operation；清单缺失项为完成定义失败。
+
 PLT-01 完成当且仅当：
 
-1. `packages/platform-contract`（或等价真实包）存在：契约源码按领域/common 组织、操作注册表完整、公共 Schema 完整；
+1. `packages/platform-contract`（或等价真实包）存在：契约源码按领域/common 组织、操作注册表按上述 manifest 完整、公共 Schema 完整；
 2. 机器 OpenAPI `docs/api/platform-openapi-v1.yaml` 真实存在且由契约源码生成；
-3. 生成器真实存在且确定性（同输入同输出）；
+3. 生成器真实存在且确定性（同输入同输出，字节级一致）；
 4. 生成 Client（`/client`）与服务端校验适配（`/server`）真实存在并可通过注册表编译；
-5. 漂移门禁真实存在并通过（生成无差异）；
+5. 漂移门禁真实存在并在 PR＋main 都通过（生成无差异）；
 6. 契约样本与 `contract-testkit` 真实存在并通过合法性/非法性断言；
-7. 包公开导出（`.`/`/client`/`/server`/`/contract-testkit`）真实且符合 Workspace Policy；
-8. RFC 9457 错误契约、Session/CSRF 传输契约形状、分页/时间/排序/幂等/并发、RouteTarget、capability projection、unavailable/partial/stale 均有契约级表达；
+7. 包公开导出（`.`/`/client`/`/server`/`/contract-testkit`）真实且符合 Workspace Policy（含新增 `contract` 层矩阵）；
+8. RFC 9457 错误契约、Session/CSRF 传输契约形状、分页/时间/排序/幂等/并发、RouteTarget、capability projection、unavailable/partial/stale 均有契约级表达，且逐项登记在契约覆盖清单；
 9. D2 只冻结 RouteTarget 与 unavailable 状态，不伪造平台管理员能力；
-10. 无私有后端类型、处理存储模型或 event-schema 语义泄露；
+10. 无私有后端类型、处理存储模型或 event-schema 语义泄露（依赖规则/导出边界/OpenAPI 内部名扫描阻断）；
 11. 契约相关测试（生成一致性、漂移、adapter、consumer、样本）真实通过；
-12. CI 集成门禁（覆盖 31 页/36 RouteTarget、无未登记端点、无任意 URL、兼容差异阻断）真实通过；
-13. 未实现能力以明确的 unavailable/blocked 状态表达，无空 Schema/`{}`/`unknown` 响应/伪造端点；
+12. CI 集成门禁真实通过：31 页/36 RouteTarget 覆盖、无未登记端点、无任意 URL、兼容差异阻断（含 `openEnum`/默认排序/空值语义标记的机器判定）、漂移 PR＋main；
+13. 未实现能力以明确的 unavailable/blocked 状态表达；自定义 OpenAPI lint 阻断空 operation/`{}`/自由形式 Schema/未类型化 `unknown` 响应逃逸；生产代码不得 import `contract-testkit`/MSW/fixture；启用 operation 必须有真实 handler 模块（stub/501 为构建失败）；
 14. 不包含 PLT-02 Vue SPA 实现；
 15. 独立验收通过且叶子计数按正式规则更新。
 
@@ -331,3 +333,14 @@ PLT-01 完成当且仅当：
 | 是否覆盖错误/幂等/并发/分页/时间/排序 | 是；14/17/18/19/20 节 |
 | 是否需要 ADR | 是；ADR-025 前端技术栈、ADR-026 后端运行时与契约链、ADR-027 契约生成工具链、ADR-028 Session/CSRF 安全未 accepted 前不得实施 |
 | 是否进入 writing-plans | 否；ADR accepted 且用户批准后才进入 |
+
+## 39. 评审记录
+
+### 2026-08-08：独立评审（reviewer subagent，记录用，不代替正式批准）
+
+> 本节点记录 reviewer subagent 意见。意见只用于改进设计材料，不改变本规格的 draft 状态。正式批准必须由用户完成。
+
+- **架构评审**：内部一致性高，与 ADR-025/026/027/028 边界一致；占位符可追溯（"真实路径为准""由 accepted ADR-026 承载"等不虚构实现）。`§37 "操作注册表完整"` 存在歧义。修正：§37 已改为与总体 OpenAPI 设计 §19 第 1 步一致的"A1—D2 完整操作注册表（无 handler）＋契约覆盖清单（expected-operation manifest）"界定。
+- **测试/兼容评审**：`ACCEPT-WITH-REVISIONS`。§37 部分完成项为不可验证文本（操作注册表"完整"、契约能力"均有表达"、无泄露、无空 Schema）。修正：§37 已改为覆盖清单逐项登记、漂移 PR＋main、自定义 OpenAPI lint（空 operation/`{}`/`unknown`）、生产代码不 import testkit/MSW/fixture、启用 operation 真实 handler、注册表 `openEnum`/默认排序/空值语义标记、错误码进稳定目录。
+- **非阻断观察**：平台契约漂移为自引用（注册表→OpenAPI），与 ingestion 双权威先例不同，其真实职责是确定性＋已提交制品一致＋跨制品版本一致（§11 已覆盖）；兼容语义含义变化需人工评审门禁与机器检查并行。
+- **评审落实**：已落实于 §11、§35、§37。另附：安全评审对 PLT-02 的交叉意见不影响本规格。

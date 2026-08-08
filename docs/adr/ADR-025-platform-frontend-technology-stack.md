@@ -71,7 +71,7 @@ Aurora 第一版管理平台是登录后的高交互应用，31 个页面设计�
 
 **选择结论**：推荐。
 
-### 方案 B：React SPA＋Vite＋TanStack Vue Query（不采用）
+### 方案 B：React SPA＋Vite＋TanStack Query（不采用）
 
 **行为**：React 18/19 SPA，Vite 构建，TanStack Query 处理服务端缓存。
 
@@ -195,3 +195,12 @@ Aurora 第一版管理平台是登录后的高交互应用，31 个页面设计�
 - 依据 approved 前端技术栈设计（FE-STACK-001—004/005）、管理平台前端架构、总体 OpenAPI 设计 §20 与 formalization-readiness §7 候选第 3 项；
 - 未调用 writing-plans、未创建 `apps/console`、未安装依赖、未实施代码；
 - 等待独立评审与用户正式批准，不自动批准、不实施。
+
+### 2026-08-08：独立评审（reviewer subagent，记录用，不代替正式批准）
+
+> 本节点记录 reviewer subagent 意见。意见只用于改进决策材料，不改变 ADR 状态。正式接受必须由用户完成。
+
+- **前端评审**：`ACCEPT`（无 blocking finding）。ADR-025 逐条忠实形式化已批准 FE-STACK-001—004，无静默改变任何决策；候选方案 A/B/C 真实且公平比较（方案 B 的否决基于用户 2026-07-28 撤回 React 的文档化记录与 approved Vue 方向，非稻草人）；自建缓存层成本诚实评估；§7.15 检查表完整；决策范围正确延后版本/浏览器矩阵/性能预算数值。
+- **架构评审（交叉）**：`ACCEPT`（无 blocking finding）。触发合法性成立；与 ADR-002/005/006、平台前端架构一致。
+- **非阻断观察**：N1 决定细节 5 未复述 FE-STACK-002"客户端状态（草稿/选择/抽屉/对话框）留在页面/业务 composable 而非 Pinia"——建议实施计划补一句；N2 建议在实施计划为 `apps/console` 钉死新 Workspace 层（console 不得是 `service` 层，因 service 可依赖 data）；N3 ADR-025—028 应登记进 ADR 索引；N4 修正方案 B 标题笔误（TanStack Vue Query → TanStack Query，已修正）。
+- **评审落实**：N1—N3 作为实施计划与索引同步事项记录；N4 已修正。

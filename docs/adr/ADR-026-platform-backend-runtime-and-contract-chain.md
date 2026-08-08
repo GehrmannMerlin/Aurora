@@ -114,9 +114,9 @@ Aurora 管理平台后端需为 31 个页面提供公开 Query/Command 能力，
 
 1. **运行时**：Node.js（实施时仍受支持的 Active LTS，与 Monorepo 基线一致）；严格 TypeScript 编译与类型检查；
 2. **服务形态**：`platform-api` 是按领域模块化的可部署应用；第一版不按领域拆微服务、不增加浏览器 BFF；`platform-worker` 是独立进程/部署单元，不向浏览器暴露业务 API；
-3. **HTTP 适配**：Fastify 仅负责 HTTP、路由、请求上下文、限流挂点、序列化与传输层错误映射；领域和应用层不得依赖 Fastify 类型；不使用 `@fastify/cors` 之外的默认 CORS 策略（显式 CORS adapter 遵循 ADR-011 先例）；精确版本实施时锁定；
+3. **HTTP 适配**：Fastify 仅负责 HTTP、路由、请求上下文、限流挂点、序列化与传输层错误映射；领域和应用层不得依赖 Fastify 类型；**不使用 `@fastify/cors`**；CORS 采用显式 adapter，严格遵循 ADR-011 §4.5 先例（明确 OPTIONS 路由、禁 `*`、禁 Cookie credential、单 Origin 回显、`Vary: Origin`），平台域 OPTIONS/POST 授权分工按实施规格细化；精确版本实施时锁定；
 4. **平台业务数据**：使用独立逻辑 PostgreSQL 平台数据库和最小权限数据库角色，不与事件明细/聚合存储共享表或私有模型；
-5. **数据访问**：Kysely 表达类型化 SQL；版本化 SQL Migration 是数据库结构权威变更记录；应用启动不得隐式改表；不使用 ORM 隐藏 SQL；禁止创建权威 SQL/Migration 前未达数据库 ADR 门禁；
+5. **数据访问**：Kysely 表达类型化 SQL；版本化 SQL Migration 是数据库结构权威变更记录；应用启动不得隐式改表；不使用 ORM 隐藏 SQL；**数据库 ADR accepted 前不得创建权威 SQL/Migration**。本 ADR 依据用户已确认 BACKEND-001 冻结 Kysely 查询构建层；后续"平台数据库与访问/Migration"ADR 保留物理数据模型、PostgreSQL 版本、Migration 执行与 DDL 的权威，不再重开 Kysely vs Prisma vs Drizzle（formalization-readiness §7 第 5 项在同一变更中同步更新）；
 6. **公开契约**：REST/JSON、OpenAPI 契约优先、RFC 9457 问题详情；Zod 注册表（`@aurora/platform-contract`）生成或校验 JSON Schema/OpenAPI；具体 `zod`/`zod/mini` 入口与生成器技术选型归 ADR-027；
 7. **浏览器边界**：Vue SPA 只消费正式 `platform-api`；不共享数据库模型、Kysely 类型、领域实体或内部能力令牌；
 8. **跨系统边界**：`platform-api` 只能通过数据接入/处理存储的正式公开服务接口组合监控数据，不能直连其数据库或队列；
@@ -157,6 +157,7 @@ Aurora 管理平台后端需为 31 个页面提供公开 Query/Command 能力，
 - 版本化 SQL Migration 为结构权威；应用启动不得隐式改表；
 - HTTP handler 只做契约适配、认证上下文建立和错误映射，不直接拼接多领域表写入；
 - 领域模块不依赖 Fastify Request/Reply、OpenAPI 生成器或浏览器 Route Target 拼装实现；
+- `platform-api` 与 `platform-worker` 复用纯领域、应用用例和公开契约，但不得通过一个全局容器共享任意可变状态；
 - 严格 TypeScript；所有外部输入、数据库行和下游响应在边界运行时验证；
 - 不暴露 SQLSTATE/约束名/SQL/堆栈/内部队列/主机/对象键/秘密。
 
@@ -198,3 +199,13 @@ Aurora 管理平台后端需为 31 个页面提供公开 Query/Command 能力，
 - 依据 approved 平台后端设计（BACKEND-001=A）、总体 OpenAPI 设计 §20、formalization-readiness §7 候选第 4 项；
 - 未调用 writing-plans、未创建 `apps/platform-api`/`apps/platform-worker`、未创建数据库模型/Migration、未实施代码；
 - 等待独立评审与用户正式批准，不自动批准、不实施。
+
+### 2026-08-08：独立评审（reviewer subagent，记录用，不代替正式批准）
+
+> 本节点记录 reviewer subagent 意见。意见只用于改进决策材料，不改变 ADR 状态。正式接受必须由用户完成。
+
+- **架构/后端评审**：`ACCEPT-WITH-REVISIONS`（无正确性阻断）。核心决策忠实形式化 BACKEND-001=A；与 ADR-011（接入域先例）、ADR-002（五大边界）、ADR-005/006、平台后端设计边界一致；数据库 ADR 门禁被遵守；范围控制正确（未拉入 Redis/BullMQ/S3/Session/容量）。
+  - **Load-bearing finding B1**：决定细节 5/10 冻结 Kysely，与 formalization-readiness §7 第 5 项"平台数据库与访问/Migration"开放候选清单（Kysely/Prisma/Drizzle）存在权威归属重叠。修正：决定细节 5 已改为"本 ADR 依据用户已确认 BACKEND-001 冻结 Kysely 查询构建层；后续 DB ADR 保留物理数据模型/版本/Migration 执行/DDL 权威，不再重开 Kysely vs Prisma vs Drizzle；formalization-readiness §7 第 5 项同一变更同步更新"。
+  - **Load-bearing finding B2**：决定细节 3 CORS 措辞为含混双否。修正：已改为直陈"不使用 `@fastify/cors`；CORS 采用显式 adapter，严格遵循 ADR-011 §4.5 先例（明确 OPTIONS 路由、禁 `*`、禁 Cookie credential、单 Origin 回显、`Vary: Origin`）"。
+- **后端评审非阻断观察**：N1 "不得通过全局容器共享任意可变状态"（后端设计 §3）已补入实施约束；N2 "数据库 ADR accepted 前不得创建权威 SQL/Migration" 已改为直陈；N3 Workspace Policy `contract`/`service` 层新增归 ADR-027/实施计划；N4 event-schema 边界由 PLT-01 §28 与 ADR-005 承接。
+- **评审落实**：B1/B2/N1/N2 已落实（见决定细节 3/5 与实施约束）。详见各节修订。
