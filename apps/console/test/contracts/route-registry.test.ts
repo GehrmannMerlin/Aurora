@@ -1,0 +1,68 @@
+import { describe, expect, it } from 'vitest';
+import { ROUTE_TARGET_IDS, type RouteTargetId } from '@aurora/platform-contract';
+import {
+  ORG_SIDEBAR_ENTRIES,
+  PROJECT_SIDEBAR_ENTRIES,
+} from '../../src/contracts/sidebar-entries.js';
+import {
+  ROUTE_BY_ID,
+  ROUTE_REGISTRY,
+  resolveRouteTarget,
+} from '../../src/contracts/route-registry.js';
+
+describe('RouteTarget registry', () => {
+  it('declares exactly the 36 frozen route targets', () => {
+    expect(ROUTE_REGISTRY.map((entry) => entry.routeId).sort()).toEqual(
+      [...ROUTE_TARGET_IDS].sort(),
+    );
+  });
+
+  it('gives every entry a path template, scope, label and lazy loader', () => {
+    for (const entry of ROUTE_REGISTRY) {
+      expect(entry.path).toMatch(/^\//);
+      expect(['public', 'account', 'workspace', 'organization', 'project', 'platform']).toContain(
+        entry.scope,
+      );
+      expect(entry.label.length).toBeGreaterThan(0);
+      expect(typeof entry.lazy).toBe('function');
+    }
+  });
+
+  it('resolves a project target with params and query', () => {
+    const result = resolveRouteTarget({
+      routeId: 'project.overview',
+      pathParams: { organizationId: 'org_test_1', projectId: 'prj_test_1' },
+      query: {},
+    });
+    expect(result.path).toBe('/organizations/org_test_1/projects/prj_test_1/overview');
+  });
+
+  it('rejects invalid params and unknown targets safely', () => {
+    expect(
+      resolveRouteTarget({ routeId: 'project.overview', pathParams: {}, query: {} }).error,
+    ).toBe('invalid-params');
+    expect(
+      resolveRouteTarget({ routeId: 'made.up' as RouteTargetId, pathParams: {}, query: {} }).error,
+    ).toBe('unknown-target');
+  });
+
+  it('keeps the approved sidebar entry lists within the registry', () => {
+    for (const routeId of [...ORG_SIDEBAR_ENTRIES, ...PROJECT_SIDEBAR_ENTRIES]) {
+      expect(ROUTE_BY_ID.get(routeId)?.menu).toBe(true);
+    }
+  });
+
+  it('marks every non-shell business target as unavailable (no fake content)', () => {
+    for (const entry of ROUTE_REGISTRY) {
+      if (entry.routeId === 'workspace.home') continue;
+      expect(entry.unavailableReason).not.toBeNull();
+      expect(entry.unavailableReason).toMatch(
+        /^(capability-not-provided|dependency-unavailable|permission-unavailable)$/,
+      );
+    }
+  });
+
+  it('keeps the frozen id list verbatim', () => {
+    expect(ROUTE_REGISTRY.map((entry) => entry.routeId)).toEqual(ROUTE_TARGET_IDS);
+  });
+});
