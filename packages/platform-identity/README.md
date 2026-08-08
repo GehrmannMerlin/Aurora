@@ -8,9 +8,8 @@
 `password_reset_intents`、`organizations`、`organization_members`、`organization_invitations`、
 `project_members`、`security_audit_events`、`idempotency_records`、`outbox`（11 张表）。
 
-本包是 PLT-03 Task 2 的脚手架结果：包结构、构建/类型检查/migrate 入口与 11 表 Migration 已真实存在。
-Repository、Argon2id 密码包装与一次性 intent token（Task 3）尚未实现，`src/index.ts` 目前只导出最小
-稳定占位表面。
+本包是 PLT-03 Task 2 + Task 3 的结果：包结构、构建/类型检查/migrate 入口、11 表 Migration、
+Repository 层、Argon2id 密码包装与一次性 intent token 均已真实存在。
 
 ## 职责
 
@@ -26,7 +25,6 @@ Repository、Argon2id 密码包装与一次性 intent token（Task 3）尚未实
 
 ## 非职责
 
-- 不实现 Repository/密码哈希/意图令牌（Task 3）；
 - 不实现 Session/CSRF（`@aurora/platform-session`）、EmailDeliveryPort（`@aurora/platform-email`）；
 - 不实现 HTTP、Fastify、管理平台 UI、管理员授权、完整审计；
 - 不实现 PLT-04（B1-B8）、SEC-01（A5 删除编排）、G11-G13；
@@ -35,13 +33,20 @@ Repository、Argon2id 密码包装与一次性 intent token（Task 3）尚未实
 ## 安全模型
 
 - 密码绝不存储明文；本包只建 `password_hash`（Argon2id 编码串）列；
+- `hashPassword` 用 Argon2id（`m=19456, t=2, p=1`，每密码唯一 CSPRNG 盐），`verifyPassword` 失败路径统一返回 `false`，绝不抛错；
 - `token_digest` 只存摘要；`details`/`payload` 绝不记录密码、一次性 token 或完整邮箱；
-- 防枚举：公开结果不随账号是否存在而变化（由上层操作实现）。
+- 防枚举：公开结果不随账号是否存在而变化（由上层操作实现）；
+- 数据层只依赖 `pg`/`argon2`（外部），不依赖 `@aurora/platform-contract`（contract 层，Workspace Policy `data → {protocol}`）。
 
 ## 对外接口
 
-包根导出（Task 2 占位）：`PLATFORM_IDENTITY_PACKAGE`、`PLATFORM_IDENTITY_VERSION`。
-Task 3 将扩展为 Repository 函数、`hashPassword`/`verifyPassword`、`createIntentToken`。
+包根导出：
+
+- `hashPassword` / `verifyPassword`（Argon2id）；
+- `createIntentToken` / `normalizeEmail`（一次性 token + SHA-256 摘要、邮箱规范化）；
+- `PlatformIdentityError` / `PlatformIdentityErrorKind`（稳定错误表面）；
+- Repository：`createAccount`、`findAccountByEmailNormalized`、`getAccountById`、`updateAccountVerifiedAt`、`incrementSecurityVersion`、`upsertAccountCredential`；`insertEmailVerificationIntent`、`insertPasswordResetIntent`、`findEmailVerificationIntentByDigest`、`findPasswordResetIntentByDigest`、`consumeIntent`；`createPersonalOrganization`、`insertOrganizationMembership`、`insertProjectMembership`、`createInvitation`、`findInvitationByDigest`、`updateInvitationStatus`、`findOrganizationById`；`insertAuditEvent`；`createIdempotencyRecord`、`findIdempotencyRecord`、`updateIdempotencyResult`；`insertOutboxRow`、`claimOutboxRows`、`markOutboxResult`；
+- 对应输入/结果类型（`AccountRow`、`IntentRow`、`InvitationRow`、`OutboxRow`、`ConsumeIntentResult` 等）。
 
 不暴露数据库行、pg 错误、SQLSTATE、密码摘要、token 明文或内部路径。
 

@@ -1,4 +1,23 @@
+import { fileURLToPath } from 'node:url';
+import { runner } from 'node-pg-migrate';
 import { Pool, type PoolClient, type QueryResult, type QueryResultRow } from 'pg';
+
+const migrationsDir = fileURLToPath(new URL('../../migrations', import.meta.url));
+
+/** The 11 platform-identity tables, in FK-safe drop order. */
+const IDENTITY_TABLES_DROP_ORDER = [
+  'outbox',
+  'idempotency_records',
+  'security_audit_events',
+  'project_members',
+  'organization_invitations',
+  'organization_members',
+  'organizations',
+  'password_reset_intents',
+  'email_verification_intents',
+  'account_credentials',
+  'accounts',
+];
 
 export function testDatabaseUrl(): string {
   const url = process.env.AURORA_TEST_DATABASE_URL;
@@ -40,4 +59,33 @@ export async function queryRow<T extends QueryResultRow>(
 ): Promise<T | undefined> {
   const rows = await queryRows<T>(pool, sql, params);
   return rows[0];
+}
+
+/** Drop the platform-identity tables (children first) + pgmigrations for a fresh-up. */
+export async function resetIdentitySchema(pool: Pool): Promise<void> {
+  for (const table of IDENTITY_TABLES_DROP_ORDER) {
+    await pool.query(`DROP TABLE IF EXISTS ${table} CASCADE`);
+  }
+  await pool.query('DROP TABLE IF EXISTS pgmigrations CASCADE');
+}
+
+/** Run all platform-identity migrations up (idempotent). */
+export async function runMigrationsUp(): Promise<void> {
+  await runner({
+    databaseUrl: testDatabaseUrl(),
+    dir: migrationsDir,
+    direction: 'up',
+    migrationsTable: 'pgmigrations',
+    count: Infinity,
+    log: () => undefined,
+  });
+}
+
+/**
+ * Normalize a raw pg timestamptz value (a JS Date at runtime) to a stable
+ * ISO-8601 UTC string for equality assertions.
+ */
+export function toIso(value: Date | string | null | undefined): string | null {
+  if (value === null || value === undefined) return null;
+  return value instanceof Date ? value.toISOString() : new Date(value).toISOString();
 }

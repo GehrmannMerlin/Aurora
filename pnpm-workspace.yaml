@@ -9,6 +9,7 @@ engineStrict: true
 strictPeerDependencies: true
 strictDepBuilds: true
 allowBuilds:
+  argon2: false
   esbuild: true
   msw: true
 minimumReleaseAge: 1440
