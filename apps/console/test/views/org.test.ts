@@ -248,10 +248,10 @@ describe('B4 organization settings / timezone (7B)', () => {
     await router.isReady();
     render(SettingsView, { global: { plugins: [pinia, router] } });
     expect(await screen.findByTestId('settings-view')).toBeTruthy();
+    expect(await screen.findByTestId('timezone-input')).toBeTruthy();
 
     await fireEvent.update(screen.getByTestId('timezone-input'), 'Asia/Shanghai');
     await fireEvent.click(screen.getByTestId('timezone-submit'));
-
     expect(await screen.findByTestId('timezone-success')).toBeTruthy();
     expect(screen.getByTestId('current-timezone').textContent).toContain('Asia/Shanghai');
     expect(handlerControls.updateTimezoneRequests).toBeGreaterThanOrEqual(1);
@@ -262,6 +262,7 @@ describe('B4 organization settings / timezone (7B)', () => {
     await router.isReady();
     render(SettingsView, { global: { plugins: [pinia, router] } });
     expect(await screen.findByTestId('settings-view')).toBeTruthy();
+    expect(await screen.findByTestId('timezone-input')).toBeTruthy();
 
     await fireEvent.update(screen.getByTestId('timezone-input'), 'Not/AZone');
     expect(screen.getByTestId('timezone-error').textContent).toMatch(/IANA/);
@@ -305,6 +306,7 @@ describe('B4 organization settings / timezone (7B)', () => {
     await router.isReady();
     render(SettingsView, { global: { plugins: [pinia, router] } });
     expect(await screen.findByTestId('settings-view')).toBeTruthy();
+    expect(await screen.findByTestId('timezone-input')).toBeTruthy();
 
     await fireEvent.update(screen.getByTestId('timezone-input'), 'Asia/Tokyo');
     await fireEvent.click(screen.getByTestId('timezone-submit'));
@@ -314,6 +316,16 @@ describe('B4 organization settings / timezone (7B)', () => {
     await fireEvent.click(screen.getByTestId('timezone-submit'));
     expect(await screen.findByTestId('timezone-success')).toBeTruthy();
     expect(capturedResourceVersion).toBe('3');
+  });
+
+  it('shows a forbidden state for a plain member (server re-checks)', async () => {
+    usePlainMemberProjection();
+    await router.push('/organizations/org_test_1/settings');
+    await router.isReady();
+    render(SettingsView, { global: { plugins: [pinia, router] } });
+    expect(await screen.findByTestId('settings-forbidden')).toBeTruthy();
+    expect(screen.queryByTestId('timezone-input')).toBeNull();
+    expect(screen.queryByTestId('timezone-submit')).toBeNull();
   });
 });
 
@@ -417,6 +429,47 @@ describe('B6 private tokens (7C)', () => {
     // The revoke button is replaced by the revoked marker.
     await waitFor(() => expect(screen.queryByTestId('revoke-token-pt_test_1')).toBeNull());
     expect(screen.getByText('已撤销')).toBeTruthy();
+  });
+
+  it('does NOT render a revoked token as active after unmount + remount (cache invalidated)', async () => {
+    await router.push('/organizations/org_test_1/tokens');
+    await router.isReady();
+    render(TokensView, { global: { plugins: [pinia, router] } });
+    expect(await screen.findByTestId('token-list')).toBeTruthy();
+
+    await fireEvent.click(screen.getByTestId('revoke-token-pt_test_1'));
+    await waitFor(() => expect(handlerControls.revokePrivateTokenRequests).toBeGreaterThanOrEqual(1));
+
+    // The real server persists `revoked_at` on revoke; mirror that so the
+    // remount reads a server projection where the token is revoked.
+    mockServer.use(
+      http.get('/api/platform/v1/organizations/:organizationId/private-tokens', () =>
+        HttpResponse.json(
+          {
+            tokens: [
+              {
+                tokenId: 'pt_test_1',
+                name: 'ci-token',
+                scopes: ['source_maps.upload'],
+                revokedAt: '2026-08-09T03:00:00.000Z',
+              },
+            ],
+            navigationTargets: [],
+          } as JsonBodyType,
+          { status: 200 },
+        ),
+      ),
+    );
+
+    // Leave (unmount) and remount: the org-scope request cache must be
+    // invalidated by the revoke so the fresh mount re-reads the server state
+    // where the token is revoked — not the stale pre-revoke list.
+    cleanup();
+    render(TokensView, { global: { plugins: [pinia, router] } });
+    await screen.findByTestId('token-list');
+    expect(screen.queryByTestId('revoke-token-pt_test_1')).toBeNull();
+    expect(screen.getByText('已撤销')).toBeTruthy();
+    expect(screen.queryByTestId('token-plaintext')).toBeNull();
   });
 
   it('shows a forbidden state for a plain member (server re-checks)', async () => {

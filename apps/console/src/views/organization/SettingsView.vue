@@ -1,14 +1,22 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue';
+import { computed, ref, watch } from 'vue';
 import { useRoute } from 'vue-router';
-import { OPERATION_ID_UPDATE_TIMEZONE } from '@aurora/platform-contract';
+import { OPERATION_ID_LIST_MEMBERS, OPERATION_ID_UPDATE_TIMEZONE } from '@aurora/platform-contract';
 import { platformRequest } from '../../api/client.js';
+import { executeQuery } from '../../api/query.js';
 import { ApiError } from '../../api/errors.js';
 import { describeRequestError } from '../../api/feedback.js';
 import { useSessionStore } from '../../stores/session.js';
 import AppButton from '../../components/aurora/AppButton.vue';
 import AppPageHeader from '../../components/aurora/AppPageHeader.vue';
 import AppStatusBadge from '../../components/aurora/AppStatusBadge.vue';
+
+type OrgRole = 'owner' | 'admin' | 'member';
+
+interface MemberSummary {
+  readonly accountId: string;
+  readonly orgRole: OrgRole;
+}
 
 const COMMON_TIMEZONES = [
   'UTC',
@@ -40,6 +48,47 @@ const organizationId = computed(() => {
   const raw = route.params.organizationId;
   return typeof raw === 'string' && raw.length > 0 ? raw : null;
 });
+
+// ---- UX-only owner/admin gate (the server re-checks authoritatively). The
+// settings update requires an org manager, so a plain member sees a forbidden
+// state instead of a form that would 403 on submit. ----
+const gateLoading = ref(true);
+const gateError = ref<string | null>(null);
+const canManage = ref(false);
+
+const myAccountId = computed(() => session.account?.accountId ?? null);
+
+watch(
+  organizationId,
+  () => {
+    void loadGate();
+  },
+  { immediate: true },
+);
+
+async function loadGate(): Promise<void> {
+  const orgId = organizationId.value;
+  if (orgId === null) {
+    gateLoading.value = false;
+    return;
+  }
+  gateLoading.value = true;
+  gateError.value = null;
+  try {
+    const data = await executeQuery<{ members: readonly MemberSummary[] }>({
+      operationId: OPERATION_ID_LIST_MEMBERS,
+      input: { pathParams: { organizationId: orgId } },
+      scope: { type: 'organization', id: orgId },
+    });
+    const mine = data.members.find((member) => member.accountId === myAccountId.value);
+    canManage.value = mine?.orgRole === 'owner' || mine?.orgRole === 'admin';
+  } catch (caught) {
+    canManage.value = false;
+    gateError.value = describeRequestError(caught);
+  } finally {
+    gateLoading.value = false;
+  }
+}
 
 // ---- B4 timezone form. The contract has NO read-settings operation, so the
 // page cannot show the server's current timezone or version; it only submits.
@@ -127,52 +176,62 @@ async function onUpdateTimezone(): Promise<void> {
   <section class="au-surface" data-testid="settings-view">
     <AppPageHeader title="组织设置" />
 
-    <p class="au-hint" data-testid="settings-hint">
-      组织业务时区用于数据统计口径。当前时区与版本无法读取（契约没有读取设置的操作），
-      修改后以提交结果为准；若其他会话已并发修改，会提示版本冲突并刷新版本后重试。
+    <AppStatusBadge v-if="gateError !== null" tone="danger" data-testid="settings-gate-error">
+      {{ gateError }}
+    </AppStatusBadge>
+
+    <p v-else-if="!gateLoading && !canManage" class="au-hint" data-testid="settings-forbidden">
+      你没有权限修改该组织的设置。
     </p>
 
-    <p v-if="lastSavedTimezone !== null" class="au-hint" data-testid="current-timezone">
-      当前保存的时区：{{ lastSavedTimezone }}
-    </p>
+    <template v-else-if="!gateLoading">
+      <p class="au-hint" data-testid="settings-hint">
+        组织业务时区用于数据统计口径。当前时区与版本无法读取（契约没有读取设置的操作），
+        修改后以提交结果为准；若其他会话已并发修改，会提示版本冲突并刷新版本后重试。
+      </p>
 
-    <form class="au-form" novalidate @submit.prevent="onUpdateTimezone">
-      <div class="au-field">
-        <label class="au-field__label" for="settings-timezone">时区（IANA 标识）</label>
-        <input
-          id="settings-timezone"
-          class="au-field__input"
-          type="text"
-          list="common-timezones"
-          :value="timezone"
-          placeholder="例如 Asia/Shanghai"
-          data-testid="timezone-input"
-          @input="timezone = ($event.target as HTMLInputElement).value"
-        />
-        <datalist id="common-timezones">
-          <option v-for="zone in COMMON_TIMEZONES" :key="zone" :value="zone" />
-        </datalist>
-        <p v-if="timezoneError !== null" class="au-field-error" data-testid="timezone-error">
-          {{ timezoneError }}
-        </p>
-      </div>
+      <p v-if="lastSavedTimezone !== null" class="au-hint" data-testid="current-timezone">
+        当前保存的时区：{{ lastSavedTimezone }}
+      </p>
 
-      <AppButton
-        type="submit"
-        variant="primary"
-        :disabled="updating || session.csrf === null || timezoneError !== null"
-        data-testid="timezone-submit"
-      >
-        {{ updating ? '保存中…' : '保存时区' }}
-      </AppButton>
+      <form class="au-form" novalidate @submit.prevent="onUpdateTimezone">
+        <div class="au-field">
+          <label class="au-field__label" for="settings-timezone">时区（IANA 标识）</label>
+          <input
+            id="settings-timezone"
+            class="au-field__input"
+            type="text"
+            list="common-timezones"
+            :value="timezone"
+            placeholder="例如 Asia/Shanghai"
+            data-testid="timezone-input"
+            @input="timezone = ($event.target as HTMLInputElement).value"
+          />
+          <datalist id="common-timezones">
+            <option v-for="zone in COMMON_TIMEZONES" :key="zone" :value="zone" />
+          </datalist>
+          <p v-if="timezoneError !== null" class="au-field-error" data-testid="timezone-error">
+            {{ timezoneError }}
+          </p>
+        </div>
 
-      <AppStatusBadge v-if="updateInfo !== null" tone="success" data-testid="timezone-success">
-        {{ updateInfo }}
-      </AppStatusBadge>
-      <AppStatusBadge v-if="updateError !== null" tone="danger" data-testid="timezone-error-banner">
-        {{ updateError }}
-      </AppStatusBadge>
-    </form>
+        <AppButton
+          type="submit"
+          variant="primary"
+          :disabled="updating || session.csrf === null || timezoneError !== null"
+          data-testid="timezone-submit"
+        >
+          {{ updating ? '保存中…' : '保存时区' }}
+        </AppButton>
+
+        <AppStatusBadge v-if="updateInfo !== null" tone="success" data-testid="timezone-success">
+          {{ updateInfo }}
+        </AppStatusBadge>
+        <AppStatusBadge v-if="updateError !== null" tone="danger" data-testid="timezone-error-banner">
+          {{ updateError }}
+        </AppStatusBadge>
+      </form>
+    </template>
   </section>
 </template>
 

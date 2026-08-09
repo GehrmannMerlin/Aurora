@@ -241,6 +241,9 @@ async function onRevokeToken(token: TokenSummary): Promise<void> {
         ? { ...candidate, revokedAt: new Date().toISOString() }
         : candidate,
     );
+    // The org-scope request cache must not serve the stale pre-revoke list on a
+    // later remount: a fresh mount re-reads the server and sees the revoked row.
+    invalidateScope({ type: 'organization', id: orgId });
   } catch (caught) {
     loadError.value = describeCommandError(caught);
   } finally {
