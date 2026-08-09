@@ -108,6 +108,19 @@ SSH "cd '${RELEASE_DIR}' && RELEASE_ID='${RELEASE_ID}' PREVIEW_DB_PASSWORD='${DB
 SSH "if [ -L '${CURRENT_DIR}' ]; then rm -f '${CURRENT_DIR}'; elif [ -d '${CURRENT_DIR}' ] && [ -z \"\$(ls -A '${CURRENT_DIR}')\" ]; then rmdir '${CURRENT_DIR}'; elif [ -e '${CURRENT_DIR}' ]; then echo 'current is not empty; refusing to replace'; exit 1; fi && ln -s '${RELEASE_DIR}' '${CURRENT_DIR}'" || { echo "POINTER SWITCH FAILED"; exit 1; }
 echo "==> current -> ${RELEASE_DIR}"
 
+# 13. Sync Aurora nginx vhosts to the host bind-mount path and reload the shared
+#     Lumina nginx container (ops doc §4.1). The compose.aurora-override.yml
+#     bind-mounts /opt/aurora-preview/deploy/nginx/conf.d/aurora-tls.conf into
+#     nginx; the deploy ships the config in the release dir, so copy the Aurora
+#     vhost/status files to the fixed host paths, validate with `nginx -t`, then
+#     recreate nginx with the AURORA_COMPOSE override so the Aurora vhosts
+#     (incl. /api/platform/*) stay live. Never touches other Lumina containers.
+AURORA_NGINX_DIR="${REMOTE_ROOT}/deploy/nginx"
+SSH "mkdir -p '${AURORA_NGINX_DIR}/conf.d' '${AURORA_NGINX_DIR}/www' && cp '${RELEASE_DIR}/deploy/preview/nginx/aurora-tls.conf' '${AURORA_NGINX_DIR}/conf.d/aurora-tls.conf' && cp '${RELEASE_DIR}/deploy/preview/nginx/console-default.conf' '${AURORA_NGINX_DIR}/conf.d/console-default.conf' && cp '${RELEASE_DIR}/deploy/preview/nginx/preview-status.html' '${AURORA_NGINX_DIR}/www/preview-status.html'" || { echo "NGINX SYNC FAILED"; exit 1; }
+echo "==> nginx config synced to host"
+SSH "docker compose -f /opt/lumina/app/deploy/compose.prod.yml -f '${REMOTE_ROOT}/deploy/compose.aurora-override.yml' up -d --no-deps nginx" || { echo "NGINX RELOAD FAILED"; exit 1; }
+echo "==> nginx reloaded with Aurora vhosts"
+
 echo "==> Deploy complete: release ${RELEASE_ID}"
 echo "==> Public URLs (once DNS + nginx edge configured):"
 echo "    https://aurora.ah.cn/          (Aurora Vue console SPA)"
