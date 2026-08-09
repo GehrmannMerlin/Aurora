@@ -23,12 +23,12 @@ const PASSWORD_MIN = passwordRule?.minLength ?? 8;
 const PASSWORD_MAX = passwordRule?.maxLength ?? 256;
 
 /** Shown ahead of input, next to each field. */
-export const REGISTER_EMAIL_HINT = `请输入 ${EMAIL_MIN}–${EMAIL_MAX} 个字符的邮箱地址。`;
-export const REGISTER_PASSWORD_HINT = `密码需为 ${PASSWORD_MIN}–${PASSWORD_MAX} 个字符。`;
+export const REGISTER_EMAIL_HINT = `请输入 ${String(EMAIL_MIN)}–${String(EMAIL_MAX)} 个字符的邮箱地址。`;
+export const REGISTER_PASSWORD_HINT = `密码需为 ${String(PASSWORD_MIN)}–${String(PASSWORD_MAX)} 个字符。`;
 
 /** Field-level messages, shown next to the offending field on invalid input. */
-const EMAIL_RULE_TEXT = `请输入 ${EMAIL_MIN}–${EMAIL_MAX} 个字符的邮箱地址。`;
-const PASSWORD_RULE_TEXT = `密码需为 ${PASSWORD_MIN}–${PASSWORD_MAX} 个字符。`;
+const EMAIL_RULE_TEXT = `请输入 ${String(EMAIL_MIN)}–${String(EMAIL_MAX)} 个字符的邮箱地址。`;
+const PASSWORD_RULE_TEXT = `密码需为 ${String(PASSWORD_MIN)}–${String(PASSWORD_MAX)} 个字符。`;
 
 // A contract-valid placeholder so the shared parse only ever reports
 // email/password issues; the real key is generated at submit time.
