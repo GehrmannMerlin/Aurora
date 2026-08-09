@@ -34,10 +34,7 @@ export async function csrfFor(app: FastifyInstance, cookie: string): Promise<str
  * personal workspace and establishes a session) and return the session cookie,
  * bound CSRF token, accountId and personal-org organizationId.
  */
-export async function registerActor(
-  app: FastifyInstance,
-  email: string,
-): Promise<RegisteredActor> {
+export async function registerActor(app: FastifyInstance, email: string): Promise<RegisteredActor> {
   const response = await app.inject({
     method: 'POST',
     url: '/api/platform/v1/auth/register',
@@ -60,25 +57,4 @@ export async function registerActor(
     accountId: body.accountId,
     organizationId: body.workspaceId.organizationId,
   };
-}
-
-/** Convenience POST with session cookie + CSRF header (for CSRF-protected ops). */
-export async function postJson(
-  app: FastifyInstance,
-  url: string,
-  cookie: string,
-  csrf: string,
-  payload: object,
-): Promise<{ status: number; body: unknown }> {
-  const response = await app.inject({
-    method: 'POST',
-    url,
-    headers: {
-      cookie: `aurora_session=${cookie}`,
-      'content-type': 'application/json',
-      'x-aurora-csrf': csrf,
-    },
-    payload: JSON.stringify(payload),
-  });
-  return { status: response.statusCode, body: response.json() };
 }

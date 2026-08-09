@@ -3,7 +3,7 @@ import { getSession, type SessionPayload, type SessionStore } from '@aurora/plat
 import { readSessionCookie, SESSION_COOKIE_NAME } from '../session-cookie.js';
 import { parseIntentCookie, type IntentCookiePayload } from '../intent-cookie.js';
 import { sendProblem } from '../error-mapper.js';
-import { routeInfo } from '../operations.js';
+import { requestRouteInfo } from '../operations.js';
 
 export interface CookieSessionPluginOptions {
   readonly store: SessionStore;
@@ -54,7 +54,7 @@ export function applyCookieSessionPlugin(
   app.decorateRequest('intentPayload', null);
 
   app.addHook('onRequest', async (request: FastifyRequest, reply) => {
-    const info = routeInfo(request.method, request.url);
+    const info = requestRouteInfo(request);
 
     const cookieValue = readSessionCookie(request.headers.cookie, cookieName);
     if (cookieValue === undefined) {

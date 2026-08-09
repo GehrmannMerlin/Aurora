@@ -1,13 +1,18 @@
 import type { FastifyReply, FastifyRequest } from 'fastify';
-import type { PoolClient } from 'pg';
 import { createProject } from '@aurora/platform-project-governance';
 import { OPERATION_ID_CREATE_PROJECT } from '@aurora/platform-contract';
 import { parseInput, serializeOutput, type OperationDef } from '@aurora/platform-contract/server';
 import { operationById } from '../operations.js';
 import { sendProblem } from '../error-mapper.js';
-import { sendMappedError, ServiceError } from '../service-error.js';
+import { sendMappedError } from '../service-error.js';
 import { effectivePermissions } from '../authorization.js';
-import { orgNavigation, requireOrgManager, requireSession, requireUuidParams } from './_shared.js';
+import {
+  orgNavigation,
+  requireOrgManager,
+  requireOrgManagerOnTransaction,
+  requireSession,
+  requireUuidParams,
+} from './_shared.js';
 import {
   lookupIdempotency,
   requestDigest,
@@ -114,7 +119,7 @@ export async function handleCreateProject(
       execute: async (client) => {
         // Fresh re-read of the actor's membership on the command transaction so
         // a demoted/removed actor cannot create after the outer check passed.
-        await requireManagerOnTransaction(client, session.accountId, organizationId);
+        await requireOrgManagerOnTransaction(client, session.accountId, organizationId);
 
         const result = await createProject(client, {
           orgId: organizationId,
@@ -148,26 +153,4 @@ export async function handleCreateProject(
     return;
   }
   void reply.header('x-aurora-request-id', requestId).code(200).send(serialized.body);
-}
-
-/**
- * Re-read the actor's organization membership on the command's transaction and
- * reject with a closed 403 unless they are still an org manager (spec §13
- * fresh re-reads; no creatability leak to a demoted member). Throws a
- * ServiceError so the whole command transaction (including the idempotency
- * record) rolls back.
- */
-async function requireManagerOnTransaction(
-  client: PoolClient,
-  accountId: string,
-  organizationId: string,
-): Promise<void> {
-  const fresh = await effectivePermissions(accountId, organizationId, { pool: client });
-  if (!fresh.isOrgManager) {
-    throw new ServiceError(
-      403,
-      'authorization',
-      'You do not have permission to perform this action.',
-    );
-  }
 }

@@ -1,8 +1,10 @@
 import type { FastifyReply, FastifyRequest } from 'fastify';
+import type { PoolClient } from 'pg';
 import type { SessionPayload } from '@aurora/platform-session';
 import type { RouteTargetId } from '@aurora/platform-contract';
-import type { EffectivePermissions } from '../authorization.js';
+import { effectivePermissions, type EffectivePermissions } from '../authorization.js';
 import { sendProblem } from '../error-mapper.js';
+import { ServiceError } from '../service-error.js';
 
 /**
  * Canonical UUID shape. The contract's branded-id schemas are length-bounded
@@ -134,4 +136,28 @@ export function orgNavigation(
   organizationId: string,
 ): readonly OrgNavigationTarget[] {
   return [{ routeId, pathParams: { organizationId }, query: {} }];
+}
+
+/**
+ * Re-read the actor's organization membership on the command's transaction and
+ * reject with a closed 403 unless they are still an org manager (spec §13 fresh
+ * re-reads). Closes the TOCTOU window between the handler's outer
+ * `effectivePermissions` check and the command's writes so a demoted/removed
+ * manager cannot win it. Throws a ServiceError so the whole command transaction
+ * (including any idempotency record) rolls back. B2/B4 (and 6C commands) reuse
+ * this on their command transaction.
+ */
+export async function requireOrgManagerOnTransaction(
+  client: PoolClient,
+  accountId: string,
+  organizationId: string,
+): Promise<void> {
+  const fresh = await effectivePermissions(accountId, organizationId, { pool: client });
+  if (!fresh.isOrgManager) {
+    throw new ServiceError(
+      403,
+      'authorization',
+      'You do not have permission to perform this action.',
+    );
+  }
 }

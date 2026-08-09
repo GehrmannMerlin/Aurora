@@ -1,7 +1,7 @@
 import type { FastifyInstance, FastifyRequest } from 'fastify';
 import { verifyCsrf } from '@aurora/platform-session';
 import { sendProblem } from '../error-mapper.js';
-import { routeInfo } from '../operations.js';
+import { requestRouteInfo } from '../operations.js';
 
 const SAFE_METHODS = new Set(['GET', 'HEAD', 'OPTIONS']);
 
@@ -18,7 +18,7 @@ const SAFE_METHODS = new Set(['GET', 'HEAD', 'OPTIONS']);
 export function applyCsrfPlugin(app: FastifyInstance): void {
   app.addHook('onRequest', async (request: FastifyRequest, reply) => {
     if (SAFE_METHODS.has(request.method)) return;
-    const info = routeInfo(request.method, request.url);
+    const info = requestRouteInfo(request);
     if (!info?.csrf) return;
 
     let secret: string;

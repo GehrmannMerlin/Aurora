@@ -95,15 +95,17 @@ describeDb('B4 update-timezone flow (real PostgreSQL 17 + Redis)', () => {
     actor: RegisteredActor,
     organizationId: string,
     payload: object,
+    csrfHeader: string | null = actor.csrf,
   ): Promise<{ status: number; body: UpdateTimezoneBody | ProblemBody }> {
+    const headers: Record<string, string> = {
+      cookie: `aurora_session=${actor.cookie}`,
+      'content-type': 'application/json',
+    };
+    if (csrfHeader !== null) headers['x-aurora-csrf'] = csrfHeader;
     const response = await app.inject({
       method: 'PATCH',
       url: `/api/platform/v1/organizations/${organizationId}/settings/timezone`,
-      headers: {
-        cookie: `aurora_session=${actor.cookie}`,
-        'content-type': 'application/json',
-        'x-aurora-csrf': actor.csrf,
-      },
+      headers,
       payload: JSON.stringify(payload),
     });
     return { status: response.statusCode, body: response.json() };
@@ -179,6 +181,44 @@ describeDb('B4 update-timezone flow (real PostgreSQL 17 + Redis)', () => {
     });
     expect(status).toBe(403);
     expect((body as ProblemBody).code).toBe('authorization');
+    await app.close();
+  });
+
+  it('rejects B4 update-timezone with a valid session but NO CSRF token (403)', async () => {
+    const app = buildApp();
+    const owner = await registerActor(app, `owner-${randomUUID()}@example.com`);
+
+    const { status, body } = await updateTimezone(
+      app,
+      owner,
+      owner.organizationId,
+      {
+        timezone: 'Asia/Tokyo',
+        resourceVersion: '0',
+      },
+      null,
+    );
+
+    expect(status).toBe(403);
+    expect((body as ProblemBody).code).toBe('authorization');
+    const after = await readSettings(owner.organizationId);
+    expect(after.timezone).not.toBe('Asia/Tokyo');
+    await app.close();
+  });
+
+  it('rejects a non-numeric resourceVersion with 400 structural_error', async () => {
+    const app = buildApp();
+    const owner = await registerActor(app, `owner-${randomUUID()}@example.com`);
+
+    const { status, body } = await updateTimezone(app, owner, owner.organizationId, {
+      timezone: 'Asia/Tokyo',
+      resourceVersion: 'not-a-number',
+    });
+
+    expect(status).toBe(400);
+    expect((body as ProblemBody).code).toBe('structural_error');
+    const after = await readSettings(owner.organizationId);
+    expect(after.timezone).not.toBe('Asia/Tokyo');
     await app.close();
   });
 });

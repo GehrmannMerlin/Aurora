@@ -85,15 +85,17 @@ describeDb('B2 create-project flow (real PostgreSQL 17 + Redis)', () => {
     actor: RegisteredActor,
     organizationId: string,
     payload: object,
+    csrfHeader: string | null = actor.csrf,
   ): Promise<{ status: number; body: CreateProjectBody | ProblemBody }> {
+    const headers: Record<string, string> = {
+      cookie: `aurora_session=${actor.cookie}`,
+      'content-type': 'application/json',
+    };
+    if (csrfHeader !== null) headers['x-aurora-csrf'] = csrfHeader;
     const response = await app.inject({
       method: 'POST',
       url: `/api/platform/v1/organizations/${organizationId}/projects`,
-      headers: {
-        cookie: `aurora_session=${actor.cookie}`,
-        'content-type': 'application/json',
-        'x-aurora-csrf': actor.csrf,
-      },
+      headers,
       payload: JSON.stringify(payload),
     });
     return { status: response.statusCode, body: response.json() };
@@ -116,9 +118,9 @@ describeDb('B2 create-project flow (real PostgreSQL 17 + Redis)', () => {
     expect(created.defaultEnvironment).toBe('production');
     expect(created.onboardingStatus).toBe('not_started');
     expect(created.clientKeyPublicIdentifier).toMatch(/^aurora_key_/);
-    expect(created.navigationTargets?.some((t) => t.routeId === 'organization.project-create')).toBe(
-      true,
-    );
+    expect(
+      created.navigationTargets?.some((t) => t.routeId === 'organization.project-create'),
+    ).toBe(true);
 
     // The client-key secret is never returned: the response must not contain any
     // secret-like base64url token beyond the public identifier itself.
@@ -186,6 +188,53 @@ describeDb('B2 create-project flow (real PostgreSQL 17 + Redis)', () => {
       frameworkType: 'javascript',
       idempotencyKey: randomUUID(),
     });
+
+    expect(status).toBe(403);
+    expect((body as ProblemBody).code).toBe('authorization');
+    await app.close();
+  });
+
+  it('rejects B2 create-project with a valid session but NO CSRF token (403)', async () => {
+    const app = buildApp();
+    const owner = await registerActor(app, `owner-${randomUUID()}@example.com`);
+
+    const { status, body } = await createProject(
+      app,
+      owner,
+      owner.organizationId,
+      {
+        name: 'No CSRF',
+        frameworkType: 'javascript',
+        idempotencyKey: randomUUID(),
+      },
+      null,
+    );
+
+    expect(status).toBe(403);
+    expect((body as ProblemBody).code).toBe('authorization');
+    const count = await pool.query<{ n: string }>(
+      'SELECT count(*)::text AS n FROM projects WHERE organization_id = $1',
+      [owner.organizationId],
+    );
+    expect(Number(count.rows[0]?.n ?? '0')).toBe(0);
+    await app.close();
+  });
+
+  it('rejects B2 create-project with a wrong CSRF token (403)', async () => {
+    const app = buildApp();
+    const owner = await registerActor(app, `owner-${randomUUID()}@example.com`);
+
+    const { status, body } = await createProject(
+      app,
+      owner,
+      owner.organizationId,
+      {
+        name: 'Wrong CSRF',
+        frameworkType: 'javascript',
+        idempotencyKey: randomUUID(),
+      },
+      'definitely-not-the-bound-secret',
+    );
 
     expect(status).toBe(403);
     expect((body as ProblemBody).code).toBe('authorization');

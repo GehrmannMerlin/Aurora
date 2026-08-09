@@ -1,3 +1,4 @@
+import type { FastifyRequest } from 'fastify';
 import {
   listServerOperations,
   type AuthLevel,
@@ -38,4 +39,20 @@ for (const operation of listServerOperations()) {
 export function routeInfo(method: string, url: string): RouteInfo | undefined {
   const path = url.split('?')[0] ?? url;
   return routeInfoByKey.get(`${method} ${path}`);
+}
+
+/**
+ * Resolve the security metadata for an incoming request using the MATCHED
+ * Fastify route pattern rather than the concrete URL. Fastify exposes the
+ * colon-style route pattern (e.g. `/organizations/:organizationId/projects`)
+ * as `request.routeOptions.url` in the onRequest hook, and the contract
+ * registry keys are colon-style. Resolving against the concrete URL (which
+ * carries the real path params) would silently miss every parameterized route
+ * and skip its CSRF/session gate — a security bypass. `routeOptions.url` is
+ * undefined for unmatched (404) requests, so fall back to the raw URL (which
+ * still won't match any registry key).
+ */
+export function requestRouteInfo(request: FastifyRequest): RouteInfo | undefined {
+  const url = request.routeOptions.url ?? request.url;
+  return routeInfo(request.method, url);
 }

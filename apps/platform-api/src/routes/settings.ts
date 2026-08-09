@@ -5,11 +5,21 @@ import { parseInput, serializeOutput, type OperationDef } from '@aurora/platform
 import { operationById } from '../operations.js';
 import { sendProblem } from '../error-mapper.js';
 import { sendMappedError } from '../service-error.js';
+import { withTransaction } from '../db.js';
 import { effectivePermissions } from '../authorization.js';
-import { requireOrgManager, requireSession, requireUuidParams } from './_shared.js';
+import {
+  requireOrgManager,
+  requireOrgManagerOnTransaction,
+  requireSession,
+  requireUuidParams,
+} from './_shared.js';
 import type { PlatformApiRouteDependencies } from '../route-deps.js';
 
 const UPDATE_TIMEZONE_OPERATION: OperationDef = operationById(OPERATION_ID_UPDATE_TIMEZONE);
+
+/** The contract `resourceVersion` is `str(1,64)`; only a canonical non-negative
+ *  integer is a valid optimistic-concurrency version. */
+const RESOURCE_VERSION_PATTERN = /^\d{1,18}$/;
 
 interface UpdateTimezoneBody {
   readonly timezone: string;
@@ -53,6 +63,23 @@ export async function handleUpdateTimezone(
   const organizationId = params.organizationId ?? '';
   const input = parsed.data.body as UpdateTimezoneBody;
 
+  // The contract `resourceVersion` is `str(1,64)`; only a canonical non-negative
+  // integer is a valid optimistic-concurrency version. A non-numeric value
+  // (e.g. "abc") must be a structural error, not a silent version_conflict.
+  const expectedVersion = Number(input.resourceVersion);
+  const versionIsValid =
+    RESOURCE_VERSION_PATTERN.test(input.resourceVersion) && Number.isSafeInteger(expectedVersion);
+  if (!versionIsValid) {
+    await sendProblem(
+      reply,
+      requestId,
+      400,
+      'structural_error',
+      'Request does not match the public contract.',
+    );
+    return;
+  }
+
   const session = await requireSession(request, reply, requestId);
   if (session === null) return;
 
@@ -67,11 +94,17 @@ export async function handleUpdateTimezone(
 
   let result;
   try {
-    result = await updateOrganizationTimezone(deps.pool, {
-      orgId: organizationId,
-      timezone: input.timezone,
-      expectedVersion: Number(input.resourceVersion),
-      actorId: session.accountId,
+    // Re-read the actor's membership on the same transaction as the update so a
+    // demoted/removed manager cannot win the TOCTOU window (spec §13 fresh
+    // re-reads; mirrors B2 and the pattern 6C must mirror).
+    result = await withTransaction(deps.pool, async (client) => {
+      await requireOrgManagerOnTransaction(client, session.accountId, organizationId);
+      return updateOrganizationTimezone(client, {
+        orgId: organizationId,
+        timezone: input.timezone,
+        expectedVersion,
+        actorId: session.accountId,
+      });
     });
   } catch (error) {
     if (await sendMappedError(reply, requestId, error)) return;
