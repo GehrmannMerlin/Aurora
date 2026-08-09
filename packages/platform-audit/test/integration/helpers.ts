@@ -28,6 +28,11 @@ const IDENTITY_TABLES_DROP_ORDER = [
   'password_reset_intents',
   'email_verification_intents',
   'account_credentials',
+  // SEC-01 A5 account-deletion tables (created by the shared identity migration
+  // directory; FK → accounts, so they must be dropped before accounts so
+  // re-running migrations stays fresh).
+  'account_cleanup_handoffs',
+  'account_deletion_intents',
   'accounts',
 ];
 
