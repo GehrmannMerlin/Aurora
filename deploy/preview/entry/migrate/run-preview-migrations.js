@@ -1,12 +1,25 @@
 /**
  * Aurora public-preview migration runner.
  *
- * Deploy-only, plain ESM. Merges the repository's three migration packages
- * (ingestion-inbox ×3, ingestion-credentials ×1, processing-store ×4) into a
- * stable combined directory and applies them with node-pg-migrate over the
- * preview DATABASE_URL. node-pg-migrate bundles jiti, so the checked-in .ts
- * migration files load without tsx. This is the same combined-directory
- * pattern proven by the credentials/benchmark integration harnesses.
+ * Deploy-only, plain ESM. Merges the repository's eight migration packages
+ * (ingestion-inbox ×3, ingestion-credentials ×1, processing-store ×4,
+ * platform-identity ×2, platform-organization ×1, platform-project-governance
+ * ×1, platform-credentials ×1, platform-audit ×1) into a stable combined
+ * directory and applies them with node-pg-migrate over the preview
+ * DATABASE_URL. node-pg-migrate bundles jiti, so the checked-in .ts migration
+ * files load without tsx. This is the same combined-directory pattern proven
+ * by the credentials/benchmark integration harnesses.
+ *
+ * Filename-collision note: node-pg-migrate v9 sorts by numeric timestamp, then
+ * falls back to a numeric localeCompare of the full file name, so all files in
+ * the combined directory must be uniquely named and preserve relative
+ * timestamp order. Every migration here has a distinct full filename — the two
+ * `1722500000002_*` files (inbox replay + client credentials) already coexist
+ * in the deployed combined dir and tie-break deterministically by name. The
+ * five platform packages use distinct 1786…/1787… timestamps that sort after
+ * the ingestion set in dependency order (identity base → organization →
+ * account-deletion → project-governance → credentials → audit). No filename
+ * prefixing is required.
  */
 import { copyFile, mkdir, readdir, rm } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
@@ -29,6 +42,11 @@ const MIGRATION_SOURCES = [
   join(REPO_ROOT, 'packages', 'ingestion-inbox', 'migrations'),
   join(REPO_ROOT, 'packages', 'ingestion-credentials', 'migrations'),
   join(REPO_ROOT, 'packages', 'processing-store', 'migrations'),
+  join(REPO_ROOT, 'packages', 'platform-identity', 'migrations'),
+  join(REPO_ROOT, 'packages', 'platform-organization', 'migrations'),
+  join(REPO_ROOT, 'packages', 'platform-project-governance', 'migrations'),
+  join(REPO_ROOT, 'packages', 'platform-credentials', 'migrations'),
+  join(REPO_ROOT, 'packages', 'platform-audit', 'migrations'),
 ];
 
 const COMBINED_DIR = join(REPO_ROOT, '.migrations-combined-preview');

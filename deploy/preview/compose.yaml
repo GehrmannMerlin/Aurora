@@ -120,6 +120,86 @@ services:
       - lumina-prod-internal
     logging: *default-logging
 
+  redis:
+    # ADR-030 session authority (node-redis client). In-memory only
+    # (`--appendonly no`): a restart drops all sessions and logs users out.
+    # Acceptable for the public-preview bridge — sessions are not durable
+    # production data. Never exposed on a published host port (no 0.0.0.0:6379).
+    image: redis:7.4-alpine
+    restart: unless-stopped
+    command: ['redis-server', '--appendonly', 'no', '--maxmemory-policy', 'noeviction']
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 5s
+      timeout: 3s
+      retries: 20
+      start_period: 5s
+    networks:
+      - aurora-private
+    logging: *default-logging
+
+  platform-api:
+    image: aurora-preview-platform-api:${RELEASE_ID:?RELEASE_ID is required}
+    build:
+      context: ../..
+      dockerfile: deploy/preview/Dockerfile.platform-api
+    restart: unless-stopped
+    environment:
+      HOST: 0.0.0.0
+      PORT: '8787'
+      DATABASE_URL: postgresql://aurora:${PREVIEW_DB_PASSWORD:?PREVIEW_DB_PASSWORD is required}@postgres:5432/aurora_preview
+      REDIS_URL: redis://redis:6379
+      COOKIE_SECURE: 'true' # served over HTTPS via the shared Lumina nginx edge
+      EMAIL_DELIVERY_MODE: 'console' # approved degraded path; no real provider credential yet
+      APP_ORIGIN: 'https://aurora.ah.cn'
+      CONSOLE_ORIGIN: 'https://aurora.ah.cn'
+      LOG_ENABLED: 'true'
+      LOG_LEVEL: info
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      redis:
+        condition: service_healthy
+    healthcheck:
+      # No public /healthz route exists; probe the listening TCP port instead.
+      test:
+        [
+          'CMD-SHELL',
+          'node -e "require(''net'').connect(8787,''127.0.0.1'').on(''connect'',()=>process.exit(0)).on(''error'',()=>process.exit(1))"',
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 15s
+    # No published host port; reached only via Lumina nginx on the shared
+    # lumina-prod-internal network (attached below).
+    networks:
+      - aurora-private
+      - lumina-prod-internal
+    logging: *default-logging
+
+  platform-worker:
+    image: aurora-preview-platform-worker:${RELEASE_ID:?RELEASE_ID is required}
+    build:
+      context: ../..
+      dockerfile: deploy/preview/Dockerfile.platform-worker
+    restart: unless-stopped
+    environment:
+      OUTBOX_POLL_INTERVAL_MS: '2000'
+      OUTBOX_BATCH_LIMIT: '10'
+      OUTBOX_MAX_ATTEMPTS: '5'
+      EMAIL_DELIVERY_MODE: 'console' # approved degraded path; no real provider credential yet
+      DATABASE_URL: postgresql://aurora:${PREVIEW_DB_PASSWORD:?PREVIEW_DB_PASSWORD is required}@postgres:5432/aurora_preview
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      redis:
+        condition: service_healthy
+    # No published ports: never exposed to the public network.
+    networks:
+      - aurora-private
+    logging: *default-logging
+
 volumes:
   postgres-data:
     name: aurora-preview-postgres-data
