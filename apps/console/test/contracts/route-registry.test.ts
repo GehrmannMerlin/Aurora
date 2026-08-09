@@ -11,7 +11,7 @@ import {
 } from '../../src/contracts/route-registry.js';
 
 describe('RouteTarget registry', () => {
-  it('declares exactly the 36 frozen route targets', () => {
+  it('declares exactly the 37 frozen route targets', () => {
     expect(ROUTE_REGISTRY.map((entry) => entry.routeId).sort()).toEqual(
       [...ROUTE_TARGET_IDS].sort(),
     );
@@ -54,9 +54,7 @@ describe('RouteTarget registry', () => {
       pathParams: { organizationId: "org$1&$&$'" },
       query: {},
     });
-    expect(result.path).toBe(
-      `/organizations/${encodeURIComponent("org$1&$&$'")}/members`,
-    );
+    expect(result.path).toBe(`/organizations/${encodeURIComponent("org$1&$&$'")}/members`);
   });
 
   it('rejects invalid params and unknown targets safely', () => {
@@ -88,6 +86,8 @@ describe('RouteTarget registry', () => {
       'auth.reset-password',
       'invitation.accept',
       'account.security',
+      'account.deletion-cancel',
+      'account.deletion-confirm',
       'organization.usage',
       'organization.project-create',
       'organization.members',

@@ -124,6 +124,22 @@ export async function handleLogin(
     return;
   }
 
+  // SEC-01 login gate (spec §8): a deletion-cooling or terminated account may
+  // NOT sign in. This runs AFTER password verification so the response is
+  // uniform for the intended (correct-password) caller without leaking lifecycle
+  // detail to anyone who lacks the password. No session is created.
+  if (account.status === 'deletion_cooling' || account.status === 'terminated') {
+    await sendProblem(
+      reply,
+      requestId,
+      409,
+      'state_machine_conflict',
+      'This account is not currently able to sign in.',
+      { recoveryTarget: 'auth.login' },
+    );
+    return;
+  }
+
   const commandResult = buildLoginCommandResult(account, request);
 
   let idempotency: IdempotentCommandResult;

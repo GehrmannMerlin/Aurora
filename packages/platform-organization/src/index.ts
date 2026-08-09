@@ -26,9 +26,14 @@ export { PlatformOrganizationError, type PlatformOrganizationErrorKind } from '.
 
 export type { OrganizationRole } from './repositories/organizations.js';
 export {
+  countOrganizationOwners,
   findMembership,
   getOrganizationById,
+  isUniqueOrganizationOwner,
+  listAccountOrganizations,
+  type AccountOrganizationMembership,
   type FindMembershipInput,
+  type IsUniqueOrganizationOwnerInput,
   type MembershipRow,
   type OrganizationRow,
 } from './repositories/organizations.js';

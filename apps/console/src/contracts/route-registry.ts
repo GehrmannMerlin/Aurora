@@ -31,13 +31,16 @@ const verifyEmailView = (): Promise<Component> => import('../views/auth/VerifyEm
 const verifyEmailConfirmView = (): Promise<Component> =>
   import('../views/auth/VerifyEmailConfirmView.vue');
 const loginView = (): Promise<Component> => import('../views/auth/LoginView.vue');
-const forgotPasswordView = (): Promise<Component> =>
-  import('../views/auth/ForgotPasswordView.vue');
+const forgotPasswordView = (): Promise<Component> => import('../views/auth/ForgotPasswordView.vue');
 const resetPasswordView = (): Promise<Component> => import('../views/auth/ResetPasswordView.vue');
 const invitationAcceptView = (): Promise<Component> =>
   import('../views/auth/InvitationAcceptView.vue');
 const accountSecurityView = (): Promise<Component> =>
   import('../views/account/AccountSecurityView.vue');
+const deletionCancelView = (): Promise<Component> =>
+  import('../views/account/DeletionCancelView.vue');
+const deletionConfirmView = (): Promise<Component> =>
+  import('../views/account/DeletionConfirmView.vue');
 
 export const ROUTE_REGISTRY: readonly RouteEntry[] = [
   {
@@ -127,6 +130,28 @@ export const ROUTE_REGISTRY: readonly RouteEntry[] = [
     querySchema: anyQuery,
     lazy: accountSecurityView,
     menu: true,
+    unavailableReason: null,
+  },
+  {
+    routeId: 'account.deletion-cancel',
+    path: '/account/deletion-cancel',
+    scope: 'public',
+    label: '撤销账号注销',
+    paramsSchema: emptyParams,
+    querySchema: anyQuery,
+    lazy: deletionCancelView,
+    menu: false,
+    unavailableReason: null,
+  },
+  {
+    routeId: 'account.deletion-confirm',
+    path: '/account/deletion-confirm',
+    scope: 'public',
+    label: '注销账号确认',
+    paramsSchema: emptyParams,
+    querySchema: anyQuery,
+    lazy: deletionConfirmView,
+    menu: false,
     unavailableReason: null,
   },
   {

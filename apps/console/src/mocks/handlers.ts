@@ -27,6 +27,7 @@ export interface MockScope {
 
 const MOCK_SCOPE_STORAGE_KEY = '__aurora_mock_scope';
 const MOCK_SESSION_STORAGE_KEY = '__aurora_mock_session_authenticated';
+const MOCK_DELETION_PREFLIGHT_STORAGE_KEY = '__aurora_mock_deletion_preflight';
 
 function readStoredScope(): MockScope {
   try {
@@ -57,6 +58,17 @@ function readStoredSessionAuthenticated(): boolean {
     // storage may be unavailable; default to an authenticated session
   }
   return true;
+}
+
+function readStoredDeletionPreflight(): 'ready' | 'blocked' {
+  try {
+    const raw = sessionStorage.getItem(MOCK_DELETION_PREFLIGHT_STORAGE_KEY);
+    if (raw === 'blocked') return 'blocked';
+    if (raw === 'ready') return 'ready';
+  } catch {
+    // storage may be unavailable; default to the ready projection
+  }
+  return 'ready';
 }
 
 let mockScope: MockScope = readStoredScope();
@@ -93,8 +105,14 @@ export const handlerControls = {
   listSecurityAuditRequests: 0,
   listTrashRequests: 0,
   restoreProjectRequests: 0,
+  deletionPreflightRequests: 0,
+  requestAccountDeletionRequests: 0,
+  deleteAccountRequests: 0,
+  cancelDeletionRequests: 0,
   /** Toggle for the session projection: true = authenticated, false = 401. */
   sessionAuthenticated: readStoredSessionAuthenticated(),
+  /** Toggle for the A5 deletion preflight projection: ready = no blocker. */
+  deletionPreflightStatus: readStoredDeletionPreflight(),
 };
 
 const unauthenticatedProblem = {
@@ -110,6 +128,15 @@ function persistSessionAuthenticated(value: boolean): void {
   handlerControls.sessionAuthenticated = value;
   try {
     sessionStorage.setItem(MOCK_SESSION_STORAGE_KEY, String(value));
+  } catch {
+    // storage unavailable; the module flag still applies for this page lifetime
+  }
+}
+
+function persistDeletionPreflight(status: 'ready' | 'blocked'): void {
+  handlerControls.deletionPreflightStatus = status;
+  try {
+    sessionStorage.setItem(MOCK_DELETION_PREFLIGHT_STORAGE_KEY, status);
   } catch {
     // storage unavailable; the module flag still applies for this page lifetime
   }
@@ -133,7 +160,11 @@ function maybeDelay(): Promise<void> {
 }
 
 const INTENT_LINK_RESPONSES = {
-  email_verification: { status: 'valid', csrf: 'csrf_intent_token', maskedEmail: 'us**@example.invalid' },
+  email_verification: {
+    status: 'valid',
+    csrf: 'csrf_intent_token',
+    maskedEmail: 'us**@example.invalid',
+  },
   password_reset: { status: 'valid', csrf: 'csrf_intent_token' },
   organization_invitation: {
     status: 'valid',
@@ -142,6 +173,68 @@ const INTENT_LINK_RESPONSES = {
     organizationName: 'Acme',
     role: 'member',
   },
+  deletion_cancel: {
+    status: 'valid',
+    csrf: 'csrf_intent_token',
+    maskedEmail: 'us**@example.invalid',
+    intentKind: 'deletion_cancel',
+  },
+  deletion_request: {
+    status: 'valid',
+    csrf: 'csrf_intent_token',
+    maskedEmail: 'us**@example.invalid',
+    intentKind: 'deletion_request',
+  },
+} as const;
+
+// A5 deletion preflight projections (contract §5.2): ready = no unique-owner
+// blocker; blocked = the blocking orgs the account still owns outright.
+const DELETION_PREFLIGHT_REQUIRED_LIFECYCLE = {
+  coolingHours: 168,
+  onlineCleanupDays: 7,
+  auditRetentionYears: 1,
+  backupRetentionDays: 35,
+} as const;
+
+const DELETION_PREFLIGHT_READY = {
+  status: 'ready',
+  requiredLifecycle: DELETION_PREFLIGHT_REQUIRED_LIFECYCLE,
+  serverTime: '2026-08-09T01:00:00.000Z',
+} as const;
+
+const DELETION_PREFLIGHT_BLOCKED = {
+  status: 'blocked',
+  blockingOrganizations: [
+    { organizationId: 'org_test_1', organizationName: 'Acme', organizationKind: 'organization' },
+  ],
+  requiredLifecycle: DELETION_PREFLIGHT_REQUIRED_LIFECYCLE,
+  serverTime: '2026-08-09T01:00:00.000Z',
+} as const;
+
+// A5 request-email success: the confirmation email is sent to the masked
+// recipient (mirrors the real contract shape; no full email, no token).
+const REQUEST_ACCOUNT_DELETION_SUCCESS = {
+  status: 'succeeded',
+  maskedEmail: 'us**@example.invalid',
+  resendAvailableAt: '2026-08-09T01:01:00.000Z',
+} as const;
+
+// A5 delete-command success: account enters the server-authoritative cooling
+// window and every session is revoked (mirrors the real contract shape).
+const DELETE_ACCOUNT_SUCCESS = {
+  status: 'succeeded',
+  accountStatus: 'deletion_cooling',
+  deletionRequestedAt: '2026-08-09T01:00:00.000Z',
+  deletionCoolingEndsAt: '2026-08-16T01:00:00.000Z',
+  sessionImpact: 'revoked_all',
+} as const;
+
+// A5 cancel-command success: the account returns to active and every session is
+// revoked (the user must re-login; mirrors the real contract shape).
+const CANCEL_DELETION_SUCCESS = {
+  status: 'succeeded',
+  accountStatus: 'active',
+  sessionImpact: 'revoked_all',
 } as const;
 
 export function createPlatformHandlers() {
@@ -185,17 +278,23 @@ export function createPlatformHandlers() {
       handlerControls.confirmEmailRequests += 1;
       persistSessionAuthenticated(true);
       await maybeDelay();
-      return HttpResponse.json(validConfirmEmailVerificationSamples[0] as JsonBodyType, { status: 200 });
+      return HttpResponse.json(validConfirmEmailVerificationSamples[0] as JsonBodyType, {
+        status: 200,
+      });
     }),
     http.post('/api/platform/v1/auth/password/request', async () => {
       handlerControls.requestPasswordResetRequests += 1;
       await maybeDelay();
-      return HttpResponse.json(validRequestPasswordResetSamples[0] as JsonBodyType, { status: 200 });
+      return HttpResponse.json(validRequestPasswordResetSamples[0] as JsonBodyType, {
+        status: 200,
+      });
     }),
     http.post('/api/platform/v1/auth/password/confirm', async () => {
       handlerControls.confirmPasswordResetRequests += 1;
       await maybeDelay();
-      return HttpResponse.json(validConfirmPasswordResetSamples[0] as JsonBodyType, { status: 200 });
+      return HttpResponse.json(validConfirmPasswordResetSamples[0] as JsonBodyType, {
+        status: 200,
+      });
     }),
     http.post('/api/platform/v1/auth/password/change', async () => {
       handlerControls.changePasswordRequests += 1;
@@ -270,7 +369,11 @@ export function createPlatformHandlers() {
         await maybeDelay();
         const body = (await request.json()) as { orgRole: string };
         return HttpResponse.json(
-          { accountId: params.accountId, orgRole: body.orgRole, resourceVersion: '0' } as JsonBodyType,
+          {
+            accountId: params.accountId,
+            orgRole: body.orgRole,
+            resourceVersion: '0',
+          } as JsonBodyType,
           { status: 200 },
         );
       },
@@ -338,10 +441,9 @@ export function createPlatformHandlers() {
       async ({ params }) => {
         handlerControls.revokePrivateTokenRequests += 1;
         await maybeDelay();
-        return HttpResponse.json(
-          { status: 'succeeded', tokenId: params.tokenId } as JsonBodyType,
-          { status: 200 },
-        );
+        return HttpResponse.json({ status: 'succeeded', tokenId: params.tokenId } as JsonBodyType, {
+          status: 200,
+        });
       },
     ),
     http.get('/api/platform/v1/organizations/:organizationId/audit', async () => {
@@ -365,17 +467,70 @@ export function createPlatformHandlers() {
     http.get('/api/platform/v1/auth/verify/:token', async () => {
       handlerControls.intentLinkRequests += 1;
       await maybeDelay();
-      return HttpResponse.json(INTENT_LINK_RESPONSES.email_verification as JsonBodyType, { status: 200 });
+      return HttpResponse.json(INTENT_LINK_RESPONSES.email_verification as JsonBodyType, {
+        status: 200,
+      });
     }),
     http.get('/api/platform/v1/auth/reset/:token', async () => {
       handlerControls.intentLinkRequests += 1;
       await maybeDelay();
-      return HttpResponse.json(INTENT_LINK_RESPONSES.password_reset as JsonBodyType, { status: 200 });
+      return HttpResponse.json(INTENT_LINK_RESPONSES.password_reset as JsonBodyType, {
+        status: 200,
+      });
     }),
     http.get('/api/platform/v1/auth/invitations/:token', async () => {
       handlerControls.intentLinkRequests += 1;
       await maybeDelay();
-      return HttpResponse.json(INTENT_LINK_RESPONSES.organization_invitation as JsonBodyType, { status: 200 });
+      return HttpResponse.json(INTENT_LINK_RESPONSES.organization_invitation as JsonBodyType, {
+        status: 200,
+      });
+    }),
+    http.get('/api/platform/v1/account/deletion/intent/:token', async () => {
+      handlerControls.intentLinkRequests += 1;
+      await maybeDelay();
+      return HttpResponse.json(INTENT_LINK_RESPONSES.deletion_request as JsonBodyType, {
+        status: 200,
+      });
+    }),
+    http.get('/api/platform/v1/account/deletion/cancel/intent/:token', async () => {
+      handlerControls.intentLinkRequests += 1;
+      await maybeDelay();
+      return HttpResponse.json(INTENT_LINK_RESPONSES.deletion_cancel as JsonBodyType, {
+        status: 200,
+      });
+    }),
+    http.get('/api/platform/v1/account/deletion/preflight', async () => {
+      handlerControls.deletionPreflightRequests += 1;
+      await maybeDelay();
+      const body =
+        handlerControls.deletionPreflightStatus === 'blocked'
+          ? DELETION_PREFLIGHT_BLOCKED
+          : DELETION_PREFLIGHT_READY;
+      return HttpResponse.json(body as JsonBodyType, { status: 200 });
+    }),
+    http.post('/api/platform/v1/account/deletion/request', async () => {
+      handlerControls.requestAccountDeletionRequests += 1;
+      // Sending the confirmation email does not terminate the session; the user
+      // returns from the email with the deletion_request intent cookie still on
+      // the same browser to submit the delete command.
+      await maybeDelay();
+      return HttpResponse.json(REQUEST_ACCOUNT_DELETION_SUCCESS as JsonBodyType, { status: 200 });
+    }),
+    http.post('/api/platform/v1/account/deletion', async () => {
+      handlerControls.deleteAccountRequests += 1;
+      // Accepting deletion terminates every session; the user must re-login and
+      // can only cancel through the emailed cancel link.
+      persistSessionAuthenticated(false);
+      await maybeDelay();
+      return HttpResponse.json(DELETE_ACCOUNT_SUCCESS as JsonBodyType, { status: 200 });
+    }),
+    http.post('/api/platform/v1/account/deletion/cancel', async () => {
+      handlerControls.cancelDeletionRequests += 1;
+      // Cancellation revokes every session; the account is active again but the
+      // user must re-login.
+      persistSessionAuthenticated(false);
+      await maybeDelay();
+      return HttpResponse.json(CANCEL_DELETION_SUCCESS as JsonBodyType, { status: 200 });
     }),
     http.post('/__mock/scope', async ({ request }) => {
       const body = (await request.json()) as MockScope;
@@ -389,6 +544,11 @@ export function createPlatformHandlers() {
     http.post('/__mock/session', async ({ request }) => {
       const body = (await request.json()) as { authenticated?: boolean };
       persistSessionAuthenticated(body.authenticated ?? true);
+      return new HttpResponse(null, { status: 204 });
+    }),
+    http.post('/__mock/deletion-preflight', async ({ request }) => {
+      const body = (await request.json()) as { status?: 'ready' | 'blocked' };
+      persistDeletionPreflight(body.status === 'blocked' ? 'blocked' : 'ready');
       return new HttpResponse(null, { status: 204 });
     }),
   ];

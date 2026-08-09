@@ -60,9 +60,11 @@ describe('common contracts', () => {
     ).toBe(true);
   });
 
-  it('freezes all 36 route target ids as a closed enum', () => {
-    expect(ROUTE_TARGET_IDS).toHaveLength(36);
+  it('freezes all 38 route target ids as a closed enum', () => {
+    expect(ROUTE_TARGET_IDS).toHaveLength(38);
     expect(ROUTE_TARGET_IDS).toContain('auth.register');
+    expect(ROUTE_TARGET_IDS).toContain('account.deletion-cancel');
+    expect(ROUTE_TARGET_IDS).toContain('account.deletion-confirm');
     expect(ROUTE_TARGET_IDS).toContain('platform.resource-policies');
     expect(routeTargetId.zod.safeParse('auth.register').success).toBe(true);
     expect(routeTargetId.zod.safeParse('made.up.route').success).toBe(false);

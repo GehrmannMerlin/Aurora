@@ -81,7 +81,9 @@ describe('VerifyEmailView', () => {
     render(VerifyEmailView, { global: { plugins: [pinia, router] } });
     expect(screen.getByText('us**@example.invalid')).toBeTruthy();
     expect(screen.getByTestId('verify-status').textContent).toContain('email_verification_pending');
-    expect(screen.getByTestId('verify-server-time').textContent).toContain('2026-08-09T01:00:00.000Z');
+    expect(screen.getByTestId('verify-server-time').textContent).toContain(
+      '2026-08-09T01:00:00.000Z',
+    );
     const resend = screen.getByTestId<HTMLButtonElement>('resend-button');
     expect(resend.disabled).toBe(true);
   });
@@ -146,7 +148,9 @@ describe('ForgotPasswordView', () => {
       expect(handlerControls.requestPasswordResetRequests).toBe(1);
     });
     expect(screen.getByText(/如果该邮箱已注册/)).toBeTruthy();
-    expect(screen.getByTestId('reset-server-time').textContent).toContain('2026-08-09T01:00:00.000Z');
+    expect(screen.getByTestId('reset-server-time').textContent).toContain(
+      '2026-08-09T01:00:00.000Z',
+    );
   });
 });
 
@@ -211,7 +215,10 @@ describe('AccountSecurityView', () => {
 
   it('submits identityChangePassword and redirects to login on revoked_all', async () => {
     await renderAuthenticated();
-    await fireEvent.update(screen.getByLabelText('当前密码'), 'old-password');
+    await fireEvent.update(
+      screen.getByLabelText('当前密码', { selector: '#security-current-password' }),
+      'old-password',
+    );
     await fireEvent.update(screen.getByLabelText('新密码'), 's3cure-New-Password!');
     await fireEvent.click(screen.getByTestId('change-password-button'));
     await waitFor(() => {

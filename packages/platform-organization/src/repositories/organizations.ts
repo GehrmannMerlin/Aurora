@@ -24,7 +24,20 @@ export interface MembershipRow {
   readonly createdAt: string;
 }
 
+/** camelCase projection of an account's membership joined with its org identity. */
+export interface AccountOrganizationMembership {
+  readonly organizationId: string;
+  readonly name: string;
+  readonly kind: 'personal' | 'organization';
+  readonly role: OrganizationRole;
+}
+
 export interface FindMembershipInput {
+  readonly orgId: string;
+  readonly accountId: string;
+}
+
+export interface IsUniqueOrganizationOwnerInput {
   readonly orgId: string;
   readonly accountId: string;
 }
@@ -46,6 +59,21 @@ interface MembershipRowShape {
   created_at: string;
 }
 
+interface AccountOrganizationMembershipRowShape {
+  organization_id: string;
+  name: string;
+  kind: 'personal' | 'organization';
+  role: OrganizationRole;
+}
+
+interface OwnerCountRowShape {
+  owner_count: number;
+}
+
+interface IsUniqueOwnerRowShape {
+  is_unique: boolean;
+}
+
 function toOrganizationRow(row: OrganizationRowShape): OrganizationRow {
   return {
     organizationId: row.organization_id,
@@ -64,6 +92,17 @@ function toMembershipRow(row: MembershipRowShape): MembershipRow {
     accountId: row.account_id,
     role: row.role,
     createdAt: isoTimestamp(row.created_at),
+  };
+}
+
+function toAccountOrganizationMembership(
+  row: AccountOrganizationMembershipRowShape,
+): AccountOrganizationMembership {
+  return {
+    organizationId: row.organization_id,
+    name: row.name,
+    kind: row.kind,
+    role: row.role,
   };
 }
 
@@ -103,6 +142,82 @@ export async function findMembership(
     );
     const row = result.rows[0];
     return row === undefined ? null : toMembershipRow(row);
+  } catch (error) {
+    throw toStableError(error);
+  }
+}
+
+/**
+ * Count the owners of an organization (same SQL shape as the owner-count read
+ * in `members.ts`; read-only). Returns 0 when the organization is absent.
+ */
+const OWNER_COUNT_SQL = `
+  SELECT count(*)::int AS owner_count
+  FROM organization_members
+  WHERE organization_id = $1 AND role = 'owner'
+`;
+
+/**
+ * List every organization the account belongs to, joined with the org identity,
+ * oldest membership-org first (created_at ASC, then organization_id). Returns an
+ * empty array for an account with no memberships. Read-only.
+ */
+export async function listAccountOrganizations(
+  pool: Pool | PoolClient,
+  accountId: string,
+): Promise<AccountOrganizationMembership[]> {
+  try {
+    const result = await pool.query<AccountOrganizationMembershipRowShape>(
+      `SELECT o.organization_id, o.name, o.kind, m.role
+       FROM organization_members m
+       JOIN organizations o ON o.organization_id = m.organization_id
+       WHERE m.account_id = $1
+       ORDER BY o.created_at ASC, o.organization_id ASC`,
+      [accountId],
+    );
+    return result.rows.map(toAccountOrganizationMembership);
+  } catch (error) {
+    throw toStableError(error);
+  }
+}
+
+/** Count the owners of an organization; 0 when the organization is absent. */
+export async function countOrganizationOwners(
+  pool: Pool | PoolClient,
+  orgId: string,
+): Promise<number> {
+  try {
+    const result = await pool.query<OwnerCountRowShape>(OWNER_COUNT_SQL, [orgId]);
+    return result.rows[0]?.owner_count ?? 0;
+  } catch (error) {
+    throw toStableError(error);
+  }
+}
+
+/**
+ * True iff the account is an owner of the organization and the organization has
+ * exactly one owner. Read-only. A single round-trip: the EXISTS membership
+ * predicate short-circuits so the owner-count subquery only runs against the
+ * account's own organization. Returns false for a non-member, a non-owner member,
+ * a second owner in a multi-owner (degraded) org, or an unknown org.
+ */
+export async function isUniqueOrganizationOwner(
+  pool: Pool | PoolClient,
+  input: IsUniqueOrganizationOwnerInput,
+): Promise<boolean> {
+  try {
+    const result = await pool.query<IsUniqueOwnerRowShape>(
+      `SELECT EXISTS (
+         SELECT 1 FROM organization_members
+         WHERE organization_id = $1 AND account_id = $2 AND role = 'owner'
+       )
+       AND (
+         SELECT count(*) FROM organization_members
+         WHERE organization_id = $1 AND role = 'owner'
+       ) = 1 AS is_unique`,
+      [input.orgId, input.accountId],
+    );
+    return result.rows[0]?.is_unique ?? false;
   } catch (error) {
     throw toStableError(error);
   }

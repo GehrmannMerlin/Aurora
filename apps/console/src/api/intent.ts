@@ -7,7 +7,12 @@ import { ApiError, normalizeProblem } from './errors.js';
  * so the raw token can be cleared from the address bar. The client treats them as
  * out-of-band reads and never persists the token.
  */
-export type IntentLinkKind = 'email_verification' | 'password_reset' | 'organization_invitation';
+export type IntentLinkKind =
+  | 'email_verification'
+  | 'password_reset'
+  | 'organization_invitation'
+  | 'deletion_request'
+  | 'deletion_cancel';
 
 export interface IntentLinkResult {
   readonly status: 'valid';
@@ -21,6 +26,8 @@ const PATH_BY_KIND: Readonly<Record<IntentLinkKind, string>> = {
   email_verification: '/api/platform/v1/auth/verify/',
   password_reset: '/api/platform/v1/auth/reset/',
   organization_invitation: '/api/platform/v1/auth/invitations/',
+  deletion_request: '/api/platform/v1/account/deletion/intent/',
+  deletion_cancel: '/api/platform/v1/account/deletion/cancel/intent/',
 };
 
 interface IntentLinkBody {
@@ -35,10 +42,7 @@ export async function fetchIntentLink(
   kind: IntentLinkKind,
   token: string,
 ): Promise<IntentLinkResult> {
-  const url = new URL(
-    `${PATH_BY_KIND[kind]}${encodeURIComponent(token)}`,
-    window.location.origin,
-  );
+  const url = new URL(`${PATH_BY_KIND[kind]}${encodeURIComponent(token)}`, window.location.origin);
   let response: Response;
   try {
     response = await fetch(url.toString(), {
@@ -71,7 +75,9 @@ export async function fetchIntentLink(
     status: 'valid',
     csrf: body.csrf,
     ...(typeof body.maskedEmail === 'string' ? { maskedEmail: body.maskedEmail } : {}),
-    ...(typeof body.organizationName === 'string' ? { organizationName: body.organizationName } : {}),
+    ...(typeof body.organizationName === 'string'
+      ? { organizationName: body.organizationName }
+      : {}),
     ...(body.role === 'owner' || body.role === 'admin' || body.role === 'member'
       ? { role: body.role }
       : {}),

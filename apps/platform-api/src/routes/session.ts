@@ -54,6 +54,15 @@ export async function handleGetSession(
     });
     return;
   }
+  if (account.status === 'deletion_cooling' || account.status === 'terminated') {
+    // SEC-01 session gate (spec §8): a deletion-cooling or terminated account
+    // must never receive a business session. Return the same uniform 401 as a
+    // missing account so nothing leaks that the account is being deleted.
+    await sendProblem(reply, requestId, 401, 'authentication', 'Authentication is required.', {
+      recoveryTarget: 'auth.login',
+    });
+    return;
+  }
 
   const response = {
     account: {

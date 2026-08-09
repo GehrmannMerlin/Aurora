@@ -53,6 +53,24 @@ describe('ConsoleEmailAdapter', () => {
     expect(output).toContain('p***@example.com');
   });
 
+  it('accepts the deletion_confirmation intent type and logs only the masked address', async () => {
+    const lines: string[] = [];
+    const adapter = new ConsoleEmailAdapter({
+      mode: 'console',
+      log: (message) => lines.push(message),
+    });
+
+    const result = await adapter.deliver(
+      request({ intentType: 'deletion_confirmation', toAddressMasked: 'd***@example.com' }),
+    );
+
+    expect(result).toEqual({ status: 'enqueued' });
+    const output = lines.join('\n');
+    expect(output).toContain('deletion_confirmation');
+    expect(output).toContain('d***@example.com');
+    expect(output).not.toContain('user@example.com');
+  });
+
   it('fails closed for any non-console delivery mode', async () => {
     vi.stubEnv('EMAIL_DELIVERY_MODE', 'resend');
     const adapter = new ConsoleEmailAdapter({ log: () => undefined });

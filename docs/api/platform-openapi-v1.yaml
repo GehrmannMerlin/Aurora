@@ -235,6 +235,149 @@ paths:
                 - currentPassword
                 - newPassword
                 - idempotencyKey
+  /account/deletion/preflight:
+    get:
+      operationId: identityDeleteAccountPreflight
+      summary: Resolve the account deletion preflight projection (unique-owner blockers)
+      tags:
+        - identity
+        - auth
+      responses:
+        "200":
+          description: 200 response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/identityDeleteAccountPreflightResponse"
+  /account/deletion/request:
+    post:
+      operationId: identityRequestAccountDeletion
+      summary: Send the account deletion confirmation email (creates the
+        deletion_request intent)
+      tags:
+        - identity
+        - auth
+      responses:
+        "200":
+          description: 200 response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/identityRequestAccountDeletionResponse"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                idempotencyKey: *a1
+              additionalProperties: false
+              required:
+                - idempotencyKey
+  /account/deletion/intent/{token}:
+    get:
+      operationId: identityDeleteAccountIntentLink
+      summary: Validate the account deletion confirmation link and establish the
+        intent cookie
+      tags:
+        - identity
+        - auth
+      responses:
+        "200":
+          description: 200 response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/identityDeleteAccountIntentLinkResponse"
+      parameters:
+        - name: token
+          in: path
+          required: true
+          schema:
+            type: string
+            minLength: 1
+            maxLength: 256
+  /account/deletion:
+    post:
+      operationId: identityDeleteAccount
+      summary: Request account deletion (dual verification + final unique-owner recheck)
+      tags:
+        - identity
+        - auth
+      responses:
+        "200":
+          description: 200 response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/identityDeleteAccountResponse"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                currentPassword:
+                  type: string
+                  minLength: 8
+                  maxLength: 256
+                idempotencyKey: *a1
+              additionalProperties: false
+              required:
+                - currentPassword
+                - idempotencyKey
+  /account/deletion/cancel/intent/{token}:
+    get:
+      operationId: identityCancelAccountDeletionIntentLink
+      summary: Validate the deletion cancellation link and establish the intent cookie
+      tags:
+        - identity
+        - auth
+      responses:
+        "200":
+          description: 200 response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/identityCancelAccountDeletionIntentLinkResponse"
+      parameters:
+        - name: token
+          in: path
+          required: true
+          schema:
+            type: string
+            minLength: 1
+            maxLength: 256
+  /account/deletion/cancel:
+    post:
+      operationId: identityCancelAccountDeletion
+      summary: Cancel an account deletion within the cooling window (intent cookie +
+        CSRF)
+      tags:
+        - identity
+        - auth
+      responses:
+        "200":
+          description: 200 response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/identityCancelAccountDeletionResponse"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                currentPassword:
+                  type: string
+                  minLength: 8
+                  maxLength: 256
+                idempotencyKey: *a1
+              additionalProperties: false
+              required:
+                - currentPassword
+                - idempotencyKey
   /invitations/accept:
     post:
       operationId: organizationAcceptInvitation
@@ -739,7 +882,7 @@ paths:
         - name: tokenId
           in: path
           required: true
-          schema: &a13
+          schema: &a14
             type: string
             minLength: 3
             maxLength: 64
@@ -833,6 +976,8 @@ components:
                   - auth.reset-password
                   - invitation.accept
                   - account.security
+                  - account.deletion-cancel
+                  - account.deletion-confirm
                   - workspace.home
                   - organization.project-create
                   - organization.members
@@ -1152,6 +1297,144 @@ components:
       required:
         - status
         - sessionImpact
+    identityDeleteAccountPreflightResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          enum:
+            - ready
+            - blocked
+            - unavailable
+        blockingOrganizations:
+          type: array
+          items:
+            type: object
+            properties:
+              organizationId: *a2
+              organizationName:
+                type: string
+                minLength: 1
+                maxLength: 80
+              organizationKind:
+                type: string
+                enum:
+                  - personal
+                  - organization
+            additionalProperties: false
+            required:
+              - organizationId
+              - organizationName
+              - organizationKind
+        requiredLifecycle:
+          type: object
+          properties:
+            coolingHours:
+              type: number
+            onlineCleanupDays:
+              type: number
+            auditRetentionYears:
+              type: number
+            backupRetentionDays:
+              type: number
+          additionalProperties: false
+          required:
+            - coolingHours
+            - onlineCleanupDays
+            - auditRetentionYears
+            - backupRetentionDays
+        serverTime: *a7
+      additionalProperties: false
+      required:
+        - status
+        - requiredLifecycle
+        - serverTime
+    identityRequestAccountDeletionResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          enum:
+            - succeeded
+        maskedEmail:
+          type: string
+          minLength: 3
+          maxLength: 320
+        resendAvailableAt: *a7
+      additionalProperties: false
+      required:
+        - status
+        - maskedEmail
+    identityDeleteAccountIntentLinkResponse: &a11
+      type: object
+      properties:
+        status:
+          type: string
+          enum:
+            - valid
+        csrf:
+          type: string
+          minLength: 1
+          maxLength: 256
+        maskedEmail:
+          type: string
+          minLength: 3
+          maxLength: 320
+        intentKind:
+          type: string
+          enum:
+            - deletion_request
+            - deletion_cancel
+      additionalProperties: false
+      required:
+        - status
+        - csrf
+        - intentKind
+    identityDeleteAccountResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          enum:
+            - succeeded
+        accountStatus:
+          type: string
+          enum:
+            - deletion_cooling
+        deletionRequestedAt: *a7
+        deletionCoolingEndsAt: *a7
+        sessionImpact:
+          type: string
+          enum:
+            - revoked_all
+      additionalProperties: false
+      required:
+        - status
+        - accountStatus
+        - deletionRequestedAt
+        - deletionCoolingEndsAt
+        - sessionImpact
+    identityCancelAccountDeletionIntentLinkResponse: *a11
+    identityCancelAccountDeletionResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          enum:
+            - succeeded
+        accountStatus:
+          type: string
+          enum:
+            - active
+        sessionImpact:
+          type: string
+          enum:
+            - revoked_all
+      additionalProperties: false
+      required:
+        - status
+        - accountStatus
+        - sessionImpact
     organizationAcceptInvitationResponse:
       type: object
       properties:
@@ -1199,13 +1482,13 @@ components:
                   - react
                   - vue
                   - other
-              status: &a11
+              status: &a12
                 type: string
                 enum:
                   - active
                   - archived
                   - trash
-              lifecycle: *a11
+              lifecycle: *a12
             additionalProperties: false
             required:
               - projectId
@@ -1271,7 +1554,7 @@ components:
                 type: string
                 minLength: 3
                 maxLength: 320
-              orgRole: &a12
+              orgRole: &a13
                 type: string
                 enum:
                   - owner
@@ -1337,7 +1620,7 @@ components:
       type: object
       properties:
         accountId: *a4
-        orgRole: *a12
+        orgRole: *a13
         resourceVersion: *a5
       additionalProperties: false
       required:
@@ -1449,7 +1732,7 @@ components:
           items:
             type: object
             properties:
-              tokenId: *a13
+              tokenId: *a14
               name:
                 type: string
                 minLength: 1
@@ -1476,7 +1759,7 @@ components:
     credentialsCreatePrivateTokenResponse:
       type: object
       properties:
-        tokenId: *a13
+        tokenId: *a14
         tokenPlaintext:
           type: string
           minLength: 20
@@ -1500,7 +1783,7 @@ components:
           type: string
           enum:
             - succeeded
-        tokenId: *a13
+        tokenId: *a14
       additionalProperties: false
       required:
         - status

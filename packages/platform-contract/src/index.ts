@@ -18,6 +18,7 @@ export * from './identity/register.js';
 export * from './identity/login.js';
 export * from './identity/password.js';
 export * from './identity/email-verification.js';
+export * from './identity/deletion.js';
 export * from './identity/invitation.js';
 export * from './organization/workspace.js';
 export * from './organization/members.js';

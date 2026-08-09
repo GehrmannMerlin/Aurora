@@ -28,6 +28,11 @@ const IDENTITY_TABLES_DROP_ORDER = [
   'password_reset_intents',
   'email_verification_intents',
   'account_credentials',
+  // SEC-01 A5 account-deletion tables (created by the shared identity migration
+  // directory; FK → accounts, so they must be dropped before accounts so
+  // re-running migrations stays fresh).
+  'account_cleanup_handoffs',
+  'account_deletion_intents',
   'accounts',
 ];
 
@@ -153,6 +158,25 @@ export async function createTestOrganization(
 ): Promise<string> {
   const org = await pool.query<{ organization_id: string }>(
     `INSERT INTO organizations (name, kind) VALUES ($1, 'organization') RETURNING organization_id`,
+    [name],
+  );
+  const orgId = org.rows[0]?.organization_id;
+  if (orgId === undefined) throw new Error('org insert returned no row');
+  await pool.query(
+    `INSERT INTO organization_members (organization_id, account_id, role) VALUES ($1, $2, 'owner')`,
+    [orgId, ownerAccountId],
+  );
+  return orgId;
+}
+
+/** Create a personal workspace organization owned by `ownerAccountId` and return its id. */
+export async function createTestPersonalOrganization(
+  pool: Pool,
+  name: string,
+  ownerAccountId: string,
+): Promise<string> {
+  const org = await pool.query<{ organization_id: string }>(
+    `INSERT INTO organizations (name, kind) VALUES ($1, 'personal') RETURNING organization_id`,
     [name],
   );
   const orgId = org.rows[0]?.organization_id;

@@ -20,6 +20,10 @@ export interface AccountRow {
   readonly verifiedAt: string | null;
   readonly securityVersion: number;
   readonly status: string;
+  /** Authoritative deletion timeline (SEC-01); null until a deletion is requested. */
+  readonly deletionRequestedAt: string | null;
+  readonly deletionCoolingEndsAt: string | null;
+  readonly deletionTerminatedAt: string | null;
   readonly createdAt: string;
   readonly updatedAt: string;
 }
@@ -43,6 +47,9 @@ export interface UpsertAccountCredentialInput {
 export type AccountMutationResult =
   { readonly status: 'success' } | { readonly status: 'not_found' };
 
+/** Authoritative account lifecycle statuses (matches the accounts CHECK). */
+export type AccountStatus = 'active' | 'pending_verification' | 'deletion_cooling' | 'terminated';
+
 interface AccountRowShape {
   account_id: string;
   email: string;
@@ -52,6 +59,9 @@ interface AccountRowShape {
   verified_at: string | null;
   security_version: number;
   status: string;
+  deletion_requested_at: string | null;
+  deletion_cooling_ends_at: string | null;
+  deletion_terminated_at: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -66,6 +76,9 @@ function toAccountRow(row: AccountRowShape): AccountRow {
     verifiedAt: isoTimestamp(row.verified_at),
     securityVersion: row.security_version,
     status: row.status,
+    deletionRequestedAt: isoTimestamp(row.deletion_requested_at),
+    deletionCoolingEndsAt: isoTimestamp(row.deletion_cooling_ends_at),
+    deletionTerminatedAt: isoTimestamp(row.deletion_terminated_at),
     createdAt: isoTimestamp(row.created_at),
     updatedAt: isoTimestamp(row.updated_at),
   };
@@ -74,7 +87,8 @@ function toAccountRow(row: AccountRowShape): AccountRow {
 const ACCOUNT_SELECT = `
   SELECT
     a.account_id, a.email, a.email_normalized, a.verified_at, a.security_version,
-    a.status, a.created_at, a.updated_at,
+    a.status, a.deletion_requested_at, a.deletion_cooling_ends_at,
+    a.deletion_terminated_at, a.created_at, a.updated_at,
     c.password_hash, c.password_version
   FROM accounts a
   LEFT JOIN account_credentials c ON c.account_id = a.account_id
@@ -115,6 +129,9 @@ async function runCreateAccount(
     verified_at: null,
     security_version: 0,
     status: input.status,
+    deletion_requested_at: null,
+    deletion_cooling_ends_at: null,
+    deletion_terminated_at: null,
     created_at: insertedRow.created_at,
     updated_at: insertedRow.updated_at,
   } satisfies AccountRowShape;
@@ -176,6 +193,33 @@ export async function getAccountById(
   }
 }
 
+/**
+ * Get an account by primary key with a row-level `FOR UPDATE` lock, held until
+ * the caller's transaction commits/rolls back. SEC-01 uses this inside the
+ * cancel and lazy-finalization transactions so a concurrent cancel and a
+ * boundary finalization serialize on the accounts row instead of both
+ * "succeeding" (spec §4.2 不变量: 边界并发不得同时撤销成功与进入不可逆成功).
+ * Must be called on a `PoolClient` inside an explicit transaction.
+ *
+ * `OF a` limits the lock to the accounts side of the account_credentials LEFT
+ * JOIN — PostgreSQL rejects `FOR UPDATE` on the nullable side of an outer join.
+ */
+export async function getAccountByIdForUpdate(
+  client: PoolClient,
+  accountId: string,
+): Promise<AccountRow | null> {
+  try {
+    const result = await client.query<AccountRowShape>(
+      `${ACCOUNT_SELECT} WHERE a.account_id = $1 FOR UPDATE OF a`,
+      [accountId],
+    );
+    const row = result.rows[0];
+    return row === undefined ? null : toAccountRow(row);
+  } catch (error) {
+    throw toStableError(error);
+  }
+}
+
 /** Mark an account email-verified. */
 export async function updateAccountVerifiedAt(
   pool: Pool | PoolClient,
@@ -211,6 +255,75 @@ export async function incrementSecurityVersion(
     return row === undefined
       ? { status: 'not_found' }
       : { status: 'success', securityVersion: row.security_version };
+  } catch (error) {
+    throw toStableError(error);
+  }
+}
+
+/** Set the account status to one of the four authoritative lifecycle states. */
+export async function updateAccountStatus(
+  pool: Pool | PoolClient,
+  input: { readonly accountId: string; readonly status: AccountStatus; readonly now: Date },
+): Promise<AccountMutationResult> {
+  try {
+    const result = await pool.query(
+      `UPDATE accounts SET status = $2, updated_at = now() WHERE account_id = $1 RETURNING account_id`,
+      [input.accountId, input.status],
+    );
+    return result.rows.length === 0 ? { status: 'not_found' } : { status: 'success' };
+  } catch (error) {
+    throw toStableError(error);
+  }
+}
+
+/**
+ * Atomically transition an account into the deletion cooling period (A5-003).
+ * Sets the authoritative requested/cooling-end timestamps and bumps
+ * `security_version` in the same statement so the transition and the
+ * session-revocation guard are one atomic unit.
+ */
+export async function recordDeletionRequest(
+  pool: Pool | PoolClient,
+  input: { readonly accountId: string; readonly coolingEndsAt: Date; readonly now: Date },
+): Promise<AccountMutationResult> {
+  try {
+    const result = await pool.query(
+      `UPDATE accounts
+       SET status = 'deletion_cooling',
+           deletion_requested_at = $2,
+           deletion_cooling_ends_at = $3,
+           security_version = security_version + 1,
+           updated_at = now()
+       WHERE account_id = $1
+       RETURNING account_id`,
+      [input.accountId, input.now.toISOString(), input.coolingEndsAt.toISOString()],
+    );
+    return result.rows.length === 0 ? { status: 'not_found' } : { status: 'success' };
+  } catch (error) {
+    throw toStableError(error);
+  }
+}
+
+/**
+ * Transition an account to the terminal `terminated` state and record the
+ * irreversible-boundary timestamp. Called inside the lazy-finalization
+ * transaction together with the cleanup handoff write.
+ */
+export async function recordDeletionTermination(
+  pool: Pool | PoolClient,
+  input: { readonly accountId: string; readonly now: Date },
+): Promise<AccountMutationResult> {
+  try {
+    const result = await pool.query(
+      `UPDATE accounts
+       SET status = 'terminated',
+           deletion_terminated_at = $2,
+           updated_at = now()
+       WHERE account_id = $1
+       RETURNING account_id`,
+      [input.accountId, input.now.toISOString()],
+    );
+    return result.rows.length === 0 ? { status: 'not_found' } : { status: 'success' };
   } catch (error) {
     throw toStableError(error);
   }

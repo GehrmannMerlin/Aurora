@@ -8,7 +8,7 @@ import { BLOCKED_OPERATIONS, PLATFORM_OPERATIONS } from '../../src/registry/oper
 import { ROUTE_TARGET_IDS, type RouteTargetId } from '../../src/common/navigation.js';
 
 describe('operation registry and manifest', () => {
-  it('exposes the twenty-six stable operations', () => {
+  it('exposes the thirty-two stable operations', () => {
     expect(PLATFORM_OPERATIONS.map((o) => o.operationId)).toEqual([
       'identityGetSession',
       'navigationGetContext',
@@ -19,6 +19,12 @@ describe('operation registry and manifest', () => {
       'identityRequestPasswordReset',
       'identityConfirmPasswordReset',
       'identityChangePassword',
+      'identityDeleteAccountPreflight',
+      'identityRequestAccountDeletion',
+      'identityDeleteAccountIntentLink',
+      'identityDeleteAccount',
+      'identityCancelAccountDeletionIntentLink',
+      'identityCancelAccountDeletion',
       'organizationAcceptInvitation',
       'organizationListProjects',
       'organizationCreateProject',
@@ -40,7 +46,7 @@ describe('operation registry and manifest', () => {
   });
 
   it('registers blocked downstream operations without schemas', () => {
-    expect(BLOCKED_OPERATIONS.length).toBeGreaterThan(20);
+    expect(BLOCKED_OPERATIONS.length).toBeGreaterThan(15);
     for (const op of BLOCKED_OPERATIONS) {
       expect(op.reason.length).toBeGreaterThan(10);
       expect('responses' in op).toBe(false);
@@ -133,6 +139,8 @@ describe('operation registry and manifest', () => {
       'auth.reset-password': 'stable',
       'invitation.accept': 'stable',
       'account.security': 'stable',
+      'account.deletion-cancel': 'unavailable',
+      'account.deletion-confirm': 'unavailable',
       'workspace.home': 'stable',
       'organization.project-create': 'stable',
       'organization.members': 'stable',

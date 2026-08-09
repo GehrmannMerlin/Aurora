@@ -9,6 +9,12 @@
     "identityRequestPasswordReset",
     "identityConfirmPasswordReset",
     "identityChangePassword",
+    "identityDeleteAccountPreflight",
+    "identityRequestAccountDeletion",
+    "identityDeleteAccountIntentLink",
+    "identityDeleteAccount",
+    "identityCancelAccountDeletionIntentLink",
+    "identityCancelAccountDeletion",
     "organizationAcceptInvitation",
     "organizationListProjects",
     "organizationCreateProject",
@@ -28,8 +34,6 @@
     "auditListSecurityAudit"
   ],
   "blocked": {
-    "identityDeleteAccountPreflight": "A5 deletion backend not formalized (G10)",
-    "identityDeleteAccount": "A5 deletion orchestration not formalized (G10/SEC-01)",
     "usageGetSummary": "B5 usage module absent (G10/G11)",
     "onboardingGetProgress": "C1 onboarding model not formalized (G11)",
     "overviewGetProjectStatus": "C2 overview Query not formalized (G11)",
@@ -59,6 +63,8 @@
     "auth.reset-password": "stable",
     "invitation.accept": "stable",
     "account.security": "stable",
+    "account.deletion-cancel": "unavailable",
+    "account.deletion-confirm": "unavailable",
     "workspace.home": "stable",
     "organization.project-create": "stable",
     "organization.members": "stable",
@@ -242,6 +248,8 @@
                         "auth.reset-password",
                         "invitation.accept",
                         "account.security",
+                        "account.deletion-cancel",
+                        "account.deletion-confirm",
                         "workspace.home",
                         "organization.project-create",
                         "organization.members",
@@ -353,6 +361,8 @@
                         "auth.reset-password",
                         "invitation.accept",
                         "account.security",
+                        "account.deletion-cancel",
+                        "account.deletion-confirm",
                         "workspace.home",
                         "organization.project-create",
                         "organization.members",
@@ -472,6 +482,8 @@
                                   "auth.reset-password",
                                   "invitation.accept",
                                   "account.security",
+                                  "account.deletion-cancel",
+                                  "account.deletion-confirm",
                                   "workspace.home",
                                   "organization.project-create",
                                   "organization.members",
@@ -543,6 +555,8 @@
                             "auth.reset-password",
                             "invitation.accept",
                             "account.security",
+                            "account.deletion-cancel",
+                            "account.deletion-confirm",
                             "workspace.home",
                             "organization.project-create",
                             "organization.members",
@@ -649,6 +663,8 @@
                       "auth.reset-password",
                       "invitation.accept",
                       "account.security",
+                      "account.deletion-cancel",
+                      "account.deletion-confirm",
                       "workspace.home",
                       "organization.project-create",
                       "organization.members",
@@ -717,6 +733,8 @@
                       "auth.reset-password",
                       "invitation.accept",
                       "account.security",
+                      "account.deletion-cancel",
+                      "account.deletion-confirm",
                       "workspace.home",
                       "organization.project-create",
                       "organization.members",
@@ -979,6 +997,8 @@
                         "auth.reset-password",
                         "invitation.accept",
                         "account.security",
+                        "account.deletion-cancel",
+                        "account.deletion-confirm",
                         "workspace.home",
                         "organization.project-create",
                         "organization.members",
@@ -1055,6 +1075,8 @@
                           "auth.reset-password",
                           "invitation.accept",
                           "account.security",
+                          "account.deletion-cancel",
+                          "account.deletion-confirm",
                           "workspace.home",
                           "organization.project-create",
                           "organization.members",
@@ -1213,6 +1235,274 @@
           }
         }
       },
+      "identityDeleteAccountPreflight": {
+        "responses": {
+          "200": {
+            "type": "object",
+            "required": [
+              "status",
+              "requiredLifecycle",
+              "serverTime"
+            ],
+            "properties": {
+              "status": {
+                "type": "string",
+                "enum": [
+                  "ready",
+                  "blocked",
+                  "unavailable"
+                ],
+                "openEnum": false
+              },
+              "blockingOrganizations": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "organizationId",
+                    "organizationName",
+                    "organizationKind"
+                  ],
+                  "properties": {
+                    "organizationId": {
+                      "type": "string",
+                      "minLength": 3,
+                      "maxLength": 64
+                    },
+                    "organizationName": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 80
+                    },
+                    "organizationKind": {
+                      "type": "string",
+                      "enum": [
+                        "personal",
+                        "organization"
+                      ],
+                      "openEnum": false
+                    }
+                  }
+                }
+              },
+              "requiredLifecycle": {
+                "type": "object",
+                "required": [
+                  "coolingHours",
+                  "onlineCleanupDays",
+                  "auditRetentionYears",
+                  "backupRetentionDays"
+                ],
+                "properties": {
+                  "coolingHours": {
+                    "type": "number"
+                  },
+                  "onlineCleanupDays": {
+                    "type": "number"
+                  },
+                  "auditRetentionYears": {
+                    "type": "number"
+                  },
+                  "backupRetentionDays": {
+                    "type": "number"
+                  }
+                }
+              },
+              "serverTime": {
+                "type": "string",
+                "format": "date-time"
+              }
+            }
+          }
+        }
+      },
+      "identityRequestAccountDeletion": {
+        "responses": {
+          "200": {
+            "type": "object",
+            "required": [
+              "status",
+              "maskedEmail"
+            ],
+            "properties": {
+              "status": {
+                "type": "string",
+                "enum": [
+                  "succeeded"
+                ],
+                "openEnum": false
+              },
+              "maskedEmail": {
+                "type": "string",
+                "minLength": 3,
+                "maxLength": 320
+              },
+              "resendAvailableAt": {
+                "type": "string",
+                "format": "date-time"
+              }
+            }
+          }
+        }
+      },
+      "identityDeleteAccountIntentLink": {
+        "responses": {
+          "200": {
+            "type": "object",
+            "required": [
+              "status",
+              "csrf",
+              "intentKind"
+            ],
+            "properties": {
+              "status": {
+                "type": "string",
+                "enum": [
+                  "valid"
+                ],
+                "openEnum": false
+              },
+              "csrf": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 256
+              },
+              "maskedEmail": {
+                "type": "string",
+                "minLength": 3,
+                "maxLength": 320
+              },
+              "intentKind": {
+                "type": "string",
+                "enum": [
+                  "deletion_request",
+                  "deletion_cancel"
+                ],
+                "openEnum": false
+              }
+            }
+          }
+        }
+      },
+      "identityDeleteAccount": {
+        "responses": {
+          "200": {
+            "type": "object",
+            "required": [
+              "status",
+              "accountStatus",
+              "deletionRequestedAt",
+              "deletionCoolingEndsAt",
+              "sessionImpact"
+            ],
+            "properties": {
+              "status": {
+                "type": "string",
+                "enum": [
+                  "succeeded"
+                ],
+                "openEnum": false
+              },
+              "accountStatus": {
+                "type": "string",
+                "enum": [
+                  "deletion_cooling"
+                ],
+                "openEnum": false
+              },
+              "deletionRequestedAt": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "deletionCoolingEndsAt": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "sessionImpact": {
+                "type": "string",
+                "enum": [
+                  "revoked_all"
+                ],
+                "openEnum": false
+              }
+            }
+          }
+        }
+      },
+      "identityCancelAccountDeletionIntentLink": {
+        "responses": {
+          "200": {
+            "type": "object",
+            "required": [
+              "status",
+              "csrf",
+              "intentKind"
+            ],
+            "properties": {
+              "status": {
+                "type": "string",
+                "enum": [
+                  "valid"
+                ],
+                "openEnum": false
+              },
+              "csrf": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 256
+              },
+              "maskedEmail": {
+                "type": "string",
+                "minLength": 3,
+                "maxLength": 320
+              },
+              "intentKind": {
+                "type": "string",
+                "enum": [
+                  "deletion_request",
+                  "deletion_cancel"
+                ],
+                "openEnum": false
+              }
+            }
+          }
+        }
+      },
+      "identityCancelAccountDeletion": {
+        "responses": {
+          "200": {
+            "type": "object",
+            "required": [
+              "status",
+              "accountStatus",
+              "sessionImpact"
+            ],
+            "properties": {
+              "status": {
+                "type": "string",
+                "enum": [
+                  "succeeded"
+                ],
+                "openEnum": false
+              },
+              "accountStatus": {
+                "type": "string",
+                "enum": [
+                  "active"
+                ],
+                "openEnum": false
+              },
+              "sessionImpact": {
+                "type": "string",
+                "enum": [
+                  "revoked_all"
+                ],
+                "openEnum": false
+              }
+            }
+          }
+        }
+      },
       "organizationAcceptInvitation": {
         "responses": {
           "200": {
@@ -1272,6 +1562,8 @@
                         "auth.reset-password",
                         "invitation.accept",
                         "account.security",
+                        "account.deletion-cancel",
+                        "account.deletion-confirm",
                         "workspace.home",
                         "organization.project-create",
                         "organization.members",
@@ -1427,6 +1719,8 @@
                         "auth.reset-password",
                         "invitation.accept",
                         "account.security",
+                        "account.deletion-cancel",
+                        "account.deletion-confirm",
                         "workspace.home",
                         "organization.project-create",
                         "organization.members",
@@ -1538,6 +1832,8 @@
                         "auth.reset-password",
                         "invitation.accept",
                         "account.security",
+                        "account.deletion-cancel",
+                        "account.deletion-confirm",
                         "workspace.home",
                         "organization.project-create",
                         "organization.members",
@@ -1658,6 +1954,8 @@
                         "auth.reset-password",
                         "invitation.accept",
                         "account.security",
+                        "account.deletion-cancel",
+                        "account.deletion-confirm",
                         "workspace.home",
                         "organization.project-create",
                         "organization.members",
@@ -1908,6 +2206,8 @@
                         "auth.reset-password",
                         "invitation.accept",
                         "account.security",
+                        "account.deletion-cancel",
+                        "account.deletion-confirm",
                         "workspace.home",
                         "organization.project-create",
                         "organization.members",
@@ -2072,6 +2372,8 @@
                         "auth.reset-password",
                         "invitation.accept",
                         "account.security",
+                        "account.deletion-cancel",
+                        "account.deletion-confirm",
                         "workspace.home",
                         "organization.project-create",
                         "organization.members",
@@ -2177,6 +2479,8 @@
                         "auth.reset-password",
                         "invitation.accept",
                         "account.security",
+                        "account.deletion-cancel",
+                        "account.deletion-confirm",
                         "workspace.home",
                         "organization.project-create",
                         "organization.members",
@@ -2304,6 +2608,8 @@
                         "auth.reset-password",
                         "invitation.accept",
                         "account.security",
+                        "account.deletion-cancel",
+                        "account.deletion-confirm",
                         "workspace.home",
                         "organization.project-create",
                         "organization.members",

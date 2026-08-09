@@ -49,6 +49,14 @@ import {
   handleResetPasswordLink,
   handleVerifyEmailLink,
 } from './routes/intent-links.js';
+import {
+  handleCancelAccountDeletion,
+  handleCancelAccountDeletionIntentLink,
+  handleDeleteAccount,
+  handleDeleteAccountIntentLink,
+  handleDeleteAccountPreflight,
+  handleRequestAccountDeletion,
+} from './routes/deletion.js';
 import { SESSION_COOKIE_NAME } from './session-cookie.js';
 import { InMemoryRateLimiter } from './rate-limit.js';
 import { sendProblem } from './error-mapper.js';
@@ -260,6 +268,34 @@ export function buildPlatformApi(deps: PlatformApiDependencies): FastifyInstance
 
   app.get('/api/platform/v1/auth/invitations/:token', async (request, reply) => {
     await handleInvitationLink(request, reply, routeContext);
+  });
+
+  // SEC-01 A5 account-deletion routes (spec §5.1): preflight (session query),
+  // request/cancel intent-link GETs (public, establish the intent cookie) and
+  // the request (session + CSRF + idempotent) / cancel (intent + CSRF +
+  // idempotent) confirm commands.
+  app.get('/api/platform/v1/account/deletion/preflight', async (request, reply) => {
+    await handleDeleteAccountPreflight(request, reply, routeContext);
+  });
+
+  app.post('/api/platform/v1/account/deletion/request', async (request, reply) => {
+    await handleRequestAccountDeletion(request, reply, routeContext);
+  });
+
+  app.get('/api/platform/v1/account/deletion/intent/:token', async (request, reply) => {
+    await handleDeleteAccountIntentLink(request, reply, routeContext);
+  });
+
+  app.post('/api/platform/v1/account/deletion', async (request, reply) => {
+    await handleDeleteAccount(request, reply, routeContext);
+  });
+
+  app.get('/api/platform/v1/account/deletion/cancel/intent/:token', async (request, reply) => {
+    await handleCancelAccountDeletionIntentLink(request, reply, routeContext);
+  });
+
+  app.post('/api/platform/v1/account/deletion/cancel', async (request, reply) => {
+    await handleCancelAccountDeletion(request, reply, routeContext);
   });
 
   app.setNotFoundHandler(async (request, reply) => {

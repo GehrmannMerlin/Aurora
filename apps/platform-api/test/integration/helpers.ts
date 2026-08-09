@@ -149,15 +149,18 @@ export async function outboxIntentToken(pool: Pool, aggregateType: string): Prom
 }
 
 /**
- * Truncate all PLT-03 identity tables plus the PLT-04 tables (test isolation).
- * FK-safe order lists children first (project_onboarding/project_environments/
- * client_keys before projects); `CASCADE` also covers any FK edges not listed.
+ * Truncate all PLT-03 identity tables plus the PLT-04 tables and the SEC-01
+ * deletion tables (test isolation). FK-safe order lists children first
+ * (project_onboarding/project_environments/client_keys before projects;
+ * deletion intents/handoffs before accounts); `CASCADE` also covers any FK edges
+ * not listed.
  */
 export async function truncateIdentityTables(pool: Pool): Promise<void> {
   await pool.query(
     `TRUNCATE outbox, idempotency_records, security_audit_events, project_members,
       project_onboarding, project_environments, client_keys, projects, private_tokens,
       organization_invitations, organization_members, organizations,
+      account_cleanup_handoffs, account_deletion_intents,
       password_reset_intents, email_verification_intents,
       account_credentials, accounts CASCADE`,
   );

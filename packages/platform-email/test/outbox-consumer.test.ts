@@ -91,6 +91,46 @@ describe('consumeOutboxEmails', () => {
     });
   });
 
+  it('accepts a deletion_confirmation payload (whitelisted intent type)', async () => {
+    const { repo, markOutboxResult } = repoWith({
+      status: 'claimed',
+      rows: [
+        row({
+          payload: {
+            intentType: 'deletion_confirmation',
+            toAddress: 'user@example.com',
+            toMasked: 'd***@example.com',
+            mailLinkUrl: 'https://aurora.ah.cn/deletion/confirm?token=transient-token',
+            expiresInMinutes: 120,
+          },
+        }),
+      ],
+    });
+    const deliver = vi.fn().mockResolvedValue({ status: 'enqueued' });
+
+    const result = await consumeOutboxEmails({
+      pool,
+      port: { deliver },
+      outboxRepo: repo,
+      now: new Date(),
+    });
+
+    expect(result).toEqual({ consumed: 1, failed: 0 });
+    expect(deliver).toHaveBeenCalledTimes(1);
+    expect(deliver).toHaveBeenCalledWith({
+      intentType: 'deletion_confirmation',
+      toAddress: 'user@example.com',
+      toAddressMasked: 'd***@example.com',
+      mailLinkUrl: 'https://aurora.ah.cn/deletion/confirm?token=transient-token',
+      expiresInMinutes: 120,
+    });
+    expect(markOutboxResult).toHaveBeenCalledWith(pool, {
+      outboxId: 'row-1',
+      status: 'succeeded',
+      attemptCount: 1,
+    });
+  });
+
   it('maps the masked payload field into the port request (toMasked → toAddressMasked)', async () => {
     const { repo } = repoWith({ status: 'claimed', rows: [row({})] });
     const deliver = vi.fn().mockResolvedValue({ status: 'enqueued' });

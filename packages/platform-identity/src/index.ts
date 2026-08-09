@@ -6,8 +6,9 @@
  * - Argon2id password hashing/verification (`hashPassword`/`verifyPassword`);
  * - one-time intent token generation + email canonicalization
  *   (`createIntentToken`/`normalizeEmail`);
- * - repositories over the 11-table data model (accounts, intents,
- *   organizations, invitations, audit, idempotency, outbox);
+ * - repositories over the data model (accounts, intents, deletion intents,
+ *   cleanup handoffs, organizations, invitations, audit, idempotency, outbox);
+ * - the A5 deletion state-machine pure function (`decideDeletionFinalization`);
  * - the stable PlatformIdentityError surface.
  *
  * This is a data-layer package: it depends only on {protocol} workspace
@@ -28,11 +29,16 @@ export {
   createAccount,
   findAccountByEmailNormalized,
   getAccountById,
+  getAccountByIdForUpdate,
   incrementSecurityVersion,
+  recordDeletionRequest,
+  recordDeletionTermination,
+  updateAccountStatus,
   updateAccountVerifiedAt,
   upsertAccountCredential,
   type AccountMutationResult,
   type AccountRow,
+  type AccountStatus,
   type CreateAccountInput,
   type CreateAccountResult,
   type UpsertAccountCredentialInput,
@@ -106,3 +112,30 @@ export {
   type OutboxRow,
   type OutboxStatus,
 } from './repositories/outbox.js';
+
+export {
+  consumeDeletionIntent,
+  findDeletionIntentByDigest,
+  insertDeletionIntent,
+  type ConsumeDeletionIntentInput,
+  type ConsumeDeletionIntentResult,
+  type DeletionIntentKind,
+  type DeletionIntentRow,
+  type InsertDeletionIntentInput,
+  type InsertDeletionIntentResult,
+} from './repositories/deletion-intents.js';
+
+export {
+  findCleanupHandoffByAccount,
+  insertCleanupHandoff,
+  type CleanupHandoffRow,
+  type CleanupHandoffStatus,
+  type InsertCleanupHandoffInput,
+  type InsertCleanupHandoffResult,
+} from './repositories/cleanup-handoffs.js';
+
+export {
+  decideDeletionFinalization,
+  type DecideDeletionFinalizationInput,
+  type DeletionFinalizationDecision,
+} from './deletion-state-machine.js';

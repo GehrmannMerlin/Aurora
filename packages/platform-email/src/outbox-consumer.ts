@@ -117,7 +117,8 @@ function isEmailIntentType(value: unknown): value is EmailIntentType {
   return (
     value === 'email_verification' ||
     value === 'password_reset' ||
-    value === 'organization_invitation'
+    value === 'organization_invitation' ||
+    value === 'deletion_confirmation'
   );
 }
 

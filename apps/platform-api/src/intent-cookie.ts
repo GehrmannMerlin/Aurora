@@ -15,7 +15,12 @@ import { appendSetCookie, readSessionCookie } from './session-cookie.js';
  */
 export const INTENT_COOKIE_NAME = 'aurora_intent' as const;
 
-export type IntentKind = 'email_verification' | 'password_reset' | 'organization_invitation';
+export type IntentKind =
+  | 'email_verification'
+  | 'password_reset'
+  | 'organization_invitation'
+  | 'deletion_request'
+  | 'deletion_cancel';
 
 export interface IntentCookiePayload {
   readonly kind: IntentKind;
@@ -53,6 +58,8 @@ const INTENT_KINDS: readonly IntentKind[] = [
   'email_verification',
   'password_reset',
   'organization_invitation',
+  'deletion_request',
+  'deletion_cancel',
 ];
 
 /**

@@ -19,7 +19,11 @@
  * - No field may ever carry a raw password, verification/reset token, or
  *   provider secret.
  */
-export type EmailIntentType = 'email_verification' | 'password_reset' | 'organization_invitation';
+export type EmailIntentType =
+  | 'email_verification'
+  | 'password_reset'
+  | 'organization_invitation'
+  | 'deletion_confirmation';
 
 export interface EmailDeliveryRequest {
   readonly intentType: EmailIntentType;

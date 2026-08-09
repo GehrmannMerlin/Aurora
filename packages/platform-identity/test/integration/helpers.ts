@@ -4,7 +4,7 @@ import { Pool, type PoolClient, type QueryResult, type QueryResultRow } from 'pg
 
 const migrationsDir = fileURLToPath(new URL('../../migrations', import.meta.url));
 
-/** The 11 platform-identity tables, in FK-safe drop order. */
+/** The platform-identity tables, in FK-safe drop order. */
 const IDENTITY_TABLES_DROP_ORDER = [
   'outbox',
   'idempotency_records',
@@ -13,6 +13,8 @@ const IDENTITY_TABLES_DROP_ORDER = [
   'organization_invitations',
   'organization_members',
   'organizations',
+  'account_cleanup_handoffs',
+  'account_deletion_intents',
   'password_reset_intents',
   'email_verification_intents',
   'account_credentials',
