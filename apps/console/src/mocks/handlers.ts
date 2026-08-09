@@ -4,6 +4,8 @@ import {
   validChangePasswordSamples,
   validConfirmEmailVerificationSamples,
   validConfirmPasswordResetSamples,
+  validInviteMemberSamples,
+  validListMembersSamples,
   validListProjectsSamples,
   validLoginSamples,
   validLogoutSamples,
@@ -71,6 +73,15 @@ export const handlerControls = {
   acceptInvitationRequests: 0,
   intentLinkRequests: 0,
   listProjectsRequests: 0,
+  createProjectRequests: 0,
+  listMembersRequests: 0,
+  inviteMemberRequests: 0,
+  revokeInvitationRequests: 0,
+  resendInvitationRequests: 0,
+  changeRoleRequests: 0,
+  removeMemberRequests: 0,
+  transferOwnershipRequests: 0,
+  updateTimezoneRequests: 0,
   /** Toggle for the session projection: true = authenticated, false = 401. */
   sessionAuthenticated: readStoredSessionAuthenticated(),
 };
@@ -191,6 +202,109 @@ export function createPlatformHandlers() {
       await maybeDelay();
       return HttpResponse.json(validListProjectsSamples[0] as JsonBodyType, { status: 200 });
     }),
+    http.post('/api/platform/v1/organizations/:organizationId/projects', async () => {
+      handlerControls.createProjectRequests += 1;
+      await maybeDelay();
+      return HttpResponse.json(
+        {
+          projectId: 'prj_created_1',
+          clientKeyPublicIdentifier: 'ck_pub_test_12345',
+          defaultEnvironment: 'production',
+          onboardingStatus: 'not_started',
+          navigationTargets: [],
+        } as JsonBodyType,
+        { status: 200 },
+      );
+    }),
+    http.get('/api/platform/v1/organizations/:organizationId/members', async () => {
+      handlerControls.listMembersRequests += 1;
+      await maybeDelay();
+      return HttpResponse.json(validListMembersSamples[0] as JsonBodyType, { status: 200 });
+    }),
+    http.post('/api/platform/v1/organizations/:organizationId/invitations', async () => {
+      handlerControls.inviteMemberRequests += 1;
+      await maybeDelay();
+      return HttpResponse.json(validInviteMemberSamples[0] as JsonBodyType, { status: 200 });
+    }),
+    http.post(
+      '/api/platform/v1/organizations/:organizationId/invitations/:invitationId/revoke',
+      async ({ params }) => {
+        handlerControls.revokeInvitationRequests += 1;
+        await maybeDelay();
+        return HttpResponse.json(
+          { status: 'succeeded', invitationId: params.invitationId } as JsonBodyType,
+          { status: 200 },
+        );
+      },
+    ),
+    http.post(
+      '/api/platform/v1/organizations/:organizationId/invitations/:invitationId/resend',
+      async ({ params }) => {
+        handlerControls.resendInvitationRequests += 1;
+        await maybeDelay();
+        return HttpResponse.json(
+          {
+            status: 'succeeded',
+            invitationId: params.invitationId,
+            expiresAt: '2026-08-23T01:00:00.000Z',
+          } as JsonBodyType,
+          { status: 200 },
+        );
+      },
+    ),
+    http.post(
+      '/api/platform/v1/organizations/:organizationId/members/:accountId/role',
+      async ({ params, request }) => {
+        handlerControls.changeRoleRequests += 1;
+        await maybeDelay();
+        const body = (await request.json()) as { orgRole: string };
+        return HttpResponse.json(
+          { accountId: params.accountId, orgRole: body.orgRole, resourceVersion: '0' } as JsonBodyType,
+          { status: 200 },
+        );
+      },
+    ),
+    http.post(
+      '/api/platform/v1/organizations/:organizationId/members/:accountId/remove',
+      async ({ params }) => {
+        handlerControls.removeMemberRequests += 1;
+        await maybeDelay();
+        return HttpResponse.json(
+          { status: 'succeeded', accountId: params.accountId } as JsonBodyType,
+          { status: 200 },
+        );
+      },
+    ),
+    http.post('/api/platform/v1/organizations/:organizationId/ownership', async ({ request }) => {
+      handlerControls.transferOwnershipRequests += 1;
+      await maybeDelay();
+      const body = (await request.json()) as { newOwnerAccountId: string };
+      return HttpResponse.json(
+        {
+          organizationId: 'org_test_1',
+          ownerAccountId: body.newOwnerAccountId,
+          resourceVersion: '1',
+          navigationTargets: [],
+        } as JsonBodyType,
+        { status: 200 },
+      );
+    }),
+    http.patch(
+      '/api/platform/v1/organizations/:organizationId/settings/timezone',
+      async ({ request }) => {
+        handlerControls.updateTimezoneRequests += 1;
+        await maybeDelay();
+        const body = (await request.json()) as { timezone: string };
+        return HttpResponse.json(
+          {
+            organizationId: 'org_test_1',
+            timezone: body.timezone,
+            resourceVersion: '1',
+          } as JsonBodyType,
+          { status: 200 },
+        );
+      },
+    ),
     http.get('/api/platform/v1/auth/verify/:token', async () => {
       handlerControls.intentLinkRequests += 1;
       await maybeDelay();

@@ -48,13 +48,14 @@ describe('console router', () => {
 
   it('projects unavailable-route metadata onto the status view props', () => {
     const root = rootRoute();
-    const child = (root.children ?? []).find((c) => c.name === 'organization.members');
+    // organization.tokens stays an honest unavailable stub until 7C.
+    const child = (root.children ?? []).find((c) => c.name === 'organization.tokens');
     const props = child?.props as unknown as (route: { meta: { label: string } }) => {
       title: string;
       reason: string;
     };
-    expect(props({ meta: { label: '成员' } })).toEqual({
-      title: '成员',
+    expect(props({ meta: { label: '令牌' } })).toEqual({
+      title: '令牌',
       reason: 'capability-not-provided',
     });
   });

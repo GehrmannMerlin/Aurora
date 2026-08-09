@@ -79,7 +79,10 @@ function interpolatePathParams(
   for (const [key, value] of Object.entries(
     paramsResult.data as Readonly<Record<string, string>>,
   )) {
-    interpolated = interpolated.replace(`:${key}`, encodeURIComponent(value));
+    // split/join (not String.prototype.replace) so the encoded value is inserted
+    // literally: a string replacement would interpret ECMAScript `$` patterns
+    // and only replace the first occurrence.
+    interpolated = interpolated.split(`:${key}`).join(encodeURIComponent(value));
   }
   return interpolated;
 }

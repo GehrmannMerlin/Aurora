@@ -19,6 +19,10 @@ const anyQuery = z.record(z.string(), z.string());
 const unavailable = (): Promise<Component> => import('../components/pages/UnavailableView.vue');
 const workspaceHome = (): Promise<Component> => import('../views/workspace/WorkspaceHomeView.vue');
 const usageView = (): Promise<Component> => import('../views/organization/UsageView.vue');
+const projectCreateView = (): Promise<Component> =>
+  import('../views/organization/ProjectCreateView.vue');
+const membersView = (): Promise<Component> => import('../views/organization/MembersView.vue');
+const settingsView = (): Promise<Component> => import('../views/organization/SettingsView.vue');
 const registerView = (): Promise<Component> => import('../views/auth/RegisterView.vue');
 const verifyEmailView = (): Promise<Component> => import('../views/auth/VerifyEmailView.vue');
 const verifyEmailConfirmView = (): Promise<Component> =>
@@ -140,9 +144,9 @@ export const ROUTE_REGISTRY: readonly RouteEntry[] = [
     label: '创建项目',
     paramsSchema: orgParams,
     querySchema: anyQuery,
-    lazy: unavailable,
+    lazy: projectCreateView,
     menu: false,
-    unavailableReason: 'capability-not-provided',
+    unavailableReason: null,
   },
   {
     routeId: 'organization.members',
@@ -151,9 +155,9 @@ export const ROUTE_REGISTRY: readonly RouteEntry[] = [
     label: '成员',
     paramsSchema: orgParams,
     querySchema: anyQuery,
-    lazy: unavailable,
+    lazy: membersView,
     menu: true,
-    unavailableReason: 'capability-not-provided',
+    unavailableReason: null,
   },
   {
     routeId: 'organization.settings',
@@ -162,9 +166,9 @@ export const ROUTE_REGISTRY: readonly RouteEntry[] = [
     label: '设置',
     paramsSchema: orgParams,
     querySchema: anyQuery,
-    lazy: unavailable,
+    lazy: settingsView,
     menu: true,
-    unavailableReason: 'capability-not-provided',
+    unavailableReason: null,
   },
   {
     routeId: 'organization.usage',
@@ -456,7 +460,10 @@ export function resolveRouteTarget(target: {
   for (const [key, value] of Object.entries(
     paramsResult.data as Readonly<Record<string, string>>,
   )) {
-    path = path.replace(`:${key}`, encodeURIComponent(value));
+    // split/join (not String.prototype.replace) so the encoded value is inserted
+    // literally: a string replacement would interpret ECMAScript `$` patterns
+    // and only replace the first occurrence.
+    path = path.split(`:${key}`).join(encodeURIComponent(value));
   }
   const queryString = new URLSearchParams(target.query).toString();
   return { path: queryString.length === 0 ? path : `${path}?${queryString}` };

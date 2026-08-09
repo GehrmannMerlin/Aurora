@@ -1,0 +1,214 @@
+<script setup lang="ts">
+import { computed, ref } from 'vue';
+import { useRoute } from 'vue-router';
+import { OPERATION_ID_UPDATE_TIMEZONE } from '@aurora/platform-contract';
+import { platformRequest } from '../../api/client.js';
+import { ApiError } from '../../api/errors.js';
+import { describeRequestError } from '../../api/feedback.js';
+import { useSessionStore } from '../../stores/session.js';
+import AppButton from '../../components/aurora/AppButton.vue';
+import AppPageHeader from '../../components/aurora/AppPageHeader.vue';
+import AppStatusBadge from '../../components/aurora/AppStatusBadge.vue';
+
+const COMMON_TIMEZONES = [
+  'UTC',
+  'Asia/Shanghai',
+  'Asia/Hong_Kong',
+  'Asia/Tokyo',
+  'Asia/Seoul',
+  'Asia/Singapore',
+  'Asia/Kolkata',
+  'Asia/Dubai',
+  'Europe/London',
+  'Europe/Paris',
+  'Europe/Berlin',
+  'Europe/Moscow',
+  'America/New_York',
+  'America/Chicago',
+  'America/Denver',
+  'America/Los_Angeles',
+  'America/Sao_Paulo',
+  'Australia/Sydney',
+  'Australia/Perth',
+  'Pacific/Auckland',
+] as const;
+
+const route = useRoute();
+const session = useSessionStore();
+
+const organizationId = computed(() => {
+  const raw = route.params.organizationId;
+  return typeof raw === 'string' && raw.length > 0 ? raw : null;
+});
+
+// ---- B4 timezone form. The contract has NO read-settings operation, so the
+// page cannot show the server's current timezone or version; it only submits.
+// The update response carries the new resourceVersion, which is tracked so a
+// subsequent submit stays optimistic-concurrency-valid. ----
+const timezone = ref('');
+const resourceVersion = ref('0');
+const updating = ref(false);
+const updateError = ref<string | null>(null);
+const updateInfo = ref<string | null>(null);
+const lastSavedTimezone = ref<string | null>(null);
+
+const timezoneError = computed<string | null>(() => {
+  const value = timezone.value.trim();
+  if (value.length < 1 || value.length > 64) return '时区标识需为 1–64 个字符。';
+  try {
+    // Validates a real IANA time zone id (throws RangeError for unknown zones).
+    new Intl.DateTimeFormat(undefined, { timeZone: value });
+    return null;
+  } catch {
+    return '未知的 IANA 时区标识。';
+  }
+});
+
+function describeUpdateError(caught: unknown): string {
+  if (caught instanceof ApiError) {
+    switch (caught.code) {
+      case 'version_conflict':
+        return '组织设置已被其他操作更新，版本已刷新，请重新提交。';
+      case 'authorization':
+        return '你没有权限修改该组织的设置。';
+      case 'not_found':
+        return '组织不存在或你没有访问权限。';
+      case 'field_validation':
+      case 'structural_error':
+        return '时区标识不符合要求。';
+      default:
+        return describeRequestError(caught);
+    }
+  }
+  return describeRequestError(caught);
+}
+
+/** Recover the server's current settings version from the 412 problem's
+ *  fieldErrors (the platform-api returns it there for exactly this recovery). */
+function currentVersionFromError(error: ApiError): string | null {
+  const field = error.fieldErrors?.find((entry) => entry.field === 'resourceVersion');
+  if (field === undefined) return null;
+  const match = /Current version is (\d+)/.exec(field.reason);
+  return match === null ? null : (match[1] ?? null);
+}
+
+async function onUpdateTimezone(): Promise<void> {
+  const orgId = organizationId.value;
+  if (orgId === null || updating.value || session.csrf === null) return;
+  if (timezoneError.value !== null) return;
+  updating.value = true;
+  updateError.value = null;
+  updateInfo.value = null;
+  try {
+    const data = await platformRequest<{ timezone: string; resourceVersion: string }>(
+      OPERATION_ID_UPDATE_TIMEZONE,
+      {
+        pathParams: { organizationId: orgId },
+        body: { timezone: timezone.value.trim(), resourceVersion: resourceVersion.value },
+      },
+      { scope: { type: 'organization', id: orgId }, csrf: session.csrf },
+    );
+    resourceVersion.value = data.resourceVersion;
+    lastSavedTimezone.value = data.timezone;
+    updateInfo.value = '组织时区已更新。';
+  } catch (caught) {
+    if (caught instanceof ApiError && caught.code === 'version_conflict') {
+      const recovered = currentVersionFromError(caught);
+      if (recovered !== null) resourceVersion.value = recovered;
+    }
+    updateError.value = describeUpdateError(caught);
+  } finally {
+    updating.value = false;
+  }
+}
+</script>
+
+<template>
+  <section class="au-surface" data-testid="settings-view">
+    <AppPageHeader title="组织设置" />
+
+    <p class="au-hint" data-testid="settings-hint">
+      组织业务时区用于数据统计口径。当前时区与版本无法读取（契约没有读取设置的操作），
+      修改后以提交结果为准；若其他会话已并发修改，会提示版本冲突并刷新版本后重试。
+    </p>
+
+    <p v-if="lastSavedTimezone !== null" class="au-hint" data-testid="current-timezone">
+      当前保存的时区：{{ lastSavedTimezone }}
+    </p>
+
+    <form class="au-form" novalidate @submit.prevent="onUpdateTimezone">
+      <div class="au-field">
+        <label class="au-field__label" for="settings-timezone">时区（IANA 标识）</label>
+        <input
+          id="settings-timezone"
+          class="au-field__input"
+          type="text"
+          list="common-timezones"
+          :value="timezone"
+          placeholder="例如 Asia/Shanghai"
+          data-testid="timezone-input"
+          @input="timezone = ($event.target as HTMLInputElement).value"
+        />
+        <datalist id="common-timezones">
+          <option v-for="zone in COMMON_TIMEZONES" :key="zone" :value="zone" />
+        </datalist>
+        <p v-if="timezoneError !== null" class="au-field-error" data-testid="timezone-error">
+          {{ timezoneError }}
+        </p>
+      </div>
+
+      <AppButton
+        type="submit"
+        variant="primary"
+        :disabled="updating || session.csrf === null || timezoneError !== null"
+        data-testid="timezone-submit"
+      >
+        {{ updating ? '保存中…' : '保存时区' }}
+      </AppButton>
+
+      <AppStatusBadge v-if="updateInfo !== null" tone="success" data-testid="timezone-success">
+        {{ updateInfo }}
+      </AppStatusBadge>
+      <AppStatusBadge v-if="updateError !== null" tone="danger" data-testid="timezone-error-banner">
+        {{ updateError }}
+      </AppStatusBadge>
+    </form>
+  </section>
+</template>
+
+<style scoped>
+.au-hint {
+  color: var(--color-text-secondary);
+  max-width: 64ch;
+}
+.au-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  max-width: 42ch;
+  margin-top: var(--space-4);
+}
+.au-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+.au-field__label {
+  color: var(--color-text-primary);
+  font-weight: 500;
+}
+.au-field__input {
+  height: var(--control-height);
+  padding: 0 var(--space-3);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-base);
+  background-color: var(--color-surface-bg);
+  color: var(--color-text-primary);
+  font: inherit;
+}
+.au-field-error {
+  margin: 0;
+  color: var(--color-status-danger);
+  font-size: 13px;
+}
+</style>
