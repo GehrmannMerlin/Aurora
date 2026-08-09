@@ -23,8 +23,26 @@ function createRegistry(): SchemaRegistry {
   };
 }
 
+// OpenAPI 3.1 templating uses `{param}`; the registry keeps the internal Fastify colon form
+// (`:param`). Convert every `:param` segment so the machine OpenAPI carries valid path templating.
 function buildPathKey(op: OperationDef): string {
-  return op.path.startsWith(API_PREFIX) ? op.path.slice(API_PREFIX.length) : op.path;
+  const path = op.path.startsWith(API_PREFIX) ? op.path.slice(API_PREFIX.length) : op.path;
+  return path.replace(/:([A-Za-z][A-Za-z0-9_]*)/g, '{$1}');
+}
+
+// Path parameters are declared per-segment at the operation level. The registry models them as a
+// single object SchemaDef (`op.request.pathParams`); each property of that object is a required
+// `in: 'path'` parameter whose schema is the property's own JSON Schema.
+function buildPathParameters(op: OperationDef): Record<string, unknown>[] {
+  const pathParams = op.request?.pathParams;
+  const properties = pathParams?.openapi.properties;
+  if (properties === undefined) return [];
+  return Object.entries(properties).map(([name, schema]) => ({
+    name,
+    in: 'path',
+    required: true,
+    schema,
+  }));
 }
 
 export function generateOpenApiDocument(opts: { title?: string } = {}): OpenApiDocument {
@@ -49,10 +67,14 @@ export function generateOpenApiDocument(opts: { title?: string } = {}): OpenApiD
       tags: op.tags,
       responses,
     };
+    const parameters: Record<string, unknown>[] = [...buildPathParameters(op)];
     if (op.request?.query)
-      operation.parameters = [
-        { name: 'query', in: 'query', schema: toJsonSchema(op.request.query, registry) },
-      ];
+      parameters.push({
+        name: 'query',
+        in: 'query',
+        schema: toJsonSchema(op.request.query, registry),
+      });
+    if (parameters.length > 0) operation.parameters = parameters;
     if (op.request?.body)
       operation.requestBody = {
         content: { 'application/json': { schema: toJsonSchema(op.request.body, registry) } },
