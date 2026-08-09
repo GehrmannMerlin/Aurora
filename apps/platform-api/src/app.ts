@@ -23,6 +23,9 @@ import {
 } from './routes/password.js';
 import { handleConfirmEmailVerification } from './routes/email-verification.js';
 import { handleAcceptInvitation } from './routes/invitation.js';
+import { handleListProjects } from './routes/workspace.js';
+import { handleCreateProject } from './routes/projects.js';
+import { handleUpdateTimezone } from './routes/settings.js';
 import {
   handleInvitationLink,
   handleResetPasswordLink,
@@ -130,6 +133,23 @@ export function buildPlatformApi(deps: PlatformApiDependencies): FastifyInstance
   app.post('/api/platform/v1/invitations/accept', async (request, reply) => {
     await handleAcceptInvitation(request, reply, routeContext);
   });
+
+  // PLT-04 B1/B2/B4 workspace + project + settings routes. B1 is a session
+  // Query; B2/B4 are CSRF-protected (registry) state-changing commands.
+  app.get('/api/platform/v1/organizations/:organizationId/projects', async (request, reply) => {
+    await handleListProjects(request, reply, routeContext);
+  });
+
+  app.post('/api/platform/v1/organizations/:organizationId/projects', async (request, reply) => {
+    await handleCreateProject(request, reply, routeContext);
+  });
+
+  app.patch(
+    '/api/platform/v1/organizations/:organizationId/settings/timezone',
+    async (request, reply) => {
+      await handleUpdateTimezone(request, reply, routeContext);
+    },
+  );
 
   // Email-link GET routes (ADR-028 决定细节 6): validate the raw token, establish
   // the short-lived intent cookie and clear the token from the URL.

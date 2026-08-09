@@ -27,6 +27,41 @@ export type OrgManagerAction = (typeof ORG_MANAGER_ACTIONS)[number];
  */
 export const MEMBER_ACTIONS: readonly OrgManagerAction[] = [];
 
+/**
+ * The closed `allowedActions` verb enum the contract accepts (spec §6 /
+ * contract `common/authorization.ts`). The UI-only semantic action projection
+ * (`OrgManagerAction`) does not match this enum, so handlers map the effective
+ * projection to these contract verbs before `serializeOutput` (the verb enum is
+ * the ONLY thing `serializeOutput` accepts for `allowedActions`). 6C reuses this
+ * bridge for members/invitations/tokens/audit/trash responses.
+ */
+export const CONTRACT_ALLOWED_ACTIONS = [
+  'create',
+  'read',
+  'update',
+  'delete',
+  'manage',
+  'restore',
+  'transfer',
+  'revoke',
+] as const;
+
+export type ContractAllowedAction = (typeof CONTRACT_ALLOWED_ACTIONS)[number];
+
+/**
+ * Map the effective-permission projection to the contract `allowedActions` verb
+ * enum. Org managers (owner/admin) expose the full verb set (UI-only display
+ * hint); a plain member is limited to `read`. Non-members are rejected by the
+ * handler before this bridge is reached (no org-existence leak). This is a pure
+ * display projection — every Command re-reads membership and never trusts it
+ * for authorization.
+ */
+export function toContractAllowedActions(
+  permissions: EffectivePermissions,
+): readonly ContractAllowedAction[] {
+  return permissions.isOrgManager ? CONTRACT_ALLOWED_ACTIONS : (['read'] as const);
+}
+
 /** The actor's organization role, or null when not a member of the org. */
 export type EffectiveOrgRole = OrganizationRole | null;
 
