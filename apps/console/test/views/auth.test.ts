@@ -71,6 +71,44 @@ describe('RegisterView', () => {
     });
     expect(useAuthStore().registration?.emailMasked).toBe('us**@example.invalid');
   });
+
+  it('shows the real email/password rules as hints before any input', async () => {
+    await router.push('/register');
+    await router.isReady();
+    render(RegisterView, { global: { plugins: [pinia, router] } });
+    // Hints must come from the shared contract schema (email 3–320, password 8–256),
+    // never an invented composition rule.
+    expect(screen.getByText(/邮箱地址/)).toBeTruthy();
+    expect(screen.getByText('请输入 3–320 个字符的邮箱地址。')).toBeTruthy();
+    expect(screen.getByText('密码需为 8–256 个字符。')).toBeTruthy();
+  });
+
+  it('maps an invalid email to the email field, not the generic banner', async () => {
+    await router.push('/register');
+    await router.isReady();
+    render(RegisterView, { global: { plugins: [pinia, router] } });
+    await fireEvent.update(screen.getByLabelText('邮箱'), 'a');
+    await fireEvent.update(screen.getByLabelText('密码'), 'valid-1234');
+    await fireEvent.click(screen.getByRole('button', { name: '注册' }));
+    // The validation failure is attached to the email field and blocks the submit.
+    expect(screen.getByText('请输入 3–320 个字符的邮箱地址。')).toBeTruthy();
+    expect(handlerControls.registerRequests).toBe(0);
+    // The page-level generic banner is NOT the only feedback path.
+    expect(screen.queryByText('输入内容不符合要求，请检查后重试。')).toBeNull();
+  });
+
+  it('maps an invalid password to the password field with the real rule', async () => {
+    await router.push('/register');
+    await router.isReady();
+    render(RegisterView, { global: { plugins: [pinia, router] } });
+    await fireEvent.update(screen.getByLabelText('邮箱'), 'user@example.invalid');
+    await fireEvent.update(screen.getByLabelText('密码'), 'short');
+    await fireEvent.click(screen.getByRole('button', { name: '注册' }));
+    // The real password rule (8–256 chars) is shown next to the password field.
+    expect(screen.getByText('密码需为 8–256 个字符。')).toBeTruthy();
+    expect(handlerControls.registerRequests).toBe(0);
+    expect(screen.queryByText('输入内容不符合要求，请检查后重试。')).toBeNull();
+  });
 });
 
 describe('VerifyEmailView', () => {

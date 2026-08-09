@@ -4,6 +4,11 @@ import { useRouter } from 'vue-router';
 import { OPERATION_ID_REGISTER } from '@aurora/platform-contract';
 import { createIdempotencyKey, platformRequest } from '../../api/client.js';
 import { describeRequestError } from '../../api/feedback.js';
+import {
+  REGISTER_EMAIL_HINT,
+  REGISTER_PASSWORD_HINT,
+  validateRegisterInput,
+} from '../../api/register-validation.js';
 import { useAuthStore, type RegisterResult } from '../../stores/auth.js';
 import AuthCard from '../../components/auth/AuthCard.vue';
 import AuthFormField from '../../components/auth/AuthFormField.vue';
@@ -19,10 +24,22 @@ const password = ref('');
 const submitting = ref(false);
 const errorMessage = ref<string | null>(null);
 
+const emailError = ref<string | null>(null);
+const passwordError = ref<string | null>(null);
+
 async function onSubmit(): Promise<void> {
   if (submitting.value) return;
-  submitting.value = true;
+
+  // Field-level validation against the shared register schema, shown next to
+  // each field before any network request. Only unmappable failures fall
+  // through to the page-level banner.
+  const errors = validateRegisterInput(email.value, password.value);
+  emailError.value = errors.email;
+  passwordError.value = errors.password;
   errorMessage.value = null;
+  if (errors.email !== null || errors.password !== null) return;
+
+  submitting.value = true;
   try {
     const data = await platformRequest<RegisterResult>(
       OPERATION_ID_REGISTER,
@@ -53,6 +70,8 @@ async function onSubmit(): Promise<void> {
         type="email"
         autocomplete="email"
         :value="email"
+        :hint="REGISTER_EMAIL_HINT"
+        :error="emailError ?? undefined"
         required
         @update:value="email = $event"
       />
@@ -62,6 +81,8 @@ async function onSubmit(): Promise<void> {
         type="password"
         autocomplete="new-password"
         :value="password"
+        :hint="REGISTER_PASSWORD_HINT"
+        :error="passwordError ?? undefined"
         required
         @update:value="password = $event"
       />

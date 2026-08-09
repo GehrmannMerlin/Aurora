@@ -1,5 +1,5 @@
 <script setup lang="ts">
-withDefaults(
+const props = withDefaults(
   defineProps<{
     id: string;
     label: string;
@@ -7,11 +7,20 @@ withDefaults(
     autocomplete?: string;
     value: string;
     required?: boolean;
+    hint?: string;
+    error?: string | undefined;
   }>(),
   { type: 'text', required: false },
 );
 
 const emit = defineEmits<{ (e: 'update:value', value: string): void }>();
+
+/** Associate the input with the visible hint/error block via aria-describedby. */
+function describedByIds(hint: string | undefined, error: string | undefined): string {
+  // When a field error is shown it replaces the hint, so reference only the error.
+  if (error !== undefined) return `${props.id}-error`;
+  return hint !== undefined ? `${props.id}-hint` : '';
+}
 </script>
 
 <template>
@@ -20,12 +29,21 @@ const emit = defineEmits<{ (e: 'update:value', value: string): void }>();
     <input
       :id="id"
       class="au-field__input"
+      :class="{ 'au-field__input--invalid': error !== undefined }"
       :type="type"
       :autocomplete="autocomplete"
       :value="value"
       :required="required"
+      :aria-invalid="error !== undefined ? 'true' : undefined"
+      :aria-describedby="describedByIds(hint, error)"
       @input="emit('update:value', ($event.target as HTMLInputElement).value)"
     />
+    <p v-if="hint !== undefined && error === undefined" :id="`${id}-hint`" class="au-field__hint">
+      {{ hint }}
+    </p>
+    <p v-if="error !== undefined" :id="`${id}-error`" class="au-field__error" role="alert">
+      {{ error }}
+    </p>
   </div>
 </template>
 
@@ -47,5 +65,18 @@ const emit = defineEmits<{ (e: 'update:value', value: string): void }>();
   background-color: var(--color-surface-bg);
   color: var(--color-text-primary);
   font: inherit;
+}
+.au-field__input--invalid {
+  border-color: var(--color-status-danger);
+}
+.au-field__hint {
+  margin: 0;
+  font-size: 13px;
+  color: var(--color-text-secondary);
+}
+.au-field__error {
+  margin: 0;
+  font-size: 13px;
+  color: var(--color-status-danger);
 }
 </style>
