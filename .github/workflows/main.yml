@@ -156,6 +156,80 @@ jobs:
       - name: Integration
         run: pnpm --filter @aurora/${{ matrix.suite }} test:integration
 
+  platform-integration:
+    name: Platform Integration (${{ matrix.suite }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    strategy:
+      fail-fast: false
+      matrix:
+        suite:
+          - platform-identity
+          - platform-organization
+          - platform-project-governance
+          - platform-credentials
+          - platform-audit
+          - platform-session
+          - platform-email
+          - platform-api
+    services:
+      postgres:
+        image: postgres:17.10-alpine
+        env:
+          POSTGRES_USER: aurora
+          POSTGRES_PASSWORD: aurora_ci_test_pw
+          POSTGRES_DB: aurora_inbox_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U aurora -d aurora_inbox_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+      redis:
+        image: redis:7.4-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+    env:
+      AURORA_TEST_DATABASE_URL: postgresql://aurora:aurora_ci_test_pw@localhost:5432/aurora_inbox_test
+      AURORA_TEST_REDIS_URL: redis://localhost:6379
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 11.17.0
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24.18.0
+          cache: pnpm
+
+      - name: Install (frozen lockfile)
+        run: pnpm install --frozen-lockfile
+
+      - name: Build (workspace deps for integration tests)
+        run: pnpm build
+
+      # Each platform suite runs its own PostgreSQL+Redis service containers
+      # (per-suite isolation, OPS-01 spec §5.2). Run the package's integration
+      # tests AND its coverage against the live services so the DB/Redis-dependent
+      # platform packages' coverage thresholds are enforced in CI (the no-DB
+      # Quality job's `pnpm test:coverage` is scoped to the non-DB packages per
+      # the OPS-01 spec coverage row).
+      - name: Integration
+        run: pnpm --filter @aurora/${{ matrix.suite }} test:integration
+      - name: Coverage
+        run: pnpm --filter @aurora/${{ matrix.suite }} test:coverage
+
   browser:
     name: Browser (Chromium)
     runs-on: ubuntu-latest

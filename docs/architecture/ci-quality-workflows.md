@@ -58,12 +58,13 @@ review-cycle: ci-policy-or-tooling-change
 | `pnpm lint` | ESLint 全仓（含 processing-store/benchmark） | PR/main |
 | `pnpm typecheck` | `pnpm -r typecheck`（14 工程） | PR/main |
 | `pnpm test` | `pnpm -r test`（各包单元，排除 integration） | PR/main |
-| `pnpm test:coverage` | 6 包 coverage（Browser 系 85/80/85/85） | main/nightly |
+| `pnpm test:coverage` | 8 包 coverage（Browser 系 85/80/85/85 + platform-contract/console） | main/nightly（Quality job，无 DB） |
 | `pnpm check:boundaries` | workspace-policy boundary CLI | PR/main |
 | `pnpm build` | `pnpm -r build`（14 工程） | PR/main |
 | `<pkg> test:package` | 包根 package-entry 验证 | PR/main |
 | `<pkg> test:browser` | Playwright Chromium headless（4 包） | PR/main 或 nightly |
-| `<pkg> test:integration` | vitest integration + `--no-file-parallelism`（6 包） | main/nightly（真实 PostgreSQL） |
+| `<pkg> test:integration` | vitest integration + `--no-file-parallelism`（6 包 ingestion） | main/nightly（真实 PostgreSQL） |
+| `<pkg> test:integration` + `test:coverage` | platform 包（identity/org/project-governance/credentials/audit/session/email/api） | main/nightly（platform-integration job，真实 PostgreSQL+Redis；DB/Redis 依赖包的 coverage 在此执行） |
 
 ## 4. 工作流分层
 
