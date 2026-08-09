@@ -165,15 +165,27 @@ importers:
 
   apps/platform-api:
     dependencies:
+      '@aurora/platform-audit':
+        specifier: workspace:*
+        version: link:../../packages/platform-audit
       '@aurora/platform-contract':
         specifier: workspace:*
         version: link:../../packages/platform-contract
+      '@aurora/platform-credentials':
+        specifier: workspace:*
+        version: link:../../packages/platform-credentials
       '@aurora/platform-email':
         specifier: workspace:*
         version: link:../../packages/platform-email
       '@aurora/platform-identity':
         specifier: workspace:*
         version: link:../../packages/platform-identity
+      '@aurora/platform-organization':
+        specifier: workspace:*
+        version: link:../../packages/platform-organization
+      '@aurora/platform-project-governance':
+        specifier: workspace:*
+        version: link:../../packages/platform-project-governance
       '@aurora/platform-session':
         specifier: workspace:*
         version: link:../../packages/platform-session

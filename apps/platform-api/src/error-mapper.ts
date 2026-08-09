@@ -1,5 +1,9 @@
 import type { FastifyReply } from 'fastify';
 import { PlatformIdentityError } from '@aurora/platform-identity';
+import { PlatformOrganizationError } from '@aurora/platform-organization';
+import { PlatformProjectGovernanceError } from '@aurora/platform-project-governance';
+import { PlatformCredentialsError } from '@aurora/platform-credentials';
+import { PlatformAuditError } from '@aurora/platform-audit';
 
 /** A single field-level validation error (RFC 9457 `fieldErrors`). */
 export interface AuroraProblemFieldError {
@@ -81,6 +85,60 @@ export function sendProblem(
     .send(problem(requestId, status, code, detail, extras));
 }
 
+/** The stable `kind` union shared by every platform data-layer error class. */
+type StableErrorKind = 'invalid_input' | 'database_unavailable' | 'statement_failed';
+
+/**
+ * Map a stable data-layer failure kind to an HTTP status and a non-leaking
+ * problem. Never exposes SQL, stack, constraint names or internal details.
+ */
+function mapStableErrorKind(
+  requestId: string,
+  kind: StableErrorKind,
+): { status: number; problem: AuroraProblem } {
+  switch (kind) {
+    case 'database_unavailable':
+    case 'statement_failed':
+      return {
+        status: 503,
+        problem: problem(
+          requestId,
+          503,
+          'authority_unavailable',
+          'Authority is temporarily unavailable.',
+        ),
+      };
+    case 'invalid_input':
+      return {
+        status: 400,
+        problem: problem(
+          requestId,
+          400,
+          'structural_error',
+          'Request does not match the public contract.',
+        ),
+      };
+  }
+}
+
+/** True when the thrown value is one of the platform data-layer stable errors. */
+export function isStableDataError(
+  error: unknown,
+): error is
+  | PlatformIdentityError
+  | PlatformOrganizationError
+  | PlatformProjectGovernanceError
+  | PlatformCredentialsError
+  | PlatformAuditError {
+  return (
+    error instanceof PlatformIdentityError ||
+    error instanceof PlatformOrganizationError ||
+    error instanceof PlatformProjectGovernanceError ||
+    error instanceof PlatformCredentialsError ||
+    error instanceof PlatformAuditError
+  );
+}
+
 /**
  * Map a stable internal failure to an HTTP status and a non-leaking problem.
  * Never exposes SQL, stack, constraint names or internal details.
@@ -89,30 +147,8 @@ export function mapErrorToProblem(
   requestId: string,
   error: unknown,
 ): { status: number; problem: AuroraProblem } {
-  if (error instanceof PlatformIdentityError) {
-    switch (error.kind) {
-      case 'database_unavailable':
-      case 'statement_failed':
-        return {
-          status: 503,
-          problem: problem(
-            requestId,
-            503,
-            'authority_unavailable',
-            'Authority is temporarily unavailable.',
-          ),
-        };
-      case 'invalid_input':
-        return {
-          status: 400,
-          problem: problem(
-            requestId,
-            400,
-            'structural_error',
-            'Request does not match the public contract.',
-          ),
-        };
-    }
+  if (isStableDataError(error)) {
+    return mapStableErrorKind(requestId, error.kind);
   }
   return {
     status: 500,

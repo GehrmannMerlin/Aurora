@@ -34,6 +34,30 @@ export default defineConfig({
           new URL('../../packages/platform-email/src/index.ts', import.meta.url),
         ),
       },
+      {
+        find: /^@aurora\/platform-organization$/,
+        replacement: fileURLToPath(
+          new URL('../../packages/platform-organization/src/index.ts', import.meta.url),
+        ),
+      },
+      {
+        find: /^@aurora\/platform-project-governance$/,
+        replacement: fileURLToPath(
+          new URL('../../packages/platform-project-governance/src/index.ts', import.meta.url),
+        ),
+      },
+      {
+        find: /^@aurora\/platform-credentials$/,
+        replacement: fileURLToPath(
+          new URL('../../packages/platform-credentials/src/index.ts', import.meta.url),
+        ),
+      },
+      {
+        find: /^@aurora\/platform-audit$/,
+        replacement: fileURLToPath(
+          new URL('../../packages/platform-audit/src/index.ts', import.meta.url),
+        ),
+      },
     ],
   },
   test: {

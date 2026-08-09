@@ -24,9 +24,13 @@
     "test:coverage": "vitest run --coverage --no-file-parallelism --exclude test/package-entry.test.ts"
   },
   "dependencies": {
+    "@aurora/platform-audit": "workspace:*",
     "@aurora/platform-contract": "workspace:*",
+    "@aurora/platform-credentials": "workspace:*",
     "@aurora/platform-email": "workspace:*",
     "@aurora/platform-identity": "workspace:*",
+    "@aurora/platform-organization": "workspace:*",
+    "@aurora/platform-project-governance": "workspace:*",
     "@aurora/platform-session": "workspace:*",
     "fastify": "5.10.0",
     "pg": "8.22.0"

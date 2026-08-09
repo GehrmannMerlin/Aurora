@@ -2,8 +2,20 @@ import { fileURLToPath } from 'node:url';
 import { runner } from 'node-pg-migrate';
 import { Pool } from 'pg';
 
-const migrationsDir = fileURLToPath(
+const identityMigrationsDir = fileURLToPath(
   new URL('../../../../packages/platform-identity/migrations', import.meta.url),
+);
+const organizationMigrationsDir = fileURLToPath(
+  new URL('../../../../packages/platform-organization/migrations', import.meta.url),
+);
+const projectGovernanceMigrationsDir = fileURLToPath(
+  new URL('../../../../packages/platform-project-governance/migrations', import.meta.url),
+);
+const credentialsMigrationsDir = fileURLToPath(
+  new URL('../../../../packages/platform-credentials/migrations', import.meta.url),
+);
+const auditMigrationsDir = fileURLToPath(
+  new URL('../../../../packages/platform-audit/migrations', import.meta.url),
 );
 export function testDatabaseUrl(): string {
   const url = process.env.AURORA_TEST_DATABASE_URL;
@@ -35,16 +47,48 @@ export function createTestPool(): Pool {
   return new Pool({ connectionString: url });
 }
 
-/** Run all platform-identity migrations up (idempotent). */
-export async function runIdentityMigrations(): Promise<void> {
+/**
+ * Run one migration directory up (idempotent, shared pgmigrations table).
+ * `checkOrder: false` disables node-pg-migrate's cross-directory ordering
+ * assertion: each platform package owns its own migration directory but they
+ * all share the single `pgmigrations` table, so a later directory would
+ * otherwise be rejected as "preceding" an already-applied migration (same
+ * pattern as every platform package's run-migrations.ts).
+ */
+async function runMigrations(dir: string): Promise<void> {
   await runner({
     databaseUrl: testDatabaseUrl(),
-    dir: migrationsDir,
+    dir,
     direction: 'up',
     migrationsTable: 'pgmigrations',
     count: Infinity,
+    checkOrder: false,
     log: () => undefined,
   });
+}
+
+/**
+ * Run all PLT-03 identity migrations plus the four PLT-04 data-package
+ * migrations (organization, project-governance, credentials, audit) so the full
+ * PLT-03/04 table set exists. Order is fixed: identity first (base tables), then
+ * the packages that extend them (timestamp order). Idempotent.
+ */
+export async function runAllMigrations(): Promise<void> {
+  await runMigrations(identityMigrationsDir);
+  await runMigrations(organizationMigrationsDir);
+  await runMigrations(projectGovernanceMigrationsDir);
+  await runMigrations(credentialsMigrationsDir);
+  await runMigrations(auditMigrationsDir);
+}
+
+/**
+ * Backward-compatible alias used by the PLT-03 flow tests: runs the identity
+ * migrations AND the PLT-04 extensions that build on them, so the full table set
+ * (including the tables `truncateIdentityTables` clears) exists. New tests
+ * should call `runAllMigrations`.
+ */
+export async function runIdentityMigrations(): Promise<void> {
+  await runAllMigrations();
 }
 
 /** Extract the `aurora_session` cookie value from a `set-cookie` header. */
@@ -104,10 +148,15 @@ export async function outboxIntentToken(pool: Pool, aggregateType: string): Prom
   return token;
 }
 
-/** Truncate all PLT-03 identity tables (test isolation). */
+/**
+ * Truncate all PLT-03 identity tables plus the PLT-04 tables (test isolation).
+ * FK-safe order lists children first (project_onboarding/project_environments/
+ * client_keys before projects); `CASCADE` also covers any FK edges not listed.
+ */
 export async function truncateIdentityTables(pool: Pool): Promise<void> {
   await pool.query(
     `TRUNCATE outbox, idempotency_records, security_audit_events, project_members,
+      project_onboarding, project_environments, client_keys, projects, private_tokens,
       organization_invitations, organization_members, organizations,
       password_reset_intents, email_verification_intents,
       account_credentials, accounts CASCADE`,

@@ -1,6 +1,5 @@
 import type { FastifyReply } from 'fastify';
-import { PlatformIdentityError } from '@aurora/platform-identity';
-import { mapErrorToProblem, sendProblem } from './error-mapper.js';
+import { mapErrorToProblem, sendProblem, isStableDataError } from './error-mapper.js';
 
 /**
  * A stable service-layer failure that maps to a single RFC 9457 `auroraProblem`.
@@ -28,8 +27,11 @@ export function isServiceError(error: unknown): error is ServiceError {
  * Map a thrown value to a problem response. Returns true when a response was
  * sent:
  * - ServiceError -> its explicit status/code/detail (business conflicts, 404s);
- * - PlatformIdentityError -> the stable authority mapping (503 for
- *   database_unavailable / statement_failed);
+ * - any platform data-layer stable error (PlatformIdentityError,
+ *   PlatformOrganizationError, PlatformProjectGovernanceError,
+ *   PlatformCredentialsError, PlatformAuditError) -> the stable authority
+ *   mapping (503 authority_unavailable for database_unavailable /
+ *   statement_failed, 400 structural_error for invalid_input);
  * - anything else -> false, so the caller rethrows and the global error handler
  *   returns a closed 500 internal_error.
  */
@@ -42,7 +44,7 @@ export async function sendMappedError(
     await sendProblem(reply, requestId, error.status, error.code, error.detail);
     return true;
   }
-  if (error instanceof PlatformIdentityError) {
+  if (isStableDataError(error)) {
     const mapped = mapErrorToProblem(requestId, error);
     await reply.code(mapped.status).send(mapped.problem);
     return true;
