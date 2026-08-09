@@ -25,6 +25,7 @@ export default tseslint.config(
       'packages/platform-identity/**/*.ts',
       'packages/platform-organization/**/*.ts',
       'packages/platform-project-governance/**/*.ts',
+      'packages/platform-credentials/**/*.ts',
       'packages/platform-session/**/*.ts',
       'packages/platform-email/**/*.ts',
       'apps/ingestion-api/**/*.ts',
