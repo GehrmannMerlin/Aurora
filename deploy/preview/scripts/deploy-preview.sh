@@ -45,6 +45,8 @@ if [ "${CI:-0}" != "1" ]; then
   pnpm typecheck >/tmp/aurora-preview-typecheck.log 2>&1 || { echo "TYPE CHECK FAILED"; tail -30 /tmp/aurora-preview-typecheck.log; exit 1; }
   pnpm --filter @aurora/ingestion-api build >/tmp/aurora-preview-api-build.log 2>&1 || { echo "API BUILD FAILED"; tail -30 /tmp/aurora-preview-api-build.log; exit 1; }
   pnpm --filter @aurora/ingestion-worker build >/tmp/aurora-preview-worker-build.log 2>&1 || { echo "WORKER BUILD FAILED"; tail -30 /tmp/aurora-preview-worker-build.log; exit 1; }
+  pnpm --filter @aurora/platform-api build >/tmp/aurora-preview-platform-api-build.log 2>&1 || { echo "PLATFORM API BUILD FAILED"; tail -30 /tmp/aurora-preview-platform-api-build.log; exit 1; }
+  pnpm --filter @aurora/platform-worker build >/tmp/aurora-preview-platform-worker-build.log 2>&1 || { echo "PLATFORM WORKER BUILD FAILED"; tail -30 /tmp/aurora-preview-platform-worker-build.log; exit 1; }
   pnpm --filter @aurora/console build >/tmp/aurora-preview-console-build.log 2>&1 || { echo "CONSOLE BUILD FAILED"; tail -30 /tmp/aurora-preview-console-build.log; exit 1; }
   echo "==> Local quality gate passed (typecheck + app builds)"
 else
