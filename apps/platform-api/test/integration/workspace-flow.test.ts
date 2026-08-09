@@ -112,7 +112,7 @@ describeDb('B1 workspace list flow (real PostgreSQL 17 + Redis)', () => {
       }),
     });
     expect(response.statusCode).toBe(200);
-    const body = response.json() as { projectId: string };
+    const body: { projectId: string } = response.json();
     return body.projectId;
   }
 
@@ -126,7 +126,7 @@ describeDb('B1 workspace list flow (real PostgreSQL 17 + Redis)', () => {
       url: `/api/platform/v1/organizations/${organizationId}/projects`,
       headers: { cookie: `aurora_session=${actor.cookie}` },
     });
-    return { status: response.statusCode, body: response.json() as ListProjectsBody };
+    return { status: response.statusCode, body: response.json() };
   }
 
   it('owner lists the org projects with full allowedActions and contract-valid shapes', async () => {

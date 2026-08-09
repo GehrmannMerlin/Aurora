@@ -94,9 +94,7 @@ export async function handleInviteMember(
   }
 
   const params = request.params as { organizationId?: string };
-  if (
-    !requireUuidParams(params as unknown as Readonly<Record<string, unknown>>, reply, requestId)
-  ) {
+  if (!requireUuidParams(params, reply, requestId)) {
     return;
   }
   const organizationId = params.organizationId ?? '';
@@ -124,7 +122,7 @@ export async function handleInviteMember(
     if (await sendMappedError(reply, requestId, error)) return;
     throw error;
   }
-  if (actorAccount === null || actorAccount.verifiedAt === null) {
+  if (actorAccount?.verifiedAt == null) {
     await sendProblem(
       reply,
       requestId,

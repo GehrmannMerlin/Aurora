@@ -231,6 +231,7 @@ describeDb('B6 private-tokens flow (real PostgreSQL 17 + Redis)', () => {
     });
     const tokenId = (created.body as CreateTokenBody).tokenId;
     expect(typeof tokenId).toBe('string');
+    if (tokenId === undefined) throw new Error('token id missing in create response');
 
     const revokeUrl = `${url}/${tokenId}/revoke`;
     const revoke = await post(app, owner, revokeUrl, {});

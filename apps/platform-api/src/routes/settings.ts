@@ -122,7 +122,7 @@ export async function handleUpdateTimezone(
         fieldErrors: [
           {
             field: 'resourceVersion',
-            reason: `Current version is ${result.currentSettingsVersion}.`,
+            reason: `Current version is ${String(result.currentSettingsVersion)}.`,
           },
         ],
       },

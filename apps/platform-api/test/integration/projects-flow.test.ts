@@ -136,7 +136,7 @@ describeDb('B2 create-project flow (real PostgreSQL 17 + Redis)', () => {
     // No secret-like token (43-char base64url secret / 64-char digest) may appear
     // in the response; the public identifier is far shorter and starts with its
     // fixed prefix.
-    expect(raw.match(SECRET_LIKE) ?? []).toEqual([]);
+    expect(SECRET_LIKE.exec(raw) ?? []).toEqual([]);
 
     // DB rows: project + default production env + client key + onboarding.
     const project = await pool.query<{ name: string; framework_type: string; status: string }>(

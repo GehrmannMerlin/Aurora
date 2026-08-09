@@ -196,7 +196,7 @@ export async function handleCreatePrivateToken(
     if (await sendMappedError(reply, requestId, error)) return;
     throw error;
   }
-  if (actorAccount === null || actorAccount.verifiedAt === null) {
+  if (actorAccount?.verifiedAt == null) {
     await sendProblem(
       reply,
       requestId,
@@ -251,8 +251,10 @@ export async function handleCreatePrivateToken(
   }
 
   // Captured only inside the first-run transaction; never persisted, only
-  // attached to the first successful response.
-  let firstRunPlaintext: string | null = null;
+  // attached to the first successful response. The box indirection keeps the
+  // closure write visible to the outer flow (a bare `let` is narrowed to `null`
+  // after `runIdempotentCommand`, since the callback assignment is opaque).
+  const firstRunPlaintext: { value: string | null } = { value: null };
 
   let idempotency: IdempotentCommandResult;
   try {
@@ -270,7 +272,7 @@ export async function handleCreatePrivateToken(
           scopes: input.scopes,
           expiresAt: input.expiresAt === undefined ? null : new Date(input.expiresAt),
         });
-        firstRunPlaintext = result.tokenPlaintext;
+        firstRunPlaintext.value = result.tokenPlaintext;
         return {
           tokenId: result.tokenId,
           // The stored idempotency payload NEVER carries the real plaintext.
@@ -300,8 +302,8 @@ export async function handleCreatePrivateToken(
   // (the caller already received the real secret on the first response, or lost
   // it and must revoke + re-create).
   const body =
-    idempotency.outcome === 'succeeded' && firstRunPlaintext !== null
-      ? { ...stored, tokenPlaintext: firstRunPlaintext }
+    idempotency.outcome === 'succeeded' && firstRunPlaintext.value !== null
+      ? { ...stored, tokenPlaintext: firstRunPlaintext.value }
       : stored;
 
   const serialized = serializeOutput(CREATE_PRIVATE_TOKEN_OPERATION, 200, body);

@@ -151,9 +151,7 @@ describe('B2 create project (7B)', () => {
     await screen.findByTestId('project-name-input');
     await fireEvent.update(screen.getByTestId('project-name-input'), 'A');
     expect(screen.getByTestId('name-error').textContent).toMatch(/2–50/);
-    expect(
-      (screen.getByTestId('create-project-submit') as HTMLButtonElement).disabled,
-    ).toBe(true);
+    expect(screen.getByTestId<HTMLButtonElement>('create-project-submit').disabled).toBe(true);
     expect(handlerControls.createProjectRequests).toBe(0);
   });
 
@@ -210,13 +208,17 @@ describe('B3 members and invitations (7B)', () => {
     const toggle = screen.getByTestId('change-role-acct_test_2');
     expect(toggle.textContent).toContain('设为管理员');
     await fireEvent.click(toggle);
-    await waitFor(() => expect(handlerControls.changeRoleRequests).toBeGreaterThanOrEqual(1));
+    await waitFor(() => {
+      expect(handlerControls.changeRoleRequests).toBeGreaterThanOrEqual(1);
+    });
 
-    await waitFor(() =>
-      expect(screen.getByTestId('change-role-acct_test_2').textContent).toContain('设为成员'),
-    );
+    await waitFor(() => {
+      expect(screen.getByTestId('change-role-acct_test_2').textContent).toContain('设为成员');
+    });
     await fireEvent.click(screen.getByTestId('change-role-acct_test_2'));
-    await waitFor(() => expect(handlerControls.changeRoleRequests).toBeGreaterThanOrEqual(2));
+    await waitFor(() => {
+      expect(handlerControls.changeRoleRequests).toBeGreaterThanOrEqual(2);
+    });
   });
 
   it('hides management controls for a plain member', async () => {
@@ -266,7 +268,7 @@ describe('B4 organization settings / timezone (7B)', () => {
 
     await fireEvent.update(screen.getByTestId('timezone-input'), 'Not/AZone');
     expect(screen.getByTestId('timezone-error').textContent).toMatch(/IANA/);
-    expect((screen.getByTestId('timezone-submit') as HTMLButtonElement).disabled).toBe(true);
+    expect(screen.getByTestId<HTMLButtonElement>('timezone-submit').disabled).toBe(true);
     expect(handlerControls.updateTimezoneRequests).toBe(0);
   });
 
@@ -374,7 +376,7 @@ describe('B6 private tokens (7C)', () => {
 
     const panel = await screen.findByTestId('token-plaintext-panel');
     expect(panel).toBeTruthy();
-    const value = screen.getByTestId('token-plaintext').textContent ?? '';
+    const value = screen.getByTestId('token-plaintext').textContent;
     expect(value).toBe('aurora_pt_pt_test_2_abcdef1234567890');
     // The plaintext appears in exactly ONE element in the DOM.
     expect(screen.getAllByText('aurora_pt_pt_test_2_abcdef1234567890')).toHaveLength(1);
@@ -425,9 +427,13 @@ describe('B6 private tokens (7C)', () => {
     expect(await screen.findByTestId('token-list')).toBeTruthy();
 
     await fireEvent.click(screen.getByTestId('revoke-token-pt_test_1'));
-    await waitFor(() => expect(handlerControls.revokePrivateTokenRequests).toBeGreaterThanOrEqual(1));
+    await waitFor(() => {
+      expect(handlerControls.revokePrivateTokenRequests).toBeGreaterThanOrEqual(1);
+    });
     // The revoke button is replaced by the revoked marker.
-    await waitFor(() => expect(screen.queryByTestId('revoke-token-pt_test_1')).toBeNull());
+    await waitFor(() => {
+      expect(screen.queryByTestId('revoke-token-pt_test_1')).toBeNull();
+    });
     expect(screen.getByText('已撤销')).toBeTruthy();
   });
 
@@ -438,7 +444,9 @@ describe('B6 private tokens (7C)', () => {
     expect(await screen.findByTestId('token-list')).toBeTruthy();
 
     await fireEvent.click(screen.getByTestId('revoke-token-pt_test_1'));
-    await waitFor(() => expect(handlerControls.revokePrivateTokenRequests).toBeGreaterThanOrEqual(1));
+    await waitFor(() => {
+      expect(handlerControls.revokePrivateTokenRequests).toBeGreaterThanOrEqual(1);
+    });
 
     // The real server persists `revoked_at` on revoke; mirror that so the
     // remount reads a server projection where the token is revoked.
@@ -499,7 +507,7 @@ describe('B7 security audit (7C)', () => {
   it('loads the next audit page when a cursor is available', async () => {
     let calls = 0;
     mockServer.use(
-      http.get('/api/platform/v1/organizations/:organizationId/audit', async () => {
+      http.get('/api/platform/v1/organizations/:organizationId/audit', () => {
         calls += 1;
         if (calls === 1) {
           return HttpResponse.json(
@@ -541,7 +549,9 @@ describe('B7 security audit (7C)', () => {
     expect(await screen.findByTestId('audit-load-more')).toBeTruthy();
 
     await fireEvent.click(screen.getByTestId('audit-load-more'));
-    await waitFor(() => expect(screen.queryByTestId('audit-load-more')).toBeNull());
+    await waitFor(() => {
+      expect(screen.queryByTestId('audit-load-more')).toBeNull();
+    });
     expect(screen.getAllByTestId('audit-row')).toHaveLength(2);
     expect(screen.getByText('project.restored')).toBeTruthy();
   });

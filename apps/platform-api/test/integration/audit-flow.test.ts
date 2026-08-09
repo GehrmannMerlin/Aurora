@@ -138,7 +138,7 @@ describeDb('B7 security-audit flow (real PostgreSQL 17 + Redis)', () => {
 
     const raw = JSON.stringify(body);
     expect(raw).not.toContain(ownerEmail);
-    expect(raw.match(SECRET_LIKE) ?? []).toEqual([]);
+    expect(SECRET_LIKE.exec(raw) ?? []).toEqual([]);
     await app.close();
   });
 

@@ -20,9 +20,9 @@ export async function csrfFor(app: FastifyInstance, cookie: string): Promise<str
     headers: { cookie: `aurora_session=${cookie}` },
   });
   if (session.statusCode !== 200) {
-    throw new Error(`GET /session failed with ${session.statusCode}`);
+    throw new Error(`GET /session failed with ${String(session.statusCode)}`);
   }
-  const body = session.json() as { csrf?: string };
+  const body: { csrf?: string } = session.json();
   const csrf = body.csrf;
   if (typeof csrf !== 'string' || csrf.length === 0) {
     throw new Error('no csrf token in session response');
@@ -47,10 +47,10 @@ export async function registerActor(app: FastifyInstance, email: string): Promis
     }),
   });
   if (response.statusCode !== 200) {
-    throw new Error(`register failed with ${response.statusCode}`);
+    throw new Error(`register failed with ${String(response.statusCode)}`);
   }
   const cookie = extractSessionCookie(response.headers['set-cookie']);
-  const body = response.json() as { accountId: string; workspaceId: { organizationId: string } };
+  const body: { accountId: string; workspaceId: { organizationId: string } } = response.json();
   const csrf = await csrfFor(app, cookie);
   return {
     cookie,
@@ -81,9 +81,9 @@ export async function registerVerifiedActor(
   const token = await outboxIntentToken(pool, 'email.verification');
   const link = await app.inject({ method: 'GET', url: `/api/platform/v1/auth/verify/${token}` });
   if (link.statusCode !== 200) {
-    throw new Error(`verify link failed with ${link.statusCode}`);
+    throw new Error(`verify link failed with ${String(link.statusCode)}`);
   }
-  const linkBody = link.json() as { csrf?: string };
+  const linkBody: { csrf?: string } = link.json();
   const linkCsrf = linkBody.csrf;
   if (typeof linkCsrf !== 'string' || linkCsrf.length === 0) {
     throw new Error('no csrf in verify link response');
@@ -107,7 +107,7 @@ export async function registerVerifiedActor(
     payload: JSON.stringify({ idempotencyKey: randomUUID() }),
   });
   if (confirm.statusCode !== 200) {
-    throw new Error(`email confirm failed with ${confirm.statusCode}`);
+    throw new Error(`email confirm failed with ${String(confirm.statusCode)}`);
   }
   const rotatedCookie = extractSessionCookie(confirm.headers['set-cookie']);
   const csrf = await csrfFor(app, rotatedCookie);

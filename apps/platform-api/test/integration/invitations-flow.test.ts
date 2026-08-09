@@ -203,6 +203,7 @@ describeDb('B3 invitations flow (real PostgreSQL 17 + Redis)', () => {
     );
     const invitationId = (invited.body as InviteBody).invitationId;
     expect(typeof invitationId).toBe('string');
+    if (invitationId === undefined) throw new Error('invitation id missing in create response');
 
     const { status, body } = await post(
       app,
@@ -237,6 +238,7 @@ describeDb('B3 invitations flow (real PostgreSQL 17 + Redis)', () => {
       },
     );
     const invitationId = (invited.body as InviteBody).invitationId;
+    if (invitationId === undefined) throw new Error('invitation id missing in create response');
     const firstExpiry = (invited.body as InviteBody).expiresAt;
 
     const { status, body } = await post(

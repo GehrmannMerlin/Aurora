@@ -97,7 +97,7 @@ describeDb('B8 trash/restore flow (real PostgreSQL 17 + Redis)', () => {
       payload: JSON.stringify({ name, frameworkType: 'javascript', idempotencyKey: randomUUID() }),
     });
     expect(response.statusCode).toBe(200);
-    const body = response.json() as { projectId?: string };
+    const body: { projectId?: string } = response.json();
     if (typeof body.projectId !== 'string') throw new Error('no projectId in create response');
     return body.projectId;
   }
