@@ -15,15 +15,15 @@ related:
 supersedes: none
 audit-baseline-date: 2026-08-03
 fixed-v1-leaf-modules: 78
-completed-v1-leaf-modules: 42
-remaining-v1-leaf-modules: 36
+completed-v1-leaf-modules: 43
+remaining-v1-leaf-modules: 35
 ---
 
 # Aurora 第一版剩余模块分批基线
 
 ## 1. 文档定位
 
-本文把 2026-08-03《Aurora 第一版剩余模块盘点与实现状态审计》确认的 46 个剩余叶子实施模块，整理为可供后续规格化和 `writing-plans` 使用的实施分组。DAT-07（请求处理规则/配置 adapter）已于 2026-08-03 关闭，DAT-08（性能指标聚合与有界诊断样本存储）已于 2026-08-05 关闭，DAT-09（性能事件处理器）、DAT-10（事件处理器 Router）与 DAT-11（生产 Worker composition）已于 2026-08-07 关闭，**G01 数据处理生产链闭合全部 5 个叶子已关闭**；**OPS-01（G14 CI quality workflows）已于 2026-08-08 关闭**；**PLT-01（Platform Contract foundation）已于 2026-08-08 关闭（独立验收通过）**；**PLT-02（前端壳层）已于 2026-08-08 关闭（独立验收通过）**；**PLT-03（A1—A4 身份、认证、密码和邀请）已于 2026-08-09 关闭（独立验收通过）**；**PLT-04（B1—B8 组织、项目、成员和治理）已于 2026-08-09 关闭**，当前剩余 36 个（OPS-02 blocked 不占用 completed）。
+本文把 2026-08-03《Aurora 第一版剩余模块盘点与实现状态审计》确认的 46 个剩余叶子实施模块，整理为可供后续规格化和 `writing-plans` 使用的实施分组。DAT-07（请求处理规则/配置 adapter）已于 2026-08-03 关闭，DAT-08（性能指标聚合与有界诊断样本存储）已于 2026-08-05 关闭，DAT-09（性能事件处理器）、DAT-10（事件处理器 Router）与 DAT-11（生产 Worker composition）已于 2026-08-07 关闭，**G01 数据处理生产链闭合全部 5 个叶子已关闭**；**OPS-01（G14 CI quality workflows）已于 2026-08-08 关闭**；**PLT-01（Platform Contract foundation）已于 2026-08-08 关闭（独立验收通过）**；**PLT-02（前端壳层）已于 2026-08-08 关闭（独立验收通过）**；**PLT-03（A1—A4 身份、认证、密码和邀请）已于 2026-08-09 关闭（独立验收通过）**；**PLT-04（B1—B8 组织、项目、成员和治理）已于 2026-08-09 关闭**；**SEC-01（A5 账号注销状态机与编排）已于 2026-08-09 关闭（独立验收通过）**，当前剩余 35 个（OPS-02 blocked 不占用 completed）。
 
 本文是**计划编制输入**，不是 PRD、ADR、approved 正式规格或可直接执行的实施计划。本文不会：
 
@@ -56,6 +56,7 @@ remaining_v1_leaf_modules = 38
 > 更新（2026-08-08）：PLT-02 closed（completed 39→40），not_started 10→9，remaining 39→38（独立验收通过）。
 > 更新（2026-08-09）：PLT-03 closed（completed 40→41），not_started 9→8，remaining 38→37（独立验收通过）。
 > 更新（2026-08-09）：PLT-04 closed（completed 41→42），not_started 8→7，remaining 37→36。
+> 更新（2026-08-09）：SEC-01 closed（completed 42→43），not_started 7→6，remaining 36→35（独立验收通过）。
 
 分组只改变后续工作的组织方式，不改变计数方式：
 
@@ -199,7 +200,7 @@ remaining_v1_leaf_modules = 38
 | PLT-08 | C13—C16 权限、凭证、设置和项目生命周期     | `BASE-PRD`、`BASE-ARCH`、`BASE-IMPL`、`PLAT-DOMAINS`、`PLAT-UX`、`PLAT-STACK`、`PLAT-OAPI`、`ING-CREDENTIALS`、`SEC-A5`、`FORM`           | PRD §4—5、§13、§17；UX/UI §7.28—7.30、§8.26—8.29、§9.26—9.29、§10.20—10.23、§11.3；凭证一次性交付、项目归档/删除和审计不得合并成普通表单。                                                                                                                                                                                                                                                                                                                        |
 | PLT-09 | D1 站内通知                                | `BASE-PRD`、`BASE-ARCH`、`BASE-IMPL`、`PLAT-DOMAINS`、`PLAT-UX`、`PLAT-STACK`、`PLAT-OAPI`、`FORM`                                        | PRD §11.4；UX/UI §8.30、§9.30、§10.24；通知触发源、未读状态、权限和 Alert 实例证据必须形成机器契约。独立规格缺失。                                                                                                                                                                                                                                                                                                                                                |
 | PLT-10 | D2 平台资源策略管理                        | `BASE-PRD`、`BASE-ARCH`、`BASE-IMPL`、`PLAT-DOMAINS`、`PLAT-UX`、`PLAT-STACK`、`PLAT-OAPI`、`FORM`                                        | PRD §15.8；UX/UI §8.31、§9.31、§10.25；OpenAPI 设计 §14.1、§19。D2 仍是直接阻塞项，必须先完成产品、权限和机器契约正式化。                                                                                                                                                                                                                                                                                                                                         |
-| SEC-01 | A5 注销状态机、身份复核和 Session 终止     | `BASE-PRD`、`BASE-ARCH`、`BASE-IMPL`、`PLAT-DOMAINS`、`PLAT-UX`、`PLAT-OAPI`、`SEC-A5`、`OPS-DELIVERY`、`FORM`                            | UX/UI §7.7、§8.5、§9.5；账号注销规格 §2—11；7 天冷静期、双重复核、唯一 Owner 阻塞、全部 Session 终止和备份淘汰必须同时满足。                                                                                                                                                                                                                                                                                                                                      |
+| SEC-01 | A5 注销状态机、身份复核和 Session 终止     | `BASE-PRD`、`BASE-ARCH`、`BASE-IMPL`、`PLAT-DOMAINS`、`PLAT-UX`、`PLAT-OAPI`、`SEC-A5`、`OPS-DELIVERY`、`FORM`                            | UX/UI §7.7、§8.5、§9.5；账号注销规格 §2—11；7 天冷静期、双重复核、唯一 Owner 阻塞、全部 Session 终止和备份淘汰必须同时满足。**已关闭（2026-08-09，独立验收通过）**：`identityDeleteAccountPreflight`/`identityDeleteAccount` 解锁 + `identityRequestAccountDeletion`/`identityCancelAccountDeletion`/2×IntentLink 新增（6 个稳定操作）；`@aurora/platform-identity` `account_deletion_intents`/`accounts` 扩展/`account_cleanup_handoffs` Migration + 状态机/意图/交接 Repository + `decideDeletionFinalization`；`@aurora/platform-organization` 唯一 Owner 只读查询；`apps/platform-api` 6 个 handler + 登录/会话状态门禁 + Session 终止 + 清理交接 + 审计；`apps/console` A5 危险区（预检/阻塞清单/双重确认/受理/撤销/确认页）；规范 [account-deletion-state-machine-and-orchestration.md](../superpowers/specs/2026-08-09-account-deletion-state-machine-and-orchestration.md) approved + implemented，计划 [2026-08-09-account-deletion-state-machine-and-orchestration.md](../superpowers/plans/2026-08-09-account-deletion-state-machine-and-orchestration.md)；42→43 / 36→35。                                                                                                                                                                                                                                                                                                                                      |
 
 ### 5.7 G14—G16：测试、发布与基础设施回读路由
 
@@ -348,14 +349,14 @@ Vue 与 React 不得合成一个叶子或一个实现计划，因为组件生命
 
 **G09 当前状态（2026-08-08）**：PLT-01 已关闭（implemented-in-feature-branch、未部署、独立验收通过）：`@aurora/platform-contract`（根 + `/client` + `/server` + `/contract-testkit` 真实导出）、机器 Platform OpenAPI v1（`docs/api/platform-openapi-v1.yaml` + `docs/api/platform-openapi-v1.manifest.json`）、生成 Client/Server 适配器与 `tooling/platform-contract-drift` 漂移门禁（含 schema 兼容差异门禁）均真实存在。**PLT-02 已关闭（implemented-in-feature-branch、未部署、独立验收通过）**：`apps/console` Vue 3 SPA 壳层（36 个 RouteTarget 真实可达、Session/Navigation Context、Aurora UI shell、状态页、Playwright 可达性与 axe 门禁、`test:package` 生产构建门禁、Preview 切换文件）。叶子计数：PLT-01 关闭后 completed 38→39 / remaining 40→39；PLT-02 独立验收通过后 completed 39→40 / remaining 39→38。
 
-**G10 当前状态（2026-08-09）**：**PLT-03 已关闭（feature branch `feature/g10-identity-organization-governance`、未 merge main、独立验收通过）**：`@aurora/platform-identity`（账号/密码摘要/验证意图/重置意图/组织/成员/邀请/审计/幂等/Outbox 11 表 Migration + Repository，accepted ADR-029）、`@aurora/platform-session`（Redis 权威 Session 只存 SHA-256 摘要 + CSRF + Cookie，accepted ADR-030）、`@aurora/platform-email`（EmailDeliveryPort + ConsoleEmailAdapter + Outbox consumer，accepted ADR-031/032）、`apps/platform-api`（8 操作 handler + intent 流程 + Session/CSRF/Origin 插件 + 全局 RFC 9457 error handler）、`apps/platform-worker`（Outbox 邮件消费 poll loop）、`apps/console`（注册/邮箱验证/登录/退出/忘记重置密码/接受邀请/修改密码真实视图，Aurora UI wrapper 只经包装层）。8 个操作从 blocked → stable（`identityRegister`/`identityConfirmEmailVerification`/`identityLogin`/`identityLogout`/`identityRequestPasswordReset`/`identityConfirmPasswordReset`/`identityChangePassword`/`organizationAcceptInvitation`）。42 个契约测试、143 个数据层/服务集成测试（真实 PostgreSQL 17 + Redis）、96 个 console 测试、12 个浏览器测试（含 auth-flow + axe + license 回归）全部通过；lint/typecheck/boundaries/build/openapi/drift 门禁通过。**PLT-04 已关闭（feature branch `feature/g10-identity-organization-governance`、未 merge main）**：`@aurora/platform-organization`（组织成员/邀请/时区）、`@aurora/platform-project-governance`（项目/客户端密钥/onboarding/回收站）、`@aurora/platform-credentials`（私有令牌 SHA-256 摘要 + 一次性明文、Plaintext 永不落库）、`@aurora/platform-audit`（安全审计读取）、`apps/platform-api`（B1—B8 16 个操作 handler + 共享授权/错误映射/幂等/CSRF）、`apps/console`（B1—B8 真实视图，B5 用量保持 blocked/unavailable、不伪造数据）。16 个操作从 blocked → stable。168 个数据层集成测试、103 个 platform-api 测试、119 个 console 测试、8 个 org-flow 浏览器测试（含 axe）全部通过；lint/typecheck/boundaries/build/openapi/drift 门禁通过。**SEC-01 未开始**：SEC-01 依赖 PLT-03 身份模型与 PLT-04 数据归属规则。叶子计数：PLT-03 独立验收通过后 completed 40→41 / remaining 38→37；PLT-04 关闭后 completed 41→42 / remaining 37→36。
+**G10 当前状态（2026-08-09）**：**PLT-03 已关闭（feature branch `feature/g10-identity-organization-governance`、未 merge main、独立验收通过）**：`@aurora/platform-identity`（账号/密码摘要/验证意图/重置意图/组织/成员/邀请/审计/幂等/Outbox 11 表 Migration + Repository，accepted ADR-029）、`@aurora/platform-session`（Redis 权威 Session 只存 SHA-256 摘要 + CSRF + Cookie，accepted ADR-030）、`@aurora/platform-email`（EmailDeliveryPort + ConsoleEmailAdapter + Outbox consumer，accepted ADR-031/032）、`apps/platform-api`（8 操作 handler + intent 流程 + Session/CSRF/Origin 插件 + 全局 RFC 9457 error handler）、`apps/platform-worker`（Outbox 邮件消费 poll loop）、`apps/console`（注册/邮箱验证/登录/退出/忘记重置密码/接受邀请/修改密码真实视图，Aurora UI wrapper 只经包装层）。8 个操作从 blocked → stable（`identityRegister`/`identityConfirmEmailVerification`/`identityLogin`/`identityLogout`/`identityRequestPasswordReset`/`identityConfirmPasswordReset`/`identityChangePassword`/`organizationAcceptInvitation`）。42 个契约测试、143 个数据层/服务集成测试（真实 PostgreSQL 17 + Redis）、96 个 console 测试、12 个浏览器测试（含 auth-flow + axe + license 回归）全部通过；lint/typecheck/boundaries/build/openapi/drift 门禁通过。**PLT-04 已关闭（feature branch `feature/g10-identity-organization-governance`、未 merge main）**：`@aurora/platform-organization`（组织成员/邀请/时区）、`@aurora/platform-project-governance`（项目/客户端密钥/onboarding/回收站）、`@aurora/platform-credentials`（私有令牌 SHA-256 摘要 + 一次性明文、Plaintext 永不落库）、`@aurora/platform-audit`（安全审计读取）、`apps/platform-api`（B1—B8 16 个操作 handler + 共享授权/错误映射/幂等/CSRF）、`apps/console`（B1—B8 真实视图，B5 用量保持 blocked/unavailable、不伪造数据）。16 个操作从 blocked → stable。168 个数据层集成测试、103 个 platform-api 测试、119 个 console 测试、8 个 org-flow 浏览器测试（含 axe）全部通过；lint/typecheck/boundaries/build/openapi/drift 门禁通过。**SEC-01 已关闭（feature branch `recovery/plt04-task6`、未 merge main、独立验收通过）**：6 个稳定操作（`identityDeleteAccountPreflight`/`identityDeleteAccount` 解锁 + `identityRequestAccountDeletion`/`identityCancelAccountDeletion`/2×IntentLink 新增）；`@aurora/platform-identity` `account_deletion_intents`/`accounts` 扩展/`account_cleanup_handoffs` Migration + 状态机/意图/交接 Repository + `decideDeletionFinalization` 纯函数；`@aurora/platform-organization` 唯一 Owner 只读查询；`apps/platform-api` 6 个 handler（预检/申请确认/受理/撤销/2×意图链接）+ 登录 409/会话 401 状态门禁 + Session 终止 + lazy 最终化清理交接 + 审计；`apps/console` A5 危险区（预检/阻塞清单/双重确认/受理/撤销/确认页）。221 个契约测试、71 个 identity 集成测试、47 个 org 集成测试、97 个 platform-api 集成测试、123 个 console 测试、2 个 deletion-flow 浏览器测试（含 axe）全部通过；lint/typecheck/boundaries/build/openapi/drift 门禁与受影响包 coverage 阈值通过。叶子计数：PLT-03 独立验收通过后 completed 40→41 / remaining 38→37；PLT-04 关闭后 completed 41→42 / remaining 37→36；SEC-01 关闭后 completed 42→43 / remaining 36→35。
 
 ### G10：身份、组织治理与账号注销
 
 | 属性         | 内容                                                                                                                                                       |
 | ------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | 叶子模块     | PLT-03 A1—A4 identity/authentication/invitation；PLT-04 B1—B8 workspace/organization governance；SEC-01 A5 account deletion machine contract/orchestration |
-| 数量         | 3                                                                                                                                                          |
+| 数量         | 0（G10 已全部关闭：PLT-03 2026-08-09、PLT-04 2026-08-09、SEC-01 2026-08-09） |
 | 推荐计划包装 | 同一产品批次、三份计划                                                                                                                                     |
 | 内部顺序     | G09 → PLT-03 → PLT-04；SEC-01 依赖 PLT-03，并与 PLT-04 的数据归属规则协调                                                                                  |
 | 进入门禁     | Session、CSRF、邮件、权限、审计和用户/组织数据模型完成所需 ADR 与规格                                                                                      |
@@ -554,28 +555,28 @@ flowchart TD
 | G07       |        0 |     2 |         0 |                  0 |        0 |                  0 |                   0 |      2 |
 | G08       |        0 |     0 |         2 |                  0 |        0 |                  0 |                   0 |      2 |
 | G09       |        0 |     0 |         0 |                  0 |        0 |                  0 |                   0 |      0 |
-| G10       |        0 |     0 |         0 |                  0 |        2 |                  1 |                   0 |      3 |
+| G10       |        0 |     0 |         0 |                  0 |        0 |                  0 |                   0 |      0 |
 | G11       |        0 |     0 |         0 |                  0 |        2 |                  0 |                   0 |      2 |
 | G12       |        0 |     0 |         0 |                  0 |        2 |                  0 |                   0 |      2 |
 | G13       |        0 |     0 |         0 |                  0 |        2 |                  0 |                   0 |      2 |
 | G14       |        0 |     0 |         0 |                  0 |        0 |                  0 |                   1 |      1 |
 | G15       |        0 |     0 |         0 |                  0 |        0 |                  0 |                   1 |      1 |
 | G16       |        0 |     0 |         0 |                  0 |        0 |                  0 |                   4 |      4 |
-| **Total** |    **1** | **9** |     **2** |             **10** |    **8** |              **2** |               **6** | **38** |
+| **Total** |    **1** | **9** |     **2** |             **10** |    **6** |              **1** |               **6** | **35** |
 
 覆盖校验：
 
 ```text
-0 + 3 + 4 + 4 + 6 + 2 + 2 + 2 + 0 + 3 + 2 + 2 + 2 + 1 + 1 + 4 = 38
+0 + 3 + 4 + 4 + 6 + 2 + 2 + 2 + 0 + 0 + 2 + 2 + 2 + 1 + 1 + 4 = 35
 
 1 protocol
 + 9 SDK
 + 2 ingestion
 + 10 processing/storage
-+ 8 platform
-+ 2 security/lifecycle
++ 6 platform
++ 1 security/lifecycle
 + 6 CI/deployment/infra
-= 38
+= 35
 ```
 
 ## 11. 第一批后续计划设计队列
