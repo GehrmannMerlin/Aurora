@@ -101,7 +101,9 @@ async function onConfirm(): Promise<void> {
     <AuthStatusBanner v-if="phase === 'loading'" tone="neutral">正在校验验证链接…</AuthStatusBanner>
 
     <template v-else-if="phase === 'invalid-link'">
-      <AuthStatusBanner tone="warning">验证链接无效或已缺失，请检查邮箱中的完整链接。</AuthStatusBanner>
+      <AuthStatusBanner tone="warning"
+        >验证链接无效或已缺失，请检查邮箱中的完整链接。</AuthStatusBanner
+      >
       <p class="au-auth-switch">
         <AppLink to="/login" label="返回登录" />
       </p>

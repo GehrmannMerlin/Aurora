@@ -57,9 +57,9 @@ describe('openapi generator', () => {
     ] as Record<string, unknown>;
     expect(changeRolePath).toBeDefined();
     const changeRole = changeRolePath.post as Record<string, unknown>;
-    const changeRolePathParams = (
-      changeRole.parameters as Record<string, unknown>[]
-    ).filter((p) => p.in === 'path');
+    const changeRolePathParams = (changeRole.parameters as Record<string, unknown>[]).filter(
+      (p) => p.in === 'path',
+    );
     expect(changeRolePathParams.map((p) => p.name)).toEqual(['organizationId', 'accountId']);
     for (const param of changeRolePathParams) {
       expect(param).toMatchObject({ in: 'path', required: true });

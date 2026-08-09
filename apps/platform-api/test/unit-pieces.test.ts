@@ -120,7 +120,9 @@ describe('lookupIdempotency', () => {
       createdAt: '2026-08-09T00:00:00.000Z',
       updatedAt: '2026-08-09T00:00:00.000Z',
     });
-    await expect(lookupIdempotency(pool, 'key', 'digest')).resolves.toEqual({ outcome: 'conflict' });
+    await expect(lookupIdempotency(pool, 'key', 'digest')).resolves.toEqual({
+      outcome: 'conflict',
+    });
   });
 
   it('returns conflict when the key has a different digest', async () => {
@@ -133,7 +135,9 @@ describe('lookupIdempotency', () => {
       createdAt: '2026-08-09T00:00:00.000Z',
       updatedAt: '2026-08-09T00:00:00.000Z',
     });
-    await expect(lookupIdempotency(pool, 'key', 'digest')).resolves.toEqual({ outcome: 'conflict' });
+    await expect(lookupIdempotency(pool, 'key', 'digest')).resolves.toEqual({
+      outcome: 'conflict',
+    });
   });
 
   it('returns replay when a succeeded record matches the digest', async () => {

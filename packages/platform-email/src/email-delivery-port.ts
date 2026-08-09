@@ -20,10 +20,7 @@
  *   provider secret.
  */
 export type EmailIntentType =
-  | 'email_verification'
-  | 'password_reset'
-  | 'organization_invitation'
-  | 'deletion_confirmation';
+  'email_verification' | 'password_reset' | 'organization_invitation' | 'deletion_confirmation';
 
 export interface EmailDeliveryRequest {
   readonly intentType: EmailIntentType;

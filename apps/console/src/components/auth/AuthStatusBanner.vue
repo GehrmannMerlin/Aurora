@@ -9,9 +9,7 @@ const props = withDefaults(
   { tone: 'neutral', live: false },
 );
 
-const role = computed<'status' | 'alert'>(() =>
-  props.tone === 'danger' ? 'alert' : 'status',
-);
+const role = computed<'status' | 'alert'>(() => (props.tone === 'danger' ? 'alert' : 'status'));
 </script>
 
 <template>

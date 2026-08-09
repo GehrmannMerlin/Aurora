@@ -101,7 +101,9 @@ async function onSubmit(): Promise<void> {
     <AuthStatusBanner v-if="phase === 'loading'" tone="neutral">正在校验重置链接…</AuthStatusBanner>
 
     <template v-else-if="phase === 'invalid-link'">
-      <AuthStatusBanner tone="warning">重置链接无效或已缺失，请检查邮箱中的完整链接。</AuthStatusBanner>
+      <AuthStatusBanner tone="warning"
+        >重置链接无效或已缺失，请检查邮箱中的完整链接。</AuthStatusBanner
+      >
       <p class="au-auth-switch">
         <AppLink to="/login" label="返回登录" />
       </p>

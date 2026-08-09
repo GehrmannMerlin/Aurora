@@ -190,7 +190,13 @@ function formatDate(value: string): string {
             <div class="au-audit-meta">
               <span class="au-audit-action" data-testid="audit-action">{{ event.action }}</span>
               <AppStatusBadge
-                :tone="event.result === 'succeeded' ? 'success' : event.result === 'failed' ? 'danger' : 'warning'"
+                :tone="
+                  event.result === 'succeeded'
+                    ? 'success'
+                    : event.result === 'failed'
+                      ? 'danger'
+                      : 'warning'
+                "
               >
                 {{ event.result }}
               </AppStatusBadge>

@@ -174,8 +174,6 @@ describe('request/cache layer', () => {
     expect(data).toBeDefined();
     // The value must be percent-encoded once and inserted verbatim — never
     // interpreted as an ECMAScript replacement pattern (`$1`/`$&`/`$'`).
-    expect(capturedUrl).toContain(
-      `/organizations/${encodeURIComponent("org$1&$&$'")}/projects`,
-    );
+    expect(capturedUrl).toContain(`/organizations/${encodeURIComponent("org$1&$&$'")}/projects`);
   });
 });

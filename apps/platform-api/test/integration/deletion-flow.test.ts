@@ -27,7 +27,11 @@ const COOLING_MS = 168 * 60 * 60 * 1000;
 
 interface PreflightBody {
   status?: string;
-  blockingOrganizations?: readonly { organizationId?: string; organizationName?: string; organizationKind?: string }[];
+  blockingOrganizations?: readonly {
+    organizationId?: string;
+    organizationName?: string;
+    organizationKind?: string;
+  }[];
   requiredLifecycle?: { coolingHours?: number; onlineCleanupDays?: number };
   serverTime?: string;
 }
@@ -388,11 +392,14 @@ describeDb('A5 account deletion flow (real PostgreSQL 17 + Redis)', () => {
 
     const handoff = await pool.query<{
       status: string;
-      required_lifecycle: { onlineCleanupDays?: number; auditRetentionYears?: number; backupRetentionDays?: number };
-    }>(
-      'SELECT status, required_lifecycle FROM account_cleanup_handoffs WHERE account_id = $1',
-      [actor.accountId],
-    );
+      required_lifecycle: {
+        onlineCleanupDays?: number;
+        auditRetentionYears?: number;
+        backupRetentionDays?: number;
+      };
+    }>('SELECT status, required_lifecycle FROM account_cleanup_handoffs WHERE account_id = $1', [
+      actor.accountId,
+    ]);
     expect(handoff.rows.length).toBe(1);
     expect(handoff.rows[0]?.status).toBe('pending');
     expect(handoff.rows[0]?.required_lifecycle).toMatchObject({

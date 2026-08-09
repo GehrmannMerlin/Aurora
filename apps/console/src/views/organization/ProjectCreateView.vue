@@ -173,11 +173,7 @@ function onEnterProject(): void {
           }}</code>
         </p>
         <p class="au-success-text">默认环境：{{ createResult.defaultEnvironment }}</p>
-        <AppButton
-          variant="primary"
-          data-testid="enter-project-button"
-          @click="onEnterProject"
-        >
+        <AppButton variant="primary" data-testid="enter-project-button" @click="onEnterProject">
           进入项目
         </AppButton>
       </div>

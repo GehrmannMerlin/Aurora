@@ -276,33 +276,36 @@ describe('B4 organization settings / timezone (7B)', () => {
     let calls = 0;
     let capturedResourceVersion = '';
     mockServer.use(
-      http.patch('/api/platform/v1/organizations/:organizationId/settings/timezone', async ({ request }) => {
-        calls += 1;
-        const body = (await request.json()) as { resourceVersion: string };
-        if (calls === 1) {
+      http.patch(
+        '/api/platform/v1/organizations/:organizationId/settings/timezone',
+        async ({ request }) => {
+          calls += 1;
+          const body = (await request.json()) as { resourceVersion: string };
+          if (calls === 1) {
+            return HttpResponse.json(
+              {
+                type: 'about:blank',
+                title: 'Version conflict',
+                status: 412,
+                detail: 'The organization settings version is stale.',
+                code: 'version_conflict',
+                requestId: 'req_test_412',
+                fieldErrors: [{ field: 'resourceVersion', reason: 'Current version is 3.' }],
+              } as JsonBodyType,
+              { status: 412 },
+            );
+          }
+          capturedResourceVersion = body.resourceVersion;
           return HttpResponse.json(
             {
-              type: 'about:blank',
-              title: 'Version conflict',
-              status: 412,
-              detail: 'The organization settings version is stale.',
-              code: 'version_conflict',
-              requestId: 'req_test_412',
-              fieldErrors: [{ field: 'resourceVersion', reason: 'Current version is 3.' }],
+              organizationId: 'org_test_1',
+              timezone: 'Asia/Tokyo',
+              resourceVersion: '3',
             } as JsonBodyType,
-            { status: 412 },
+            { status: 200 },
           );
-        }
-        capturedResourceVersion = body.resourceVersion;
-        return HttpResponse.json(
-          {
-            organizationId: 'org_test_1',
-            timezone: 'Asia/Tokyo',
-            resourceVersion: '3',
-          } as JsonBodyType,
-          { status: 200 },
-        );
-      }),
+        },
+      ),
     );
     await router.push('/organizations/org_test_1/settings');
     await router.isReady();
@@ -596,7 +599,10 @@ describe('B8 trash restore (7C)', () => {
                 code: 'version_conflict',
                 requestId: 'req_test_412',
                 fieldErrors: [
-                  { field: 'resourceVersion', reason: 'Current version is 2026-08-09T02:00:00.000Z.' },
+                  {
+                    field: 'resourceVersion',
+                    reason: 'Current version is 2026-08-09T02:00:00.000Z.',
+                  },
                 ],
               } as JsonBodyType,
               { status: 412 },

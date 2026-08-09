@@ -70,7 +70,10 @@ const transferError = ref<string | null>(null);
 const myAccountId = computed(() => session.account?.accountId ?? null);
 
 const myRole = computed<OrgRole | null>(() => {
-  const mine = myAccountId.value === null ? null : members.value.find((m) => m.accountId === myAccountId.value);
+  const mine =
+    myAccountId.value === null
+      ? null
+      : members.value.find((m) => m.accountId === myAccountId.value);
   return mine?.orgRole ?? null;
 });
 
@@ -343,7 +346,11 @@ onMounted(() => {
               data-testid="invite-email-input"
               @input="inviteEmail = ($event.target as HTMLInputElement).value"
             />
-            <p v-if="inviteEmailError !== null" class="au-field-error" data-testid="invite-email-error">
+            <p
+              v-if="inviteEmailError !== null"
+              class="au-field-error"
+              data-testid="invite-email-error"
+            >
               {{ inviteEmailError }}
             </p>
           </div>
@@ -354,7 +361,9 @@ onMounted(() => {
               class="au-field__input"
               :value="inviteRole"
               data-testid="invite-role-select"
-              @change="inviteRole = ($event.target as HTMLSelectElement).value as 'admin' | 'member'"
+              @change="
+                inviteRole = ($event.target as HTMLSelectElement).value as 'admin' | 'member'
+              "
             >
               <option value="member">member</option>
               <option value="admin">admin</option>
@@ -405,7 +414,11 @@ onMounted(() => {
         <p v-else class="au-hint">本会话尚未创建邀请。</p>
       </section>
 
-      <section v-if="isOwner && transferableMembers.length > 0" class="au-section" data-testid="transfer-ownership">
+      <section
+        v-if="isOwner && transferableMembers.length > 0"
+        class="au-section"
+        data-testid="transfer-ownership"
+      >
         <h2 class="au-section-title">转让所有权</h2>
         <form class="au-form" novalidate @submit.prevent="onTransferOwnership">
           <div class="au-field">

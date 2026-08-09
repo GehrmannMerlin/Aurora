@@ -443,7 +443,8 @@ async function onRequestDeletionEmail(): Promise<void> {
 
         <template v-else>
           <AuthStatusBanner tone="neutral" data-testid="deletion-email-sent">
-            注销确认邮件已发送至 {{ maskedEmail }}，请打开邮件中的链接完成确认，然后返回此处输入当前密码并提交注销申请。
+            注销确认邮件已发送至
+            {{ maskedEmail }}，请打开邮件中的链接完成确认，然后返回此处输入当前密码并提交注销申请。
           </AuthStatusBanner>
           <form class="au-auth-form" novalidate @submit.prevent="onDeleteAccount">
             <AuthFormField

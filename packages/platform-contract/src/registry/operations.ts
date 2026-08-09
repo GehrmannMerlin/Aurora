@@ -331,12 +331,7 @@ export const PLATFORM_OPERATIONS: readonly OperationDef[] = [
     summary: 'Resolve the account deletion preflight projection (unique-owner blockers)',
     request: { csrf: false, idempotency: false },
     responses: { 200: identityDeleteAccountPreflightResponse },
-    errorCodes: [
-      'structural_error',
-      'authentication',
-      'authorization',
-      'authority_unavailable',
-    ],
+    errorCodes: ['structural_error', 'authentication', 'authorization', 'authority_unavailable'],
     page: 'account.security',
     tags: ['identity', 'auth'],
   },

@@ -321,7 +321,11 @@ function formatDate(value: string): string {
             <AppButton variant="secondary" data-testid="token-copy-button" @click="onCopyPlaintext">
               {{ copyState === 'copied' ? '已复制' : '复制' }}
             </AppButton>
-            <AppButton variant="danger" data-testid="token-close-panel" @click="onClosePlaintextPanel">
+            <AppButton
+              variant="danger"
+              data-testid="token-close-panel"
+              @click="onClosePlaintextPanel"
+            >
               我已保存，关闭
             </AppButton>
           </div>
@@ -378,7 +382,11 @@ function formatDate(value: string): string {
                 data-testid="token-name-input"
                 @input="tokenName = ($event.target as HTMLInputElement).value"
               />
-              <p v-if="tokenNameError !== null" class="au-field-error" data-testid="token-name-error">
+              <p
+                v-if="tokenNameError !== null"
+                class="au-field-error"
+                data-testid="token-name-error"
+              >
                 {{ tokenNameError }}
               </p>
             </div>
@@ -410,7 +418,11 @@ function formatDate(value: string): string {
                 data-testid="token-expiry-input"
                 @input="expiresAt = ($event.target as HTMLInputElement).value"
               />
-              <p v-if="expiresAtError !== null" class="au-field-error" data-testid="token-expiry-error">
+              <p
+                v-if="expiresAtError !== null"
+                class="au-field-error"
+                data-testid="token-expiry-error"
+              >
                 {{ expiresAtError }}
               </p>
             </div>
@@ -430,7 +442,11 @@ function formatDate(value: string): string {
               {{ creating ? '创建中…' : '创建令牌' }}
             </AppButton>
 
-            <AppStatusBadge v-if="createError !== null" tone="danger" data-testid="token-create-error">
+            <AppStatusBadge
+              v-if="createError !== null"
+              tone="danger"
+              data-testid="token-create-error"
+            >
               {{ createError }}
             </AppStatusBadge>
           </form>

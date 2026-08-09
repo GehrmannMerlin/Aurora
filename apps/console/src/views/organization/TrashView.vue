@@ -186,7 +186,9 @@ async function restoreOnce(project: TrashedProjectSummary, attempt: number): Pro
       { scope: { type: 'organization', id: orgId }, csrf: session.csrf },
     );
     if (data.status === 'active') {
-      projects.value = projects.value.filter((candidate) => candidate.projectId !== project.projectId);
+      projects.value = projects.value.filter(
+        (candidate) => candidate.projectId !== project.projectId,
+      );
       invalidateScope({ type: 'organization', id: orgId });
       restoreInfo.value = `项目「${project.name}」已恢复。`;
     }
@@ -246,7 +248,9 @@ function formatDate(value: string): string {
                 <span class="au-trash-name" data-testid="trash-name">{{ project.name }}</span>
                 <span class="au-trash-attr">{{ project.frameworkType }}</span>
                 <span class="au-trash-attr">回收 {{ formatDate(project.trashedAt) }}</span>
-                <span class="au-trash-attr">可恢复至 {{ formatDate(project.recoverableUntil) }}</span>
+                <span class="au-trash-attr"
+                  >可恢复至 {{ formatDate(project.recoverableUntil) }}</span
+                >
               </div>
               <AppButton
                 variant="primary"
@@ -261,10 +265,18 @@ function formatDate(value: string): string {
           <p v-else class="au-hint">回收站为空。</p>
         </section>
 
-        <AppStatusBadge v-if="restoreInfo !== null" tone="success" data-testid="trash-restore-success">
+        <AppStatusBadge
+          v-if="restoreInfo !== null"
+          tone="success"
+          data-testid="trash-restore-success"
+        >
           {{ restoreInfo }}
         </AppStatusBadge>
-        <AppStatusBadge v-if="restoreError !== null" tone="danger" data-testid="trash-restore-error">
+        <AppStatusBadge
+          v-if="restoreError !== null"
+          tone="danger"
+          data-testid="trash-restore-error"
+        >
           {{ restoreError }}
         </AppStatusBadge>
       </template>

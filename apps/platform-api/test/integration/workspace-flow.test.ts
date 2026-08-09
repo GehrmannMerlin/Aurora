@@ -92,10 +92,7 @@ describeDb('B1 workspace list flow (real PostgreSQL 17 + Redis)', () => {
   }
 
   /** Create a project through the B2 route as the org owner. */
-  async function createProject(
-    app: FastifyInstance,
-    owner: RegisteredActor,
-  ): Promise<string> {
+  async function createProject(app: FastifyInstance, owner: RegisteredActor): Promise<string> {
     const response = await app.inject({
       method: 'POST',
       url: `/api/platform/v1/organizations/${owner.organizationId}/projects`,

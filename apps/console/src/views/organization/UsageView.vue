@@ -19,12 +19,8 @@ const organizationId = computed(() => {
   <section class="au-status au-surface" data-testid="usage-view">
     <AppPageHeader title="用量" />
     <AppStatusBadge tone="warning">功能未提供</AppStatusBadge>
-    <p class="au-status-detail">
-      资源用量上报尚未提供；此处不会显示任何模拟数据或图表。
-    </p>
-    <p v-if="organizationId !== null" class="au-status-scope">
-      组织 {{ organizationId }}
-    </p>
+    <p class="au-status-detail">资源用量上报尚未提供；此处不会显示任何模拟数据或图表。</p>
+    <p v-if="organizationId !== null" class="au-status-scope">组织 {{ organizationId }}</p>
   </section>
 </template>
 

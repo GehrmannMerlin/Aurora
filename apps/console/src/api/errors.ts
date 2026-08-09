@@ -89,8 +89,6 @@ export function normalizeProblem(raw: unknown, status: number): ApiError {
     message: problem.title,
     requestId: problem.requestId,
     retryAfter: problem.retryAfter,
-    ...(problem.fieldErrors === undefined
-      ? {}
-      : { fieldErrors: problem.fieldErrors }),
+    ...(problem.fieldErrors === undefined ? {} : { fieldErrors: problem.fieldErrors }),
   });
 }

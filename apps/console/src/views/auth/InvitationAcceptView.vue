@@ -59,9 +59,7 @@ const role = ref<'owner' | 'admin' | 'member' | null>(null);
 const acceptResponse = ref<AcceptResponse | null>(null);
 const started = ref(false);
 
-const roleLabel = computed<string>(() =>
-  role.value === null ? '' : ROLE_LABEL[role.value],
-);
+const roleLabel = computed<string>(() => (role.value === null ? '' : ROLE_LABEL[role.value]));
 
 const acceptedPath = computed<string>(() => {
   const target = acceptResponse.value?.navigationTargets[0];
@@ -165,7 +163,11 @@ async function onSwitchAccount(): Promise<void> {
   // User-initiated sign-out: never auto-logout (A4). Log out explicitly, then land on login.
   if (session.csrf !== null) {
     try {
-      await platformRequest(OPERATION_ID_LOGOUT, {}, { scope: { type: 'account' }, csrf: session.csrf });
+      await platformRequest(
+        OPERATION_ID_LOGOUT,
+        {},
+        { scope: { type: 'account' }, csrf: session.csrf },
+      );
     } catch {
       // best-effort; client state is cleared below regardless
     }
@@ -180,7 +182,9 @@ async function onSwitchAccount(): Promise<void> {
     <AuthStatusBanner v-if="phase === 'loading'" tone="neutral">正在校验邀请链接…</AuthStatusBanner>
 
     <template v-else-if="phase === 'invalid-link'">
-      <AuthStatusBanner tone="warning">邀请链接无效或已缺失，请检查邮件中的完整链接。</AuthStatusBanner>
+      <AuthStatusBanner tone="warning"
+        >邀请链接无效或已缺失，请检查邮件中的完整链接。</AuthStatusBanner
+      >
       <p class="au-auth-switch">
         <AppLink to="/login" label="返回登录" />
       </p>
@@ -190,7 +194,8 @@ async function onSwitchAccount(): Promise<void> {
       <AuthStatusBanner v-if="maskedEmail !== null" tone="neutral">
         你被邀请加入
         <strong>{{ organizationName ?? '该组织' }}</strong>
-        （邀请发送至 <strong>{{ maskedEmail }}</strong>）。
+        （邀请发送至 <strong>{{ maskedEmail }}</strong
+        >）。
       </AuthStatusBanner>
       <dl class="au-invite-meta">
         <div class="au-invite-meta__row">

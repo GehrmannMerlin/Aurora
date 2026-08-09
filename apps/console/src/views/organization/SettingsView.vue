@@ -227,7 +227,11 @@ async function onUpdateTimezone(): Promise<void> {
         <AppStatusBadge v-if="updateInfo !== null" tone="success" data-testid="timezone-success">
           {{ updateInfo }}
         </AppStatusBadge>
-        <AppStatusBadge v-if="updateError !== null" tone="danger" data-testid="timezone-error-banner">
+        <AppStatusBadge
+          v-if="updateError !== null"
+          tone="danger"
+          data-testid="timezone-error-banner"
+        >
           {{ updateError }}
         </AppStatusBadge>
       </form>

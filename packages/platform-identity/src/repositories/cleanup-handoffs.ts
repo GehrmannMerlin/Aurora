@@ -4,11 +4,7 @@ import { isoTimestamp } from './timestamp.js';
 
 /** Lifecycle of a persisted cleanup handoff, consumed by the future SEC-02 worker. */
 export type CleanupHandoffStatus =
-  | 'pending'
-  | 'in_progress'
-  | 'succeeded'
-  | 'failed'
-  | 'dead_lettered';
+  'pending' | 'in_progress' | 'succeeded' | 'failed' | 'dead_lettered';
 
 /** camelCase projection of an account_cleanup_handoffs row. */
 export interface CleanupHandoffRow {
