@@ -63,13 +63,13 @@ const PROJECT_ENTRIES: ReadonlyArray<{ name: string; path: string }> = [
   { name: '设置', path: '/organizations/org_test_1/projects/prj_test_1/settings' },
 ];
 
-const ORG_ENTRIES: ReadonlyArray<{ name: string; path: string }> = [
-  { name: '成员', path: '/organizations/org_test_1/members' },
-  { name: '设置', path: '/organizations/org_test_1/settings' },
-  { name: '用量', path: '/organizations/org_test_1/usage' },
-  { name: '令牌', path: '/organizations/org_test_1/tokens' },
-  { name: '审计', path: '/organizations/org_test_1/audit' },
-  { name: '回收站', path: '/organizations/org_test_1/trash' },
+const ORG_ENTRIES: ReadonlyArray<{ name: string; path: string; view: string }> = [
+  { name: '成员', path: '/organizations/org_test_1/members', view: 'members-view' },
+  { name: '设置', path: '/organizations/org_test_1/settings', view: 'settings-view' },
+  { name: '用量', path: '/organizations/org_test_1/usage', view: 'usage-view' },
+  { name: '令牌', path: '/organizations/org_test_1/tokens', view: 'tokens-view' },
+  { name: '审计', path: '/organizations/org_test_1/audit', view: 'audit-view' },
+  { name: '回收站', path: '/organizations/org_test_1/trash', view: 'trash-view' },
 ];
 
 test('every project sidebar entry is reachable by real click and shows unavailable (no fake data)', async ({
@@ -117,7 +117,7 @@ test('every organization sidebar entry is reachable by real click after switchin
   for (const entry of ORG_ENTRIES) {
     await page.getByRole('link', { name: entry.name, exact: true }).click();
     await expect(page).toHaveURL(new RegExp(escapeRegExp(entry.path)));
-    await expect(page.getByTestId('unavailable-view')).toBeVisible();
+    await expect(page.getByTestId(entry.view)).toBeVisible();
   }
 });
 
