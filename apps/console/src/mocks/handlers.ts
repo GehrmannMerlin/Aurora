@@ -4,6 +4,7 @@ import {
   validChangePasswordSamples,
   validConfirmEmailVerificationSamples,
   validConfirmPasswordResetSamples,
+  validListProjectsSamples,
   validLoginSamples,
   validLogoutSamples,
   validNavigationSamples,
@@ -69,6 +70,7 @@ export const handlerControls = {
   changePasswordRequests: 0,
   acceptInvitationRequests: 0,
   intentLinkRequests: 0,
+  listProjectsRequests: 0,
   /** Toggle for the session projection: true = authenticated, false = 401. */
   sessionAuthenticated: readStoredSessionAuthenticated(),
 };
@@ -183,6 +185,11 @@ export function createPlatformHandlers() {
       handlerControls.acceptInvitationRequests += 1;
       await maybeDelay();
       return HttpResponse.json(validAcceptInvitationSamples[0] as JsonBodyType, { status: 200 });
+    }),
+    http.get('/api/platform/v1/organizations/:organizationId/projects', async () => {
+      handlerControls.listProjectsRequests += 1;
+      await maybeDelay();
+      return HttpResponse.json(validListProjectsSamples[0] as JsonBodyType, { status: 200 });
     }),
     http.get('/api/platform/v1/auth/verify/:token', async () => {
       handlerControls.intentLinkRequests += 1;

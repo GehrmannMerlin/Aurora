@@ -17,7 +17,8 @@ const instanceParams = projectParams.extend({ instanceId: z.string().min(1) });
 const anyQuery = z.record(z.string(), z.string());
 
 const unavailable = (): Promise<Component> => import('../components/pages/UnavailableView.vue');
-const workspaceHome = (): Promise<Component> => import('../components/pages/WorkspaceHomeView.vue');
+const workspaceHome = (): Promise<Component> => import('../views/workspace/WorkspaceHomeView.vue');
+const usageView = (): Promise<Component> => import('../views/organization/UsageView.vue');
 const registerView = (): Promise<Component> => import('../views/auth/RegisterView.vue');
 const verifyEmailView = (): Promise<Component> => import('../views/auth/VerifyEmailView.vue');
 const verifyEmailConfirmView = (): Promise<Component> =>
@@ -172,9 +173,9 @@ export const ROUTE_REGISTRY: readonly RouteEntry[] = [
     label: '用量',
     paramsSchema: orgParams,
     querySchema: anyQuery,
-    lazy: unavailable,
+    lazy: usageView,
     menu: true,
-    unavailableReason: 'capability-not-provided',
+    unavailableReason: null,
   },
   {
     routeId: 'organization.tokens',

@@ -63,6 +63,7 @@ describe('RouteTarget registry', () => {
 
   it('marks every non-shell business target as unavailable (no fake content)', () => {
     // PLT-03 replaced these unavailable stubs with real auth/account views.
+    // PLT-04 7A adds the real B1 workspace home and the honest B5 usage-unavailable page.
     const realViewRoutes = new Set([
       'auth.register',
       'auth.verify-email',
@@ -72,6 +73,7 @@ describe('RouteTarget registry', () => {
       'auth.reset-password',
       'invitation.accept',
       'account.security',
+      'organization.usage',
     ]);
     for (const entry of ROUTE_REGISTRY) {
       if (entry.routeId === 'workspace.home') continue;

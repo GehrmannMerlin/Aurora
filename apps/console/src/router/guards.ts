@@ -1,5 +1,6 @@
 import type { Router } from 'vue-router';
 import { pinia } from '../stores';
+import { useNavigationStore } from '../stores/navigation';
 import { useSessionStore } from '../stores/session';
 
 // Pure auth-form pages that an already-authenticated user should never see. The
@@ -24,6 +25,25 @@ export function installSessionGuard(router: Router): void {
       session.status === 'authenticated'
     ) {
       return { name: 'workspace.home' };
+    }
+    // Org-scoped routes require membership of the target org. The server re-checks
+    // the authoritative membership row on every request; this guard only short-
+    // circuits navigation to an org the navigation context does not expose, and
+    // stays silent when the context is still loading or unavailable.
+    if (
+      session.status === 'authenticated' &&
+      (to.meta.scope === 'organization' || to.meta.scope === 'project')
+    ) {
+      const navigation = useNavigationStore(pinia);
+      if (navigation.status === 'idle') await navigation.load();
+      const organizationId = to.params.organizationId;
+      if (
+        typeof organizationId === 'string' &&
+        navigation.status === 'ready' &&
+        !navigation.organizations.some((org) => org.organizationId === organizationId)
+      ) {
+        return { name: 'forbidden' };
+      }
     }
     return true;
   });

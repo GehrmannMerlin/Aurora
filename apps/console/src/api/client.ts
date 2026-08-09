@@ -3,9 +3,23 @@ import {
   ClientInputError,
   parseResponse,
   PLATFORM_OPERATIONS,
+  type OperationDef,
 } from '@aurora/platform-contract/client';
 import type { ScopeKey } from './scope.js';
 import { ApiError, normalizeProblem } from './errors.js';
+
+/**
+ * Request input for a platform operation. `pathParams` are interpolated into the
+ * contract path template (e.g. `organizationListProjects` →
+ * `/api/platform/v1/organizations/:organizationId/projects`) and validated
+ * against the operation's pathParams schema. The generated `buildRequest` only
+ * validates query/body, so path interpolation lives in this layer.
+ */
+export interface PlatformRequestInput {
+  query?: unknown;
+  body?: unknown;
+  pathParams?: Readonly<Record<string, string>>;
+}
 
 export interface RequestOptions {
   scope: ScopeKey;
@@ -40,9 +54,39 @@ export function createIdempotencyKey(): string {
   return `${prefix}${Math.random().toString(36).slice(2)}`.slice(0, 36).padEnd(36, '0');
 }
 
+function interpolatePathParams(
+  op: OperationDef,
+  path: string,
+  pathParams: Readonly<Record<string, string>> | undefined,
+): string {
+  if (op.request?.pathParams === undefined) {
+    if (pathParams !== undefined && Object.keys(pathParams).length > 0) {
+      throw new ApiError({
+        code: 'structural_error',
+        message: `Operation ${op.operationId} accepts no path parameters`,
+      });
+    }
+    return path;
+  }
+  const paramsResult = op.request.pathParams.zod.safeParse(pathParams ?? {});
+  if (!paramsResult.success) {
+    throw new ApiError({
+      code: 'structural_error',
+      message: `Invalid path parameters for ${op.operationId}`,
+    });
+  }
+  let interpolated = path;
+  for (const [key, value] of Object.entries(
+    paramsResult.data as Readonly<Record<string, string>>,
+  )) {
+    interpolated = interpolated.replace(`:${key}`, encodeURIComponent(value));
+  }
+  return interpolated;
+}
+
 export async function platformRequest<T>(
   operationId: string,
-  input: { query?: unknown; body?: unknown },
+  input: PlatformRequestInput,
   options: RequestOptions,
 ): Promise<T> {
   const op = operationById.get(operationId);
@@ -51,14 +95,17 @@ export async function platformRequest<T>(
   }
   let request;
   try {
-    request = buildRequest(op, input);
+    request = buildRequest(op, { query: input.query, body: input.body });
   } catch (error) {
     if (error instanceof ClientInputError) {
       throw new ApiError({ code: 'structural_error', message: error.message });
     }
     throw error;
   }
-  const url = new URL(request.path, window.location.origin);
+  const url = new URL(
+    interpolatePathParams(op, request.path, input.pathParams),
+    window.location.origin,
+  );
   if (request.query !== undefined) {
     for (const [key, value] of Object.entries(request.query as Readonly<Record<string, unknown>>)) {
       url.searchParams.set(key, String(value));
