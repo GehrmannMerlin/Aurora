@@ -27,6 +27,24 @@ import { handleListProjects } from './routes/workspace.js';
 import { handleCreateProject } from './routes/projects.js';
 import { handleUpdateTimezone } from './routes/settings.js';
 import {
+  handleListMembers,
+  handleChangeRole,
+  handleRemoveMember,
+  handleTransferOwnership,
+} from './routes/members.js';
+import {
+  handleInviteMember,
+  handleRevokeInvitation,
+  handleResendInvitation,
+} from './routes/invitations.js';
+import {
+  handleListPrivateTokens,
+  handleCreatePrivateToken,
+  handleRevokePrivateToken,
+} from './routes/private-tokens.js';
+import { handleListSecurityAudit } from './routes/audit.js';
+import { handleListTrash, handleRestoreProject } from './routes/trash.js';
+import {
   handleInvitationLink,
   handleResetPasswordLink,
   handleVerifyEmailLink,
@@ -148,6 +166,85 @@ export function buildPlatformApi(deps: PlatformApiDependencies): FastifyInstance
     '/api/platform/v1/organizations/:organizationId/settings/timezone',
     async (request, reply) => {
       await handleUpdateTimezone(request, reply, routeContext);
+    },
+  );
+
+  // PLT-04 6C B3/B6/B7/B8 routes. All state-changing commands are CSRF-protected
+  // by the plugins (the operation registry marks them csrf:true); GET queries are
+  // CSRF-free. Org scoping and fresh membership re-reads live in the handlers.
+  app.get('/api/platform/v1/organizations/:organizationId/members', async (request, reply) => {
+    await handleListMembers(request, reply, routeContext);
+  });
+
+  app.post(
+    '/api/platform/v1/organizations/:organizationId/members/:accountId/role',
+    async (request, reply) => {
+      await handleChangeRole(request, reply, routeContext);
+    },
+  );
+
+  app.post(
+    '/api/platform/v1/organizations/:organizationId/members/:accountId/remove',
+    async (request, reply) => {
+      await handleRemoveMember(request, reply, routeContext);
+    },
+  );
+
+  app.post('/api/platform/v1/organizations/:organizationId/ownership', async (request, reply) => {
+    await handleTransferOwnership(request, reply, routeContext);
+  });
+
+  app.post('/api/platform/v1/organizations/:organizationId/invitations', async (request, reply) => {
+    await handleInviteMember(request, reply, routeContext);
+  });
+
+  app.post(
+    '/api/platform/v1/organizations/:organizationId/invitations/:invitationId/revoke',
+    async (request, reply) => {
+      await handleRevokeInvitation(request, reply, routeContext);
+    },
+  );
+
+  app.post(
+    '/api/platform/v1/organizations/:organizationId/invitations/:invitationId/resend',
+    async (request, reply) => {
+      await handleResendInvitation(request, reply, routeContext);
+    },
+  );
+
+  app.get(
+    '/api/platform/v1/organizations/:organizationId/private-tokens',
+    async (request, reply) => {
+      await handleListPrivateTokens(request, reply, routeContext);
+    },
+  );
+
+  app.post(
+    '/api/platform/v1/organizations/:organizationId/private-tokens',
+    async (request, reply) => {
+      await handleCreatePrivateToken(request, reply, routeContext);
+    },
+  );
+
+  app.post(
+    '/api/platform/v1/organizations/:organizationId/private-tokens/:tokenId/revoke',
+    async (request, reply) => {
+      await handleRevokePrivateToken(request, reply, routeContext);
+    },
+  );
+
+  app.get('/api/platform/v1/organizations/:organizationId/audit', async (request, reply) => {
+    await handleListSecurityAudit(request, reply, routeContext);
+  });
+
+  app.get('/api/platform/v1/organizations/:organizationId/trash', async (request, reply) => {
+    await handleListTrash(request, reply, routeContext);
+  });
+
+  app.post(
+    '/api/platform/v1/organizations/:organizationId/trash/:projectId/restore',
+    async (request, reply) => {
+      await handleRestoreProject(request, reply, routeContext);
     },
   );
 

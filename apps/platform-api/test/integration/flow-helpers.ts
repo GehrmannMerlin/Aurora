@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import type { FastifyInstance } from 'fastify';
-import { extractSessionCookie } from './helpers.js';
+import type { Pool } from 'pg';
+import { extractSessionCookie, outboxIntentToken } from './helpers.js';
 
 /** A freshly registered account plus its session and personal workspace. */
 export interface RegisteredActor {
@@ -56,5 +57,64 @@ export async function registerActor(app: FastifyInstance, email: string): Promis
     csrf,
     accountId: body.accountId,
     organizationId: body.workspaceId.organizationId,
+  };
+}
+
+/**
+ * Register a fresh account AND complete its email verification, returning the
+ * ROTATED `authenticated` session (the confirm POST rotates the pending-
+ * verification session and reissues the HttpOnly cookie, so the returned cookie
+ * is the post-rotation one and the CSRF token is re-fetched against it).
+ *
+ * PRD §4.1 gates B3 invitations and B6 private-token creation on a verified
+ * email, so the B3/B6 flow tests create their acting owner through this helper.
+ * Requires the same `pool` used for the suite so it can read the verification
+ * intent token out of the outbox (mirrors email-verification-flow.test.ts).
+ */
+export async function registerVerifiedActor(
+  app: FastifyInstance,
+  pool: Pool,
+  email: string,
+): Promise<RegisteredActor> {
+  const pending = await registerActor(app, email);
+
+  const token = await outboxIntentToken(pool, 'email.verification');
+  const link = await app.inject({ method: 'GET', url: `/api/platform/v1/auth/verify/${token}` });
+  if (link.statusCode !== 200) {
+    throw new Error(`verify link failed with ${link.statusCode}`);
+  }
+  const linkBody = link.json() as { csrf?: string };
+  const linkCsrf = linkBody.csrf;
+  if (typeof linkCsrf !== 'string' || linkCsrf.length === 0) {
+    throw new Error('no csrf in verify link response');
+  }
+  const setCookie = link.headers['set-cookie'];
+  const cookieValue = Array.isArray(setCookie) ? setCookie[0] : setCookie;
+  const intentMatch = /^aurora_intent=([^;]+)/.exec(cookieValue ?? '');
+  const intentCookie = intentMatch?.[1];
+  if (intentCookie === undefined) {
+    throw new Error('no aurora_intent cookie in verify link response');
+  }
+
+  const confirm = await app.inject({
+    method: 'POST',
+    url: '/api/platform/v1/auth/email/confirm',
+    headers: {
+      cookie: `aurora_session=${pending.cookie}; aurora_intent=${intentCookie}`,
+      'content-type': 'application/json',
+      'x-aurora-csrf': linkCsrf,
+    },
+    payload: JSON.stringify({ idempotencyKey: randomUUID() }),
+  });
+  if (confirm.statusCode !== 200) {
+    throw new Error(`email confirm failed with ${confirm.statusCode}`);
+  }
+  const rotatedCookie = extractSessionCookie(confirm.headers['set-cookie']);
+  const csrf = await csrfFor(app, rotatedCookie);
+  return {
+    cookie: rotatedCookie,
+    csrf,
+    accountId: pending.accountId,
+    organizationId: pending.organizationId,
   };
 }

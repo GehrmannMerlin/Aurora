@@ -9,9 +9,12 @@ import { ServiceError } from '../service-error.js';
 /**
  * Canonical UUID shape. The contract's branded-id schemas are length-bounded
  * strings, not uuid-typed, so malformed path ids must be rejected here before
- * they reach PostgreSQL (spec §13 / ADR-029).
+ * they reach PostgreSQL (spec §13 / ADR-029). Exported so 6C body id fields
+ * (e.g. `transferOwnership.newOwnerAccountId`) are validated as UUIDs before
+ * they reach a `WHERE account_id = $n` predicate (a non-UUID would surface as a
+ * Postgres cast error instead of a clean 400 structural_error).
  */
-const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+export const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 /** One entry of the contract `navigationTargets` array (closed Route Target). */
 export interface OrgNavigationTarget {
