@@ -118,13 +118,17 @@ echo "==> current -> ${RELEASE_DIR}"
 AURORA_NGINX_DIR="${REMOTE_ROOT}/deploy/nginx"
 SSH "mkdir -p '${AURORA_NGINX_DIR}/conf.d' '${AURORA_NGINX_DIR}/www' && cp '${RELEASE_DIR}/deploy/preview/nginx/aurora-tls.conf' '${AURORA_NGINX_DIR}/conf.d/aurora-tls.conf' && cp '${RELEASE_DIR}/deploy/preview/nginx/console-default.conf' '${AURORA_NGINX_DIR}/conf.d/console-default.conf' && cp '${RELEASE_DIR}/deploy/preview/nginx/preview-status.html' '${AURORA_NGINX_DIR}/www/preview-status.html' && cp '${RELEASE_DIR}/deploy/preview/compose.aurora-override.yml' '${REMOTE_ROOT}/deploy/compose.aurora-override.yml'" || { echo "NGINX SYNC FAILED"; exit 1; }
 echo "==> nginx config synced to host"
-# Recreate the existing nginx container with the Aurora override so the bind
-# mounts (aurora-tls.conf / api proxy) take effect. --no-build reuses the
-# already-pulled Lumina nginx image; LUMINA_RELEASE_COMMIT is interpolated by
-# compose.prod.yml's nginx build args even on a plain `up`, so supply it
-# (harmless: --no-build means it is never used to build). Never touches other
-# Lumina containers.
-SSH "cd /opt/lumina/app/deploy && LUMINA_RELEASE_COMMIT=preview-aurora docker compose -f compose.prod.yml -f '${REMOTE_ROOT}/deploy/compose.aurora-override.yml' up -d --no-deps --no-build nginx" || { echo "NGINX RELOAD FAILED"; exit 1; }
+# Reload the shared Lumina nginx in place. The aurora-tls.conf change is already
+# visible inside the container (read-only bind mount), so only a reload is
+# needed — no container recreate. This avoids interpolating Lumina's full
+# compose.prod.yml (which would require Milvus/MINIO/etc. secrets) and never
+# touches other Lumina containers. Fall back to the override compose recreate
+# only if the nginx container is missing.
+if SSH "docker inspect -f '{{.State.Running}}' lumina-prod-nginx-1 2>/dev/null | grep -q true"; then
+  SSH "docker exec lumina-prod-nginx-1 nginx -t && docker exec lumina-prod-nginx-1 nginx -s reload" || { echo "NGINX RELOAD FAILED"; exit 1; }
+else
+  SSH "cd /opt/lumina/app/deploy && LUMINA_RELEASE_COMMIT=preview-aurora docker compose -f compose.prod.yml -f '${REMOTE_ROOT}/deploy/compose.aurora-override.yml' up -d --no-deps --no-build nginx" || { echo "NGINX RELOAD FAILED"; exit 1; }
+fi
 echo "==> nginx reloaded with Aurora vhosts"
 
 echo "==> Deploy complete: release ${RELEASE_ID}"
