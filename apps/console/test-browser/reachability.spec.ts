@@ -23,6 +23,24 @@ async function setMockScope(
   );
 }
 
+async function setSessionAuthenticated(page: Page, authenticated: boolean): Promise<void> {
+  await page.evaluate(
+    ({ origin, value }) =>
+      fetch(`${origin}/__mock/session`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ authenticated: value }),
+      }),
+    { origin: server!.origin, value: authenticated },
+  );
+}
+
+/** Load the app once and wait for the MSW-backed shell so the worker is active. */
+async function primeApp(page: Page): Promise<void> {
+  await page.goto(`${server!.origin}/`);
+  await expect(page.getByRole('navigation', { name: '侧栏导航' })).toBeVisible();
+}
+
 test.beforeAll(async () => {
   server = await startSpaServer();
 });
@@ -45,13 +63,13 @@ const PROJECT_ENTRIES: ReadonlyArray<{ name: string; path: string }> = [
   { name: '设置', path: '/organizations/org_test_1/projects/prj_test_1/settings' },
 ];
 
-const ORG_ENTRIES: ReadonlyArray<{ name: string; path: string }> = [
-  { name: '成员', path: '/organizations/org_test_1/members' },
-  { name: '设置', path: '/organizations/org_test_1/settings' },
-  { name: '用量', path: '/organizations/org_test_1/usage' },
-  { name: '令牌', path: '/organizations/org_test_1/tokens' },
-  { name: '审计', path: '/organizations/org_test_1/audit' },
-  { name: '回收站', path: '/organizations/org_test_1/trash' },
+const ORG_ENTRIES: ReadonlyArray<{ name: string; path: string; view: string }> = [
+  { name: '成员', path: '/organizations/org_test_1/members', view: 'members-view' },
+  { name: '设置', path: '/organizations/org_test_1/settings', view: 'settings-view' },
+  { name: '用量', path: '/organizations/org_test_1/usage', view: 'usage-view' },
+  { name: '令牌', path: '/organizations/org_test_1/tokens', view: 'tokens-view' },
+  { name: '审计', path: '/organizations/org_test_1/audit', view: 'audit-view' },
+  { name: '回收站', path: '/organizations/org_test_1/trash', view: 'trash-view' },
 ];
 
 test('every project sidebar entry is reachable by real click and shows unavailable (no fake data)', async ({
@@ -85,7 +103,8 @@ test('top bar workspace, notifications and account entries are reachable by real
   await expect(page.getByTestId('unavailable-view')).toBeVisible();
   await page.getByRole('link', { name: '账号安全', exact: true }).click();
   await expect(page).toHaveURL(/\/account\/security$/);
-  await expect(page.getByTestId('unavailable-view')).toBeVisible();
+  await expect(page.getByTestId('account-security-view')).toBeVisible();
+  await expect(page.getByRole('heading', { name: '账号安全', level: 1 })).toBeVisible();
 });
 test('every organization sidebar entry is reachable by real click after switching scope', async ({
   page,
@@ -98,7 +117,7 @@ test('every organization sidebar entry is reachable by real click after switchin
   for (const entry of ORG_ENTRIES) {
     await page.getByRole('link', { name: entry.name, exact: true }).click();
     await expect(page).toHaveURL(new RegExp(escapeRegExp(entry.path)));
-    await expect(page.getByTestId('unavailable-view')).toBeVisible();
+    await expect(page.getByTestId(entry.view)).toBeVisible();
   }
 });
 
@@ -130,8 +149,6 @@ test('blocked G10-G13 targets parse, protect and represent unavailable (no fake 
   page,
 }) => {
   const targets: ReadonlyArray<{ path: string; testId: string }> = [
-    { path: '/login', testId: 'auth-unavailable-view' },
-    { path: '/register', testId: 'unavailable-view' },
     { path: '/platform/resource-policies', testId: 'unavailable-view' },
     {
       path: '/organizations/org_test_1/projects/prj_test_1/issues/some_issue',
@@ -147,4 +164,26 @@ test('blocked G10-G13 targets parse, protect and represent unavailable (no fake 
     await expect(page.getByTestId(target.testId), target.path).toBeVisible();
     await expect(page.getByRole('table'), target.path).toHaveCount(0);
   }
+});
+
+test('auth routes render the real PLT-03 views (not unavailable stubs) when signed out', async ({
+  page,
+}) => {
+  await primeApp(page);
+  await setSessionAuthenticated(page, false);
+  await page.goto(`${server!.origin}/login`);
+  await expect(page.getByTestId('login-view')).toBeVisible();
+  await expect(page.getByRole('heading', { name: '登录', level: 1 })).toBeVisible();
+  await page.goto(`${server!.origin}/register`);
+  await expect(page.getByTestId('register-view')).toBeVisible();
+  await expect(page.getByRole('heading', { name: '注册', level: 1 })).toBeVisible();
+});
+
+test('an authenticated user visiting an auth-only route is redirected to the workspace', async ({
+  page,
+}) => {
+  await primeApp(page);
+  await setSessionAuthenticated(page, true);
+  await page.goto(`${server!.origin}/login`);
+  await expect(page).toHaveURL(/\/workspace$/);
 });

@@ -9,6 +9,8 @@ export const ROUTE_TARGET_IDS = [
   'auth.reset-password',
   'invitation.accept',
   'account.security',
+  'account.deletion-cancel',
+  'account.deletion-confirm',
   'workspace.home',
   'organization.project-create',
   'organization.members',

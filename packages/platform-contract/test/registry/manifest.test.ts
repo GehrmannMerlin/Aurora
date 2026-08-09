@@ -8,15 +8,45 @@ import { BLOCKED_OPERATIONS, PLATFORM_OPERATIONS } from '../../src/registry/oper
 import { ROUTE_TARGET_IDS, type RouteTargetId } from '../../src/common/navigation.js';
 
 describe('operation registry and manifest', () => {
-  it('exposes two stable foundation operations', () => {
+  it('exposes the thirty-two stable operations', () => {
     expect(PLATFORM_OPERATIONS.map((o) => o.operationId)).toEqual([
       'identityGetSession',
       'navigationGetContext',
+      'identityRegister',
+      'identityConfirmEmailVerification',
+      'identityLogin',
+      'identityLogout',
+      'identityRequestPasswordReset',
+      'identityConfirmPasswordReset',
+      'identityChangePassword',
+      'identityDeleteAccountPreflight',
+      'identityRequestAccountDeletion',
+      'identityDeleteAccountIntentLink',
+      'identityDeleteAccount',
+      'identityCancelAccountDeletionIntentLink',
+      'identityCancelAccountDeletion',
+      'organizationAcceptInvitation',
+      'organizationListProjects',
+      'organizationCreateProject',
+      'organizationListMembers',
+      'organizationInviteMember',
+      'organizationRevokeInvitation',
+      'organizationResendInvitation',
+      'organizationChangeRole',
+      'organizationRemoveMember',
+      'organizationTransferOwnership',
+      'organizationUpdateTimezone',
+      'projectGovernanceListTrash',
+      'projectGovernanceRestoreProject',
+      'credentialsListPrivateTokens',
+      'credentialsCreatePrivateToken',
+      'credentialsRevokePrivateToken',
+      'auditListSecurityAudit',
     ]);
   });
 
   it('registers blocked downstream operations without schemas', () => {
-    expect(BLOCKED_OPERATIONS.length).toBeGreaterThan(30);
+    expect(BLOCKED_OPERATIONS.length).toBeGreaterThan(15);
     for (const op of BLOCKED_OPERATIONS) {
       expect(op.reason.length).toBeGreaterThan(10);
       expect('responses' in op).toBe(false);
@@ -80,7 +110,7 @@ describe('operation registry and manifest', () => {
   it('throws when a route target is marked stable without an emittable operation', () => {
     const bad: Readonly<Record<RouteTargetId, CoverageKind>> = {
       ...OPERATION_MANIFEST.routeTargetCoverage,
-      'account.security': 'stable',
+      'organization.usage': 'stable',
     };
     expect(() => {
       validateManifest({ coverage: bad });
@@ -101,22 +131,24 @@ describe('operation registry and manifest', () => {
 
   it('freezes the exact route target coverage kind for every route target', () => {
     const expected: Readonly<Record<RouteTargetId, CoverageKind>> = {
-      'auth.register': 'blocked',
+      'auth.register': 'stable',
       'auth.verify-email': 'unavailable',
-      'auth.verify-email-confirm': 'blocked',
-      'auth.login': 'blocked',
-      'auth.forgot-password': 'blocked',
-      'auth.reset-password': 'blocked',
-      'invitation.accept': 'blocked',
-      'account.security': 'blocked',
+      'auth.verify-email-confirm': 'stable',
+      'auth.login': 'stable',
+      'auth.forgot-password': 'stable',
+      'auth.reset-password': 'stable',
+      'invitation.accept': 'stable',
+      'account.security': 'stable',
+      'account.deletion-cancel': 'unavailable',
+      'account.deletion-confirm': 'unavailable',
       'workspace.home': 'stable',
-      'organization.project-create': 'blocked',
-      'organization.members': 'blocked',
-      'organization.settings': 'blocked',
+      'organization.project-create': 'stable',
+      'organization.members': 'stable',
+      'organization.settings': 'stable',
       'organization.usage': 'blocked',
-      'organization.tokens': 'blocked',
-      'organization.audit': 'blocked',
-      'organization.trash': 'blocked',
+      'organization.tokens': 'stable',
+      'organization.audit': 'stable',
+      'organization.trash': 'stable',
       'project.onboarding': 'blocked',
       'project.overview': 'blocked',
       'project.issues': 'blocked',

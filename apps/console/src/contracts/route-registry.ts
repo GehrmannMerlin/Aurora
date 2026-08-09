@@ -17,7 +17,30 @@ const instanceParams = projectParams.extend({ instanceId: z.string().min(1) });
 const anyQuery = z.record(z.string(), z.string());
 
 const unavailable = (): Promise<Component> => import('../components/pages/UnavailableView.vue');
-const workspaceHome = (): Promise<Component> => import('../components/pages/WorkspaceHomeView.vue');
+const workspaceHome = (): Promise<Component> => import('../views/workspace/WorkspaceHomeView.vue');
+const usageView = (): Promise<Component> => import('../views/organization/UsageView.vue');
+const projectCreateView = (): Promise<Component> =>
+  import('../views/organization/ProjectCreateView.vue');
+const membersView = (): Promise<Component> => import('../views/organization/MembersView.vue');
+const settingsView = (): Promise<Component> => import('../views/organization/SettingsView.vue');
+const tokensView = (): Promise<Component> => import('../views/organization/TokensView.vue');
+const auditView = (): Promise<Component> => import('../views/organization/AuditView.vue');
+const trashView = (): Promise<Component> => import('../views/organization/TrashView.vue');
+const registerView = (): Promise<Component> => import('../views/auth/RegisterView.vue');
+const verifyEmailView = (): Promise<Component> => import('../views/auth/VerifyEmailView.vue');
+const verifyEmailConfirmView = (): Promise<Component> =>
+  import('../views/auth/VerifyEmailConfirmView.vue');
+const loginView = (): Promise<Component> => import('../views/auth/LoginView.vue');
+const forgotPasswordView = (): Promise<Component> => import('../views/auth/ForgotPasswordView.vue');
+const resetPasswordView = (): Promise<Component> => import('../views/auth/ResetPasswordView.vue');
+const invitationAcceptView = (): Promise<Component> =>
+  import('../views/auth/InvitationAcceptView.vue');
+const accountSecurityView = (): Promise<Component> =>
+  import('../views/account/AccountSecurityView.vue');
+const deletionCancelView = (): Promise<Component> =>
+  import('../views/account/DeletionCancelView.vue');
+const deletionConfirmView = (): Promise<Component> =>
+  import('../views/account/DeletionConfirmView.vue');
 
 export const ROUTE_REGISTRY: readonly RouteEntry[] = [
   {
@@ -27,9 +50,9 @@ export const ROUTE_REGISTRY: readonly RouteEntry[] = [
     label: '注册',
     paramsSchema: emptyParams,
     querySchema: anyQuery,
-    lazy: unavailable,
+    lazy: registerView,
     menu: false,
-    unavailableReason: 'capability-not-provided',
+    unavailableReason: null,
   },
   {
     routeId: 'auth.verify-email',
@@ -38,9 +61,9 @@ export const ROUTE_REGISTRY: readonly RouteEntry[] = [
     label: '邮箱验证',
     paramsSchema: emptyParams,
     querySchema: anyQuery,
-    lazy: unavailable,
+    lazy: verifyEmailView,
     menu: false,
-    unavailableReason: 'capability-not-provided',
+    unavailableReason: null,
   },
   {
     routeId: 'auth.verify-email-confirm',
@@ -50,9 +73,9 @@ export const ROUTE_REGISTRY: readonly RouteEntry[] = [
     parent: 'auth.verify-email',
     paramsSchema: emptyParams,
     querySchema: anyQuery,
-    lazy: unavailable,
+    lazy: verifyEmailConfirmView,
     menu: false,
-    unavailableReason: 'capability-not-provided',
+    unavailableReason: null,
   },
   {
     routeId: 'auth.login',
@@ -61,9 +84,9 @@ export const ROUTE_REGISTRY: readonly RouteEntry[] = [
     label: '登录',
     paramsSchema: emptyParams,
     querySchema: anyQuery,
-    lazy: unavailable,
+    lazy: loginView,
     menu: false,
-    unavailableReason: 'capability-not-provided',
+    unavailableReason: null,
   },
   {
     routeId: 'auth.forgot-password',
@@ -72,9 +95,9 @@ export const ROUTE_REGISTRY: readonly RouteEntry[] = [
     label: '忘记密码',
     paramsSchema: emptyParams,
     querySchema: anyQuery,
-    lazy: unavailable,
+    lazy: forgotPasswordView,
     menu: false,
-    unavailableReason: 'capability-not-provided',
+    unavailableReason: null,
   },
   {
     routeId: 'auth.reset-password',
@@ -83,9 +106,9 @@ export const ROUTE_REGISTRY: readonly RouteEntry[] = [
     label: '重置密码',
     paramsSchema: emptyParams,
     querySchema: anyQuery,
-    lazy: unavailable,
+    lazy: resetPasswordView,
     menu: false,
-    unavailableReason: 'capability-not-provided',
+    unavailableReason: null,
   },
   {
     routeId: 'invitation.accept',
@@ -94,9 +117,9 @@ export const ROUTE_REGISTRY: readonly RouteEntry[] = [
     label: '接受邀请',
     paramsSchema: emptyParams,
     querySchema: anyQuery,
-    lazy: unavailable,
+    lazy: invitationAcceptView,
     menu: false,
-    unavailableReason: 'capability-not-provided',
+    unavailableReason: null,
   },
   {
     routeId: 'account.security',
@@ -105,9 +128,31 @@ export const ROUTE_REGISTRY: readonly RouteEntry[] = [
     label: '账号安全',
     paramsSchema: emptyParams,
     querySchema: anyQuery,
-    lazy: unavailable,
+    lazy: accountSecurityView,
     menu: true,
-    unavailableReason: 'capability-not-provided',
+    unavailableReason: null,
+  },
+  {
+    routeId: 'account.deletion-cancel',
+    path: '/account/deletion-cancel',
+    scope: 'public',
+    label: '撤销账号注销',
+    paramsSchema: emptyParams,
+    querySchema: anyQuery,
+    lazy: deletionCancelView,
+    menu: false,
+    unavailableReason: null,
+  },
+  {
+    routeId: 'account.deletion-confirm',
+    path: '/account/deletion-confirm',
+    scope: 'public',
+    label: '注销账号确认',
+    paramsSchema: emptyParams,
+    querySchema: anyQuery,
+    lazy: deletionConfirmView,
+    menu: false,
+    unavailableReason: null,
   },
   {
     routeId: 'workspace.home',
@@ -127,9 +172,9 @@ export const ROUTE_REGISTRY: readonly RouteEntry[] = [
     label: '创建项目',
     paramsSchema: orgParams,
     querySchema: anyQuery,
-    lazy: unavailable,
+    lazy: projectCreateView,
     menu: false,
-    unavailableReason: 'capability-not-provided',
+    unavailableReason: null,
   },
   {
     routeId: 'organization.members',
@@ -138,9 +183,9 @@ export const ROUTE_REGISTRY: readonly RouteEntry[] = [
     label: '成员',
     paramsSchema: orgParams,
     querySchema: anyQuery,
-    lazy: unavailable,
+    lazy: membersView,
     menu: true,
-    unavailableReason: 'capability-not-provided',
+    unavailableReason: null,
   },
   {
     routeId: 'organization.settings',
@@ -149,9 +194,9 @@ export const ROUTE_REGISTRY: readonly RouteEntry[] = [
     label: '设置',
     paramsSchema: orgParams,
     querySchema: anyQuery,
-    lazy: unavailable,
+    lazy: settingsView,
     menu: true,
-    unavailableReason: 'capability-not-provided',
+    unavailableReason: null,
   },
   {
     routeId: 'organization.usage',
@@ -160,9 +205,9 @@ export const ROUTE_REGISTRY: readonly RouteEntry[] = [
     label: '用量',
     paramsSchema: orgParams,
     querySchema: anyQuery,
-    lazy: unavailable,
+    lazy: usageView,
     menu: true,
-    unavailableReason: 'capability-not-provided',
+    unavailableReason: null,
   },
   {
     routeId: 'organization.tokens',
@@ -171,9 +216,9 @@ export const ROUTE_REGISTRY: readonly RouteEntry[] = [
     label: '令牌',
     paramsSchema: orgParams,
     querySchema: anyQuery,
-    lazy: unavailable,
+    lazy: tokensView,
     menu: true,
-    unavailableReason: 'capability-not-provided',
+    unavailableReason: null,
   },
   {
     routeId: 'organization.audit',
@@ -182,9 +227,9 @@ export const ROUTE_REGISTRY: readonly RouteEntry[] = [
     label: '审计',
     paramsSchema: orgParams,
     querySchema: anyQuery,
-    lazy: unavailable,
+    lazy: auditView,
     menu: true,
-    unavailableReason: 'capability-not-provided',
+    unavailableReason: null,
   },
   {
     routeId: 'organization.trash',
@@ -193,9 +238,9 @@ export const ROUTE_REGISTRY: readonly RouteEntry[] = [
     label: '回收站',
     paramsSchema: orgParams,
     querySchema: anyQuery,
-    lazy: unavailable,
+    lazy: trashView,
     menu: true,
-    unavailableReason: 'capability-not-provided',
+    unavailableReason: null,
   },
   {
     routeId: 'project.onboarding',
@@ -443,7 +488,10 @@ export function resolveRouteTarget(target: {
   for (const [key, value] of Object.entries(
     paramsResult.data as Readonly<Record<string, string>>,
   )) {
-    path = path.replace(`:${key}`, encodeURIComponent(value));
+    // split/join (not String.prototype.replace) so the encoded value is inserted
+    // literally: a string replacement would interpret ECMAScript `$` patterns
+    // and only replace the first occurrence.
+    path = path.split(`:${key}`).join(encodeURIComponent(value));
   }
   const queryString = new URLSearchParams(target.query).toString();
   return { path: queryString.length === 0 ? path : `${path}?${queryString}` };

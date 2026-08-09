@@ -11,7 +11,7 @@ import {
 } from '../../src/contracts/route-registry.js';
 
 describe('RouteTarget registry', () => {
-  it('declares exactly the 36 frozen route targets', () => {
+  it('declares exactly the 37 frozen route targets', () => {
     expect(ROUTE_REGISTRY.map((entry) => entry.routeId).sort()).toEqual(
       [...ROUTE_TARGET_IDS].sort(),
     );
@@ -46,6 +46,17 @@ describe('RouteTarget registry', () => {
     expect(result.path).toBe('/organizations/org_test_1/projects/prj_test_1/overview?tab=events');
   });
 
+  it('interpolates path-param values literally (no ECMAScript replacement grammar)', () => {
+    // A string replacement would corrupt `$1`/`$&`/`$'` sequences; the value
+    // must be percent-encoded once and inserted verbatim.
+    const result = resolveRouteTarget({
+      routeId: 'organization.members',
+      pathParams: { organizationId: "org$1&$&$'" },
+      query: {},
+    });
+    expect(result.path).toBe(`/organizations/${encodeURIComponent("org$1&$&$'")}/members`);
+  });
+
   it('rejects invalid params and unknown targets safely', () => {
     expect(
       resolveRouteTarget({ routeId: 'project.overview', pathParams: {}, query: {} }).error,
@@ -62,8 +73,35 @@ describe('RouteTarget registry', () => {
   });
 
   it('marks every non-shell business target as unavailable (no fake content)', () => {
+    // PLT-03 replaced these unavailable stubs with real auth/account views.
+    // PLT-04 7A adds the real B1 workspace home and the honest B5 usage-unavailable page.
+    // PLT-04 7B adds the real B2 create-project, B3 members and B4 settings pages.
+    // PLT-04 7C adds the real B6 tokens, B7 audit and B8 trash pages.
+    const realViewRoutes = new Set([
+      'auth.register',
+      'auth.verify-email',
+      'auth.verify-email-confirm',
+      'auth.login',
+      'auth.forgot-password',
+      'auth.reset-password',
+      'invitation.accept',
+      'account.security',
+      'account.deletion-cancel',
+      'account.deletion-confirm',
+      'organization.usage',
+      'organization.project-create',
+      'organization.members',
+      'organization.settings',
+      'organization.tokens',
+      'organization.audit',
+      'organization.trash',
+    ]);
     for (const entry of ROUTE_REGISTRY) {
       if (entry.routeId === 'workspace.home') continue;
+      if (realViewRoutes.has(entry.routeId)) {
+        expect(entry.unavailableReason, entry.routeId).toBeNull();
+        continue;
+      }
       expect(entry.unavailableReason).not.toBeNull();
       expect(entry.unavailableReason).toMatch(
         /^(capability-not-provided|dependency-unavailable|permission-unavailable)$/,

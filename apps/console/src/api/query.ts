@@ -2,16 +2,17 @@ import { PLATFORM_OPERATIONS } from '@aurora/platform-contract/client';
 import type { ScopeKey } from './scope.js';
 import { scopeKeyString } from './scope.js';
 import { queryKey } from './query-key.js';
-import { platformRequest, type RequestOptions } from './client.js';
+import { platformRequest, type PlatformRequestInput, type RequestOptions } from './client.js';
 import { requestCache } from './cache.js';
 import { ApiError } from './errors.js';
 
 export interface ExecuteQueryOptions {
   operationId: string;
-  input?: { query?: unknown; body?: unknown };
+  input?: PlatformRequestInput;
   scope: ScopeKey;
   signal?: AbortSignal;
   retry?: boolean;
+  csrf?: string;
 }
 
 const inFlight = new Map<string, Promise<unknown>>();
@@ -63,6 +64,7 @@ export async function executeQuery<T>(options: ExecuteQueryOptions): Promise<T> 
 function requestOptions(options: ExecuteQueryOptions): RequestOptions {
   const result: RequestOptions = { scope: options.scope };
   if (options.signal !== undefined) result.signal = options.signal;
+  if (options.csrf !== undefined) result.csrf = options.csrf;
   return result;
 }
 
@@ -70,7 +72,7 @@ async function performRequest<T>(
   key: string,
   generation: number,
   options: ExecuteQueryOptions,
-  input: { query?: unknown; body?: unknown },
+  input: PlatformRequestInput,
 ): Promise<T> {
   try {
     const data = await platformRequest<T>(options.operationId, input, requestOptions(options));

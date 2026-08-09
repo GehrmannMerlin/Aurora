@@ -10,6 +10,7 @@ strictPeerDependencies: true
 strictDepBuilds: true
 allowBuilds:
   esbuild: true
+  argon2: false
   msw: true
 minimumReleaseAge: 1440
 minimumReleaseAgeStrict: true

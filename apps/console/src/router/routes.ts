@@ -15,14 +15,11 @@ export const appRoutes: readonly RouteRecordRaw[] = [
       },
       ...ROUTE_REGISTRY.map((entry) => {
         const unavailable = entry.unavailableReason;
-        const isAuthLogin = entry.routeId === 'auth.login';
         return {
           path: entry.path.replace(/^\/+/, '') || '',
           name: entry.routeId,
-          component: isAuthLogin
-            ? () => import('../components/pages/AuthUnavailableView.vue')
-            : entry.lazy,
-          ...(unavailable !== null && !isAuthLogin
+          component: entry.lazy,
+          ...(unavailable !== null
             ? {
                 props: (route: RouteLocationNormalized) => ({
                   title: route.meta.label as string,

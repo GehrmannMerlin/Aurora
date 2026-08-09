@@ -1,0 +1,41 @@
+{
+  "name": "@aurora/platform-worker",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Aurora platform outbox email consumer worker (service layer; simple poll loop — ADR-032 YAGNI, no BullMQ/S3/Redis-for-email)",
+  "engines": {
+    "node": ">=24.18.0 <25"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run --exclude test/integration/**",
+    "test:integration": "vitest run test/integration --no-file-parallelism",
+    "test:coverage": "vitest run --coverage --no-file-parallelism"
+  },
+  "dependencies": {
+    "@aurora/platform-email": "workspace:*",
+    "@aurora/platform-identity": "workspace:*",
+    "pg": "8.22.0"
+  },
+  "devDependencies": {
+    "@types/node": "24.13.3",
+    "@types/pg": "8.20.0",
+    "@vitest/coverage-v8": "4.1.10",
+    "typescript": "6.0.3",
+    "vitest": "4.1.10"
+  },
+  "aurora": {
+    "layer": "service"
+  }
+}

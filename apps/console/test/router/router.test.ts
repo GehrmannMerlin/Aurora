@@ -48,13 +48,15 @@ describe('console router', () => {
 
   it('projects unavailable-route metadata onto the status view props', () => {
     const root = rootRoute();
-    const child = (root.children ?? []).find((c) => c.name === 'organization.members');
+    // account.notifications stays an honest unavailable stub (all 7C org
+    // business targets — tokens/audit/trash — became real views).
+    const child = (root.children ?? []).find((c) => c.name === 'account.notifications');
     const props = child?.props as unknown as (route: { meta: { label: string } }) => {
       title: string;
       reason: string;
     };
-    expect(props({ meta: { label: '成员' } })).toEqual({
-      title: '成员',
+    expect(props({ meta: { label: '通知' } })).toEqual({
+      title: '通知',
       reason: 'capability-not-provided',
     });
   });

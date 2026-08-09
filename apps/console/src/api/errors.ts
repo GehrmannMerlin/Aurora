@@ -16,11 +16,17 @@ export type ProblemCode =
   | 'authority_unavailable'
   | 'network_error';
 
+export interface ApiFieldError {
+  readonly field: string;
+  readonly reason: string;
+}
+
 export class ApiError extends Error {
   readonly code: ProblemCode;
   readonly status: number | null;
   readonly requestId?: string;
   readonly retryAfter?: number;
+  readonly fieldErrors?: readonly ApiFieldError[];
 
   constructor(options: {
     code: ProblemCode;
@@ -28,6 +34,7 @@ export class ApiError extends Error {
     status?: number | null;
     requestId?: string | undefined;
     retryAfter?: number | undefined;
+    fieldErrors?: readonly ApiFieldError[] | undefined;
   }) {
     super(options.message);
     this.name = 'ApiError';
@@ -35,6 +42,7 @@ export class ApiError extends Error {
     this.status = options.status ?? null;
     if (options.requestId !== undefined) this.requestId = options.requestId;
     if (options.retryAfter !== undefined) this.retryAfter = options.retryAfter;
+    if (options.fieldErrors !== undefined) this.fieldErrors = options.fieldErrors;
   }
 }
 
@@ -62,6 +70,7 @@ interface NormalizedProblem {
   status: number;
   requestId?: string;
   retryAfter?: number;
+  fieldErrors?: readonly { field: string; reason: string }[];
 }
 
 export function normalizeProblem(raw: unknown, status: number): ApiError {
@@ -80,5 +89,6 @@ export function normalizeProblem(raw: unknown, status: number): ApiError {
     message: problem.title,
     requestId: problem.requestId,
     retryAfter: problem.retryAfter,
+    ...(problem.fieldErrors === undefined ? {} : { fieldErrors: problem.fieldErrors }),
   });
 }

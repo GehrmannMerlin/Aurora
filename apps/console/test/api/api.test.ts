@@ -1,6 +1,7 @@
 import { http, HttpResponse, type JsonBodyType } from 'msw';
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import {
+  validListProjectsSamples,
   validProblemSamples,
   validSessionSamples,
 } from '@aurora/platform-contract/contract-testkit';
@@ -155,5 +156,24 @@ describe('request/cache layer', () => {
       input: { query: {} },
     });
     expect(data).toEqual(validSessionSamples[0]);
+  });
+
+  it('interpolates a path-param value literally in the request URL', async () => {
+    let capturedUrl = '';
+    mockServer.use(
+      http.get('/api/platform/v1/organizations/:organizationId/projects', ({ request }) => {
+        capturedUrl = request.url;
+        return HttpResponse.json(validListProjectsSamples[0] as JsonBodyType, { status: 200 });
+      }),
+    );
+    const data = await executeQuery({
+      operationId: 'organizationListProjects',
+      scope: { type: 'organization', id: "org$1&$&$'" },
+      input: { pathParams: { organizationId: "org$1&$&$'" } },
+    });
+    expect(data).toBeDefined();
+    // The value must be percent-encoded once and inserted verbatim — never
+    // interpreted as an ECMAScript replacement pattern (`$1`/`$&`/`$'`).
+    expect(capturedUrl).toContain(`/organizations/${encodeURIComponent("org$1&$&$'")}/projects`);
   });
 });

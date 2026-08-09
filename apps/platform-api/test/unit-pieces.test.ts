@@ -1,0 +1,158 @@
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import { loadPlatformApiConfig } from '../src/config.js';
+import { problem } from '../src/error-mapper.js';
+import { maskEmail } from '../src/routes/register.js';
+import {
+  readSessionCookie,
+  serializeSessionCookie,
+  SESSION_COOKIE_NAME,
+} from '../src/session-cookie.js';
+
+const { idempotencyLookupMock } = vi.hoisted(() => ({ idempotencyLookupMock: vi.fn() }));
+vi.mock('@aurora/platform-identity', () => ({ findIdempotencyRecord: idempotencyLookupMock }));
+import { lookupIdempotency } from '../src/idempotency.js';
+
+describe('maskEmail', () => {
+  it('masks the local part and keeps the domain', () => {
+    expect(maskEmail('alice@example.com')).toContain('@example.com');
+    expect(maskEmail('alice@example.com')).not.toContain('alice');
+  });
+  it('keeps a short local part masked', () => {
+    expect(maskEmail('ab@example.com')).toBe('a***@example.com');
+  });
+});
+
+describe('session cookie serialization', () => {
+  const options = {
+    httpOnly: true as const,
+    secure: true,
+    sameSite: 'lax' as const,
+    path: '/' as const,
+  };
+
+  it('emits HttpOnly, Secure, SameSite=Lax and Path=/', () => {
+    const header = serializeSessionCookie(SESSION_COOKIE_NAME, 'opaque', options);
+    expect(header).toBe(`${SESSION_COOKIE_NAME}=opaque; HttpOnly; Secure; SameSite=Lax; Path=/`);
+  });
+  it('omits Secure when the config disables it', () => {
+    const header = serializeSessionCookie(SESSION_COOKIE_NAME, 'opaque', {
+      ...options,
+      secure: false,
+    });
+    expect(header).not.toContain('Secure');
+  });
+});
+
+describe('readSessionCookie', () => {
+  it('parses the aurora_session value', () => {
+    expect(readSessionCookie('other=a; aurora_session=opaque-value; foo=b')).toBe('opaque-value');
+  });
+  it('returns undefined when absent or empty', () => {
+    expect(readSessionCookie(undefined)).toBeUndefined();
+    expect(readSessionCookie('other=only')).toBeUndefined();
+    expect(readSessionCookie('aurora_session=; other=1')).toBeUndefined();
+  });
+});
+
+describe('problem (RFC 9457)', () => {
+  it('builds a closed problem with the request id', () => {
+    const value = problem('req-1', 401, 'authentication', 'Authentication is required.', {
+      recoveryTarget: 'auth.login',
+    });
+    expect(value).toMatchObject({
+      type: 'about:blank',
+      status: 401,
+      code: 'authentication',
+      requestId: 'req-1',
+      recoveryTarget: 'auth.login',
+    });
+  });
+  it('omits optional fields when not supplied', () => {
+    const value = problem('req-2', 500, 'internal_error', 'An internal error occurred.');
+    expect('recoveryTarget' in value).toBe(false);
+    expect('retryAfter' in value).toBe(false);
+  });
+});
+
+describe('loadPlatformApiConfig', () => {
+  it('requires DATABASE_URL and REDIS_URL and applies defaults', () => {
+    const config = loadPlatformApiConfig({
+      DATABASE_URL: 'postgresql://aurora:aurora_test_pw@localhost:15432/aurora_inbox_test',
+      REDIS_URL: 'redis://localhost:16379',
+      PORT: '0',
+    });
+    expect(config.sessionIdleMs).toBe(30 * 60 * 1000);
+    expect(config.sessionAbsoluteMs).toBe(8 * 60 * 60 * 1000);
+    expect(config.cookieSecure).toBe(false);
+    expect(config.appOrigins).toEqual([]);
+    expect(config.port).toBe(0);
+  });
+  it('rejects a non-numeric PORT', () => {
+    expect(() =>
+      loadPlatformApiConfig({
+        DATABASE_URL: 'postgresql://localhost/db',
+        REDIS_URL: 'redis://localhost:6379',
+        PORT: 'not-a-number',
+      }),
+    ).toThrow(/PORT/);
+  });
+});
+
+describe('lookupIdempotency', () => {
+  const pool = {} as never;
+
+  afterEach(() => {
+    idempotencyLookupMock.mockReset();
+  });
+
+  it('returns new when no record exists', async () => {
+    idempotencyLookupMock.mockResolvedValue(null);
+    await expect(lookupIdempotency(pool, 'key', 'digest')).resolves.toEqual({ outcome: 'new' });
+  });
+
+  it('returns conflict when a non-terminal record has the same digest (fail closed)', async () => {
+    idempotencyLookupMock.mockResolvedValue({
+      idempotencyKey: 'key',
+      operation: 'op',
+      requestDigest: 'digest',
+      status: 'processing',
+      resultData: null,
+      createdAt: '2026-08-09T00:00:00.000Z',
+      updatedAt: '2026-08-09T00:00:00.000Z',
+    });
+    await expect(lookupIdempotency(pool, 'key', 'digest')).resolves.toEqual({
+      outcome: 'conflict',
+    });
+  });
+
+  it('returns conflict when the key has a different digest', async () => {
+    idempotencyLookupMock.mockResolvedValue({
+      idempotencyKey: 'key',
+      operation: 'op',
+      requestDigest: 'other',
+      status: 'succeeded',
+      resultData: { ok: true },
+      createdAt: '2026-08-09T00:00:00.000Z',
+      updatedAt: '2026-08-09T00:00:00.000Z',
+    });
+    await expect(lookupIdempotency(pool, 'key', 'digest')).resolves.toEqual({
+      outcome: 'conflict',
+    });
+  });
+
+  it('returns replay when a succeeded record matches the digest', async () => {
+    idempotencyLookupMock.mockResolvedValue({
+      idempotencyKey: 'key',
+      operation: 'op',
+      requestDigest: 'digest',
+      status: 'succeeded',
+      resultData: { ok: true },
+      createdAt: '2026-08-09T00:00:00.000Z',
+      updatedAt: '2026-08-09T00:00:00.000Z',
+    });
+    await expect(lookupIdempotency(pool, 'key', 'digest')).resolves.toEqual({
+      outcome: 'replay',
+      resultData: { ok: true },
+    });
+  });
+});
