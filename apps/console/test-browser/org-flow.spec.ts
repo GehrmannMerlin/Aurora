@@ -100,3 +100,80 @@ test('B4 timezone settings updates the organization timezone', async ({ page }) 
   await expect(page.getByTestId('current-timezone')).toContainText('Asia/Shanghai');
   await expect(new AxeBuilder({ page }).analyze()).resolves.toHaveProperty('violations', []);
 });
+
+test('B6 tokens: list is metadata-only and the one-time plaintext is never re-displayed', async ({
+  page,
+}) => {
+  await page.goto(`${server!.origin}/`);
+  await expect(page.getByRole('navigation', { name: '侧栏导航' })).toBeVisible();
+  await setSessionAuthenticated(page, true);
+
+  await page.goto(`${server!.origin}/organizations/org_test_1/tokens`);
+  await expect(page.getByTestId('token-list')).toBeVisible();
+  await expect(page.getByTestId('token-name')).toHaveText('ci-token');
+  // Metadata only: no digest/plaintext in the DOM before any create.
+  await expect(page.getByText(/aurora_pt_/)).toHaveCount(0);
+
+  await page.getByTestId('token-name-input').fill('ci-deploy');
+  await page.getByTestId('token-scope-releases.write').check();
+  await page.getByTestId('token-create-submit').click();
+
+  await expect(page.getByTestId('token-plaintext')).toHaveText(
+    'aurora_pt_pt_test_2_abcdef1234567890',
+  );
+  // The plaintext appears in exactly one element.
+  await expect(page.getByText('aurora_pt_pt_test_2_abcdef1234567890')).toHaveCount(1);
+
+  // Reload: the component mounts fresh; the one-time secret must be gone.
+  await page.reload();
+  await expect(page.getByTestId('token-list')).toBeVisible();
+  await expect(page.getByTestId('token-plaintext')).toHaveCount(0);
+  await expect(page.getByText(/aurora_pt_/)).toHaveCount(0);
+
+  // Create once more, then navigate away and back: the plaintext must not
+  // return with the remounted component.
+  await page.getByTestId('token-name-input').fill('ci-deploy-2');
+  await page.getByTestId('token-scope-releases.write').check();
+  await page.getByTestId('token-create-submit').click();
+  await expect(page.getByTestId('token-plaintext')).toHaveText(
+    'aurora_pt_pt_test_2_abcdef1234567890',
+  );
+
+  await page.goto(`${server!.origin}/organizations/org_test_1/members`);
+  await expect(page.getByTestId('member-list')).toBeVisible();
+  await page.goto(`${server!.origin}/organizations/org_test_1/tokens`);
+  await expect(page.getByTestId('token-list')).toBeVisible();
+  await expect(page.getByTestId('token-plaintext')).toHaveCount(0);
+  await expect(page.getByText(/aurora_pt_/)).toHaveCount(0);
+  await expect(new AxeBuilder({ page }).analyze()).resolves.toHaveProperty('violations', []);
+});
+
+test('B7 audit shows a redacted security timeline', async ({ page }) => {
+  await page.goto(`${server!.origin}/`);
+  await expect(page.getByRole('navigation', { name: '侧栏导航' })).toBeVisible();
+  await setSessionAuthenticated(page, true);
+
+  await page.goto(`${server!.origin}/organizations/org_test_1/audit`);
+  await expect(page.getByTestId('audit-list')).toBeVisible();
+  await expect(page.getByTestId('audit-action')).toHaveText('member.invited');
+  // Redacted actor only; never the full email.
+  await expect(page.getByTestId('audit-actor')).toHaveText('ow**@example.invalid');
+  await expect(page.getByText('user@example.invalid')).toHaveCount(0);
+  await expect(new AxeBuilder({ page }).analyze()).resolves.toHaveProperty('violations', []);
+});
+
+test('B8 trash lists recoverable projects and restores one', async ({ page }) => {
+  await page.goto(`${server!.origin}/`);
+  await expect(page.getByRole('navigation', { name: '侧栏导航' })).toBeVisible();
+  await setSessionAuthenticated(page, true);
+
+  await page.goto(`${server!.origin}/organizations/org_test_1/trash`);
+  await expect(page.getByTestId('trash-list')).toBeVisible();
+  await expect(page.getByTestId('trash-name')).toHaveText('Legacy');
+  await expect(page.getByTestId('trash-safety-note')).toContainText('不会被恢复');
+
+  await page.getByTestId('restore-project-prj_test_2').click();
+  await expect(page.getByTestId('trash-restore-success')).toBeVisible();
+  await expect(page.getByTestId('trash-row')).toHaveCount(0);
+  await expect(new AxeBuilder({ page }).analyze()).resolves.toHaveProperty('violations', []);
+});

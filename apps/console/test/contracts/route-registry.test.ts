@@ -78,6 +78,7 @@ describe('RouteTarget registry', () => {
     // PLT-03 replaced these unavailable stubs with real auth/account views.
     // PLT-04 7A adds the real B1 workspace home and the honest B5 usage-unavailable page.
     // PLT-04 7B adds the real B2 create-project, B3 members and B4 settings pages.
+    // PLT-04 7C adds the real B6 tokens, B7 audit and B8 trash pages.
     const realViewRoutes = new Set([
       'auth.register',
       'auth.verify-email',
@@ -91,6 +92,9 @@ describe('RouteTarget registry', () => {
       'organization.project-create',
       'organization.members',
       'organization.settings',
+      'organization.tokens',
+      'organization.audit',
+      'organization.trash',
     ]);
     for (const entry of ROUTE_REGISTRY) {
       if (entry.routeId === 'workspace.home') continue;

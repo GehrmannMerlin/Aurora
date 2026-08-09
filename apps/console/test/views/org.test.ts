@@ -13,6 +13,9 @@ import ProjectCreateView from '../../src/views/organization/ProjectCreateView.vu
 import SettingsView from '../../src/views/organization/SettingsView.vue';
 import UsageView from '../../src/views/organization/UsageView.vue';
 import WorkspaceHomeView from '../../src/views/workspace/WorkspaceHomeView.vue';
+import TokensView from '../../src/views/organization/TokensView.vue';
+import AuditView from '../../src/views/organization/AuditView.vue';
+import TrashView from '../../src/views/organization/TrashView.vue';
 
 // A plain-member projection: no manager verbs, so the UI must hide the
 // create-project action even though the project list renders.
@@ -47,6 +50,12 @@ beforeEach(async () => {
   handlerControls.removeMemberRequests = 0;
   handlerControls.transferOwnershipRequests = 0;
   handlerControls.updateTimezoneRequests = 0;
+  handlerControls.listPrivateTokensRequests = 0;
+  handlerControls.createPrivateTokenRequests = 0;
+  handlerControls.revokePrivateTokenRequests = 0;
+  handlerControls.listSecurityAuditRequests = 0;
+  handlerControls.listTrashRequests = 0;
+  handlerControls.restoreProjectRequests = 0;
   useSessionStore(pinia).reset();
   useNavigationStore(pinia).clear();
   await useSessionStore(pinia).restore();
@@ -305,5 +314,264 @@ describe('B4 organization settings / timezone (7B)', () => {
     await fireEvent.click(screen.getByTestId('timezone-submit'));
     expect(await screen.findByTestId('timezone-success')).toBeTruthy();
     expect(capturedResourceVersion).toBe('3');
+  });
+});
+
+/** Override the members projection so the session account is a plain member. */
+function usePlainMemberProjection(): void {
+  mockServer.use(
+    http.get('/api/platform/v1/organizations/:organizationId/members', () =>
+      HttpResponse.json(
+        {
+          members: [
+            { accountId: 'acct_test_1', emailMasked: 'us**@example.invalid', orgRole: 'member' },
+          ],
+          navigationTargets: [],
+        } as JsonBodyType,
+        { status: 200 },
+      ),
+    ),
+  );
+}
+
+describe('B6 private tokens (7C)', () => {
+  it('lists tokens with metadata only (no digest or plaintext in the DOM)', async () => {
+    await router.push('/organizations/org_test_1/tokens');
+    await router.isReady();
+    render(TokensView, { global: { plugins: [pinia, router] } });
+    expect(await screen.findByTestId('token-list')).toBeTruthy();
+    expect(screen.getByTestId('token-name').textContent).toBe('ci-token');
+    // The scope appears in the token row and the create-form checkbox; both are
+    // metadata-only renderings.
+    expect(screen.getAllByText('source_maps.upload').length).toBeGreaterThanOrEqual(1);
+    // Metadata only: no digest, no plaintext is ever rendered.
+    expect(screen.queryByText(/aurora_pt_/)).toBeNull();
+    expect(screen.queryByTestId('token-plaintext')).toBeNull();
+    expect(handlerControls.listPrivateTokensRequests).toBeGreaterThanOrEqual(1);
+  });
+
+  it('creates a token and shows the one-time plaintext exactly once', async () => {
+    await router.push('/organizations/org_test_1/tokens');
+    await router.isReady();
+    render(TokensView, { global: { plugins: [pinia, router] } });
+    expect(await screen.findByTestId('token-list')).toBeTruthy();
+
+    await fireEvent.update(screen.getByTestId('token-name-input'), 'ci-deploy');
+    await fireEvent.click(screen.getByTestId('token-scope-releases.write'));
+    await fireEvent.click(screen.getByTestId('token-create-submit'));
+
+    const panel = await screen.findByTestId('token-plaintext-panel');
+    expect(panel).toBeTruthy();
+    const value = screen.getByTestId('token-plaintext').textContent ?? '';
+    expect(value).toBe('aurora_pt_pt_test_2_abcdef1234567890');
+    // The plaintext appears in exactly ONE element in the DOM.
+    expect(screen.getAllByText('aurora_pt_pt_test_2_abcdef1234567890')).toHaveLength(1);
+    expect(handlerControls.createPrivateTokenRequests).toBeGreaterThanOrEqual(1);
+  });
+
+  it('clears the one-time plaintext when the user acknowledges the panel', async () => {
+    await router.push('/organizations/org_test_1/tokens');
+    await router.isReady();
+    render(TokensView, { global: { plugins: [pinia, router] } });
+    expect(await screen.findByTestId('token-list')).toBeTruthy();
+
+    await fireEvent.update(screen.getByTestId('token-name-input'), 'ci-deploy');
+    await fireEvent.click(screen.getByTestId('token-scope-releases.write'));
+    await fireEvent.click(screen.getByTestId('token-create-submit'));
+    expect(await screen.findByTestId('token-plaintext')).toBeTruthy();
+
+    await fireEvent.click(screen.getByTestId('token-close-panel'));
+    expect(screen.queryByTestId('token-plaintext')).toBeNull();
+    expect(screen.queryByText(/aurora_pt_/)).toBeNull();
+  });
+
+  it('does NOT re-display the one-time plaintext after leave/refresh (unmount + remount)', async () => {
+    await router.push('/organizations/org_test_1/tokens');
+    await router.isReady();
+    render(TokensView, { global: { plugins: [pinia, router] } });
+    expect(await screen.findByTestId('token-list')).toBeTruthy();
+
+    await fireEvent.update(screen.getByTestId('token-name-input'), 'ci-deploy');
+    await fireEvent.click(screen.getByTestId('token-scope-releases.write'));
+    await fireEvent.click(screen.getByTestId('token-create-submit'));
+    expect(await screen.findByTestId('token-plaintext')).toBeTruthy();
+
+    // Simulate a route leave / refresh: the component unmounts and a fresh
+    // instance mounts. The one-time secret lives only in the old instance's
+    // memory and is never persisted, so it must not come back.
+    cleanup();
+    render(TokensView, { global: { plugins: [pinia, router] } });
+    await screen.findByTestId('token-list');
+    expect(screen.queryByTestId('token-plaintext')).toBeNull();
+    expect(screen.queryByText(/aurora_pt_/)).toBeNull();
+  });
+
+  it('revokes a token via credentialsRevokePrivateToken', async () => {
+    await router.push('/organizations/org_test_1/tokens');
+    await router.isReady();
+    render(TokensView, { global: { plugins: [pinia, router] } });
+    expect(await screen.findByTestId('token-list')).toBeTruthy();
+
+    await fireEvent.click(screen.getByTestId('revoke-token-pt_test_1'));
+    await waitFor(() => expect(handlerControls.revokePrivateTokenRequests).toBeGreaterThanOrEqual(1));
+    // The revoke button is replaced by the revoked marker.
+    await waitFor(() => expect(screen.queryByTestId('revoke-token-pt_test_1')).toBeNull());
+    expect(screen.getByText('已撤销')).toBeTruthy();
+  });
+
+  it('shows a forbidden state for a plain member (server re-checks)', async () => {
+    usePlainMemberProjection();
+    await router.push('/organizations/org_test_1/tokens');
+    await router.isReady();
+    render(TokensView, { global: { plugins: [pinia, router] } });
+    expect(await screen.findByTestId('tokens-forbidden')).toBeTruthy();
+    expect(screen.queryByTestId('token-create')).toBeNull();
+  });
+});
+
+describe('B7 security audit (7C)', () => {
+  it('renders the redacted security timeline with no full email', async () => {
+    await router.push('/organizations/org_test_1/audit');
+    await router.isReady();
+    render(AuditView, { global: { plugins: [pinia, router] } });
+    expect(await screen.findByTestId('audit-list')).toBeTruthy();
+    expect(screen.getByTestId('audit-action').textContent).toBe('member.invited');
+    // Redacted actor: only the masked projection is rendered, never the full email.
+    expect(screen.getByTestId('audit-actor').textContent).toBe('ow**@example.invalid');
+    expect(screen.queryByText('user@example.invalid')).toBeNull();
+    expect(screen.queryByText(/aurora_pt_/)).toBeNull();
+    expect(handlerControls.listSecurityAuditRequests).toBeGreaterThanOrEqual(1);
+  });
+
+  it('loads the next audit page when a cursor is available', async () => {
+    let calls = 0;
+    mockServer.use(
+      http.get('/api/platform/v1/organizations/:organizationId/audit', async () => {
+        calls += 1;
+        if (calls === 1) {
+          return HttpResponse.json(
+            {
+              events: [
+                {
+                  eventId: 'aud_test_1',
+                  action: 'member.invited',
+                  occurredAt: '2026-08-09T01:00:00.000Z',
+                  result: 'succeeded',
+                  actorMasked: 'ow**@example.invalid',
+                },
+              ],
+              pagination: { nextCursor: 'cursor_2', totalCountStatus: 'available' },
+            } as JsonBodyType,
+            { status: 200 },
+          );
+        }
+        return HttpResponse.json(
+          {
+            events: [
+              {
+                eventId: 'aud_test_2',
+                action: 'project.restored',
+                occurredAt: '2026-08-09T02:00:00.000Z',
+                result: 'succeeded',
+                actorMasked: 'ad**@example.invalid',
+              },
+            ],
+            pagination: { totalCountStatus: 'available' },
+          } as JsonBodyType,
+          { status: 200 },
+        );
+      }),
+    );
+    await router.push('/organizations/org_test_1/audit');
+    await router.isReady();
+    render(AuditView, { global: { plugins: [pinia, router] } });
+    expect(await screen.findByTestId('audit-load-more')).toBeTruthy();
+
+    await fireEvent.click(screen.getByTestId('audit-load-more'));
+    await waitFor(() => expect(screen.queryByTestId('audit-load-more')).toBeNull());
+    expect(screen.getAllByTestId('audit-row')).toHaveLength(2);
+    expect(screen.getByText('project.restored')).toBeTruthy();
+  });
+
+  it('shows a forbidden state for a plain member', async () => {
+    usePlainMemberProjection();
+    await router.push('/organizations/org_test_1/audit');
+    await router.isReady();
+    render(AuditView, { global: { plugins: [pinia, router] } });
+    expect(await screen.findByTestId('audit-forbidden')).toBeTruthy();
+    expect(screen.queryByTestId('audit-list')).toBeNull();
+  });
+});
+
+describe('B8 trash restore (7C)', () => {
+  it('lists recoverable projects and shows the G10 safety note', async () => {
+    await router.push('/organizations/org_test_1/trash');
+    await router.isReady();
+    render(TrashView, { global: { plugins: [pinia, router] } });
+    expect(await screen.findByTestId('trash-list')).toBeTruthy();
+    expect(screen.getByTestId('trash-name').textContent).toBe('Legacy');
+    expect(screen.getByTestId('trash-safety-note').textContent).toMatch(/不会被恢复/);
+    expect(handlerControls.listTrashRequests).toBeGreaterThanOrEqual(1);
+  });
+
+  it('restores a project, recovering the current version from a 412 and resubmitting', async () => {
+    let calls = 0;
+    let capturedResourceVersion = '';
+    mockServer.use(
+      http.post(
+        '/api/platform/v1/organizations/:organizationId/trash/:projectId/restore',
+        async ({ request }) => {
+          calls += 1;
+          const body = (await request.json()) as { resourceVersion: string };
+          if (calls === 1) {
+            return HttpResponse.json(
+              {
+                type: 'about:blank',
+                title: 'Version conflict',
+                status: 412,
+                detail: 'The project version is stale.',
+                code: 'version_conflict',
+                requestId: 'req_test_412',
+                fieldErrors: [
+                  { field: 'resourceVersion', reason: 'Current version is 2026-08-09T02:00:00.000Z.' },
+                ],
+              } as JsonBodyType,
+              { status: 412 },
+            );
+          }
+          capturedResourceVersion = body.resourceVersion;
+          return HttpResponse.json(
+            {
+              projectId: 'prj_test_2',
+              status: 'active',
+              lifecycle: 'active',
+              navigationTargets: [],
+            } as JsonBodyType,
+            { status: 200 },
+          );
+        },
+      ),
+    );
+    await router.push('/organizations/org_test_1/trash');
+    await router.isReady();
+    render(TrashView, { global: { plugins: [pinia, router] } });
+    expect(await screen.findByTestId('trash-list')).toBeTruthy();
+
+    await fireEvent.click(screen.getByTestId('restore-project-prj_test_2'));
+    expect(await screen.findByTestId('trash-restore-success')).toBeTruthy();
+    // The override handler counts restore attempts (first 412, second success).
+    expect(calls).toBeGreaterThanOrEqual(2);
+    expect(capturedResourceVersion).toBe('2026-08-09T02:00:00.000Z');
+    // The restored row leaves the trash list.
+    expect(screen.queryByTestId('trash-row')).toBeNull();
+  });
+
+  it('shows a forbidden state for a plain member', async () => {
+    usePlainMemberProjection();
+    await router.push('/organizations/org_test_1/trash');
+    await router.isReady();
+    render(TrashView, { global: { plugins: [pinia, router] } });
+    expect(await screen.findByTestId('trash-forbidden')).toBeTruthy();
+    expect(screen.queryByTestId('trash-list')).toBeNull();
   });
 });

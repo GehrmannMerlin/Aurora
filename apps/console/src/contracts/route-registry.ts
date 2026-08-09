@@ -23,6 +23,9 @@ const projectCreateView = (): Promise<Component> =>
   import('../views/organization/ProjectCreateView.vue');
 const membersView = (): Promise<Component> => import('../views/organization/MembersView.vue');
 const settingsView = (): Promise<Component> => import('../views/organization/SettingsView.vue');
+const tokensView = (): Promise<Component> => import('../views/organization/TokensView.vue');
+const auditView = (): Promise<Component> => import('../views/organization/AuditView.vue');
+const trashView = (): Promise<Component> => import('../views/organization/TrashView.vue');
 const registerView = (): Promise<Component> => import('../views/auth/RegisterView.vue');
 const verifyEmailView = (): Promise<Component> => import('../views/auth/VerifyEmailView.vue');
 const verifyEmailConfirmView = (): Promise<Component> =>
@@ -188,9 +191,9 @@ export const ROUTE_REGISTRY: readonly RouteEntry[] = [
     label: '令牌',
     paramsSchema: orgParams,
     querySchema: anyQuery,
-    lazy: unavailable,
+    lazy: tokensView,
     menu: true,
-    unavailableReason: 'capability-not-provided',
+    unavailableReason: null,
   },
   {
     routeId: 'organization.audit',
@@ -199,9 +202,9 @@ export const ROUTE_REGISTRY: readonly RouteEntry[] = [
     label: '审计',
     paramsSchema: orgParams,
     querySchema: anyQuery,
-    lazy: unavailable,
+    lazy: auditView,
     menu: true,
-    unavailableReason: 'capability-not-provided',
+    unavailableReason: null,
   },
   {
     routeId: 'organization.trash',
@@ -210,9 +213,9 @@ export const ROUTE_REGISTRY: readonly RouteEntry[] = [
     label: '回收站',
     paramsSchema: orgParams,
     querySchema: anyQuery,
-    lazy: unavailable,
+    lazy: trashView,
     menu: true,
-    unavailableReason: 'capability-not-provided',
+    unavailableReason: null,
   },
   {
     routeId: 'project.onboarding',

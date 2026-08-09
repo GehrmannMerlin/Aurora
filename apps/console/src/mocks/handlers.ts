@@ -4,14 +4,19 @@ import {
   validChangePasswordSamples,
   validConfirmEmailVerificationSamples,
   validConfirmPasswordResetSamples,
+  validCreatePrivateTokenSamples,
   validInviteMemberSamples,
   validListMembersSamples,
+  validListPrivateTokensSamples,
   validListProjectsSamples,
+  validListSecurityAuditSamples,
+  validListTrashSamples,
   validLoginSamples,
   validLogoutSamples,
   validNavigationSamples,
   validRegisterSamples,
   validRequestPasswordResetSamples,
+  validRestoreProjectSamples,
   validSessionSamples,
 } from '@aurora/platform-contract/contract-testkit';
 
@@ -82,6 +87,12 @@ export const handlerControls = {
   removeMemberRequests: 0,
   transferOwnershipRequests: 0,
   updateTimezoneRequests: 0,
+  listPrivateTokensRequests: 0,
+  createPrivateTokenRequests: 0,
+  revokePrivateTokenRequests: 0,
+  listSecurityAuditRequests: 0,
+  listTrashRequests: 0,
+  restoreProjectRequests: 0,
   /** Toggle for the session projection: true = authenticated, false = 401. */
   sessionAuthenticated: readStoredSessionAuthenticated(),
 };
@@ -303,6 +314,52 @@ export function createPlatformHandlers() {
           } as JsonBodyType,
           { status: 200 },
         );
+      },
+    ),
+    http.get('/api/platform/v1/organizations/:organizationId/private-tokens', async () => {
+      handlerControls.listPrivateTokensRequests += 1;
+      await maybeDelay();
+      // METADATA ONLY: no digest and no plaintext ever appears in the list.
+      return HttpResponse.json(validListPrivateTokensSamples[0] as JsonBodyType, { status: 200 });
+    }),
+    http.post('/api/platform/v1/organizations/:organizationId/private-tokens', async () => {
+      handlerControls.createPrivateTokenRequests += 1;
+      await maybeDelay();
+      // One-time plaintext delivery: the response carries `tokenPlaintext` once
+      // and is served with Cache-Control: no-store. The mock mirrors the real
+      // contract shape (the plaintext is never stored client-side).
+      return HttpResponse.json(validCreatePrivateTokenSamples[0] as JsonBodyType, {
+        status: 200,
+        headers: { 'cache-control': 'no-store' },
+      });
+    }),
+    http.post(
+      '/api/platform/v1/organizations/:organizationId/private-tokens/:tokenId/revoke',
+      async ({ params }) => {
+        handlerControls.revokePrivateTokenRequests += 1;
+        await maybeDelay();
+        return HttpResponse.json(
+          { status: 'succeeded', tokenId: params.tokenId } as JsonBodyType,
+          { status: 200 },
+        );
+      },
+    ),
+    http.get('/api/platform/v1/organizations/:organizationId/audit', async () => {
+      handlerControls.listSecurityAuditRequests += 1;
+      await maybeDelay();
+      return HttpResponse.json(validListSecurityAuditSamples[0] as JsonBodyType, { status: 200 });
+    }),
+    http.get('/api/platform/v1/organizations/:organizationId/trash', async () => {
+      handlerControls.listTrashRequests += 1;
+      await maybeDelay();
+      return HttpResponse.json(validListTrashSamples[0] as JsonBodyType, { status: 200 });
+    }),
+    http.post(
+      '/api/platform/v1/organizations/:organizationId/trash/:projectId/restore',
+      async () => {
+        handlerControls.restoreProjectRequests += 1;
+        await maybeDelay();
+        return HttpResponse.json(validRestoreProjectSamples[0] as JsonBodyType, { status: 200 });
       },
     ),
     http.get('/api/platform/v1/auth/verify/:token', async () => {
