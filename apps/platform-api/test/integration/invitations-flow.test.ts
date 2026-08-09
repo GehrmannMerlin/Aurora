@@ -312,4 +312,34 @@ describeDb('B3 invitations flow (real PostgreSQL 17 + Redis)', () => {
     expect((body as ProblemBody).code).toBe('authorization');
     await app.close();
   });
+
+  it('an invitation carrying projectGrants is rejected 422 and creates no row', async () => {
+    const app = buildApp();
+    const owner = await registerVerifiedActor(app, pool, `owner-${randomUUID()}@example.com`);
+    const invitedEmail = `grants-${randomUUID()}@example.com`;
+
+    const { status, body } = await post(
+      app,
+      owner,
+      `/api/platform/v1/organizations/${owner.organizationId}/invitations`,
+      {
+        email: invitedEmail,
+        orgRole: 'member',
+        projectGrants: [
+          { projectId: '00000000-0000-4000-8000-000000000001', projectRole: 'developer' },
+        ],
+        idempotencyKey: randomUUID(),
+      },
+    );
+    expect(status).toBe(422);
+    expect((body as ProblemBody).code).toBe('field_validation');
+
+    // No invitation row is created (the field is rejected, never silently dropped).
+    const rows = await pool.query(
+      'SELECT 1 FROM organization_invitations WHERE invited_email = $1',
+      [invitedEmail],
+    );
+    expect(rows.rows.length).toBe(0);
+    await app.close();
+  });
 });

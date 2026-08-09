@@ -100,6 +100,29 @@ export async function handleInviteMember(
   const organizationId = params.organizationId ?? '';
   const input = parsed.data.body as InviteMemberBody;
 
+  // Contract-honesty guard (leaf-close finding): the stable public contract
+  // advertises `projectGrants` (organizationInviteMemberRequest), but the
+  // data-layer `inviteMember` has no grants field and the first increment does
+  // not persist project grants. A caller sending the field would receive a 200
+  // and the grants would be silently dropped. Reject-on-present with 422
+  // field_validation instead of a no-op 200. The contract schema is
+  // `arr(projectGrant, 1, 50)` (min 1), so a present value is always non-empty;
+  // this check runs BEFORE the idempotency probe so a same-key retry that sends
+  // grants is rejected consistently (no replay of a "successful" drop).
+  if (input.projectGrants !== undefined && input.projectGrants.length > 0) {
+    await sendProblem(
+      reply,
+      requestId,
+      422,
+      'field_validation',
+      'Project grants on invitations are not supported yet.',
+      {
+        fieldErrors: [{ field: 'projectGrants', reason: 'Project grants are not supported yet.' }],
+      },
+    );
+    return;
+  }
+
   const session = await requireSession(request, reply, requestId);
   if (session === null) return;
 
