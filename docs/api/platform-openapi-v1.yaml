@@ -259,6 +259,411 @@ paths:
               additionalProperties: false
               required:
                 - idempotencyKey
+  /organizations/:organizationId/projects:
+    get:
+      operationId: organizationListProjects
+      summary: List projects visible to the current account in an organization
+      tags:
+        - organization
+        - workspace
+      responses:
+        "200":
+          description: 200 response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/organizationListProjectsResponse"
+    post:
+      operationId: organizationCreateProject
+      summary: Atomically create a project with default environment and client key
+        (owner/admin)
+      tags:
+        - project-governance
+        - workspace
+      responses:
+        "200":
+          description: 200 response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/organizationCreateProjectResponse"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  minLength: 2
+                  maxLength: 50
+                frameworkType:
+                  type: string
+                  enum:
+                    - javascript
+                    - react
+                    - vue
+                    - other
+                websiteUrl:
+                  type: string
+                  minLength: 8
+                  maxLength: 512
+                idempotencyKey: *a1
+              additionalProperties: false
+              required:
+                - name
+                - frameworkType
+                - idempotencyKey
+  /organizations/:organizationId/members:
+    get:
+      operationId: organizationListMembers
+      summary: List organization members with masked emails
+      tags:
+        - organization
+        - members
+      responses:
+        "200":
+          description: 200 response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/organizationListMembersResponse"
+  /organizations/:organizationId/invitations:
+    post:
+      operationId: organizationInviteMember
+      summary: Invite a member to an organization (atomic invite + audit)
+      tags:
+        - organization
+        - invitation
+      responses:
+        "200":
+          description: 200 response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/organizationInviteMemberResponse"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                  minLength: 3
+                  maxLength: 320
+                orgRole:
+                  type: string
+                  enum:
+                    - admin
+                    - member
+                projectGrants:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      projectId: &a6
+                        type: string
+                        minLength: 3
+                        maxLength: 64
+                        description: ProjectId
+                      projectRole:
+                        type: string
+                        enum:
+                          - project_admin
+                          - developer
+                          - read_only
+                    additionalProperties: false
+                    required:
+                      - projectId
+                      - projectRole
+                idempotencyKey: *a1
+              additionalProperties: false
+              required:
+                - email
+                - orgRole
+                - idempotencyKey
+  /organizations/:organizationId/invitations/:invitationId/revoke:
+    post:
+      operationId: organizationRevokeInvitation
+      summary: Revoke a pending organization invitation
+      tags:
+        - organization
+        - invitation
+      responses:
+        "200":
+          description: 200 response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/organizationRevokeInvitationResponse"
+  /organizations/:organizationId/invitations/:invitationId/resend:
+    post:
+      operationId: organizationResendInvitation
+      summary: Resend a pending organization invitation email
+      tags:
+        - organization
+        - invitation
+      responses:
+        "200":
+          description: 200 response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/organizationResendInvitationResponse"
+  /organizations/:organizationId/members/:accountId/role:
+    post:
+      operationId: organizationChangeRole
+      summary: Change an organization member role (never to/from owner)
+      tags:
+        - organization
+        - members
+      responses:
+        "200":
+          description: 200 response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/organizationChangeRoleResponse"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                orgRole:
+                  type: string
+                  enum:
+                    - admin
+                    - member
+                resourceVersion: &a2
+                  type: string
+                  minLength: 1
+                  maxLength: 64
+              additionalProperties: false
+              required:
+                - orgRole
+                - resourceVersion
+  /organizations/:organizationId/members/:accountId/remove:
+    post:
+      operationId: organizationRemoveMember
+      summary: Remove a member from an organization (never the last owner)
+      tags:
+        - organization
+        - members
+      responses:
+        "200":
+          description: 200 response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/organizationRemoveMemberResponse"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                resourceVersion: *a2
+              additionalProperties: false
+              required:
+                - resourceVersion
+  /organizations/:organizationId/ownership:
+    post:
+      operationId: organizationTransferOwnership
+      summary: Transfer organization ownership atomically (owner invariant)
+      tags:
+        - organization
+        - members
+      responses:
+        "200":
+          description: 200 response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/organizationTransferOwnershipResponse"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                newOwnerAccountId: &a3
+                  type: string
+                  minLength: 3
+                  maxLength: 64
+                  description: AccountId
+                idempotencyKey: *a1
+              additionalProperties: false
+              required:
+                - newOwnerAccountId
+                - idempotencyKey
+  /organizations/:organizationId/settings/timezone:
+    patch:
+      operationId: organizationUpdateTimezone
+      summary: Update the organization business timezone (versioned)
+      tags:
+        - organization
+        - settings
+      responses:
+        "200":
+          description: 200 response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/organizationUpdateTimezoneResponse"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                timezone:
+                  type: string
+                  minLength: 1
+                  maxLength: 64
+                resourceVersion: *a2
+              additionalProperties: false
+              required:
+                - timezone
+                - resourceVersion
+  /organizations/:organizationId/trash:
+    get:
+      operationId: projectGovernanceListTrash
+      summary: List recoverable trashed projects (owner/admin)
+      tags:
+        - project-governance
+        - trash
+      responses:
+        "200":
+          description: 200 response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/projectGovernanceListTrashResponse"
+  /organizations/:organizationId/trash/:projectId/restore:
+    post:
+      operationId: projectGovernanceRestoreProject
+      summary: Restore a trashed project within the recovery window (G10 safety rules)
+      tags:
+        - project-governance
+        - trash
+      responses:
+        "200":
+          description: 200 response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/projectGovernanceRestoreProjectResponse"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                resourceVersion: *a2
+                idempotencyKey: *a1
+              additionalProperties: false
+              required:
+                - resourceVersion
+                - idempotencyKey
+  /organizations/:organizationId/private-tokens:
+    get:
+      operationId: credentialsListPrivateTokens
+      summary: List private management tokens (metadata only, no secret)
+      tags:
+        - credentials
+        - tokens
+      responses:
+        "200":
+          description: 200 response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/credentialsListPrivateTokensResponse"
+    post:
+      operationId: credentialsCreatePrivateToken
+      summary: Create a private management token (one-time plaintext delivery)
+      tags:
+        - credentials
+        - tokens
+      responses:
+        "200":
+          description: 200 response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/credentialsCreatePrivateTokenResponse"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  minLength: 1
+                  maxLength: 128
+                scopes:
+                  type: array
+                  items:
+                    type: string
+                    minLength: 1
+                    maxLength: 128
+                expiresAt: &a4
+                  type: string
+                  format: date-time
+                idempotencyKey: *a1
+              additionalProperties: false
+              required:
+                - name
+                - scopes
+                - idempotencyKey
+  /organizations/:organizationId/private-tokens/:tokenId/revoke:
+    post:
+      operationId: credentialsRevokePrivateToken
+      summary: Irreversibly revoke a private management token
+      tags:
+        - credentials
+        - tokens
+      responses:
+        "200":
+          description: 200 response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/credentialsRevokePrivateTokenResponse"
+  /organizations/:organizationId/audit:
+    get:
+      operationId: auditListSecurityAudit
+      summary: List the security audit timeline (redacted summaries)
+      tags:
+        - audit
+        - security
+      responses:
+        "200":
+          description: 200 response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/auditListSecurityAuditResponse"
+      parameters:
+        - name: query
+          in: query
+          schema:
+            type: object
+            properties:
+              cursor:
+                type: string
+                minLength: 1
+                maxLength: 64
+              limit:
+                type: number
+                minimum: 1
+                maximum: 100
+            additionalProperties: false
+            required:
+              - limit
 components:
   schemas:
     identityGetSessionResponse:
@@ -267,11 +672,7 @@ components:
         account:
           type: object
           properties:
-            accountId: &a3
-              type: string
-              minLength: 3
-              maxLength: 64
-              description: AccountId
+            accountId: *a3
             email:
               type: string
               minLength: 3
@@ -292,10 +693,8 @@ components:
         session:
           type: object
           properties:
-            expiresAt: &a2
-              type: string
-              format: date-time
-            rotationDueAt: *a2
+            expiresAt: *a4
+            rotationDueAt: *a4
           additionalProperties: false
           required:
             - expiresAt
@@ -303,9 +702,9 @@ components:
           type: string
           minLength: 1
           maxLength: 256
-        navigation: &a4
+        navigation: &a5
           type: array
-          items: &a5
+          items: &a7
             type: object
             properties:
               routeId:
@@ -389,13 +788,13 @@ components:
             - accountId
             - email
             - verified
-        workspace: *a4
+        workspace: *a5
         organizations:
           type: array
           items:
             type: object
             properties:
-              organizationId: &a6
+              organizationId: &a8
                 type: string
                 minLength: 3
                 maxLength: 64
@@ -409,11 +808,7 @@ components:
                 items:
                   type: object
                   properties:
-                    projectId:
-                      type: string
-                      minLength: 3
-                      maxLength: 64
-                      description: ProjectId
+                    projectId: *a6
                     name:
                       type: string
                       minLength: 1
@@ -423,14 +818,14 @@ components:
                       enum:
                         - active
                         - archived
-                    entry: *a5
+                    entry: *a7
                   additionalProperties: false
                   required:
                     - projectId
                     - name
                     - lifecycle
                     - entry
-              entry: *a5
+              entry: *a7
             additionalProperties: false
             required:
               - organizationId
@@ -462,8 +857,8 @@ components:
           type:
             - object
             - "null"
-        defaultTarget: *a5
-        safeExitTarget: *a5
+        defaultTarget: *a7
+        safeExitTarget: *a7
       additionalProperties: false
       required:
         - account
@@ -479,7 +874,7 @@ components:
         workspaceId:
           type: object
           properties:
-            organizationId: *a6
+            organizationId: *a8
           additionalProperties: false
           required:
             - organizationId
@@ -502,8 +897,8 @@ components:
           required:
             - verified
             - reason
-        resendAvailableAt: *a2
-        serverTime: *a2
+        resendAvailableAt: *a4
+        serverTime: *a4
       additionalProperties: false
       required:
         - accountId
@@ -517,7 +912,7 @@ components:
         verificationStatus:
           type: object
           properties:
-            verified: &a7
+            verified: &a9
               type: boolean
               enum:
                 - true
@@ -532,7 +927,7 @@ components:
               type: string
               minLength: 3
               maxLength: 320
-            verified: *a7
+            verified: *a9
           additionalProperties: false
           required:
             - accountId
@@ -569,8 +964,8 @@ components:
         session:
           type: object
           properties:
-            expiresAt: *a2
-            rotationDueAt: *a2
+            expiresAt: *a4
+            rotationDueAt: *a4
           additionalProperties: false
           required:
             - expiresAt
@@ -578,11 +973,11 @@ components:
           type: string
           minLength: 1
           maxLength: 256
-        navigation: *a4
+        navigation: *a5
         continuation:
           type: object
           properties:
-            target: *a5
+            target: *a7
             kind:
               type: string
               enum:
@@ -606,7 +1001,7 @@ components:
           type: string
           enum:
             - succeeded
-        serverTime: *a2
+        serverTime: *a4
       additionalProperties: false
       required:
         - status
@@ -614,8 +1009,8 @@ components:
     identityRequestPasswordResetResponse:
       type: object
       properties:
-        serverTime: *a2
-        nextRequestAllowedAt: *a2
+        serverTime: *a4
+        nextRequestAllowedAt: *a4
       additionalProperties: false
       required:
         - serverTime
@@ -626,7 +1021,7 @@ components:
           type: string
           enum:
             - succeeded
-        serverTime: *a2
+        serverTime: *a4
       additionalProperties: false
       required:
         - status
@@ -652,7 +1047,7 @@ components:
         organization:
           type: object
           properties:
-            organizationId: *a6
+            organizationId: *a8
             name:
               type: string
               minLength: 1
@@ -668,15 +1063,426 @@ components:
             - organizationId
             - name
             - role
-        navigationTargets: *a4
+        navigationTargets: *a5
       additionalProperties: false
       required:
         - organization
         - navigationTargets
+    organizationListProjectsResponse:
+      type: object
+      properties:
+        projects:
+          type: array
+          items:
+            type: object
+            properties:
+              projectId: *a6
+              name:
+                type: string
+                minLength: 2
+                maxLength: 50
+              frameworkType:
+                type: string
+                enum:
+                  - javascript
+                  - react
+                  - vue
+                  - other
+              status: &a10
+                type: string
+                enum:
+                  - active
+                  - archived
+                  - trash
+              lifecycle: *a10
+            additionalProperties: false
+            required:
+              - projectId
+              - name
+              - frameworkType
+              - status
+              - lifecycle
+        allowedActions:
+          type: array
+          items:
+            type: string
+            enum:
+              - create
+              - read
+              - update
+              - delete
+              - manage
+              - restore
+              - transfer
+              - revoke
+        navigationTargets: *a5
+      additionalProperties: false
+      required:
+        - projects
+        - allowedActions
+        - navigationTargets
+    organizationCreateProjectResponse:
+      type: object
+      properties:
+        projectId: *a6
+        clientKeyPublicIdentifier:
+          type: string
+          minLength: 11
+          maxLength: 128
+        defaultEnvironment:
+          type: string
+          minLength: 1
+          maxLength: 32
+        onboardingStatus:
+          type: string
+          enum:
+            - not_started
+            - in_progress
+            - completed
+        navigationTargets: *a5
+      additionalProperties: false
+      required:
+        - projectId
+        - clientKeyPublicIdentifier
+        - defaultEnvironment
+        - onboardingStatus
+        - navigationTargets
+    organizationListMembersResponse:
+      type: object
+      properties:
+        members:
+          type: array
+          items:
+            type: object
+            properties:
+              accountId: *a3
+              emailMasked:
+                type: string
+                minLength: 3
+                maxLength: 320
+              orgRole: &a12
+                type: string
+                enum:
+                  - owner
+                  - admin
+                  - member
+              joinedAt: *a4
+            additionalProperties: false
+            required:
+              - accountId
+              - emailMasked
+              - orgRole
+        navigationTargets: *a5
+      additionalProperties: false
+      required:
+        - members
+        - navigationTargets
+    organizationInviteMemberResponse:
+      type: object
+      properties:
+        invitationId: &a11
+          type: string
+          minLength: 3
+          maxLength: 64
+          description: InvitationId
+        invitedEmailMasked:
+          type: string
+          minLength: 3
+          maxLength: 320
+        expiresAt: *a4
+        status:
+          type: string
+          enum:
+            - pending
+      additionalProperties: false
+      required:
+        - invitationId
+        - invitedEmailMasked
+        - expiresAt
+        - status
+    organizationRevokeInvitationResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          enum:
+            - succeeded
+        invitationId: *a11
+      additionalProperties: false
+      required:
+        - status
+        - invitationId
+    organizationResendInvitationResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          enum:
+            - succeeded
+        invitationId: *a11
+        expiresAt: *a4
+      additionalProperties: false
+      required:
+        - status
+        - invitationId
+        - expiresAt
+    organizationChangeRoleResponse:
+      type: object
+      properties:
+        accountId: *a3
+        orgRole: *a12
+        resourceVersion: *a2
+      additionalProperties: false
+      required:
+        - accountId
+        - orgRole
+        - resourceVersion
+    organizationRemoveMemberResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          enum:
+            - succeeded
+        accountId: *a3
+      additionalProperties: false
+      required:
+        - status
+        - accountId
+    organizationTransferOwnershipResponse:
+      type: object
+      properties:
+        organizationId: *a8
+        ownerAccountId: *a3
+        resourceVersion: *a2
+        navigationTargets: *a5
+      additionalProperties: false
+      required:
+        - organizationId
+        - ownerAccountId
+        - resourceVersion
+        - navigationTargets
+    organizationUpdateTimezoneResponse:
+      type: object
+      properties:
+        organizationId: *a8
+        timezone:
+          type: string
+          minLength: 1
+          maxLength: 64
+        resourceVersion: *a2
+      additionalProperties: false
+      required:
+        - organizationId
+        - timezone
+        - resourceVersion
+    projectGovernanceListTrashResponse:
+      type: object
+      properties:
+        projects:
+          type: array
+          items:
+            type: object
+            properties:
+              projectId: *a6
+              name:
+                type: string
+                minLength: 2
+                maxLength: 50
+              frameworkType:
+                type: string
+                enum:
+                  - javascript
+                  - react
+                  - vue
+                  - other
+              trashedAt: *a4
+              recoverableUntil: *a4
+              lifecycle:
+                type: string
+                enum:
+                  - trash
+            additionalProperties: false
+            required:
+              - projectId
+              - name
+              - frameworkType
+              - trashedAt
+              - recoverableUntil
+              - lifecycle
+        navigationTargets: *a5
+      additionalProperties: false
+      required:
+        - projects
+        - navigationTargets
+    projectGovernanceRestoreProjectResponse:
+      type: object
+      properties:
+        projectId: *a6
+        status:
+          type: string
+          enum:
+            - active
+        lifecycle:
+          type: string
+          enum:
+            - active
+        navigationTargets: *a5
+      additionalProperties: false
+      required:
+        - projectId
+        - status
+        - lifecycle
+        - navigationTargets
+    credentialsListPrivateTokensResponse:
+      type: object
+      properties:
+        tokens:
+          type: array
+          items:
+            type: object
+            properties:
+              tokenId: &a13
+                type: string
+                minLength: 3
+                maxLength: 64
+                description: PrivateTokenId
+              name:
+                type: string
+                minLength: 1
+                maxLength: 128
+              scopes:
+                type: array
+                items:
+                  type: string
+                  minLength: 1
+                  maxLength: 128
+              expiresAt: *a4
+              revokedAt: *a4
+              lastUsedAt: *a4
+            additionalProperties: false
+            required:
+              - tokenId
+              - name
+              - scopes
+        navigationTargets: *a5
+      additionalProperties: false
+      required:
+        - tokens
+        - navigationTargets
+    credentialsCreatePrivateTokenResponse:
+      type: object
+      properties:
+        tokenId: *a13
+        tokenPlaintext:
+          type: string
+          minLength: 20
+          maxLength: 256
+        scopes:
+          type: array
+          items:
+            type: string
+            minLength: 1
+            maxLength: 128
+        expiresAt: *a4
+      additionalProperties: false
+      required:
+        - tokenId
+        - tokenPlaintext
+        - scopes
+    credentialsRevokePrivateTokenResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          enum:
+            - succeeded
+        tokenId: *a13
+      additionalProperties: false
+      required:
+        - status
+        - tokenId
+    auditListSecurityAuditResponse:
+      type: object
+      properties:
+        events:
+          type: array
+          items:
+            type: object
+            properties:
+              eventId:
+                type: string
+                minLength: 3
+                maxLength: 64
+                description: AuditEventId
+              action:
+                type: string
+                minLength: 1
+                maxLength: 128
+              occurredAt: *a4
+              result:
+                type: string
+                enum:
+                  - succeeded
+                  - failed
+                  - blocked
+              actorMasked:
+                type: string
+                minLength: 3
+                maxLength: 320
+              targetProjectRef:
+                type: object
+                properties:
+                  projectId: *a6
+                additionalProperties: false
+                required:
+                  - projectId
+            additionalProperties: false
+            required:
+              - eventId
+              - action
+              - occurredAt
+              - result
+              - actorMasked
+        pagination:
+          type: object
+          properties:
+            cursor:
+              type: string
+              minLength: 1
+              maxLength: 64
+            nextCursor:
+              type: string
+              minLength: 1
+              maxLength: 64
+            totalCount:
+              type: number
+              minimum: 0
+            totalCountStatus:
+              type: string
+              enum:
+                - available
+                - unavailable
+          additionalProperties: false
+          required:
+            - totalCountStatus
+      additionalProperties: false
+      required:
+        - events
+        - pagination
 tags:
+  - name: audit
   - name: auth
+  - name: credentials
   - name: identity
   - name: invitation
+  - name: members
   - name: navigation
   - name: organization
+  - name: project-governance
+  - name: security
   - name: session
+  - name: settings
+  - name: tokens
+  - name: trash
+  - name: workspace

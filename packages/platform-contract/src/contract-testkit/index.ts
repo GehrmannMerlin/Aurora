@@ -13,4 +13,13 @@ export {
   validChangePasswordSamples,
   validConfirmEmailVerificationSamples,
   validAcceptInvitationSamples,
+  validListProjectsSamples,
+  validListMembersSamples,
+  validInviteMemberSamples,
+  validUpdateTimezoneSamples,
+  validListTrashSamples,
+  validRestoreProjectSamples,
+  validListPrivateTokensSamples,
+  validCreatePrivateTokenSamples,
+  validListSecurityAuditSamples,
 } from './samples.js';

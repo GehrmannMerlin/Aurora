@@ -161,3 +161,126 @@ export const validAcceptInvitationSamples: readonly unknown[] = [
     navigationTargets: [{ routeId: 'workspace.home', pathParams: {}, query: {} }],
   },
 ];
+
+export const validListProjectsSamples: readonly unknown[] = [
+  {
+    projects: [
+      {
+        projectId: 'prj_test_1',
+        name: 'Web',
+        frameworkType: 'vue',
+        status: 'active',
+        lifecycle: 'active',
+      },
+    ],
+    allowedActions: ['create'],
+    navigationTargets: [
+      { routeId: 'workspace.home', pathParams: { organizationId: 'org_test_1' }, query: {} },
+    ],
+  },
+];
+
+export const validListMembersSamples: readonly unknown[] = [
+  {
+    members: [
+      { accountId: 'acct_test_1', emailMasked: 'ow**@example.invalid', orgRole: 'owner' },
+      {
+        accountId: 'acct_test_2',
+        emailMasked: 'me**@example.invalid',
+        orgRole: 'member',
+        joinedAt: '2026-08-09T01:00:00.000Z',
+      },
+    ],
+    navigationTargets: [
+      { routeId: 'organization.members', pathParams: { organizationId: 'org_test_1' }, query: {} },
+    ],
+  },
+];
+
+export const validInviteMemberSamples: readonly unknown[] = [
+  {
+    invitationId: 'inv_test_1',
+    invitedEmailMasked: 'ne**@example.invalid',
+    expiresAt: '2026-08-16T01:00:00.000Z',
+    status: 'pending',
+  },
+];
+
+export const validUpdateTimezoneSamples: readonly unknown[] = [
+  {
+    organizationId: 'org_test_1',
+    timezone: 'Asia/Shanghai',
+    resourceVersion: 'v1',
+  },
+];
+
+export const validListTrashSamples: readonly unknown[] = [
+  {
+    projects: [
+      {
+        projectId: 'prj_test_2',
+        name: 'Legacy',
+        frameworkType: 'javascript',
+        trashedAt: '2026-08-01T01:00:00.000Z',
+        recoverableUntil: '2026-08-08T01:00:00.000Z',
+        lifecycle: 'trash',
+      },
+    ],
+    navigationTargets: [
+      { routeId: 'organization.trash', pathParams: { organizationId: 'org_test_1' }, query: {} },
+    ],
+  },
+];
+
+export const validRestoreProjectSamples: readonly unknown[] = [
+  {
+    projectId: 'prj_test_2',
+    status: 'active',
+    lifecycle: 'active',
+    navigationTargets: [
+      { routeId: 'workspace.home', pathParams: { organizationId: 'org_test_1' }, query: {} },
+    ],
+  },
+];
+
+export const validListPrivateTokensSamples: readonly unknown[] = [
+  {
+    tokens: [
+      {
+        tokenId: 'pt_test_1',
+        name: 'ci-token',
+        scopes: ['source_maps.upload'],
+        expiresAt: '2026-09-01T01:00:00.000Z',
+        lastUsedAt: '2026-08-09T01:00:00.000Z',
+      },
+    ],
+    navigationTargets: [
+      { routeId: 'organization.tokens', pathParams: { organizationId: 'org_test_1' }, query: {} },
+    ],
+  },
+];
+
+export const validCreatePrivateTokenSamples: readonly unknown[] = [
+  {
+    tokenId: 'pt_test_2',
+    tokenPlaintext: 'aurora_pt_pt_test_2_abcdef1234567890',
+    scopes: ['releases.write'],
+    expiresAt: '2026-09-01T01:00:00.000Z',
+  },
+];
+
+export const validListSecurityAuditSamples: readonly unknown[] = [
+  {
+    events: [
+      {
+        eventId: 'aud_test_1',
+        action: 'member.invited',
+        occurredAt: '2026-08-09T01:00:00.000Z',
+        result: 'succeeded',
+        actorMasked: 'ow**@example.invalid',
+        targetProjectRef: { projectId: 'prj_test_1' },
+      },
+    ],
+    pagination: { totalCountStatus: 'available' },
+  },
+];

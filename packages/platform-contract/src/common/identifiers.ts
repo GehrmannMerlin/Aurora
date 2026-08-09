@@ -11,3 +11,6 @@ export const AlertRuleId = brandedId<'AlertRuleId'>('AlertRuleId');
 export const AlertInstanceId = brandedId<'AlertInstanceId'>('AlertInstanceId');
 export const NotificationId = brandedId<'NotificationId'>('NotificationId');
 export const OperationId = brandedId<'OperationId'>('OperationId');
+export const InvitationId = brandedId<'InvitationId'>('InvitationId');
+export const PrivateTokenId = brandedId<'PrivateTokenId'>('PrivateTokenId');
+export const AuditEventId = brandedId<'AuditEventId'>('AuditEventId');

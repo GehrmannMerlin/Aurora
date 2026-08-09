@@ -8,7 +8,7 @@ import { BLOCKED_OPERATIONS, PLATFORM_OPERATIONS } from '../../src/registry/oper
 import { ROUTE_TARGET_IDS, type RouteTargetId } from '../../src/common/navigation.js';
 
 describe('operation registry and manifest', () => {
-  it('exposes the ten stable operations', () => {
+  it('exposes the twenty-six stable operations', () => {
     expect(PLATFORM_OPERATIONS.map((o) => o.operationId)).toEqual([
       'identityGetSession',
       'navigationGetContext',
@@ -20,11 +20,27 @@ describe('operation registry and manifest', () => {
       'identityConfirmPasswordReset',
       'identityChangePassword',
       'organizationAcceptInvitation',
+      'organizationListProjects',
+      'organizationCreateProject',
+      'organizationListMembers',
+      'organizationInviteMember',
+      'organizationRevokeInvitation',
+      'organizationResendInvitation',
+      'organizationChangeRole',
+      'organizationRemoveMember',
+      'organizationTransferOwnership',
+      'organizationUpdateTimezone',
+      'projectGovernanceListTrash',
+      'projectGovernanceRestoreProject',
+      'credentialsListPrivateTokens',
+      'credentialsCreatePrivateToken',
+      'credentialsRevokePrivateToken',
+      'auditListSecurityAudit',
     ]);
   });
 
   it('registers blocked downstream operations without schemas', () => {
-    expect(BLOCKED_OPERATIONS.length).toBeGreaterThan(30);
+    expect(BLOCKED_OPERATIONS.length).toBeGreaterThan(20);
     for (const op of BLOCKED_OPERATIONS) {
       expect(op.reason.length).toBeGreaterThan(10);
       expect('responses' in op).toBe(false);
@@ -118,13 +134,13 @@ describe('operation registry and manifest', () => {
       'invitation.accept': 'stable',
       'account.security': 'stable',
       'workspace.home': 'stable',
-      'organization.project-create': 'blocked',
-      'organization.members': 'blocked',
-      'organization.settings': 'blocked',
+      'organization.project-create': 'stable',
+      'organization.members': 'stable',
+      'organization.settings': 'stable',
       'organization.usage': 'blocked',
-      'organization.tokens': 'blocked',
-      'organization.audit': 'blocked',
-      'organization.trash': 'blocked',
+      'organization.tokens': 'stable',
+      'organization.audit': 'stable',
+      'organization.trash': 'stable',
       'project.onboarding': 'blocked',
       'project.overview': 'blocked',
       'project.issues': 'blocked',
