@@ -53,6 +53,7 @@ export {
   resendInvitation,
   revokeInvitation,
   type InvitationRow,
+  type InvitedOrganizationRole,
   type InviteMemberInput,
   type InviteMemberResult,
   type ResendInvitationInput,

@@ -112,6 +112,25 @@ export async function runMigrationsUp(): Promise<void> {
   });
 }
 
+/**
+ * Run only the platform-organization migration down (`count: 1` = this
+ * package's single migration). `checkOrder: false` for the same shared
+ * `pgmigrations`-table reason as `runMigrationsUp`. `count: Infinity` would
+ * trigger node-pg-migrate's "definitions deleted" validation because the PLT-03
+ * identity migration shares the table from a sibling directory.
+ */
+export async function runOrganizationMigrationsDown(): Promise<void> {
+  await runner({
+    databaseUrl: testDatabaseUrl(),
+    dir: organizationMigrationsDir,
+    direction: 'down',
+    migrationsTable: 'pgmigrations',
+    count: 1,
+    log: () => undefined,
+    checkOrder: false,
+  });
+}
+
 /** Insert an active account and return its id. */
 export async function createTestAccount(pool: Pool, email: string): Promise<string> {
   const normalized = email.trim().toLowerCase();

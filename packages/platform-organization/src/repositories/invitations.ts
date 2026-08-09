@@ -8,6 +8,13 @@ import type { OrganizationRole } from './organizations.js';
 
 const DEFAULT_INVITATION_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 
+/**
+ * Roles grantable via invitation. The owner role is intentionally excluded:
+ * ownership only ever changes through `transferOwnership`, so an invitation can
+ * never be accepted into a second owner (owner-unique invariant, spec §6).
+ */
+export type InvitedOrganizationRole = 'admin' | 'member';
+
 /** camelCase projection of an organization_invitations row (no token digest). */
 export interface InvitationRow {
   readonly invitationId: string;
@@ -22,7 +29,7 @@ export interface InvitationRow {
 export interface InviteMemberInput {
   readonly orgId: string;
   readonly invitedEmail: string;
-  readonly orgRole: OrganizationRole;
+  readonly orgRole: InvitedOrganizationRole;
   /** SHA-256 digest of the one-time invitation token; the raw token never reaches the DB. */
   readonly tokenDigest: string;
   readonly expiresAt: Date;
@@ -88,6 +95,16 @@ async function runInviteMember(
   client: PoolClient,
   input: InviteMemberInput,
 ): Promise<InviteMemberResult> {
+  // Defense-in-depth: the public input type narrows orgRole to
+  // 'admin' | 'member', but a caller that bypasses the type must still not be
+  // able to create an owner-role invitation — accepting it would break the
+  // owner-unique invariant (owner only changes via transferOwnership).
+  if ((input.orgRole as OrganizationRole) === 'owner') {
+    throw new PlatformOrganizationError(
+      'invalid_input',
+      'owner role cannot be granted via invitation',
+    );
+  }
   const normalizedEmail = normalizeEmail(input.invitedEmail);
   // An email that already belongs to a member of this org cannot be re-invited.
   const existing = await client.query<{ account_id: string }>(

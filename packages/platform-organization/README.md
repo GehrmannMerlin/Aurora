@@ -18,7 +18,8 @@ Repository 层均已真实存在。
 - `members`：`listMembers`、`changeOrganizationRole`、`removeMember`、`transferOwnership`
   （**owner 唯一不变量在 Repository 层事务内强制**：org 行 `FOR UPDATE` 串行化所有成员变更；
   不得 derote 唯一 owner、不得经 ChangeRole 制造第二个 owner、TransferOwnership 提交后恰有一个 owner）；
-- `invitations`：`inviteMember`（原子邀请 + 审计；pending 重复冲突 / 已是成员冲突）、
+- `invitations`：`inviteMember`（原子邀请 + 审计；pending 重复冲突 / 已是成员冲突；
+  **orgRole 限 `admin | member`，拒绝 `owner`**——owner 只能经 `transferOwnership` 变更）、
   `revokeInvitation`、`resendInvitation`（新 token+摘要+有效期，保持 pending，一次性明文返回）、
   `listPendingInvitations`；
 - `timezone`：`getOrganizationSettings`、`updateOrganizationTimezone`（乐观并发 → `version_conflict`，

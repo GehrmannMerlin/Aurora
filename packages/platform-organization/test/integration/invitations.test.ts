@@ -5,6 +5,7 @@ import {
   listPendingInvitations,
   resendInvitation,
   revokeInvitation,
+  type InviteMemberInput,
 } from '../../src/index.js';
 import {
   assertIsTestDatabase,
@@ -292,5 +293,31 @@ describeDb('platform-organization invitations repository (real PostgreSQL 17)', 
     expect(pending[0]?.invitationId).toBe(c2.invitationId);
     expect(pending[0]?.invitedEmail).toBe(email2);
     expect(pending[0]?.status).toBe('pending');
+  });
+
+  it('inviteMember rejects an owner-role invitation (owner-unique invariant)', async () => {
+    const { orgId, ownerId } = await createOrgWithOwner();
+    const ownerEmail = `owner-invite-${crypto.randomUUID()}@example.com`;
+    // `orgRole: 'owner'` is not expressible in the narrowed public input type
+    // (InviteMemberInput.orgRole = 'admin' | 'member'); cast through unknown to
+    // exercise the runtime defense-in-depth guard.
+    const input = {
+      orgId,
+      invitedEmail: ownerEmail,
+      orgRole: 'owner',
+      tokenDigest: 'w'.repeat(64),
+      expiresAt: futureExpiry(),
+      actorId: ownerId,
+    } as unknown;
+    await expect(inviteMember(pool, input as InviteMemberInput)).rejects.toMatchObject({
+      kind: 'invalid_input',
+    });
+    // No invitation row (of any status) was created.
+    const rows = await queryRows<{ count: string }>(
+      pool,
+      'SELECT count(*)::int AS count FROM organization_invitations WHERE invited_email = $1',
+      [ownerEmail],
+    );
+    expect(rows[0]?.count).toBe(0);
   });
 });
