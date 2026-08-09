@@ -116,9 +116,15 @@ echo "==> current -> ${RELEASE_DIR}"
 #     recreate nginx with the AURORA_COMPOSE override so the Aurora vhosts
 #     (incl. /api/platform/*) stay live. Never touches other Lumina containers.
 AURORA_NGINX_DIR="${REMOTE_ROOT}/deploy/nginx"
-SSH "mkdir -p '${AURORA_NGINX_DIR}/conf.d' '${AURORA_NGINX_DIR}/www' && cp '${RELEASE_DIR}/deploy/preview/nginx/aurora-tls.conf' '${AURORA_NGINX_DIR}/conf.d/aurora-tls.conf' && cp '${RELEASE_DIR}/deploy/preview/nginx/console-default.conf' '${AURORA_NGINX_DIR}/conf.d/console-default.conf' && cp '${RELEASE_DIR}/deploy/preview/nginx/preview-status.html' '${AURORA_NGINX_DIR}/www/preview-status.html'" || { echo "NGINX SYNC FAILED"; exit 1; }
+SSH "mkdir -p '${AURORA_NGINX_DIR}/conf.d' '${AURORA_NGINX_DIR}/www' && cp '${RELEASE_DIR}/deploy/preview/nginx/aurora-tls.conf' '${AURORA_NGINX_DIR}/conf.d/aurora-tls.conf' && cp '${RELEASE_DIR}/deploy/preview/nginx/console-default.conf' '${AURORA_NGINX_DIR}/conf.d/console-default.conf' && cp '${RELEASE_DIR}/deploy/preview/nginx/preview-status.html' '${AURORA_NGINX_DIR}/www/preview-status.html' && cp '${RELEASE_DIR}/deploy/preview/compose.aurora-override.yml' '${REMOTE_ROOT}/deploy/compose.aurora-override.yml'" || { echo "NGINX SYNC FAILED"; exit 1; }
 echo "==> nginx config synced to host"
-SSH "docker compose -f /opt/lumina/app/deploy/compose.prod.yml -f '${REMOTE_ROOT}/deploy/compose.aurora-override.yml' up -d --no-deps nginx" || { echo "NGINX RELOAD FAILED"; exit 1; }
+# Recreate the existing nginx container with the Aurora override so the bind
+# mounts (aurora-tls.conf / api proxy) take effect. --no-build reuses the
+# already-pulled Lumina nginx image; LUMINA_RELEASE_COMMIT is interpolated by
+# compose.prod.yml's nginx build args even on a plain `up`, so supply it
+# (harmless: --no-build means it is never used to build). Never touches other
+# Lumina containers.
+SSH "cd /opt/lumina/app/deploy && LUMINA_RELEASE_COMMIT=preview-aurora docker compose -f compose.prod.yml -f '${REMOTE_ROOT}/deploy/compose.aurora-override.yml' up -d --no-deps --no-build nginx" || { echo "NGINX RELOAD FAILED"; exit 1; }
 echo "==> nginx reloaded with Aurora vhosts"
 
 echo "==> Deploy complete: release ${RELEASE_ID}"
