@@ -31,7 +31,8 @@
     "credentialsListPrivateTokens",
     "credentialsCreatePrivateToken",
     "credentialsRevokePrivateToken",
-    "auditListSecurityAudit"
+    "auditListSecurityAudit",
+    "requestsListEndpoints"
   ],
   "blocked": {
     "usageGetSummary": "B5 usage module absent (G10/G11)",
@@ -39,7 +40,6 @@
     "overviewGetProjectStatus": "C2 overview Query not formalized (G11)",
     "issuesListIssues": "C3 processing-store Query contract absent (G11)",
     "issuesGetIssueDetail": "C4 processing-store Query contract absent (G11)",
-    "requestsListEndpoints": "C5 request metric Query absent (G11)",
     "performanceListPages": "C6 performance metric Query absent (G11)",
     "diagnosticsGetDataStatus": "C7 diagnostics Query absent (G11)",
     "releasesListReleases": "C8 releases model not formalized (G12)",
@@ -77,7 +77,7 @@
     "project.overview": "blocked",
     "project.issues": "blocked",
     "project.issue-detail": "blocked",
-    "project.requests": "blocked",
+    "project.requests": "stable",
     "project.performance": "blocked",
     "project.data-status": "blocked",
     "project.releases": "blocked",
@@ -2817,6 +2817,1137 @@
                       "unavailable"
                     ],
                     "openEnum": false
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "requestsListEndpoints": {
+        "responses": {
+          "200": {
+            "type": "object",
+            "required": [
+              "data",
+              "meta",
+              "allowedActions",
+              "navigationTargets"
+            ],
+            "properties": {
+              "data": {
+                "type": "object",
+                "required": [
+                  "summary",
+                  "endpoints",
+                  "percentiles"
+                ],
+                "properties": {
+                  "summary": {
+                    "anyOf": [
+                      {
+                        "type": "object",
+                        "required": [
+                          "status",
+                          "data"
+                        ],
+                        "properties": {
+                          "status": {
+                            "type": "string",
+                            "enum": [
+                              "available"
+                            ],
+                            "openEnum": false
+                          },
+                          "data": {
+                            "type": "object",
+                            "required": [
+                              "methods",
+                              "isPartial"
+                            ],
+                            "properties": {
+                              "methods": {
+                                "type": "array",
+                                "items": {
+                                  "type": "object",
+                                  "required": [
+                                    "method",
+                                    "observedCount",
+                                    "failureCount",
+                                    "slowCount",
+                                    "durationSumMs",
+                                    "durationMaxMs",
+                                    "outcomes"
+                                  ],
+                                  "properties": {
+                                    "method": {
+                                      "type": "string",
+                                      "minLength": 1,
+                                      "maxLength": 16
+                                    },
+                                    "observedCount": {
+                                      "type": "number",
+                                      "minimum": 0
+                                    },
+                                    "failureCount": {
+                                      "type": "number",
+                                      "minimum": 0
+                                    },
+                                    "slowCount": {
+                                      "type": "number",
+                                      "minimum": 0
+                                    },
+                                    "durationSumMs": {
+                                      "type": "number",
+                                      "minimum": 0
+                                    },
+                                    "durationMaxMs": {
+                                      "type": "number",
+                                      "minimum": 0
+                                    },
+                                    "outcomes": {
+                                      "type": "array",
+                                      "items": {
+                                        "type": "object",
+                                        "required": [
+                                          "outcome",
+                                          "count"
+                                        ],
+                                        "properties": {
+                                          "outcome": {
+                                            "type": "string",
+                                            "minLength": 1,
+                                            "maxLength": 32
+                                          },
+                                          "count": {
+                                            "type": "number",
+                                            "minimum": 0
+                                          }
+                                        }
+                                      }
+                                    }
+                                  }
+                                }
+                              },
+                              "dataThrough": {
+                                "type": "string",
+                                "format": "date-time"
+                              },
+                              "isPartial": {
+                                "type": "boolean"
+                              }
+                            }
+                          }
+                        }
+                      },
+                      {
+                        "type": "object",
+                        "required": [
+                          "status",
+                          "reason"
+                        ],
+                        "properties": {
+                          "status": {
+                            "type": "string",
+                            "enum": [
+                              "empty"
+                            ],
+                            "openEnum": false
+                          },
+                          "reason": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 256
+                          }
+                        }
+                      },
+                      {
+                        "type": "object",
+                        "required": [
+                          "status",
+                          "data",
+                          "missing"
+                        ],
+                        "properties": {
+                          "status": {
+                            "type": "string",
+                            "enum": [
+                              "partial"
+                            ],
+                            "openEnum": false
+                          },
+                          "data": {
+                            "type": "object",
+                            "required": [
+                              "methods",
+                              "isPartial"
+                            ],
+                            "properties": {
+                              "methods": {
+                                "type": "array",
+                                "items": {
+                                  "type": "object",
+                                  "required": [
+                                    "method",
+                                    "observedCount",
+                                    "failureCount",
+                                    "slowCount",
+                                    "durationSumMs",
+                                    "durationMaxMs",
+                                    "outcomes"
+                                  ],
+                                  "properties": {
+                                    "method": {
+                                      "type": "string",
+                                      "minLength": 1,
+                                      "maxLength": 16
+                                    },
+                                    "observedCount": {
+                                      "type": "number",
+                                      "minimum": 0
+                                    },
+                                    "failureCount": {
+                                      "type": "number",
+                                      "minimum": 0
+                                    },
+                                    "slowCount": {
+                                      "type": "number",
+                                      "minimum": 0
+                                    },
+                                    "durationSumMs": {
+                                      "type": "number",
+                                      "minimum": 0
+                                    },
+                                    "durationMaxMs": {
+                                      "type": "number",
+                                      "minimum": 0
+                                    },
+                                    "outcomes": {
+                                      "type": "array",
+                                      "items": {
+                                        "type": "object",
+                                        "required": [
+                                          "outcome",
+                                          "count"
+                                        ],
+                                        "properties": {
+                                          "outcome": {
+                                            "type": "string",
+                                            "minLength": 1,
+                                            "maxLength": 32
+                                          },
+                                          "count": {
+                                            "type": "number",
+                                            "minimum": 0
+                                          }
+                                        }
+                                      }
+                                    }
+                                  }
+                                }
+                              },
+                              "dataThrough": {
+                                "type": "string",
+                                "format": "date-time"
+                              },
+                              "isPartial": {
+                                "type": "boolean"
+                              }
+                            }
+                          },
+                          "missing": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 256
+                          }
+                        }
+                      },
+                      {
+                        "type": "object",
+                        "required": [
+                          "status",
+                          "data",
+                          "freshAt",
+                          "staleReason"
+                        ],
+                        "properties": {
+                          "status": {
+                            "type": "string",
+                            "enum": [
+                              "stale"
+                            ],
+                            "openEnum": false
+                          },
+                          "data": {
+                            "type": "object",
+                            "required": [
+                              "methods",
+                              "isPartial"
+                            ],
+                            "properties": {
+                              "methods": {
+                                "type": "array",
+                                "items": {
+                                  "type": "object",
+                                  "required": [
+                                    "method",
+                                    "observedCount",
+                                    "failureCount",
+                                    "slowCount",
+                                    "durationSumMs",
+                                    "durationMaxMs",
+                                    "outcomes"
+                                  ],
+                                  "properties": {
+                                    "method": {
+                                      "type": "string",
+                                      "minLength": 1,
+                                      "maxLength": 16
+                                    },
+                                    "observedCount": {
+                                      "type": "number",
+                                      "minimum": 0
+                                    },
+                                    "failureCount": {
+                                      "type": "number",
+                                      "minimum": 0
+                                    },
+                                    "slowCount": {
+                                      "type": "number",
+                                      "minimum": 0
+                                    },
+                                    "durationSumMs": {
+                                      "type": "number",
+                                      "minimum": 0
+                                    },
+                                    "durationMaxMs": {
+                                      "type": "number",
+                                      "minimum": 0
+                                    },
+                                    "outcomes": {
+                                      "type": "array",
+                                      "items": {
+                                        "type": "object",
+                                        "required": [
+                                          "outcome",
+                                          "count"
+                                        ],
+                                        "properties": {
+                                          "outcome": {
+                                            "type": "string",
+                                            "minLength": 1,
+                                            "maxLength": 32
+                                          },
+                                          "count": {
+                                            "type": "number",
+                                            "minimum": 0
+                                          }
+                                        }
+                                      }
+                                    }
+                                  }
+                                }
+                              },
+                              "dataThrough": {
+                                "type": "string",
+                                "format": "date-time"
+                              },
+                              "isPartial": {
+                                "type": "boolean"
+                              }
+                            }
+                          },
+                          "freshAt": {
+                            "type": "string",
+                            "minLength": 20,
+                            "maxLength": 24
+                          },
+                          "staleReason": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 256
+                          }
+                        }
+                      },
+                      {
+                        "type": "object",
+                        "required": [
+                          "status",
+                          "reason"
+                        ],
+                        "properties": {
+                          "status": {
+                            "type": "string",
+                            "enum": [
+                              "unavailable"
+                            ],
+                            "openEnum": false
+                          },
+                          "reason": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 256
+                          }
+                        }
+                      },
+                      {
+                        "type": "object",
+                        "required": [
+                          "status"
+                        ],
+                        "properties": {
+                          "status": {
+                            "type": "string",
+                            "enum": [
+                              "forbidden"
+                            ],
+                            "openEnum": false
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  "endpoints": {
+                    "anyOf": [
+                      {
+                        "type": "object",
+                        "required": [
+                          "status",
+                          "data"
+                        ],
+                        "properties": {
+                          "status": {
+                            "type": "string",
+                            "enum": [
+                              "available"
+                            ],
+                            "openEnum": false
+                          },
+                          "data": {
+                            "type": "object",
+                            "required": [
+                              "items",
+                              "pagination"
+                            ],
+                            "properties": {
+                              "items": {
+                                "type": "array",
+                                "items": {
+                                  "type": "object",
+                                  "required": [
+                                    "endpointId",
+                                    "method",
+                                    "url",
+                                    "sampleCount",
+                                    "outcomeCounts",
+                                    "isPartial",
+                                    "completeness"
+                                  ],
+                                  "properties": {
+                                    "endpointId": {
+                                      "type": "string",
+                                      "minLength": 1,
+                                      "maxLength": 64
+                                    },
+                                    "method": {
+                                      "type": "string",
+                                      "minLength": 1,
+                                      "maxLength": 16
+                                    },
+                                    "url": {
+                                      "type": "string",
+                                      "minLength": 1,
+                                      "maxLength": 2048
+                                    },
+                                    "sampleCount": {
+                                      "type": "number",
+                                      "minimum": 0
+                                    },
+                                    "outcomeCounts": {
+                                      "type": "array",
+                                      "items": {
+                                        "type": "object",
+                                        "required": [
+                                          "outcome",
+                                          "count"
+                                        ],
+                                        "properties": {
+                                          "outcome": {
+                                            "type": "string",
+                                            "minLength": 1,
+                                            "maxLength": 32
+                                          },
+                                          "count": {
+                                            "type": "number",
+                                            "minimum": 0
+                                          }
+                                        }
+                                      }
+                                    },
+                                    "dataThrough": {
+                                      "type": "string",
+                                      "format": "date-time"
+                                    },
+                                    "isPartial": {
+                                      "type": "boolean"
+                                    },
+                                    "completeness": {
+                                      "type": "object",
+                                      "required": [
+                                        "source",
+                                        "bounded"
+                                      ],
+                                      "properties": {
+                                        "source": {
+                                          "type": "string",
+                                          "minLength": 1,
+                                          "maxLength": 32
+                                        },
+                                        "bounded": {
+                                          "type": "boolean"
+                                        }
+                                      }
+                                    }
+                                  }
+                                }
+                              },
+                              "pagination": {
+                                "type": "object",
+                                "required": [
+                                  "totalCountStatus"
+                                ],
+                                "properties": {
+                                  "cursor": {
+                                    "type": "string",
+                                    "minLength": 1,
+                                    "maxLength": 64
+                                  },
+                                  "nextCursor": {
+                                    "type": "string",
+                                    "minLength": 1,
+                                    "maxLength": 64
+                                  },
+                                  "totalCount": {
+                                    "type": "number",
+                                    "minimum": 0
+                                  },
+                                  "totalCountStatus": {
+                                    "type": "string",
+                                    "enum": [
+                                      "available",
+                                      "unavailable"
+                                    ],
+                                    "openEnum": false
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      },
+                      {
+                        "type": "object",
+                        "required": [
+                          "status",
+                          "reason"
+                        ],
+                        "properties": {
+                          "status": {
+                            "type": "string",
+                            "enum": [
+                              "empty"
+                            ],
+                            "openEnum": false
+                          },
+                          "reason": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 256
+                          }
+                        }
+                      },
+                      {
+                        "type": "object",
+                        "required": [
+                          "status",
+                          "data",
+                          "missing"
+                        ],
+                        "properties": {
+                          "status": {
+                            "type": "string",
+                            "enum": [
+                              "partial"
+                            ],
+                            "openEnum": false
+                          },
+                          "data": {
+                            "type": "object",
+                            "required": [
+                              "items",
+                              "pagination"
+                            ],
+                            "properties": {
+                              "items": {
+                                "type": "array",
+                                "items": {
+                                  "type": "object",
+                                  "required": [
+                                    "endpointId",
+                                    "method",
+                                    "url",
+                                    "sampleCount",
+                                    "outcomeCounts",
+                                    "isPartial",
+                                    "completeness"
+                                  ],
+                                  "properties": {
+                                    "endpointId": {
+                                      "type": "string",
+                                      "minLength": 1,
+                                      "maxLength": 64
+                                    },
+                                    "method": {
+                                      "type": "string",
+                                      "minLength": 1,
+                                      "maxLength": 16
+                                    },
+                                    "url": {
+                                      "type": "string",
+                                      "minLength": 1,
+                                      "maxLength": 2048
+                                    },
+                                    "sampleCount": {
+                                      "type": "number",
+                                      "minimum": 0
+                                    },
+                                    "outcomeCounts": {
+                                      "type": "array",
+                                      "items": {
+                                        "type": "object",
+                                        "required": [
+                                          "outcome",
+                                          "count"
+                                        ],
+                                        "properties": {
+                                          "outcome": {
+                                            "type": "string",
+                                            "minLength": 1,
+                                            "maxLength": 32
+                                          },
+                                          "count": {
+                                            "type": "number",
+                                            "minimum": 0
+                                          }
+                                        }
+                                      }
+                                    },
+                                    "dataThrough": {
+                                      "type": "string",
+                                      "format": "date-time"
+                                    },
+                                    "isPartial": {
+                                      "type": "boolean"
+                                    },
+                                    "completeness": {
+                                      "type": "object",
+                                      "required": [
+                                        "source",
+                                        "bounded"
+                                      ],
+                                      "properties": {
+                                        "source": {
+                                          "type": "string",
+                                          "minLength": 1,
+                                          "maxLength": 32
+                                        },
+                                        "bounded": {
+                                          "type": "boolean"
+                                        }
+                                      }
+                                    }
+                                  }
+                                }
+                              },
+                              "pagination": {
+                                "type": "object",
+                                "required": [
+                                  "totalCountStatus"
+                                ],
+                                "properties": {
+                                  "cursor": {
+                                    "type": "string",
+                                    "minLength": 1,
+                                    "maxLength": 64
+                                  },
+                                  "nextCursor": {
+                                    "type": "string",
+                                    "minLength": 1,
+                                    "maxLength": 64
+                                  },
+                                  "totalCount": {
+                                    "type": "number",
+                                    "minimum": 0
+                                  },
+                                  "totalCountStatus": {
+                                    "type": "string",
+                                    "enum": [
+                                      "available",
+                                      "unavailable"
+                                    ],
+                                    "openEnum": false
+                                  }
+                                }
+                              }
+                            }
+                          },
+                          "missing": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 256
+                          }
+                        }
+                      },
+                      {
+                        "type": "object",
+                        "required": [
+                          "status",
+                          "data",
+                          "freshAt",
+                          "staleReason"
+                        ],
+                        "properties": {
+                          "status": {
+                            "type": "string",
+                            "enum": [
+                              "stale"
+                            ],
+                            "openEnum": false
+                          },
+                          "data": {
+                            "type": "object",
+                            "required": [
+                              "items",
+                              "pagination"
+                            ],
+                            "properties": {
+                              "items": {
+                                "type": "array",
+                                "items": {
+                                  "type": "object",
+                                  "required": [
+                                    "endpointId",
+                                    "method",
+                                    "url",
+                                    "sampleCount",
+                                    "outcomeCounts",
+                                    "isPartial",
+                                    "completeness"
+                                  ],
+                                  "properties": {
+                                    "endpointId": {
+                                      "type": "string",
+                                      "minLength": 1,
+                                      "maxLength": 64
+                                    },
+                                    "method": {
+                                      "type": "string",
+                                      "minLength": 1,
+                                      "maxLength": 16
+                                    },
+                                    "url": {
+                                      "type": "string",
+                                      "minLength": 1,
+                                      "maxLength": 2048
+                                    },
+                                    "sampleCount": {
+                                      "type": "number",
+                                      "minimum": 0
+                                    },
+                                    "outcomeCounts": {
+                                      "type": "array",
+                                      "items": {
+                                        "type": "object",
+                                        "required": [
+                                          "outcome",
+                                          "count"
+                                        ],
+                                        "properties": {
+                                          "outcome": {
+                                            "type": "string",
+                                            "minLength": 1,
+                                            "maxLength": 32
+                                          },
+                                          "count": {
+                                            "type": "number",
+                                            "minimum": 0
+                                          }
+                                        }
+                                      }
+                                    },
+                                    "dataThrough": {
+                                      "type": "string",
+                                      "format": "date-time"
+                                    },
+                                    "isPartial": {
+                                      "type": "boolean"
+                                    },
+                                    "completeness": {
+                                      "type": "object",
+                                      "required": [
+                                        "source",
+                                        "bounded"
+                                      ],
+                                      "properties": {
+                                        "source": {
+                                          "type": "string",
+                                          "minLength": 1,
+                                          "maxLength": 32
+                                        },
+                                        "bounded": {
+                                          "type": "boolean"
+                                        }
+                                      }
+                                    }
+                                  }
+                                }
+                              },
+                              "pagination": {
+                                "type": "object",
+                                "required": [
+                                  "totalCountStatus"
+                                ],
+                                "properties": {
+                                  "cursor": {
+                                    "type": "string",
+                                    "minLength": 1,
+                                    "maxLength": 64
+                                  },
+                                  "nextCursor": {
+                                    "type": "string",
+                                    "minLength": 1,
+                                    "maxLength": 64
+                                  },
+                                  "totalCount": {
+                                    "type": "number",
+                                    "minimum": 0
+                                  },
+                                  "totalCountStatus": {
+                                    "type": "string",
+                                    "enum": [
+                                      "available",
+                                      "unavailable"
+                                    ],
+                                    "openEnum": false
+                                  }
+                                }
+                              }
+                            }
+                          },
+                          "freshAt": {
+                            "type": "string",
+                            "minLength": 20,
+                            "maxLength": 24
+                          },
+                          "staleReason": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 256
+                          }
+                        }
+                      },
+                      {
+                        "type": "object",
+                        "required": [
+                          "status",
+                          "reason"
+                        ],
+                        "properties": {
+                          "status": {
+                            "type": "string",
+                            "enum": [
+                              "unavailable"
+                            ],
+                            "openEnum": false
+                          },
+                          "reason": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 256
+                          }
+                        }
+                      },
+                      {
+                        "type": "object",
+                        "required": [
+                          "status"
+                        ],
+                        "properties": {
+                          "status": {
+                            "type": "string",
+                            "enum": [
+                              "forbidden"
+                            ],
+                            "openEnum": false
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  "percentiles": {
+                    "anyOf": [
+                      {
+                        "type": "object",
+                        "required": [
+                          "status",
+                          "data"
+                        ],
+                        "properties": {
+                          "status": {
+                            "type": "string",
+                            "enum": [
+                              "available"
+                            ],
+                            "openEnum": false
+                          },
+                          "data": {
+                            "type": "object",
+                            "properties": {}
+                          }
+                        }
+                      },
+                      {
+                        "type": "object",
+                        "required": [
+                          "status",
+                          "reason"
+                        ],
+                        "properties": {
+                          "status": {
+                            "type": "string",
+                            "enum": [
+                              "empty"
+                            ],
+                            "openEnum": false
+                          },
+                          "reason": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 256
+                          }
+                        }
+                      },
+                      {
+                        "type": "object",
+                        "required": [
+                          "status",
+                          "data",
+                          "missing"
+                        ],
+                        "properties": {
+                          "status": {
+                            "type": "string",
+                            "enum": [
+                              "partial"
+                            ],
+                            "openEnum": false
+                          },
+                          "data": {
+                            "type": "object",
+                            "properties": {}
+                          },
+                          "missing": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 256
+                          }
+                        }
+                      },
+                      {
+                        "type": "object",
+                        "required": [
+                          "status",
+                          "data",
+                          "freshAt",
+                          "staleReason"
+                        ],
+                        "properties": {
+                          "status": {
+                            "type": "string",
+                            "enum": [
+                              "stale"
+                            ],
+                            "openEnum": false
+                          },
+                          "data": {
+                            "type": "object",
+                            "properties": {}
+                          },
+                          "freshAt": {
+                            "type": "string",
+                            "minLength": 20,
+                            "maxLength": 24
+                          },
+                          "staleReason": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 256
+                          }
+                        }
+                      },
+                      {
+                        "type": "object",
+                        "required": [
+                          "status",
+                          "reason"
+                        ],
+                        "properties": {
+                          "status": {
+                            "type": "string",
+                            "enum": [
+                              "unavailable"
+                            ],
+                            "openEnum": false
+                          },
+                          "reason": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 256
+                          }
+                        }
+                      },
+                      {
+                        "type": "object",
+                        "required": [
+                          "status"
+                        ],
+                        "properties": {
+                          "status": {
+                            "type": "string",
+                            "enum": [
+                              "forbidden"
+                            ],
+                            "openEnum": false
+                          }
+                        }
+                      }
+                    ]
+                  }
+                }
+              },
+              "meta": {
+                "type": "object",
+                "required": [
+                  "requestId",
+                  "readAt"
+                ],
+                "properties": {
+                  "requestId": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 64
+                  },
+                  "readAt": {
+                    "type": "string",
+                    "format": "date-time"
+                  },
+                  "normalizedQuery": {
+                    "type": "object",
+                    "additionalProperties": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 512
+                    }
+                  }
+                }
+              },
+              "allowedActions": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "enum": [
+                    "create",
+                    "read",
+                    "update",
+                    "delete",
+                    "manage",
+                    "restore",
+                    "transfer",
+                    "revoke"
+                  ],
+                  "openEnum": false
+                }
+              },
+              "navigationTargets": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "routeId",
+                    "pathParams",
+                    "query"
+                  ],
+                  "properties": {
+                    "routeId": {
+                      "type": "string",
+                      "enum": [
+                        "auth.register",
+                        "auth.verify-email",
+                        "auth.verify-email-confirm",
+                        "auth.login",
+                        "auth.forgot-password",
+                        "auth.reset-password",
+                        "invitation.accept",
+                        "account.security",
+                        "account.deletion-cancel",
+                        "account.deletion-confirm",
+                        "workspace.home",
+                        "organization.project-create",
+                        "organization.members",
+                        "organization.settings",
+                        "organization.usage",
+                        "organization.tokens",
+                        "organization.audit",
+                        "organization.trash",
+                        "project.onboarding",
+                        "project.overview",
+                        "project.issues",
+                        "project.issue-detail",
+                        "project.requests",
+                        "project.performance",
+                        "project.data-status",
+                        "project.releases",
+                        "project.release-detail",
+                        "project.source-maps",
+                        "project.alerts",
+                        "project.alert-rule-create",
+                        "project.alert-rule-edit",
+                        "project.alert-instance-detail",
+                        "project.access",
+                        "project.client-keys",
+                        "project.settings",
+                        "project.lifecycle",
+                        "account.notifications",
+                        "platform.resource-policies"
+                      ],
+                      "openEnum": false
+                    },
+                    "pathParams": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 256
+                      }
+                    },
+                    "query": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 512
+                      }
+                    }
                   }
                 }
               }

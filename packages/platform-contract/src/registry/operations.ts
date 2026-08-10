@@ -131,6 +131,12 @@ import {
   auditListSecurityAuditQuery,
   auditListSecurityAuditResponse,
 } from '../audit/security-audit.js';
+import {
+  OPERATION_ID_LIST_REQUEST_ENDPOINTS,
+  requestsListEndpointsPathParams,
+  requestsListEndpointsQuery,
+  requestsListEndpointsResponse,
+} from '../monitoring/request-metrics.js';
 
 export type HttpMethod = 'GET' | 'POST' | 'PATCH' | 'DELETE';
 export type AuthLevel = 'public' | 'intent' | 'session' | 'recent-verification';
@@ -873,6 +879,31 @@ export const PLATFORM_OPERATIONS: readonly OperationDef[] = [
     page: 'organization.audit',
     tags: ['audit', 'security'],
   },
+  {
+    operationId: OPERATION_ID_LIST_REQUEST_ENDPOINTS,
+    domain: 'monitoring-projections',
+    authLevel: 'session',
+    method: 'GET',
+    path: '/api/platform/v1/organizations/:organizationId/projects/:projectId/requests',
+    summary: 'List request endpoint metric projections for a project time window',
+    request: {
+      pathParams: requestsListEndpointsPathParams,
+      query: requestsListEndpointsQuery,
+      csrf: false,
+      idempotency: false,
+    },
+    responses: { 200: requestsListEndpointsResponse },
+    errorCodes: [
+      'structural_error',
+      'authentication',
+      'authorization',
+      'not_found',
+      'rate_limited',
+      'authority_unavailable',
+    ],
+    page: 'project.requests',
+    tags: ['monitoring', 'requests'],
+  },
 ];
 
 export interface BlockedOperation {
@@ -906,11 +937,6 @@ export const BLOCKED_OPERATIONS: readonly BlockedOperation[] = [
     operationId: 'issuesGetIssueDetail',
     domain: 'issues-and-alerts',
     reason: 'C4 processing-store Query contract absent (G11)',
-  },
-  {
-    operationId: 'requestsListEndpoints',
-    domain: 'monitoring-projections',
-    reason: 'C5 request metric Query absent (G11)',
   },
   {
     operationId: 'performanceListPages',

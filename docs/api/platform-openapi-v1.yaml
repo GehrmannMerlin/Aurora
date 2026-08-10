@@ -922,6 +922,54 @@ paths:
             additionalProperties: false
             required:
               - limit
+  /organizations/{organizationId}/projects/{projectId}/requests:
+    get:
+      operationId: requestsListEndpoints
+      summary: List request endpoint metric projections for a project time window
+      tags:
+        - monitoring
+        - requests
+      responses:
+        "200":
+          description: 200 response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/requestsListEndpointsResponse"
+      parameters:
+        - name: organizationId
+          in: path
+          required: true
+          schema: *a2
+        - name: projectId
+          in: path
+          required: true
+          schema: *a6
+        - name: query
+          in: query
+          schema:
+            type: object
+            properties:
+              timeRange:
+                type: object
+                properties:
+                  start: *a7
+                  end: *a7
+                additionalProperties: false
+                required:
+                  - start
+                  - end
+              cursor:
+                type: string
+                minLength: 1
+                maxLength: 512
+              limit:
+                type: number
+                minimum: 1
+                maximum: 100
+            additionalProperties: false
+            required:
+              - timeRange
 components:
   schemas:
     identityGetSessionResponse:
@@ -1496,7 +1544,7 @@ components:
               - frameworkType
               - status
               - lifecycle
-        allowedActions:
+        allowedActions: &a19
           type: array
           items:
             type: string
@@ -1830,7 +1878,7 @@ components:
               - occurredAt
               - result
               - actorMasked
-        pagination:
+        pagination: &a16
           type: object
           properties:
             cursor:
@@ -1856,6 +1904,433 @@ components:
       required:
         - events
         - pagination
+    requestsListEndpointsResponse:
+      type: object
+      properties:
+        data:
+          type: object
+          properties:
+            summary:
+              anyOf:
+                - type: object
+                  properties:
+                    status:
+                      type: string
+                      enum:
+                        - available
+                    data: &a15
+                      type: object
+                      properties:
+                        methods:
+                          type: array
+                          items:
+                            type: object
+                            properties:
+                              method:
+                                type: string
+                                minLength: 1
+                                maxLength: 16
+                              observedCount:
+                                type: number
+                                minimum: 0
+                              failureCount:
+                                type: number
+                                minimum: 0
+                              slowCount:
+                                type: number
+                                minimum: 0
+                              durationSumMs:
+                                type: number
+                                minimum: 0
+                              durationMaxMs:
+                                type: number
+                                minimum: 0
+                              outcomes:
+                                type: array
+                                items:
+                                  type: object
+                                  properties:
+                                    outcome:
+                                      type: string
+                                      minLength: 1
+                                      maxLength: 32
+                                    count:
+                                      type: number
+                                      minimum: 0
+                                  additionalProperties: false
+                                  required:
+                                    - outcome
+                                    - count
+                            additionalProperties: false
+                            required:
+                              - method
+                              - observedCount
+                              - failureCount
+                              - slowCount
+                              - durationSumMs
+                              - durationMaxMs
+                              - outcomes
+                        dataThrough: *a7
+                        isPartial:
+                          type: boolean
+                      additionalProperties: false
+                      required:
+                        - methods
+                        - isPartial
+                  additionalProperties: false
+                  required:
+                    - status
+                    - data
+                - type: object
+                  properties:
+                    status:
+                      type: string
+                      enum:
+                        - empty
+                    reason:
+                      type: string
+                      minLength: 1
+                      maxLength: 256
+                  additionalProperties: false
+                  required:
+                    - status
+                    - reason
+                - type: object
+                  properties:
+                    status:
+                      type: string
+                      enum:
+                        - partial
+                    data: *a15
+                    missing:
+                      type: string
+                      minLength: 1
+                      maxLength: 256
+                  additionalProperties: false
+                  required:
+                    - status
+                    - data
+                    - missing
+                - type: object
+                  properties:
+                    status:
+                      type: string
+                      enum:
+                        - stale
+                    data: *a15
+                    freshAt:
+                      type: string
+                      minLength: 20
+                      maxLength: 24
+                    staleReason:
+                      type: string
+                      minLength: 1
+                      maxLength: 256
+                  additionalProperties: false
+                  required:
+                    - status
+                    - data
+                    - freshAt
+                    - staleReason
+                - type: object
+                  properties:
+                    status:
+                      type: string
+                      enum:
+                        - unavailable
+                    reason:
+                      type: string
+                      minLength: 1
+                      maxLength: 256
+                  additionalProperties: false
+                  required:
+                    - status
+                    - reason
+                - type: object
+                  properties:
+                    status:
+                      type: string
+                      enum:
+                        - forbidden
+                  additionalProperties: false
+                  required:
+                    - status
+            endpoints:
+              anyOf:
+                - type: object
+                  properties:
+                    status:
+                      type: string
+                      enum:
+                        - available
+                    data: &a17
+                      type: object
+                      properties:
+                        items:
+                          type: array
+                          items:
+                            type: object
+                            properties:
+                              endpointId:
+                                type: string
+                                minLength: 1
+                                maxLength: 64
+                              method:
+                                type: string
+                                minLength: 1
+                                maxLength: 16
+                              url:
+                                type: string
+                                minLength: 1
+                                maxLength: 2048
+                              sampleCount:
+                                type: number
+                                minimum: 0
+                              outcomeCounts:
+                                type: array
+                                items:
+                                  type: object
+                                  properties:
+                                    outcome:
+                                      type: string
+                                      minLength: 1
+                                      maxLength: 32
+                                    count:
+                                      type: number
+                                      minimum: 0
+                                  additionalProperties: false
+                                  required:
+                                    - outcome
+                                    - count
+                              dataThrough: *a7
+                              isPartial:
+                                type: boolean
+                              completeness:
+                                type: object
+                                properties:
+                                  source:
+                                    type: string
+                                    minLength: 1
+                                    maxLength: 32
+                                  bounded:
+                                    type: boolean
+                                additionalProperties: false
+                                required:
+                                  - source
+                                  - bounded
+                            additionalProperties: false
+                            required:
+                              - endpointId
+                              - method
+                              - url
+                              - sampleCount
+                              - outcomeCounts
+                              - isPartial
+                              - completeness
+                        pagination: *a16
+                      additionalProperties: false
+                      required:
+                        - items
+                        - pagination
+                  additionalProperties: false
+                  required:
+                    - status
+                    - data
+                - type: object
+                  properties:
+                    status:
+                      type: string
+                      enum:
+                        - empty
+                    reason:
+                      type: string
+                      minLength: 1
+                      maxLength: 256
+                  additionalProperties: false
+                  required:
+                    - status
+                    - reason
+                - type: object
+                  properties:
+                    status:
+                      type: string
+                      enum:
+                        - partial
+                    data: *a17
+                    missing:
+                      type: string
+                      minLength: 1
+                      maxLength: 256
+                  additionalProperties: false
+                  required:
+                    - status
+                    - data
+                    - missing
+                - type: object
+                  properties:
+                    status:
+                      type: string
+                      enum:
+                        - stale
+                    data: *a17
+                    freshAt:
+                      type: string
+                      minLength: 20
+                      maxLength: 24
+                    staleReason:
+                      type: string
+                      minLength: 1
+                      maxLength: 256
+                  additionalProperties: false
+                  required:
+                    - status
+                    - data
+                    - freshAt
+                    - staleReason
+                - type: object
+                  properties:
+                    status:
+                      type: string
+                      enum:
+                        - unavailable
+                    reason:
+                      type: string
+                      minLength: 1
+                      maxLength: 256
+                  additionalProperties: false
+                  required:
+                    - status
+                    - reason
+                - type: object
+                  properties:
+                    status:
+                      type: string
+                      enum:
+                        - forbidden
+                  additionalProperties: false
+                  required:
+                    - status
+            percentiles:
+              anyOf:
+                - type: object
+                  properties:
+                    status:
+                      type: string
+                      enum:
+                        - available
+                    data: &a18
+                      type: object
+                      properties: {}
+                      additionalProperties: false
+                  additionalProperties: false
+                  required:
+                    - status
+                    - data
+                - type: object
+                  properties:
+                    status:
+                      type: string
+                      enum:
+                        - empty
+                    reason:
+                      type: string
+                      minLength: 1
+                      maxLength: 256
+                  additionalProperties: false
+                  required:
+                    - status
+                    - reason
+                - type: object
+                  properties:
+                    status:
+                      type: string
+                      enum:
+                        - partial
+                    data: *a18
+                    missing:
+                      type: string
+                      minLength: 1
+                      maxLength: 256
+                  additionalProperties: false
+                  required:
+                    - status
+                    - data
+                    - missing
+                - type: object
+                  properties:
+                    status:
+                      type: string
+                      enum:
+                        - stale
+                    data: *a18
+                    freshAt:
+                      type: string
+                      minLength: 20
+                      maxLength: 24
+                    staleReason:
+                      type: string
+                      minLength: 1
+                      maxLength: 256
+                  additionalProperties: false
+                  required:
+                    - status
+                    - data
+                    - freshAt
+                    - staleReason
+                - type: object
+                  properties:
+                    status:
+                      type: string
+                      enum:
+                        - unavailable
+                    reason:
+                      type: string
+                      minLength: 1
+                      maxLength: 256
+                  additionalProperties: false
+                  required:
+                    - status
+                    - reason
+                - type: object
+                  properties:
+                    status:
+                      type: string
+                      enum:
+                        - forbidden
+                  additionalProperties: false
+                  required:
+                    - status
+          additionalProperties: false
+          required:
+            - summary
+            - endpoints
+            - percentiles
+        meta:
+          type: object
+          properties:
+            requestId:
+              type: string
+              minLength: 1
+              maxLength: 64
+            readAt: *a7
+            normalizedQuery:
+              type: object
+              additionalProperties:
+                type: string
+                minLength: 1
+                maxLength: 512
+          additionalProperties: false
+          required:
+            - requestId
+            - readAt
+        allowedActions: *a19
+        navigationTargets: *a8
+      additionalProperties: false
+      required:
+        - data
+        - meta
+        - allowedActions
+        - navigationTargets
 tags:
   - name: audit
   - name: auth
@@ -1863,9 +2338,11 @@ tags:
   - name: identity
   - name: invitation
   - name: members
+  - name: monitoring
   - name: navigation
   - name: organization
   - name: project-governance
+  - name: requests
   - name: security
   - name: session
   - name: settings
