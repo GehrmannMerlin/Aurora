@@ -87,3 +87,21 @@ export type {
 export { queryPerformanceMetricSummary } from './performance-metric-query-repository.js';
 export { queryProjectQueryableEvidence } from './queryable-evidence-query.js';
 export type { ProjectQueryableEvidence } from './queryable-evidence-query.js';
+export {
+  queryIssueListPage,
+  queryIssueDetail,
+  queryIssueSamples,
+  queryIssueActivity,
+  encodeIssueCursor,
+  decodeIssueCursor,
+} from './issue-query-repository.js';
+export type {
+  IssueSummary,
+  IssueListPage,
+  IssueListQuery,
+  IssueDetail,
+  IssueSampleProjection,
+  IssueActivityTimeline,
+  IssueActivityEntry,
+  IssueNoteProjection,
+} from './issue-query-types.js';
