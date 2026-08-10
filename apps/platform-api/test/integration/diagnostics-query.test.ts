@@ -407,8 +407,8 @@ describeDb('DAT-20 diagnosticsGetDataStatus flow (real PostgreSQL 17 + Redis)', 
       'project.performance',
     ]);
     for (const target of data?.actionTargets ?? []) {
-      expect(target?.pathParams?.organizationId).toBe(owner.organizationId);
-      expect(target?.pathParams?.projectId).toBe(projectId);
+      expect(target.pathParams?.organizationId).toBe(owner.organizationId);
+      expect(target.pathParams?.projectId).toBe(projectId);
     }
 
     const meta = (body as DataStatusBody).meta;
