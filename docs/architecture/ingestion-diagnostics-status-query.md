@@ -1,7 +1,7 @@
 ---
 title: Aurora 接入诊断状态查询（Ingestion Diagnosis / Status Query）
 status: approved
-implementation-status: in-progress
+implementation-status: implemented
 approval-status: approved
 owner: ingestion/backend
 created: 2026-08-10
@@ -35,7 +35,13 @@ review-cycle: ingestion-diagnostics-query-schema-or-contract-change
 
 本文冻结接入诊断状态查询（DAT-20）第一增量：把数据接入链路的**真实持久化状态**（`event_inbox` 状态机、`ingestion_client_credentials` 安全状态、`@aurora/processing-store` 可查询证据）形成**正式、安全、项目隔离的公开 Query 投影**，暴露为平台公开 API 操作 `diagnosticsGetDataStatus`（C7 数据接收诊断页面 `project.data-status` Route Target）。它不建设任何写侧能力，只新增只读查询、契约操作与平台 handler。
 
-**批准状态**：本文由用户于 2026-08-10 预先批准（`status: approved`）。`implementation-status` 将在 DAT-20 独立验收后更新为 `implemented`。本文由 accepted ADR-008/010/013、approved 数据接入批次与接收结果协议、approved C7 数据接收诊断 UX/UI 设计（§9.20）、G10 授权模型与平台 Query 通用约束无歧义派生；自动审批依据见规格自检节。
+**批准状态**：本文由用户于 2026-08-10 预先批准（`status: approved`），并经独立验收后于 2026-08-10 更新为 `implementation-status: implemented`。本文由 accepted ADR-008/010/013、approved 数据接入批次与接收结果协议、approved C7 数据接收诊断 UX/UI 设计（§9.20）、G10 授权模型与平台 Query 通用约束无歧义派生；自动审批依据见规格自检节。
+
+**独立验收证据（2026-08-10，DAT-20 全量 Task 实施完成）**：
+- 契约层：`@aurora/platform-contract` 契约测试 231 passed（29 files，含 `diagnosticsGetDataStatus` 操作/路径/响应 schema 断言）与 `test:package` 3 passed（client/server 适配器含 `diagnosticsGetDataStatus`，包入口无 `ERR_PACKAGE_PATH_NOT_EXPORTED`）；OpenAPI 重新生成 `docs/api/platform-openapi-v1.yaml`/`platform-openapi-v1.manifest.json`（34 stable ops，`diagnosticsGetDataStatus` stable、`project.data-status` coverage stable）通过 `openapi:platform:lint`；`@aurora/platform-contract-drift` 漂移门禁 19 passed（生成物与契约源码逐字节一致、compat 兼容性差异检测全绿）。
+- 查询层（真实 PostgreSQL 17.10，各数据包无新 Migration）：`@aurora/ingestion-inbox` 单元测试 44 passed + 集成测试 57 passed（含 `queryProjectInboxDiagnostics` byState 五值计数、latest 时间戳、`lastErrorCode`、半开窗口、项目隔离、空项目用例）；`@aurora/ingestion-credentials` 单元测试 79 passed + 集成测试 52 passed（含 `queryProjectCredentialSafeStatus` active/disabled/revoked 计数与隐私负例：结果仅四个安全键，无 keyId/secret/clientKey）；`@aurora/processing-store` 单元测试 99 passed + 集成测试 73 passed（含 `queryProjectQueryableEvidence` 三表行数证据与项目隔离）。
+- 服务层：`@aurora/platform-api` 单元测试 51 passed（含 summary 派生六分支与 actionTargets 映射）+ 真实 PostgreSQL 17.10/Redis 集成测试 119 passed（18 files，含 `diagnosticsGetDataStatus` 端到端 flow：manager 200 真实数据、member `read`、403 无权限不查数据、跨 org 404、空项目 `not_receiving`/empty、credential_inactive `blocked`、dead-letter、`timeRange` 校验 400、隐私负例）；`platform-api`/`platform-contract`/`ingestion-inbox`/`ingestion-credentials`/`processing-store` typecheck 全绿。
+- 门禁：`pnpm --filter @aurora/platform-contract build && pnpm --filter @aurora/platform-contract test:package && pnpm platform-contract:generate && pnpm openapi:platform:lint && pnpm --filter @aurora/platform-contract-drift test` 在 DAT-20 Task 4 复跑全绿（generate 幂等，无 diff）；DAT-20 Task 4 另以最终状态复跑四个 DAT-20 集成文件（ingestion-inbox 5 / ingestion-credentials 4 / processing-store 4 / platform-api flow 12，真实 PostgreSQL 17.10/Redis）全部通过；`git diff --check` 干净。
 
 **声明边界**：诊断只暴露**安全投影**。**不**给浏览器 `event_inbox.envelope` 原文、Worker 内部 lease、密钥摘要、内部堆栈、原始日志或内部队列细节。**`HTTP accepted` 绝不等于"接入成功"**：只有 `event_inbox` 中可靠接收并最终进入处理/可查询状态的事件才是真实证据。**被拒绝批次未持久化**（接入 API 对 401/403/400 同步返回、不落库），因此"被拒绝"证据在 v1 一律以 `unavailable` 诚实表达，或由凭证安全状态（disabled/revoked）作为唯一可观察的拒绝原因。
 
