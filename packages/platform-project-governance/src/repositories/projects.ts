@@ -321,6 +321,59 @@ export async function checkProjectAccess(
   }
 }
 
+export type GetProjectAccessRoleResult =
+  | { readonly outcome: 'allowed'; readonly role: ProjectRole }
+  | { readonly outcome: 'forbidden' }
+  | { readonly outcome: 'not_found' };
+
+/**
+ * Role-aware project access for Issue lifecycle Commands (DAT-14 spec §4). Like
+ * `checkProjectAccess`, an org manager (owner/admin) of the project's org is
+ * granted the handler capability `project_admin`; any other org member resolves
+ * their `project_members` role. `not_found` is returned for both an absent
+ * project AND a project that belongs to a different organization (no existence
+ * leak). The org-manager privilege is scoped to the PATH organization.
+ */
+export async function getProjectAccessRole(
+  pool: Pool | PoolClient,
+  input: CheckProjectAccessInput,
+): Promise<GetProjectAccessRoleResult> {
+  try {
+    const project = await pool.query<{ organization_id: string }>(
+      'SELECT organization_id FROM projects WHERE project_id = $1',
+      [input.projectId],
+    );
+    const row = project.rows[0];
+    if (row?.organization_id !== input.organizationId) {
+      return { outcome: 'not_found' };
+    }
+    // Org managers (owner/admin) always hold the handler capability, regardless
+    // of any project_members row (mirrors checkProjectAccess).
+    const manager = await pool.query<{ is_manager: boolean }>(
+      `SELECT EXISTS (
+         SELECT 1 FROM organization_members om
+         WHERE om.organization_id = $1 AND om.account_id = $2 AND om.role IN ('owner','admin')
+       ) AS is_manager`,
+      [input.organizationId, input.accountId],
+    );
+    if (manager.rows[0]?.is_manager) {
+      return { outcome: 'allowed', role: 'project_admin' };
+    }
+    const membership = await pool.query<{ role: ProjectRole }>(
+      `SELECT role FROM project_members
+        WHERE project_id = $1 AND account_id = $2`,
+      [input.projectId, input.accountId],
+    );
+    const memberRole = membership.rows[0]?.role;
+    if (memberRole !== undefined) {
+      return { outcome: 'allowed', role: memberRole };
+    }
+    return { outcome: 'forbidden' };
+  } catch (error) {
+    throw toStableError(error);
+  }
+}
+
 /** Get a single project by primary key (scoped to its organization); null when absent. */
 export async function getProjectById(
   pool: Pool | PoolClient,

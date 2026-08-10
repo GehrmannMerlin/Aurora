@@ -4,6 +4,48 @@ export type {
   PersistErrorEventOccurrenceResult,
 } from './error-occurrence-types.js';
 export { persistErrorEventOccurrence } from './error-occurrence-repository.js';
+export {
+  ERROR_FINGERPRINT_VERSION,
+  type ErrorFingerprintInput,
+  type ErrorFingerprintResult,
+} from './error-fingerprint-types.js';
+export { computeErrorFingerprint } from './error-fingerprint.js';
+export {
+  DEFAULT_MAX_ISSUE_SAMPLES,
+  type PersistIssueContributionInput,
+  type PersistIssueContributionResult,
+} from './issue-contribution-types.js';
+export {
+  decideIssueSample,
+  type DecideIssueSampleInput,
+  type IssueSampleDecision,
+} from './issue-sample-decision.js';
+export { persistIssueContribution } from './issue-contribution-repository.js';
+export {
+  validateStateTransition,
+  updateIssueState,
+  updateIssueAssignee,
+  updateIssuePriority,
+  createIssueNote,
+  deleteIssueNote,
+  mergeIssues,
+  batchUpdateIssues,
+} from './issue-lifecycle-repository.js';
+export {
+  ISSUE_STATUSES,
+  ISSUE_PRIORITIES,
+  MAX_ISSUE_NOTE_LENGTH,
+  ALLOWED_STATUS_TRANSITIONS,
+  type IssueLifecycleResult,
+  type IssueBatchItem,
+  type IssueBatchResult,
+  type UpdateIssueStateInput,
+  type UpdateIssueAssigneeInput,
+  type UpdateIssuePriorityInput,
+  type CreateIssueNoteInput,
+  type DeleteIssueNoteInput,
+  type MergeIssuesInput,
+} from './issue-lifecycle-types.js';
 export type {
   PersistRequestEventSampleInput,
   PersistRequestEventSampleResult,
@@ -45,3 +87,21 @@ export type {
 export { queryPerformanceMetricSummary } from './performance-metric-query-repository.js';
 export { queryProjectQueryableEvidence } from './queryable-evidence-query.js';
 export type { ProjectQueryableEvidence } from './queryable-evidence-query.js';
+export {
+  queryIssueListPage,
+  queryIssueDetail,
+  queryIssueSamples,
+  queryIssueActivity,
+  encodeIssueCursor,
+  decodeIssueCursor,
+} from './issue-query-repository.js';
+export type {
+  IssueSummary,
+  IssueListPage,
+  IssueListQuery,
+  IssueDetail,
+  IssueSampleProjection,
+  IssueActivityTimeline,
+  IssueActivityEntry,
+  IssueNoteProjection,
+} from './issue-query-types.js';

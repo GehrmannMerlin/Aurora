@@ -1,4 +1,6 @@
+import type { ErrorEventBody } from '@aurora/event-schema';
 import { describe, expect, it } from 'vitest';
+import { computeErrorFingerprint } from '../src/error-fingerprint.js';
 import { parsePersistErrorEventOccurrenceInput } from '../src/error-occurrence-input.js';
 import type { ErrorOccurrenceDbParams } from '../src/error-occurrence-types.js';
 
@@ -114,7 +116,10 @@ describe('parsePersistErrorEventOccurrenceInput', () => {
   });
 
   it('accepts all three current error categories and maps fields correctly', () => {
-    const cases: { input: unknown; expected: ErrorOccurrenceDbParams }[] = [
+    const cases: {
+      input: unknown;
+      expected: Omit<ErrorOccurrenceDbParams, 'fingerprint' | 'fingerprintVersion'>;
+    }[] = [
       {
         input: javascriptEnvelope,
         expected: {
@@ -161,7 +166,15 @@ describe('parsePersistErrorEventOccurrenceInput', () => {
       });
       expect('status' in result).toBe(false);
       if ('status' in result) continue;
-      expect(result).toEqual(expected);
+      expect(result).toMatchObject(expected);
+      // DAT-12: the store computes a stable fingerprint from the validated body.
+      expect(result.fingerprint).toBe(
+        computeErrorFingerprint({
+          projectId: expected.projectId,
+          body: result.normalizedBody as ErrorEventBody,
+        }).fingerprint,
+      );
+      expect(result.fingerprintVersion).toBe(1);
     }
   });
 

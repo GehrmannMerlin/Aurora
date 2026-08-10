@@ -6,6 +6,13 @@
 export interface PersistErrorEventOccurrenceInput {
   readonly projectId: string;
   readonly eventEnvelope: unknown;
+  /**
+   * Optional fingerprint computed by the error processor (DAT-12 §11). When
+   * absent, the store computes it internally via `computeErrorFingerprint` so
+   * the NOT NULL column is always populated and legacy callers keep working.
+   */
+  readonly fingerprint?: string;
+  readonly fingerprintVersion?: number;
 }
 
 /**
@@ -33,4 +40,6 @@ export interface ErrorOccurrenceDbParams {
   readonly occurredAtIso: string;
   readonly errorCategory: string;
   readonly normalizedBody: unknown;
+  readonly fingerprint: string;
+  readonly fingerprintVersion: number;
 }

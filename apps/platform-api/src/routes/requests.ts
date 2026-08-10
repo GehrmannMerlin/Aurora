@@ -1,8 +1,5 @@
 import type { FastifyReply, FastifyRequest } from 'fastify';
-import {
-  queryRequestEndpointPage,
-  queryRequestMetricSummary,
-} from '@aurora/processing-store';
+import { queryRequestEndpointPage, queryRequestMetricSummary } from '@aurora/processing-store';
 import { OPERATION_ID_LIST_REQUEST_ENDPOINTS } from '@aurora/platform-contract';
 import { parseInput, serializeOutput, type OperationDef } from '@aurora/platform-contract/server';
 import { operationById } from '../operations.js';

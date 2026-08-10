@@ -31,9 +31,9 @@ describe('deriveDiagnosisSummary (spec §5.3 priority order)', () => {
   });
 
   it('not_receiving/no_credential when no credentials exist', () => {
-    expect(deriveDiagnosisSummary(input({ activeCount: 0, disabledCount: 0, revokedCount: 0 }))).toEqual(
-      { status: 'not_receiving', primaryCause: 'no_credential' },
-    );
+    expect(
+      deriveDiagnosisSummary(input({ activeCount: 0, disabledCount: 0, revokedCount: 0 })),
+    ).toEqual({ status: 'not_receiving', primaryCause: 'no_credential' });
   });
 
   it('not_receiving/no_received_events when credentials exist but the window has no rows', () => {
@@ -67,7 +67,11 @@ describe('deriveActionTargets (spec §5.3 closed mapping)', () => {
     expect(
       deriveActionTargets({ status: 'blocked', primaryCause: 'credential_inactive' }, ORG, PROJECT),
     ).toEqual([
-      { routeId: 'project.client-keys', pathParams: { organizationId: ORG, projectId: PROJECT }, query: {} },
+      {
+        routeId: 'project.client-keys',
+        pathParams: { organizationId: ORG, projectId: PROJECT },
+        query: {},
+      },
     ]);
   });
 
@@ -76,21 +80,45 @@ describe('deriveActionTargets (spec §5.3 closed mapping)', () => {
       expect(
         deriveActionTargets({ status: 'not_receiving', primaryCause: cause }, ORG, PROJECT),
       ).toEqual([
-        { routeId: 'project.onboarding', pathParams: { organizationId: ORG, projectId: PROJECT }, query: {} },
+        {
+          routeId: 'project.onboarding',
+          pathParams: { organizationId: ORG, projectId: PROJECT },
+          query: {},
+        },
       ]);
     }
   });
 
   it('processing and receiving → project.requests + project.performance', () => {
     expect(
-      deriveActionTargets({ status: 'processing', primaryCause: 'processing_backlog' }, ORG, PROJECT),
+      deriveActionTargets(
+        { status: 'processing', primaryCause: 'processing_backlog' },
+        ORG,
+        PROJECT,
+      ),
     ).toEqual([
-      { routeId: 'project.requests', pathParams: { organizationId: ORG, projectId: PROJECT }, query: {} },
-      { routeId: 'project.performance', pathParams: { organizationId: ORG, projectId: PROJECT }, query: {} },
+      {
+        routeId: 'project.requests',
+        pathParams: { organizationId: ORG, projectId: PROJECT },
+        query: {},
+      },
+      {
+        routeId: 'project.performance',
+        pathParams: { organizationId: ORG, projectId: PROJECT },
+        query: {},
+      },
     ]);
     expect(deriveActionTargets({ status: 'receiving' }, ORG, PROJECT)).toEqual([
-      { routeId: 'project.requests', pathParams: { organizationId: ORG, projectId: PROJECT }, query: {} },
-      { routeId: 'project.performance', pathParams: { organizationId: ORG, projectId: PROJECT }, query: {} },
+      {
+        routeId: 'project.requests',
+        pathParams: { organizationId: ORG, projectId: PROJECT },
+        query: {},
+      },
+      {
+        routeId: 'project.performance',
+        pathParams: { organizationId: ORG, projectId: PROJECT },
+        query: {},
+      },
     ]);
   });
 

@@ -45,11 +45,20 @@ describe('operation registry and manifest', () => {
       'requestsListEndpoints',
       'diagnosticsGetDataStatus',
       'performanceListPages',
+      'issuesUpdateState',
+      'issuesUpdateAssignee',
+      'issuesUpdatePriority',
+      'issuesCreateNote',
+      'issuesDeleteNote',
+      'issuesMerge',
+      'issuesBatchUpdate',
+      'issuesListIssues',
+      'issuesGetIssueDetail',
     ]);
   });
 
   it('registers blocked downstream operations without schemas', () => {
-    expect(BLOCKED_OPERATIONS.length).toBeGreaterThan(15);
+    expect(BLOCKED_OPERATIONS.length).toBeGreaterThan(12);
     for (const op of BLOCKED_OPERATIONS) {
       expect(op.reason.length).toBeGreaterThan(10);
       expect('responses' in op).toBe(false);
@@ -154,8 +163,8 @@ describe('operation registry and manifest', () => {
       'organization.trash': 'stable',
       'project.onboarding': 'blocked',
       'project.overview': 'blocked',
-      'project.issues': 'blocked',
-      'project.issue-detail': 'blocked',
+      'project.issues': 'stable',
+      'project.issue-detail': 'stable',
       'project.requests': 'stable',
       'project.performance': 'stable',
       'project.data-status': 'stable',

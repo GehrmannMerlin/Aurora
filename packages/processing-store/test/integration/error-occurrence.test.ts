@@ -60,6 +60,11 @@ describeDb('processing-store error occurrence persistence (real PostgreSQL 17)',
     await pool.query('DROP TABLE IF EXISTS request_metric_buckets CASCADE');
     await pool.query('DROP TABLE IF EXISTS request_event_samples CASCADE');
     await pool.query('DROP TABLE IF EXISTS error_event_occurrences CASCADE');
+    await pool.query('DROP TABLE IF EXISTS issue_samples CASCADE');
+    await pool.query('DROP TABLE IF EXISTS issue_activities CASCADE');
+    await pool.query('DROP TABLE IF EXISTS issue_notes CASCADE');
+    await pool.query('DROP TABLE IF EXISTS issue_event_applications CASCADE');
+    await pool.query('DROP TABLE IF EXISTS issues CASCADE');
     await pool.query('DROP TABLE IF EXISTS performance_metric_event_applications CASCADE');
     await pool.query('DROP TABLE IF EXISTS performance_metric_buckets CASCADE');
     await pool.query('DROP TABLE IF EXISTS performance_event_samples CASCADE');
@@ -198,9 +203,9 @@ describeDb('processing-store error occurrence persistence (real PostgreSQL 17)',
     await expect(
       pool.query(
         `INSERT INTO error_event_occurrences
-           (project_id, event_id, protocol_version, occurred_at, error_category, normalized_body)
+           (project_id, event_id, protocol_version, occurred_at, error_category, normalized_body, fingerprint, fingerprint_version)
          VALUES ('11111111-1111-1111-1111-111111111111', 'evt-pg-bad-category',
-                 '1', now(), 'custom_category', '{}'::jsonb)`,
+                 '1', now(), 'custom_category', '{}'::jsonb, 'v1|test|bad-category', 1)`,
       ),
     ).rejects.toThrow();
   });
@@ -209,9 +214,9 @@ describeDb('processing-store error occurrence persistence (real PostgreSQL 17)',
     await expect(
       pool.query(
         `INSERT INTO error_event_occurrences
-           (project_id, event_id, protocol_version, occurred_at, error_category, normalized_body)
+           (project_id, event_id, protocol_version, occurred_at, error_category, normalized_body, fingerprint, fingerprint_version)
          VALUES ('11111111-1111-1111-1111-111111111111', 'evt-pg-bad-body',
-                 '1', now(), 'javascript', '[]'::jsonb)`,
+                 '1', now(), 'javascript', '[]'::jsonb, 'v1|test|bad-body', 1)`,
       ),
     ).rejects.toThrow();
   });
@@ -220,9 +225,9 @@ describeDb('processing-store error occurrence persistence (real PostgreSQL 17)',
     await expect(
       pool.query(
         `INSERT INTO error_event_occurrences
-           (project_id, event_id, protocol_version, occurred_at, error_category, normalized_body)
+           (project_id, event_id, protocol_version, occurred_at, error_category, normalized_body, fingerprint, fingerprint_version)
          VALUES ('11111111-1111-1111-1111-111111111111', 'evt-pg-mismatch',
-                 '1', now(), 'javascript', '{"category":"resource"}'::jsonb)`,
+                 '1', now(), 'javascript', '{"category":"resource"}'::jsonb, 'v1|test|mismatch', 1)`,
       ),
     ).rejects.toThrow();
   });
@@ -230,16 +235,16 @@ describeDb('processing-store error occurrence persistence (real PostgreSQL 17)',
   it('enforces the (project_id, event_id) unique constraint', async () => {
     await pool.query(
       `INSERT INTO error_event_occurrences
-         (project_id, event_id, protocol_version, occurred_at, error_category, normalized_body)
+         (project_id, event_id, protocol_version, occurred_at, error_category, normalized_body, fingerprint, fingerprint_version)
        VALUES ('55555555-5555-5555-5555-555555555555', 'evt-pg-unique',
-               '1', now(), 'javascript', '{"category":"javascript"}'::jsonb)`,
+               '1', now(), 'javascript', '{"category":"javascript"}'::jsonb, 'v1|test|unique', 1)`,
     );
     await expect(
       pool.query(
         `INSERT INTO error_event_occurrences
-           (project_id, event_id, protocol_version, occurred_at, error_category, normalized_body)
+           (project_id, event_id, protocol_version, occurred_at, error_category, normalized_body, fingerprint, fingerprint_version)
          VALUES ('55555555-5555-5555-5555-555555555555', 'evt-pg-unique',
-                 '1', now(), 'javascript', '{"category":"javascript"}'::jsonb)`,
+                 '1', now(), 'javascript', '{"category":"javascript"}'::jsonb, 'v1|test|unique', 1)`,
       ),
     ).rejects.toThrow();
   });

@@ -412,3 +412,10 @@ Migration 必须：可 up；可 down；up/down/up 测试；不在应用启动时
 - **安全和数据**：不存客户端密钥；不存 Header；不存数据库 URL；不存完整 Envelope；不存未批准字段；SQL 全参数化；不暴露数据库错误；测试 Schema 隔离并清理；无自动保留或删除规则。
 
 自动审批依据：本文全部语义由 accepted ADR-005/008/010/012/018 与 approved 错误事件协议契约、Inbox 数据模型、处理侧 Repository、Worker 规格无歧义派生；无新增产品/架构/安全/隐私决策；不修改 Inbox/Worker/event-schema/OpenAPI；不实现 processor/查询/Issue；用户已预先批准本消息中的精确架构决策（6.1—6.11）；自检全部通过。
+
+## 36. DAT-12 fingerprint 增列衔接证据（2026-08-10）
+
+- 本规格的 `error_event_occurrences` 表由 DAT-12（错误归一化与 fingerprint 分组算法，approved 规格 [error-normalization-fingerprint.md](./error-normalization-fingerprint.md)）additive 增列承接分组键：Migration `1722500000007_error-occurrence-fingerprint.ts` 增加 `fingerprint varchar(1024) NOT NULL` + `fingerprint_version integer NOT NULL DEFAULT 1` + `(project_id, fingerprint)` 索引；
+- `persistErrorEventOccurrence` 接受处理器传入的 fingerprint（格式校验，≤1024）或缺省时内部经 `computeErrorFingerprint` 计算兜底，保证两列始终有值；`(project_id, event_id)` 幂等与既有列/约束/CHECK 不变；
+- `@aurora/ingestion-worker` `createErrorEventProcessor` 经 `computeErrorFingerprint` 计算并传入（单一计算点，DAT-13 Issue 聚合键复用同一输出）；
+- 本规格原有"不创建 Issue/fingerprint"边界不变：本增量只做 fingerprint 算法与 occurrence 指纹落库，Issue 聚合（DAT-13）仍由 accepted ADR-033 另行授权。

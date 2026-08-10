@@ -61,8 +61,13 @@ ADR-001—ADR-006 从已批准架构规范中的 ARCH-001—ARCH-006 提取，AD
 | [ADR-030](ADR-030-platform-session-csrf-password-physical-parameters.md)              | 管理平台 Session、CSRF 与密码物理安全参数             | accepted | not-started | G10 身份/认证物理参数                         |
 | [ADR-031](ADR-031-platform-email-delivery.md)                                         | 管理平台邮件发送责任、端口与供应商                    | accepted | not-started | G10 邮箱验证/密码重置/邀请                    |
 | [ADR-032](ADR-032-platform-outbox-tasks-cache-objects.md)                             | 管理平台 Outbox、任务、缓存与对象存储基础设施         | accepted | not-started | G10 异步边界（邮件/删除交接）                 |
+| [ADR-033](ADR-033-issue-aggregate-data-model.md)                                      | Issue 聚合与有界代表样本数据模型                     | accepted | not-started | G03 Issue 主链（DAT-13 数据模型）             |
 
 > 状态说明：ADR-029—032 于 2026-08-08 由 G10（PLT-03/PLT-04/SEC-01）实施门禁创建为 `proposed / not-started / awaiting-review`；2026-08-09 完成独立评审（security/backend-ops/architecture 三路，ADR-030 初审 REJECT 后修复为最终 ACCEPT 版本）并由用户明确正式批准（`accepted / not-started / approved`）。ADR-032 附带用户 YAGNI 实施约束：只有当前 approved 叶子规格确实需要、存在真实 consumer、且 ADR 明确要求该资源时才实际 provision Redis/cache/object storage/background infrastructure；不得因 ADR 定义了未来基础设施边界就提前创建没有 consumer 的付费资源。批准仅覆盖各 ADR 已记录并经过评审修订的决策内容；`implementation-status` 保持 `not-started`，对应代码实施开始前不得标记 implemented。
+>
+> 状态说明：ADR-033 于 2026-08-10 由 G03 正式化扫掠创建为 `proposed / not-started / awaiting-user-approval`。用户 G03 readiness 规则明确 DAT-13 Issue 数据模型必须有 accepted ADR；评审（architecture/backend、database domain、privacy/data-governance 三路，记录用）见 ADR-033 追加记录。2026-08-10 用户对 G03 APPROVAL PACKAGE 整体批准，ADR-033 转为 `accepted / not-started / approved`；`implementation-status` 保持 not-started，直到 DAT-13 正式实施开始。
+
+
 
 > 状态说明：ADR-008 于 2026-08-01 由用户批准（`accepted / in-progress / approved`），推荐方案 A（PostgreSQL 事务性 Inbox），批准以六项校正为准。批次/接收结果协议、数据接入 OpenAPI 与 Inbox 数据模型已实施；接入服务、Worker 与容量证据未实现。
 

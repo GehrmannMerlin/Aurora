@@ -116,7 +116,10 @@ interface ProblemBody {
 }
 
 /** A valid @aurora/event-schema error envelope for `persistBatch` seeding. */
-function errorEnvelope(eventId: string, occurredAtMs: number): {
+function errorEnvelope(
+  eventId: string,
+  occurredAtMs: number,
+): {
   protocolVersion: 1;
   eventId: string;
   eventType: 'error';
@@ -335,10 +338,17 @@ describeDb('DAT-20 diagnosticsGetDataStatus flow (real PostgreSQL 17 + Redis)', 
     await insertInboxEvent(pool, projectId, 'flow-o2', '2026-08-10T09:20:00.000Z', 'processed', {
       processedAt: '2026-08-10T09:22:00.000Z',
     });
-    await insertInboxEvent(pool, projectId, 'flow-d1', '2026-08-10T09:30:00.000Z', 'dead_lettered', {
-      deadLetteredAt: '2026-08-10T09:31:00.000Z',
-      lastErrorCode: 'capacity_protected',
-    });
+    await insertInboxEvent(
+      pool,
+      projectId,
+      'flow-d1',
+      '2026-08-10T09:30:00.000Z',
+      'dead_lettered',
+      {
+        deadLetteredAt: '2026-08-10T09:31:00.000Z',
+        lastErrorCode: 'capacity_protected',
+      },
+    );
     await seedQueryableEvidence(pool, projectId);
 
     const { status, body } = await getDataStatus(

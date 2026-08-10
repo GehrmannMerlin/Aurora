@@ -140,7 +140,10 @@ describe('diagnosticsGetDataStatus contract', () => {
     // A status outside the closed enum is rejected.
     const bad = schema.safeParse({
       data: {
-        summary: { status: 'available', data: { status: 'bogus', asOf: '2026-08-02T00:00:00.000Z' } },
+        summary: {
+          status: 'available',
+          data: { status: 'bogus', asOf: '2026-08-02T00:00:00.000Z' },
+        },
         stages: { status: 'empty', reason: 'no data' },
         recent: { status: 'empty', reason: 'no data' },
         rejection: { status: 'unavailable', reason: 'rejected batches are not persisted' },

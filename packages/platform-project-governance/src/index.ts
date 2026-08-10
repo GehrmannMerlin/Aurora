@@ -38,6 +38,8 @@ export type {
 } from './repositories/projects.js';
 export {
   checkProjectAccess,
+  getProjectAccessRole,
+  type GetProjectAccessRoleResult,
   createProject,
   getProjectById,
   insertProjectMember,
