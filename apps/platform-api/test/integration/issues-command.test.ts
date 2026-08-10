@@ -152,6 +152,33 @@ describeDb('DAT-14 issue lifecycle Commands (real PostgreSQL 17 + Redis)', () =>
     await app.close();
   });
 
+  it('a developer project member may transition state (not org-manager-only)', async () => {
+    const app = buildApp();
+    const owner = await registerVerifiedActor(app, pool, `owner-${randomUUID()}@example.com`);
+    const developer = await registerVerifiedActor(app, pool, `dev-${randomUUID()}@example.com`);
+    await insertOrganizationMembership(pool, {
+      organizationId: owner.organizationId,
+      accountId: developer.accountId,
+      role: 'member',
+    });
+    const projectId = await createProjectFor(pool, owner);
+    const issueId = await seedIssue(pool, projectId);
+    await insertProjectMember(pool, {
+      orgId: owner.organizationId,
+      projectId,
+      accountId: developer.accountId,
+      role: 'developer',
+    });
+
+    const { status } = await postIssue(app, developer, owner.organizationId, projectId, `${issueId}/state`, {
+      status: 'in_progress',
+      version: 1,
+      idempotencyKey: `idem-${randomUUID()}`,
+    });
+    expect(status).toBe(200);
+    await app.close();
+  });
+
   it('a read_only project member is forbidden from a Command', async () => {
     const app = buildApp();
     const owner = await registerVerifiedActor(app, pool, `owner-${randomUUID()}@example.com`);

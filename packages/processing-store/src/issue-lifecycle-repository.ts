@@ -129,8 +129,10 @@ export async function updateIssueState(
     return invalid('invalid_ignored_until');
   }
 
-  // Auto-assign on start-processing for an unassigned issue (PRD §10.2).
-  const autoAssign = status === 'in_progress' && issue.assigneeAccountId === null;
+  // Auto-assign on start-processing for an unassigned issue (PRD §10.2). Batch
+  // operations pass autoAssign: false — batch never auto-assigns (PRD §10.2).
+  const autoAssign =
+    (record.autoAssign ?? true) && status === 'in_progress' && issue.assigneeAccountId === null;
 
   const params: unknown[] = [record.issueId, record.projectId, record.version, status];
   const sets: string[] = ['status = $4', 'version = version + 1', 'updated_at = now()'];
@@ -276,13 +278,17 @@ export async function createIssueNote(
   const issue = await selectIssue(client, record.issueId, record.projectId);
   if (issue === null) return { status: 'not_found' };
 
-  await client.query(
+  const inserted = await client.query<{ id: string }>(
     `INSERT INTO issue_notes (issue_id, project_id, author_account_id, content)
-     VALUES ($1, $2, $3, $4)`,
+     VALUES ($1, $2, $3, $4) RETURNING id`,
     [record.issueId, record.projectId, record.authorAccountId, record.content],
   );
   await appendActivity(client, issue.id, record.projectId, record.authorAccountId, 'note_added', {});
-  return { status: 'succeeded', issueId: issue.id };
+  return {
+    status: 'succeeded',
+    issueId: issue.id,
+    noteId: inserted.rows[0]?.id ?? '',
+  };
 }
 
 export async function deleteIssueNote(
@@ -403,7 +409,8 @@ export async function batchUpdateIssues(
     };
     let result: IssueLifecycleResult;
     if (item.action === 'status') {
-      result = await updateIssueState(client, { ...base, status: item.target });
+      // PRD §10.2: batch never auto-assigns.
+      result = await updateIssueState(client, { ...base, status: item.target, autoAssign: false });
     } else if (item.action === 'assignee') {
       result = await updateIssueAssignee(client, {
         ...base,

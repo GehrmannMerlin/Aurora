@@ -215,8 +215,9 @@ describeDb('processing-store issue lifecycle repositories (real PostgreSQL 17)',
       canDeleteSensitive: false,
     });
     await client.query('COMMIT');
-    expect(created).toEqual({ status: 'succeeded', issueId });
-    expect(deleted).toEqual({ status: 'succeeded', issueId });
+    expect(created.status).toBe('succeeded');
+    expect(created.status === 'succeeded' ? created.noteId : '').not.toBe('');
+    expect(deleted.status).toBe('succeeded');
     const soft = await queryRow<{ deleted_at: string | null }>(
       client,
       `SELECT deleted_at FROM issue_notes WHERE id = $1`,

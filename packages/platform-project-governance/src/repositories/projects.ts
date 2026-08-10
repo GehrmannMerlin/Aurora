@@ -347,15 +347,8 @@ export async function getProjectAccessRole(
     if (row?.organization_id !== input.organizationId) {
       return { outcome: 'not_found' };
     }
-    const membership = await pool.query<{ role: ProjectRole }>(
-      `SELECT role FROM project_members
-        WHERE project_id = $1 AND account_id = $2`,
-      [input.projectId, input.accountId],
-    );
-    const memberRole = membership.rows[0]?.role;
-    if (memberRole !== undefined) {
-      return { outcome: 'allowed', role: memberRole };
-    }
+    // Org managers (owner/admin) always hold the handler capability, regardless
+    // of any project_members row (mirrors checkProjectAccess).
     const manager = await pool.query<{ is_manager: boolean }>(
       `SELECT EXISTS (
          SELECT 1 FROM organization_members om
@@ -365,6 +358,15 @@ export async function getProjectAccessRole(
     );
     if (manager.rows[0]?.is_manager) {
       return { outcome: 'allowed', role: 'project_admin' };
+    }
+    const membership = await pool.query<{ role: ProjectRole }>(
+      `SELECT role FROM project_members
+        WHERE project_id = $1 AND account_id = $2`,
+      [input.projectId, input.accountId],
+    );
+    const memberRole = membership.rows[0]?.role;
+    if (memberRole !== undefined) {
+      return { outcome: 'allowed', role: memberRole };
     }
     return { outcome: 'forbidden' };
   } catch (error) {

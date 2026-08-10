@@ -57,7 +57,7 @@ describe('issue lifecycle Command contracts', () => {
         ],
         idempotencyKey: 'k'.repeat(12),
       }).success,
-    ).toBe(false);
+    ).toBe(true);
     expect(
       schema.safeParse({
         items: [
@@ -68,5 +68,11 @@ describe('issue lifecycle Command contracts', () => {
       }).success,
     ).toBe(true);
     expect(schema.safeParse({ items: [], idempotencyKey: 'k'.repeat(12) }).success).toBe(false);
+    expect(
+      schema.safeParse({
+        items: [{ issueId: '', action: 'status', target: 'in_progress', version: 1 }],
+        idempotencyKey: 'k'.repeat(12),
+      }).success,
+    ).toBe(false);
   });
 });

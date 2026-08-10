@@ -29,6 +29,8 @@ export interface UpdateIssueStateInput {
   readonly actorAccountId: string;
   readonly resolution?: Resolution;
   readonly ignoredUntilIso?: string;
+  /** Auto-assign on start-processing (PRD §10.2). Default true; false for batch. */
+  readonly autoAssign?: boolean;
 }
 
 export interface UpdateIssueAssigneeInput {
@@ -85,7 +87,7 @@ export interface BatchUpdateIssuesInput {
 }
 
 export type IssueLifecycleResult =
-  | { readonly status: 'succeeded'; readonly issueId: string }
+  | { readonly status: 'succeeded'; readonly issueId: string; readonly noteId?: string }
   | { readonly status: 'conflict' }
   | { readonly status: 'not_found' }
   | { readonly status: 'forbidden' }

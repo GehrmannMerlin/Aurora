@@ -55,6 +55,8 @@ describeDb('processing-store issue aggregate contribution (real PostgreSQL 17)',
     assertIsTestDatabase(testDatabaseUrl());
     pool = createTestPool();
     await pool.query('DROP TABLE IF EXISTS issue_samples CASCADE');
+    await pool.query('DROP TABLE IF EXISTS issue_activities CASCADE');
+    await pool.query('DROP TABLE IF EXISTS issue_notes CASCADE');
     await pool.query('DROP TABLE IF EXISTS issue_event_applications CASCADE');
     await pool.query('DROP TABLE IF EXISTS issues CASCADE');
     await pool.query('DROP TABLE IF EXISTS request_metric_event_applications CASCADE');

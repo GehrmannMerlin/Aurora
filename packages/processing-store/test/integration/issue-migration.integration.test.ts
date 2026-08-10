@@ -24,6 +24,8 @@ describeDb('issue aggregate migrations (real PostgreSQL 17)', () => {
     assertIsTestDatabase(testDatabaseUrl());
     pool = createTestPool();
     await pool.query('DROP TABLE IF EXISTS issue_samples CASCADE');
+    await pool.query('DROP TABLE IF EXISTS issue_activities CASCADE');
+    await pool.query('DROP TABLE IF EXISTS issue_notes CASCADE');
     await pool.query('DROP TABLE IF EXISTS issue_event_applications CASCADE');
     await pool.query('DROP TABLE IF EXISTS issues CASCADE');
     await pool.query('DROP TABLE IF EXISTS request_metric_event_applications CASCADE');
@@ -114,8 +116,9 @@ describeDb('issue aggregate migrations (real PostgreSQL 17)', () => {
       count: 1,
       log: () => undefined,
     });
+    // The down dropped migration 1722500000009 (issue_activities/issue_notes).
     const cols = await pool.query<ColumnRow>(
-      `SELECT column_name FROM information_schema.columns WHERE table_name = 'issues'`,
+      `SELECT column_name FROM information_schema.columns WHERE table_name = 'issue_activities'`,
     );
     expect(cols.rows).toHaveLength(0);
     await runner({

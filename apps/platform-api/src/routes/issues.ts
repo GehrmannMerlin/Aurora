@@ -24,12 +24,13 @@ import { sendProblem } from '../error-mapper.js';
 import { sendMappedError, ServiceError } from '../service-error.js';
 import { effectivePermissions } from '../authorization.js';
 import {
-  requireOrgManagerOnTransaction,
   requireProjectAccess,
   requireProjectHandleAccess,
+  requireProjectHandleAccessOnTransaction,
   requireSession,
   requireUuidParams,
 } from './_shared.js';
+import { getProjectAccessRole } from '@aurora/platform-project-governance';
 import {
   lookupIdempotency,
   requestDigest,
@@ -151,7 +152,12 @@ export async function handleUpdateIssueState(
       operation: OPERATION_ID_UPDATE_ISSUE_STATE,
       digest,
       execute: async (client) => {
-        await requireOrgManagerOnTransaction(client, session?.accountId ?? '', auth.organizationId);
+        await requireProjectHandleAccessOnTransaction(
+          client,
+          session?.accountId ?? '',
+          auth.organizationId,
+          auth.projectId,
+        );
         const result = await updateIssueState(client, {
           issueId: auth.issueId,
           projectId: auth.projectId,
@@ -170,7 +176,7 @@ export async function handleUpdateIssueState(
         });
         if (result.status === 'conflict') throw new ServiceError(409, 'conflict', 'The issue was updated by another member.');
         if (result.status === 'not_found') throw new ServiceError(404, 'not_found', 'The issue was not found.');
-        if (result.status === 'invalid_input') throw new ServiceError(400, 'structural_error', result.code);
+        if (result.status === 'invalid_input') throw new ServiceError(422, 'field_validation', result.code);
         await insertAuditEvent(client, {
           organizationId: auth.organizationId,
           ...actorField(session?.accountId),
@@ -229,7 +235,12 @@ export async function handleUpdateIssueAssignee(
       operation: OPERATION_ID_UPDATE_ISSUE_ASSIGNEE,
       digest,
       execute: async (client) => {
-        await requireOrgManagerOnTransaction(client, session?.accountId ?? '', auth.organizationId);
+        await requireProjectHandleAccessOnTransaction(
+          client,
+          session?.accountId ?? '',
+          auth.organizationId,
+          auth.projectId,
+        );
         const result = await updateIssueAssignee(client, {
           issueId: auth.issueId,
           projectId: auth.projectId,
@@ -297,7 +308,12 @@ export async function handleUpdateIssuePriority(
       operation: OPERATION_ID_UPDATE_ISSUE_PRIORITY,
       digest,
       execute: async (client) => {
-        await requireOrgManagerOnTransaction(client, session?.accountId ?? '', auth.organizationId);
+        await requireProjectHandleAccessOnTransaction(
+          client,
+          session?.accountId ?? '',
+          auth.organizationId,
+          auth.projectId,
+        );
         const result = await updateIssuePriority(client, {
           issueId: auth.issueId,
           projectId: auth.projectId,
@@ -365,7 +381,12 @@ export async function handleCreateIssueNote(
       operation: OPERATION_ID_CREATE_ISSUE_NOTE,
       digest,
       execute: async (client) => {
-        await requireOrgManagerOnTransaction(client, session?.accountId ?? '', auth.organizationId);
+        await requireProjectHandleAccessOnTransaction(
+          client,
+          session?.accountId ?? '',
+          auth.organizationId,
+          auth.projectId,
+        );
         const result = await createIssueNote(client, {
           issueId: auth.issueId,
           projectId: auth.projectId,
@@ -373,8 +394,12 @@ export async function handleCreateIssueNote(
           content: body.content,
         });
         if (result.status === 'not_found') throw new ServiceError(404, 'not_found', 'The issue was not found.');
-        if (result.status === 'invalid_input') throw new ServiceError(400, 'structural_error', result.code);
-        return { status: 'succeeded', issueId: auth.issueId, noteId: auth.issueId };
+        if (result.status === 'invalid_input') throw new ServiceError(422, 'field_validation', result.code);
+        return {
+          status: 'succeeded',
+          issueId: auth.issueId,
+          noteId: result.status === 'succeeded' ? (result.noteId ?? '') : '',
+        };
       },
     });
     if (idempotency.outcome === 'conflict') {
@@ -423,14 +448,26 @@ export async function handleDeleteIssueNote(
       operation: OPERATION_ID_DELETE_ISSUE_NOTE,
       digest,
       execute: async (client) => {
-        await requireOrgManagerOnTransaction(client, session?.accountId ?? '', auth.organizationId);
-        const permissions = await effectivePermissions(session?.accountId ?? '', auth.organizationId, { pool: client });
+        await requireProjectHandleAccessOnTransaction(
+          client,
+          session?.accountId ?? '',
+          auth.organizationId,
+          auth.projectId,
+        );
+        // Admin-sensitive deletion: org manager OR project_admin (DAT-14 spec §4).
+        const role = await getProjectAccessRole(client, {
+          organizationId: auth.organizationId,
+          projectId: auth.projectId,
+          accountId: session?.accountId ?? '',
+        });
+        const canDeleteSensitive =
+          role.outcome === 'allowed' && role.role === 'project_admin';
         const result = await deleteIssueNote(client, {
           issueId: auth.issueId,
           projectId: auth.projectId,
           noteId: params.noteId ?? '',
           actorAccountId: session?.accountId ?? '',
-          canDeleteSensitive: permissions.isOrgManager,
+          canDeleteSensitive,
         });
         if (result.status === 'forbidden') throw new ServiceError(403, 'authorization', 'You cannot delete this note.');
         if (result.status === 'not_found') throw new ServiceError(404, 'not_found', 'The note was not found.');
@@ -488,7 +525,12 @@ export async function handleMergeIssues(
       operation: OPERATION_ID_MERGE_ISSUES,
       digest,
       execute: async (client) => {
-        await requireOrgManagerOnTransaction(client, session?.accountId ?? '', auth.organizationId);
+        await requireProjectHandleAccessOnTransaction(
+          client,
+          session?.accountId ?? '',
+          auth.organizationId,
+          auth.projectId,
+        );
         const result = await mergeIssues(client, {
           issueId: auth.issueId,
           primaryIssueId: body.primaryIssueId,
@@ -571,7 +613,7 @@ export async function handleBatchUpdateIssues(
       operation: OPERATION_ID_BATCH_UPDATE_ISSUES,
       digest,
       execute: async (client) => {
-        await requireOrgManagerOnTransaction(client, session.accountId, organizationId);
+        await requireProjectHandleAccessOnTransaction(client, session.accountId, organizationId, projectId);
         const result = await batchUpdateIssues(client, {
           projectId,
           actorAccountId: session.accountId,
@@ -582,7 +624,7 @@ export async function handleBatchUpdateIssues(
             version: item.version,
           })),
         });
-        if (result.status === 'invalid_input') throw new ServiceError(400, 'structural_error', result.code);
+        if (result.status === 'invalid_input') throw new ServiceError(422, 'field_validation', result.code);
         await insertAuditEvent(client, {
           organizationId,
           actorAccountId: session.accountId,

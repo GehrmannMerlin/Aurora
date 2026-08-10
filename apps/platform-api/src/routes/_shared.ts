@@ -245,6 +245,25 @@ export async function requireProjectHandleAccess(
 }
 
 /**
+ * Fresh project handle-role re-read on the command transaction (DAT-14 spec §4:
+ * org manager or project_admin/developer may handle; read_only/forbidden 403).
+ * Closes the TOCTOU window between the handler's outer `requireProjectHandleAccess`
+ * check and the command's writes so a demoted/removed member cannot win it.
+ * Throws a ServiceError so the whole command transaction rolls back.
+ */
+export async function requireProjectHandleAccessOnTransaction(
+  client: PoolClient,
+  accountId: string,
+  organizationId: string,
+  projectId: string,
+): Promise<void> {
+  const result = await getProjectAccessRole(client, { organizationId, projectId, accountId });
+  if (result.outcome !== 'allowed' || result.role === 'read_only') {
+    throw new ServiceError(403, 'authorization', 'You do not have permission to handle issues in this project.');
+  }
+}
+
+/**
  * Re-read the actor's organization membership on the command's transaction and
  * reject with a closed 403 unless they are still an org manager (spec §13 fresh
  * re-reads). Closes the TOCTOU window between the handler's outer
