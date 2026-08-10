@@ -150,6 +150,15 @@ import {
   performanceListPagesResponse,
 } from '../monitoring/performance.js';
 import {
+  OPERATION_ID_GET_ISSUE_DETAIL,
+  OPERATION_ID_LIST_ISSUES,
+  issuesGetIssueDetailPathParams,
+  issuesGetIssueDetailResponse,
+  issuesListIssuesPathParams,
+  issuesListIssuesQuery,
+  issuesListIssuesResponse,
+} from '../issues-and-alerts/issue-queries.js';
+import {
   OPERATION_ID_BATCH_UPDATE_ISSUES,
   OPERATION_ID_CREATE_ISSUE_NOTE,
   OPERATION_ID_DELETE_ISSUE_NOTE,
@@ -1187,6 +1196,55 @@ export const PLATFORM_OPERATIONS: readonly OperationDef[] = [
     page: 'project.issues',
     tags: ['issues-and-alerts'],
   },
+  {
+    operationId: OPERATION_ID_LIST_ISSUES,
+    domain: 'issues-and-alerts',
+    authLevel: 'session',
+    method: 'GET',
+    path: '/api/platform/v1/organizations/:organizationId/projects/:projectId/issues',
+    summary: 'List Issue aggregates for a project with pagination and filters',
+    request: {
+      pathParams: issuesListIssuesPathParams,
+      query: issuesListIssuesQuery,
+      csrf: false,
+      idempotency: false,
+    },
+    responses: { 200: issuesListIssuesResponse },
+    errorCodes: [
+      'structural_error',
+      'authentication',
+      'authorization',
+      'not_found',
+      'rate_limited',
+      'authority_unavailable',
+    ],
+    page: 'project.issues',
+    tags: ['issues-and-alerts'],
+  },
+  {
+    operationId: OPERATION_ID_GET_ISSUE_DETAIL,
+    domain: 'issues-and-alerts',
+    authLevel: 'session',
+    method: 'GET',
+    path: '/api/platform/v1/organizations/:organizationId/projects/:projectId/issues/:issueId',
+    summary: 'Resolve an Issue detail with bounded samples and activity/notes projection',
+    request: {
+      pathParams: issuesGetIssueDetailPathParams,
+      csrf: false,
+      idempotency: false,
+    },
+    responses: { 200: issuesGetIssueDetailResponse },
+    errorCodes: [
+      'structural_error',
+      'authentication',
+      'authorization',
+      'not_found',
+      'rate_limited',
+      'authority_unavailable',
+    ],
+    page: 'project.issue-detail',
+    tags: ['issues-and-alerts'],
+  },
 ];
 
 export interface BlockedOperation {
@@ -1210,16 +1268,6 @@ export const BLOCKED_OPERATIONS: readonly BlockedOperation[] = [
     operationId: 'overviewGetProjectStatus',
     domain: 'issues-and-alerts',
     reason: 'C2 overview Query not formalized (G11)',
-  },
-  {
-    operationId: 'issuesListIssues',
-    domain: 'issues-and-alerts',
-    reason: 'C3 processing-store Query contract absent (G11)',
-  },
-  {
-    operationId: 'issuesGetIssueDetail',
-    domain: 'issues-and-alerts',
-    reason: 'C4 processing-store Query contract absent (G11)',
   },
   {
     operationId: 'releasesListReleases',

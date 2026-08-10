@@ -52,11 +52,13 @@ describe('operation registry and manifest', () => {
       'issuesDeleteNote',
       'issuesMerge',
       'issuesBatchUpdate',
+      'issuesListIssues',
+      'issuesGetIssueDetail',
     ]);
   });
 
   it('registers blocked downstream operations without schemas', () => {
-    expect(BLOCKED_OPERATIONS.length).toBeGreaterThan(15);
+    expect(BLOCKED_OPERATIONS.length).toBeGreaterThan(12);
     for (const op of BLOCKED_OPERATIONS) {
       expect(op.reason.length).toBeGreaterThan(10);
       expect('responses' in op).toBe(false);
