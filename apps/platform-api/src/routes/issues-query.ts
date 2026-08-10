@@ -2,6 +2,7 @@ import type { FastifyReply, FastifyRequest } from 'fastify';
 import { OPERATION_ID_GET_ISSUE_DETAIL, OPERATION_ID_LIST_ISSUES } from '@aurora/platform-contract';
 import { parseInput, serializeOutput, type OperationDef } from '@aurora/platform-contract/server';
 import {
+  decodeIssueCursor,
   queryIssueActivity,
   queryIssueDetail,
   queryIssueListPage,
@@ -52,6 +53,19 @@ function normalizeBracketQuery(query: Record<string, unknown>): Record<string, u
 
 function numericId(value: unknown): value is string {
   return typeof value === 'string' && /^\d{1,19}$/.test(value);
+}
+
+/**
+ * A keyset cursor is `base64url(lastSeenAtIso|issueId)` (encodeIssueCursor).
+ * The public contract treats `cursor` as an opaque string, so structural
+ * validity is enforced here — before any Repository/DB access — so a cursor
+ * that cannot decode into a usable keyset is a 400 structural_error, never a 5xx.
+ */
+function isStructurallyValidCursor(cursor: string): boolean {
+  const decoded = decodeIssueCursor(cursor);
+  if (decoded === null) return false;
+  if (Number.isNaN(new Date(decoded.lastSeenAtIso).getTime())) return false;
+  return numericId(decoded.issueId);
 }
 
 /** Flatten a safe nested object to a flat string-keyed map (string leaves only). */
@@ -128,6 +142,16 @@ export async function handleListIssues(
     endMs - startMs > MAX_WINDOW_MS ||
     endMs > deps.now().getTime() + CLOCK_SKEW_MS
   ) {
+    await sendProblem(
+      reply,
+      requestId,
+      400,
+      'structural_error',
+      'Request does not match the public contract.',
+    );
+    return;
+  }
+  if (input.cursor !== undefined && !isStructurallyValidCursor(input.cursor)) {
     await sendProblem(
       reply,
       requestId,
