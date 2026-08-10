@@ -39,3 +39,9 @@ export {
   enableIngestionClientCredential,
   revokeIngestionClientCredential,
 } from './lifecycle-mutate.js';
+export {
+  IngestionCredentialsError,
+  type IngestionCredentialsErrorKind,
+} from './errors.js';
+export { queryProjectCredentialSafeStatus } from './credential-status-query.js';
+export type { ProjectCredentialSafeStatus } from './credential-status-query.js';
