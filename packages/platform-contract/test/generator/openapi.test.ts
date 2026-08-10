@@ -71,8 +71,6 @@ describe('openapi generator', () => {
     const json = JSON.stringify(doc);
     expect(json).not.toContain('usageGetSummary');
     expect(json).not.toContain('onboardingGetProgress');
-    // Blocked operations are metadata-only: none may be emitted as an operation in the document.
-    expect(json).not.toContain('"operationId":"performanceListPages"');
     // The newly unblocked request metric projection is emitted as a stable path.
     expect(
       doc.paths['/organizations/{organizationId}/projects/{projectId}/requests'],
@@ -80,6 +78,10 @@ describe('openapi generator', () => {
     // The newly unblocked ingestion diagnosis projection is emitted as a stable path.
     expect(
       doc.paths['/organizations/{organizationId}/projects/{projectId}/data-status'],
+    ).toBeDefined();
+    // The newly unblocked performance metric projection is emitted as a stable path.
+    expect(
+      doc.paths['/organizations/{organizationId}/projects/{projectId}/performance'],
     ).toBeDefined();
   });
 

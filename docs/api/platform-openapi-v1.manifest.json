@@ -33,7 +33,8 @@
     "credentialsRevokePrivateToken",
     "auditListSecurityAudit",
     "requestsListEndpoints",
-    "diagnosticsGetDataStatus"
+    "diagnosticsGetDataStatus",
+    "performanceListPages"
   ],
   "blocked": {
     "usageGetSummary": "B5 usage module absent (G10/G11)",
@@ -41,7 +42,6 @@
     "overviewGetProjectStatus": "C2 overview Query not formalized (G11)",
     "issuesListIssues": "C3 processing-store Query contract absent (G11)",
     "issuesGetIssueDetail": "C4 processing-store Query contract absent (G11)",
-    "performanceListPages": "C6 performance metric Query absent (G11)",
     "releasesListReleases": "C8 releases model not formalized (G12)",
     "sourceMapsListFiles": "C9 Source Map/object store not formalized (G12)",
     "alertsListRulesAndInstances": "C10 alert model not formalized (G12)",
@@ -78,7 +78,7 @@
     "project.issues": "blocked",
     "project.issue-detail": "blocked",
     "project.requests": "stable",
-    "project.performance": "blocked",
+    "project.performance": "stable",
     "project.data-status": "stable",
     "project.releases": "blocked",
     "project.release-detail": "unavailable",
@@ -5817,6 +5817,750 @@
                         }
                       }
                     }
+                  }
+                }
+              },
+              "meta": {
+                "type": "object",
+                "required": [
+                  "requestId",
+                  "readAt"
+                ],
+                "properties": {
+                  "requestId": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 64
+                  },
+                  "readAt": {
+                    "type": "string",
+                    "format": "date-time"
+                  },
+                  "normalizedQuery": {
+                    "type": "object",
+                    "additionalProperties": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 512
+                    }
+                  }
+                }
+              },
+              "allowedActions": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "enum": [
+                    "create",
+                    "read",
+                    "update",
+                    "delete",
+                    "manage",
+                    "restore",
+                    "transfer",
+                    "revoke"
+                  ],
+                  "openEnum": false
+                }
+              },
+              "navigationTargets": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "routeId",
+                    "pathParams",
+                    "query"
+                  ],
+                  "properties": {
+                    "routeId": {
+                      "type": "string",
+                      "enum": [
+                        "auth.register",
+                        "auth.verify-email",
+                        "auth.verify-email-confirm",
+                        "auth.login",
+                        "auth.forgot-password",
+                        "auth.reset-password",
+                        "invitation.accept",
+                        "account.security",
+                        "account.deletion-cancel",
+                        "account.deletion-confirm",
+                        "workspace.home",
+                        "organization.project-create",
+                        "organization.members",
+                        "organization.settings",
+                        "organization.usage",
+                        "organization.tokens",
+                        "organization.audit",
+                        "organization.trash",
+                        "project.onboarding",
+                        "project.overview",
+                        "project.issues",
+                        "project.issue-detail",
+                        "project.requests",
+                        "project.performance",
+                        "project.data-status",
+                        "project.releases",
+                        "project.release-detail",
+                        "project.source-maps",
+                        "project.alerts",
+                        "project.alert-rule-create",
+                        "project.alert-rule-edit",
+                        "project.alert-instance-detail",
+                        "project.access",
+                        "project.client-keys",
+                        "project.settings",
+                        "project.lifecycle",
+                        "account.notifications",
+                        "platform.resource-policies"
+                      ],
+                      "openEnum": false
+                    },
+                    "pathParams": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 256
+                      }
+                    },
+                    "query": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 512
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "performanceListPages": {
+        "responses": {
+          "200": {
+            "type": "object",
+            "required": [
+              "data",
+              "meta",
+              "allowedActions",
+              "navigationTargets"
+            ],
+            "properties": {
+              "data": {
+                "type": "object",
+                "required": [
+                  "metrics",
+                  "pages",
+                  "percentiles"
+                ],
+                "properties": {
+                  "metrics": {
+                    "anyOf": [
+                      {
+                        "type": "object",
+                        "required": [
+                          "status",
+                          "data"
+                        ],
+                        "properties": {
+                          "status": {
+                            "type": "string",
+                            "enum": [
+                              "available"
+                            ],
+                            "openEnum": false
+                          },
+                          "data": {
+                            "type": "object",
+                            "required": [
+                              "metrics",
+                              "isPartial"
+                            ],
+                            "properties": {
+                              "metrics": {
+                                "type": "array",
+                                "items": {
+                                  "type": "object",
+                                  "required": [
+                                    "metricName",
+                                    "unit",
+                                    "observedCount",
+                                    "valueSum",
+                                    "valueMax",
+                                    "mean"
+                                  ],
+                                  "properties": {
+                                    "metricName": {
+                                      "type": "string",
+                                      "enum": [
+                                        "lcp",
+                                        "inp",
+                                        "cls",
+                                        "page_load"
+                                      ],
+                                      "openEnum": false
+                                    },
+                                    "unit": {
+                                      "type": "string",
+                                      "enum": [
+                                        "millisecond",
+                                        "ratio"
+                                      ],
+                                      "openEnum": false
+                                    },
+                                    "observedCount": {
+                                      "type": "number",
+                                      "minimum": 0
+                                    },
+                                    "valueSum": {
+                                      "type": "number",
+                                      "minimum": 0
+                                    },
+                                    "valueMax": {
+                                      "type": "number",
+                                      "minimum": 0
+                                    },
+                                    "mean": {
+                                      "type": "number",
+                                      "minimum": 0
+                                    }
+                                  }
+                                }
+                              },
+                              "dataThrough": {
+                                "type": "string",
+                                "format": "date-time"
+                              },
+                              "isPartial": {
+                                "type": "boolean"
+                              }
+                            }
+                          }
+                        }
+                      },
+                      {
+                        "type": "object",
+                        "required": [
+                          "status",
+                          "reason"
+                        ],
+                        "properties": {
+                          "status": {
+                            "type": "string",
+                            "enum": [
+                              "empty"
+                            ],
+                            "openEnum": false
+                          },
+                          "reason": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 256
+                          }
+                        }
+                      },
+                      {
+                        "type": "object",
+                        "required": [
+                          "status",
+                          "data",
+                          "missing"
+                        ],
+                        "properties": {
+                          "status": {
+                            "type": "string",
+                            "enum": [
+                              "partial"
+                            ],
+                            "openEnum": false
+                          },
+                          "data": {
+                            "type": "object",
+                            "required": [
+                              "metrics",
+                              "isPartial"
+                            ],
+                            "properties": {
+                              "metrics": {
+                                "type": "array",
+                                "items": {
+                                  "type": "object",
+                                  "required": [
+                                    "metricName",
+                                    "unit",
+                                    "observedCount",
+                                    "valueSum",
+                                    "valueMax",
+                                    "mean"
+                                  ],
+                                  "properties": {
+                                    "metricName": {
+                                      "type": "string",
+                                      "enum": [
+                                        "lcp",
+                                        "inp",
+                                        "cls",
+                                        "page_load"
+                                      ],
+                                      "openEnum": false
+                                    },
+                                    "unit": {
+                                      "type": "string",
+                                      "enum": [
+                                        "millisecond",
+                                        "ratio"
+                                      ],
+                                      "openEnum": false
+                                    },
+                                    "observedCount": {
+                                      "type": "number",
+                                      "minimum": 0
+                                    },
+                                    "valueSum": {
+                                      "type": "number",
+                                      "minimum": 0
+                                    },
+                                    "valueMax": {
+                                      "type": "number",
+                                      "minimum": 0
+                                    },
+                                    "mean": {
+                                      "type": "number",
+                                      "minimum": 0
+                                    }
+                                  }
+                                }
+                              },
+                              "dataThrough": {
+                                "type": "string",
+                                "format": "date-time"
+                              },
+                              "isPartial": {
+                                "type": "boolean"
+                              }
+                            }
+                          },
+                          "missing": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 256
+                          }
+                        }
+                      },
+                      {
+                        "type": "object",
+                        "required": [
+                          "status",
+                          "data",
+                          "freshAt",
+                          "staleReason"
+                        ],
+                        "properties": {
+                          "status": {
+                            "type": "string",
+                            "enum": [
+                              "stale"
+                            ],
+                            "openEnum": false
+                          },
+                          "data": {
+                            "type": "object",
+                            "required": [
+                              "metrics",
+                              "isPartial"
+                            ],
+                            "properties": {
+                              "metrics": {
+                                "type": "array",
+                                "items": {
+                                  "type": "object",
+                                  "required": [
+                                    "metricName",
+                                    "unit",
+                                    "observedCount",
+                                    "valueSum",
+                                    "valueMax",
+                                    "mean"
+                                  ],
+                                  "properties": {
+                                    "metricName": {
+                                      "type": "string",
+                                      "enum": [
+                                        "lcp",
+                                        "inp",
+                                        "cls",
+                                        "page_load"
+                                      ],
+                                      "openEnum": false
+                                    },
+                                    "unit": {
+                                      "type": "string",
+                                      "enum": [
+                                        "millisecond",
+                                        "ratio"
+                                      ],
+                                      "openEnum": false
+                                    },
+                                    "observedCount": {
+                                      "type": "number",
+                                      "minimum": 0
+                                    },
+                                    "valueSum": {
+                                      "type": "number",
+                                      "minimum": 0
+                                    },
+                                    "valueMax": {
+                                      "type": "number",
+                                      "minimum": 0
+                                    },
+                                    "mean": {
+                                      "type": "number",
+                                      "minimum": 0
+                                    }
+                                  }
+                                }
+                              },
+                              "dataThrough": {
+                                "type": "string",
+                                "format": "date-time"
+                              },
+                              "isPartial": {
+                                "type": "boolean"
+                              }
+                            }
+                          },
+                          "freshAt": {
+                            "type": "string",
+                            "minLength": 20,
+                            "maxLength": 24
+                          },
+                          "staleReason": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 256
+                          }
+                        }
+                      },
+                      {
+                        "type": "object",
+                        "required": [
+                          "status",
+                          "reason"
+                        ],
+                        "properties": {
+                          "status": {
+                            "type": "string",
+                            "enum": [
+                              "unavailable"
+                            ],
+                            "openEnum": false
+                          },
+                          "reason": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 256
+                          }
+                        }
+                      },
+                      {
+                        "type": "object",
+                        "required": [
+                          "status"
+                        ],
+                        "properties": {
+                          "status": {
+                            "type": "string",
+                            "enum": [
+                              "forbidden"
+                            ],
+                            "openEnum": false
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  "pages": {
+                    "anyOf": [
+                      {
+                        "type": "object",
+                        "required": [
+                          "status",
+                          "data"
+                        ],
+                        "properties": {
+                          "status": {
+                            "type": "string",
+                            "enum": [
+                              "available"
+                            ],
+                            "openEnum": false
+                          },
+                          "data": {
+                            "type": "object",
+                            "properties": {}
+                          }
+                        }
+                      },
+                      {
+                        "type": "object",
+                        "required": [
+                          "status",
+                          "reason"
+                        ],
+                        "properties": {
+                          "status": {
+                            "type": "string",
+                            "enum": [
+                              "empty"
+                            ],
+                            "openEnum": false
+                          },
+                          "reason": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 256
+                          }
+                        }
+                      },
+                      {
+                        "type": "object",
+                        "required": [
+                          "status",
+                          "data",
+                          "missing"
+                        ],
+                        "properties": {
+                          "status": {
+                            "type": "string",
+                            "enum": [
+                              "partial"
+                            ],
+                            "openEnum": false
+                          },
+                          "data": {
+                            "type": "object",
+                            "properties": {}
+                          },
+                          "missing": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 256
+                          }
+                        }
+                      },
+                      {
+                        "type": "object",
+                        "required": [
+                          "status",
+                          "data",
+                          "freshAt",
+                          "staleReason"
+                        ],
+                        "properties": {
+                          "status": {
+                            "type": "string",
+                            "enum": [
+                              "stale"
+                            ],
+                            "openEnum": false
+                          },
+                          "data": {
+                            "type": "object",
+                            "properties": {}
+                          },
+                          "freshAt": {
+                            "type": "string",
+                            "minLength": 20,
+                            "maxLength": 24
+                          },
+                          "staleReason": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 256
+                          }
+                        }
+                      },
+                      {
+                        "type": "object",
+                        "required": [
+                          "status",
+                          "reason"
+                        ],
+                        "properties": {
+                          "status": {
+                            "type": "string",
+                            "enum": [
+                              "unavailable"
+                            ],
+                            "openEnum": false
+                          },
+                          "reason": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 256
+                          }
+                        }
+                      },
+                      {
+                        "type": "object",
+                        "required": [
+                          "status"
+                        ],
+                        "properties": {
+                          "status": {
+                            "type": "string",
+                            "enum": [
+                              "forbidden"
+                            ],
+                            "openEnum": false
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  "percentiles": {
+                    "anyOf": [
+                      {
+                        "type": "object",
+                        "required": [
+                          "status",
+                          "data"
+                        ],
+                        "properties": {
+                          "status": {
+                            "type": "string",
+                            "enum": [
+                              "available"
+                            ],
+                            "openEnum": false
+                          },
+                          "data": {
+                            "type": "object",
+                            "properties": {}
+                          }
+                        }
+                      },
+                      {
+                        "type": "object",
+                        "required": [
+                          "status",
+                          "reason"
+                        ],
+                        "properties": {
+                          "status": {
+                            "type": "string",
+                            "enum": [
+                              "empty"
+                            ],
+                            "openEnum": false
+                          },
+                          "reason": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 256
+                          }
+                        }
+                      },
+                      {
+                        "type": "object",
+                        "required": [
+                          "status",
+                          "data",
+                          "missing"
+                        ],
+                        "properties": {
+                          "status": {
+                            "type": "string",
+                            "enum": [
+                              "partial"
+                            ],
+                            "openEnum": false
+                          },
+                          "data": {
+                            "type": "object",
+                            "properties": {}
+                          },
+                          "missing": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 256
+                          }
+                        }
+                      },
+                      {
+                        "type": "object",
+                        "required": [
+                          "status",
+                          "data",
+                          "freshAt",
+                          "staleReason"
+                        ],
+                        "properties": {
+                          "status": {
+                            "type": "string",
+                            "enum": [
+                              "stale"
+                            ],
+                            "openEnum": false
+                          },
+                          "data": {
+                            "type": "object",
+                            "properties": {}
+                          },
+                          "freshAt": {
+                            "type": "string",
+                            "minLength": 20,
+                            "maxLength": 24
+                          },
+                          "staleReason": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 256
+                          }
+                        }
+                      },
+                      {
+                        "type": "object",
+                        "required": [
+                          "status",
+                          "reason"
+                        ],
+                        "properties": {
+                          "status": {
+                            "type": "string",
+                            "enum": [
+                              "unavailable"
+                            ],
+                            "openEnum": false
+                          },
+                          "reason": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 256
+                          }
+                        }
+                      },
+                      {
+                        "type": "object",
+                        "required": [
+                          "status"
+                        ],
+                        "properties": {
+                          "status": {
+                            "type": "string",
+                            "enum": [
+                              "forbidden"
+                            ],
+                            "openEnum": false
+                          }
+                        }
+                      }
+                    ]
                   }
                 }
               },
