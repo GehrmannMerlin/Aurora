@@ -115,6 +115,8 @@ maintenance: operational-snapshot
 
 **G03 DAT-14 Issue Lifecycle Commands / Activity / Audit（2026-08-10，implemented-in-feature-branch）**：`issue_activities`/`issue_notes` Migration + 生命周期 Repository（状态/负责人/优先级/备注/合并/批量，closed 转移表、自动分配、乐观 `version`、逐项结果）+ `getProjectAccessRole` + `@aurora/platform-contract` 7 个 Command 操作 + `apps/platform-api` 7 个 handler（处理授权、CSRF、幂等、审计）；通过单元测试、真实 PostgreSQL 17.10+Redis 集成测试与独立验收（reviewer REJECT 后 F1—F6 全部修复）；规格 [issue-lifecycle-commands.md](docs/architecture/issue-lifecycle-commands.md)、计划 [2026-08-10-dat-14-issue-lifecycle-activity-commands.md](docs/superpowers/plans/2026-08-10-dat-14-issue-lifecycle-activity-commands.md)。**已关闭叶子**：completed 48→49 / remaining 30→29；Issue Query（DAT-15）、Console C3/C4（G11）仍 absent；`by_version` 重开 deferred（契约缺口）。
 
+**G03 DAT-15 Issue List/Detail Query Projection（2026-08-10，implemented-in-feature-branch）**：`@aurora/processing-store` 只读 Query Repository（列表 keyset 分页 + 时间范围/状态/负责人/优先级过滤 + 过滤感知 totalCount、详情、有界安全样本、活动/备注时间线且已删除备注不返回 content）+ `@aurora/platform-contract` `issuesListIssues`/`issuesGetIssueDetail` 从 `BLOCKED_OPERATIONS` 移入稳定操作 + `apps/platform-api` 2 个 Query handler（复用 G02 项目查看授权、诚实 empty/unavailable、environments/releases 恒 unavailable、畸形 cursor 400）；通过单元测试、真实 PostgreSQL 17.10+Redis 集成测试与独立验收；规格 [issue-query-projection.md](docs/architecture/issue-query-projection.md)、计划 [2026-08-10-dat-15-issue-query-projection.md](docs/superpowers/plans/2026-08-10-dat-15-issue-query-projection.md)。**已关闭叶子**：completed 49→50 / remaining 29→28；Console C3/C4（G11）仍 absent；`by_version` 重开、页面/环境/发布维度 deferred（契约缺口）；**G03 全部 4 叶子已完成**。
+
 ## 4. 正式化与详细设计入口
 
 [正式文档索引](docs/README.md)维护 approved 设计到长期权威文档的唯一映射；[正式化与实施就绪追踪](docs/architecture/formalization-readiness.md)维护 ADR、机器契约和真实阻塞，不成为第二份 PRD。
