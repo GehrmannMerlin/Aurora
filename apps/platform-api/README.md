@@ -10,6 +10,7 @@
 - `GET /api/platform/v1/session`（identityGetSession）：无 Session → 统一 401＋安全登录目标；有 Session → 返回账号摘要、认证级别、Session 到期/轮换、CSRF token 与导航目标；
 - `POST /api/platform/v1/auth/register`（Task 6 桩）：真实创建账号＋个人工作空间＋建立 Session，返回 `identityRegisterResponse` 契约形状；
 - `GET /api/platform/v1/health`：存活检查；
+- `GET /api/platform/v1/organizations/:organizationId/projects/:projectId/requests`（requestsListEndpoints，DAT-16）：项目级授权下的请求指标/接口列表只读查询（复用 `requireSession` + `effectivePermissions` + `requireProjectAccess`，无权限 403 不查数据、项目不属于 org 404；返回 `queryResponse`，percentile `unavailable`）；
 - 插件：cookie-session（`aurora_session` HttpOnly Cookie 解析、`getSession`、受保护操作缺失/过期/撤销 → 401、Redis down → 503 失败关闭）、csrf（非安全方法 `X-Aurora-CSRF` 校验，失败 → 403）、origin（状态改变请求 Origin allow-list + `Sec-Fetch-Site: cross-site` 拒绝）；
 - RFC 9457 `auroraProblem` 错误映射（structural_error/authentication/authorization/not_found/business_validation/authority_unavailable 等），绝不泄漏 SQL/栈/约束名/password/token/sessionId/csrf/email；
 - 生命周期：启动、graceful shutdown、PostgreSQL Pool + Redis session store 释放。
@@ -50,3 +51,4 @@ cd ../.. && pnpm check:boundaries
 - [ADR-026 管理平台后端运行时与契约链](../../docs/adr/ADR-026-platform-backend-runtime-and-contract-chain.md)
 - [ADR-028 管理平台 Session、CSRF 与认证传输契约](../../docs/adr/ADR-028-platform-session-csrf-security.md)
 - [ADR-030 平台 Session/CSRF/密码物理参数](../../docs/adr/ADR-030-platform-session-csrf-password-physical-parameters.md)
+- [请求指标查询投影正式规格](../../docs/architecture/request-metric-query-projection.md)

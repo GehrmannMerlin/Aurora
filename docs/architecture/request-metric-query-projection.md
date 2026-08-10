@@ -1,7 +1,7 @@
 ---
 title: Aurora 请求指标查询投影（Request Metric Query Projection）
 status: approved
-implementation-status: in-progress
+implementation-status: implemented
 approval-status: approved
 owner: ingestion/backend
 created: 2026-08-10
@@ -33,7 +33,13 @@ review-cycle: request-metric-query-schema-or-contract-change
 
 本文冻结请求指标查询投影（DAT-16）第一增量：把已实施的请求指标聚合存储（`request_metric_buckets`，accepted ADR-020）与请求事件安全样本存储（`request_event_samples`，accepted ADR-019）中的数据，经真实处理链写入后，形成**正式、安全、项目隔离的公开 Query 投影**，暴露为平台公开 API 操作 `requestsListEndpoints`（C5 请求监控页面 `project.requests` Route Target）。它不建设任何写侧能力，只新增只读查询 Repository、契约操作与平台 handler。
 
-**批准状态**：本文由用户于 2026-08-10 预先批准（`status: approved`）。`implementation-status` 将在 DAT-16 独立验收后更新为 `implemented`。本文由 accepted ADR-019/020、approved 请求事件协议契约、approved C5 请求监控 UX/UI 设计（§7.20/§8.18/§9.18）、G10 授权模型与平台 Query 通用约束无歧义派生；自动审批依据见规格自检节。
+**批准状态**：本文由用户于 2026-08-10 预先批准（`status: approved`），并经独立验收后于 2026-08-10 更新为 `implementation-status: implemented`。本文由 accepted ADR-019/020、approved 请求事件协议契约、approved C5 请求监控 UX/UI 设计（§7.20/§8.18/§9.18）、G10 授权模型与平台 Query 通用约束无歧义派生；自动审批依据见规格自检节。
+
+**独立验收证据（2026-08-10，DAT-16 全量 Task 实施完成）**：
+- 契约层：`@aurora/platform-contract` 契约测试 226 passed（含 `requestsListEndpoints` 长 URL keyset 游标 >64/512 字符的请求/响应往返用例），`test:package` 3 passed；OpenAPI 重新生成 `docs/api/platform-openapi-v1.yaml`（`paginationMeta.cursor`/`nextCursor` 与 `requestsListEndpointsQuery.cursor` maxLength 64/512 → 4096，非破坏性放宽）通过 `openapi:platform:lint`；`@aurora/platform-contract-drift` 漂移门禁 19 passed（compat baseline 再生成逐字节一致、兼容性差异检测全绿）。
+- 查询层：`@aurora/processing-store` 单元测试 99 passed + 真实 PostgreSQL 17.10 集成测试 69 passed（含长 URL 接口经 keyset 游标 encode→查询→decode 往返、游标长度 >64 的用例）。
+- 服务层：`@aurora/platform-api` 单元测试 32 passed + 真实 PostgreSQL 17.10/Redis 集成测试 106 passed（含端到端长游标分页：首页返回 >64 字符 `nextCursor` 200，第二页携带该游标 200）；`platform-api`/`processing-store`/`platform-contract` typecheck 全绿。
+- 门禁：`pnpm platform-contract:generate && pnpm openapi:platform:lint && pnpm --filter @aurora/platform-contract-drift test` 通过；`git diff --check` 干净。
 
 **声明边界**：本模块只公开服务端**真实存在**的数据。请求指标聚合桶只有 `method/outcome/status_code` 低基数维度，**没有**接口/路由维度；因此"规范化接口列表"只能从**有界安全诊断样本**（`request_event_samples`）推导，是部分（`partial`）且带采样/完整性元数据的列表，**不是**完整接口枚举。percentile/直方图原材料按 ADR-020 明确 deferred，本 Query 一律以 `unavailable` 表达，**不伪造**。任何缺失数据不得解释为 0。
 
@@ -145,7 +151,7 @@ allowedActions, navigationTargets
 
 - `@aurora/processing-store`（`data` 层，无新 Migration）新增只读查询：
   - `src/request-metric-query-types.ts`（输入/结果类型，复用 `RequestMethod`/`RequestOutcome` 来自 event-schema）；
-  - `src/request-metric-query-repository.ts`（`queryRequestMetricSummary`/`queryRequestEndpointList`，参数化 SQL、keyset 分页、稳定错误）；
+  - `src/request-metric-query-repository.ts`（`queryRequestMetricSummary`/`queryRequestEndpointPage`，参数化 SQL、keyset 分页、稳定错误）；
   - 包根 `index.ts` 追加导出；
 - `@aurora/platform-contract`（`contract` 层）：
   - `src/monitoring/request-metrics.ts`（操作常量、pathParams/query/response schema）；
