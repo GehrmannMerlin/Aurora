@@ -15,6 +15,12 @@ export {
   type PersistIssueContributionInput,
   type PersistIssueContributionResult,
 } from './issue-contribution-types.js';
+export {
+  decideIssueSample,
+  type DecideIssueSampleInput,
+  type IssueSampleDecision,
+} from './issue-sample-decision.js';
+export { persistIssueContribution } from './issue-contribution-repository.js';
 export type {
   PersistRequestEventSampleInput,
   PersistRequestEventSampleResult,
