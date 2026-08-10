@@ -49,8 +49,8 @@ test.afterAll(async () => {
   await server?.close();
 });
 
-// PLT-05 flips C1/C2/C7 to real monitoring views (consuming real public Queries).
-// The remaining project entries stay honest unavailable stubs until PLT-06/07/08.
+// PLT-05/06 flip C1—C7 to real monitoring views (consuming real public Queries).
+// The remaining project entries stay honest unavailable stubs until PLT-07/08.
 const REAL_PROJECT_ENTRIES: ReadonlyArray<{ name: string; path: string; view: string }> = [
   {
     name: '接入',
@@ -67,12 +67,24 @@ const REAL_PROJECT_ENTRIES: ReadonlyArray<{ name: string; path: string; view: st
     path: '/organizations/org_test_1/projects/prj_test_1/data-status',
     view: 'project-data-status-view',
   },
+  {
+    name: '问题',
+    path: '/organizations/org_test_1/projects/prj_test_1/issues',
+    view: 'project-issues-view',
+  },
+  {
+    name: '请求',
+    path: '/organizations/org_test_1/projects/prj_test_1/requests',
+    view: 'project-requests-view',
+  },
+  {
+    name: '性能',
+    path: '/organizations/org_test_1/projects/prj_test_1/performance',
+    view: 'project-performance-view',
+  },
 ];
 
 const UNAVAILABLE_PROJECT_ENTRIES: ReadonlyArray<{ name: string; path: string }> = [
-  { name: '问题', path: '/organizations/org_test_1/projects/prj_test_1/issues' },
-  { name: '请求', path: '/organizations/org_test_1/projects/prj_test_1/requests' },
-  { name: '性能', path: '/organizations/org_test_1/projects/prj_test_1/performance' },
   { name: '发布', path: '/organizations/org_test_1/projects/prj_test_1/releases' },
   { name: '告警', path: '/organizations/org_test_1/projects/prj_test_1/alerts' },
   { name: '访问', path: '/organizations/org_test_1/projects/prj_test_1/access' },
@@ -102,6 +114,11 @@ test('every project sidebar entry is reachable by real click — PLT-05 views re
     await expect(page).toHaveURL(new RegExp(escapeRegExp(entry.path)));
     await expect(page.getByTestId(entry.view)).toBeVisible();
   }
+  // C4 issue detail (menu:false) is directly reachable and renders the real view.
+  await page.goto(
+    `${server!.origin}/organizations/org_test_1/projects/prj_test_1/issues/issue_test_1`,
+  );
+  await expect(page.getByTestId('project-issue-detail-view')).toBeVisible();
   for (const entry of UNAVAILABLE_PROJECT_ENTRIES) {
     await page.getByRole('link', { name: entry.name, exact: true }).click();
     await expect(page).toHaveURL(new RegExp(escapeRegExp(entry.path)));
@@ -172,10 +189,6 @@ test('blocked G10-G13 targets parse, protect and represent unavailable (no fake 
 }) => {
   const targets: ReadonlyArray<{ path: string; testId: string }> = [
     { path: '/platform/resource-policies', testId: 'unavailable-view' },
-    {
-      path: '/organizations/org_test_1/projects/prj_test_1/issues/some_issue',
-      testId: 'unavailable-view',
-    },
     {
       path: '/organizations/org_test_1/projects/prj_test_1/releases/r_1/source-maps',
       testId: 'unavailable-view',

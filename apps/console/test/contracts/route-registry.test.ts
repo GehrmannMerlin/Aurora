@@ -99,6 +99,11 @@ describe('RouteTarget registry', () => {
       'project.onboarding',
       'project.overview',
       'project.data-status',
+      // PLT-06 replaces these unavailable stubs with real workspace views.
+      'project.issues',
+      'project.issue-detail',
+      'project.requests',
+      'project.performance',
     ]);
     for (const entry of ROUTE_REGISTRY) {
       if (entry.routeId === 'workspace.home') continue;

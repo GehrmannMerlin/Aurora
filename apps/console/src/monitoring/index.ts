@@ -8,3 +8,5 @@ export * from './format.js';
 export * from './diagnosis.js';
 export * from './queries.js';
 export * from './time-range.js';
+export * from './commands.js';
+export * from './issue-workspace.js';
