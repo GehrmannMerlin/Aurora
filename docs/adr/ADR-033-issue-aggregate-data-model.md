@@ -1,7 +1,7 @@
 ---
 title: ADR-033：Issue 聚合与有界代表样本数据模型
 status: accepted
-implementation-status: not-started
+implementation-status: implemented
 approval-status: approved
 owner: processing/backend
 date: 2026-08-10
@@ -275,3 +275,13 @@ Aurora 已接受 ADR-004/005/008/010/012/018/019/020/021，`@aurora/processing-s
 - 批准范围仅适用于本 ADR 已记录并经过评审修订的决策范围；不得扩大到 DAT-14/15 之外的 Command/Query 实现、自定义 fingerprint、Source Map、告警、数据保留、新基础设施；
 - 状态更新：`status: accepted`、`decision-status: accepted`、`approval-status: approved`、`implementation-status: not-started`；
 - 原 proposed 历史记录完整保留；实施状态保持 `not-started`，直到 DAT-13 正式实施开始；本 ADR 不得在此时标记为 implemented 或 in-progress。
+
+### 2026-08-10：DAT-13 Issue 聚合与有界代表样本存储实施证据
+
+- 实施状态更新为 `implemented`：`@aurora/processing-store` Issue 聚合与有界代表样本存储能力已实施并通过单元测试、真实 PostgreSQL 17.10 集成测试与全仓质量门禁；Issue 生命周期 Command（DAT-14）、Issue Query（DAT-15）、`issue_activities`/`issue_notes` 表仍未实现，故不扩大范围；
+- 实施内容：Migration `1722500000008_issue-aggregate-and-samples.ts`（`issues` + `issue_event_applications` + `issue_samples`，决定细节 3/5/5b/5c/5d 的 DAT-13 部分：聚合键/计数/首末次/生命周期列/乐观 version/closed 枚举与计数 CHECK/`(project_id, event_id)` 事件应用 PK/样本幂等/FK `ON DELETE NO ACTION`）；`src/issue-contribution-types.ts`（`PersistIssueContributionInput`/`Result`/`DEFAULT_MAX_ISSUE_SAMPLES=100`）；`src/issue-sample-decision.ts`（`decideIssueSample` 固定优先级：容量内 store、regular 满 skip、priority 替换最旧 regular/latest/reappeared、first 永不替换）；`src/issue-contribution-repository.ts`（`persistIssueContribution`：`(project_id, event_id)` 事件应用登记防重复累加、`last_seen_at = GREATEST`、首次 INSERT `ON CONFLICT DO NOTHING` + 重锁恢复、`by_time` 再次出现重开 + `version` 递增、样本有界存储/替换、无跨 Store 事务）；`apps/ingestion-worker` `createErrorEventProcessor` 注入 `contributeIssue`（默认 no-op 保持 DAT-12 行为，生产接线时注入真实 `persistIssueContribution`）；
+- 语义（决定细节 1—20 落实）：聚合键 `(project_id, fingerprint, fingerprint_version)`；事件应用登记防 retry/重放下计数重复；`first_seen_at` 不变、`last_seen_at` `GREATEST` 防乱序回退；`occurrence_count >= 1`/`sample_count <= occurrence_count` CHECK；样本 `(project_id, event_id)` 幂等；`by_time` 重开（`resolved_at`/`ignored_until` 之后新事件）；v1 不实现 `by_version` 重开与页面/环境/发布维度（契约缺口）；
+- 未修改：error-event-contract/ingestion-api/Worker 运行时/既有 store 表与 Repository/retry/backoff/replay/event-schema；未增加新包；
+- 测试：单元测试（`decideIssueSample` 决策矩阵 + `persistIssueContribution` 输入校验）+ 真实 PostgreSQL 17.10 集成测试（迁移 4 + Issue 聚合 8 + 既有回归全绿，共 12 文件 94 集成测试）+ Worker 290 测试，覆盖率达 lines ≥ 85%、branches ≥ 80%、functions ≥ 85%、statements ≥ 85%，全仓质量门禁通过；
+- 正式规格：[issue-aggregate-representative-sample-store.md](../architecture/issue-aggregate-representative-sample-store.md)（approved + implemented）；
+- 状态记录：issue aggregate and bounded representative sample store implemented；Issue lifecycle Commands not-started（DAT-14）；Issue Query not-started（DAT-15）；production worker composition not-started / blocked（DAT-13 处理器贡献为可注入，未接入生产 composition root）；本 ADR 实施状态更新为 implemented。

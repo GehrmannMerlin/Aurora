@@ -151,7 +151,13 @@ async function registerEventApplication(
 async function findEvictableSample(
   client: PoolClient,
   issueId: string,
+  eventSampleKind: string,
 ): Promise<string | null> {
+  // Prefer the oldest `regular` sample for any priority kind. When no regular
+  // remains, evict the oldest sample of the SAME incoming kind (a new `latest`
+  // evicts the oldest `latest`; a new `reappeared` evicts the oldest
+  // `reappeared`) — never crossing kinds, so reappearance evidence is never
+  // lost to a newer latest (ADR-033 decision detail 8).
   const regular = await client.query<{ id: string }>(
     `SELECT id FROM issue_samples
       WHERE issue_id = $1 AND sample_kind = 'regular'
@@ -160,14 +166,15 @@ async function findEvictableSample(
     [issueId],
   );
   if (regular.rows[0] !== undefined) return regular.rows[0].id;
-  const other = await client.query<{ id: string }>(
+  if (eventSampleKind === 'first') return null; // first is never evictable.
+  const sameKind = await client.query<{ id: string }>(
     `SELECT id FROM issue_samples
-      WHERE issue_id = $1 AND sample_kind IN ('latest','reappeared')
+      WHERE issue_id = $1 AND sample_kind = $2
       ORDER BY occurred_at ASC, id ASC
       LIMIT 1`,
-    [issueId],
+    [issueId, eventSampleKind],
   );
-  return other.rows[0]?.id ?? null;
+  return sameKind.rows[0]?.id ?? null;
 }
 
 async function storeSample(
@@ -300,7 +307,7 @@ export async function persistIssueContribution(
         : parsed.occurredAt.getTime() > issue.lastSeenAt.getTime()
           ? 'latest'
           : 'regular';
-      const evictableSampleId = await findEvictableSample(client, issueId);
+      const evictableSampleId = await findEvictableSample(client, issueId, eventSampleKind);
       const decision = decideIssueSample({
         sampleCount: issue.sampleCount,
         eventSampleKind,

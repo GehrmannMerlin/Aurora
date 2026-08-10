@@ -198,6 +198,61 @@ describeDb('processing-store issue aggregate contribution (real PostgreSQL 17)',
     expect(reopened?.version).toBe(2);
   });
 
+  it('evicts kind-matched samples at capacity and never crosses latest/reappeared', async () => {
+    // Create an issue, then fill it to the cap with 99 'latest' + 1 'reappeared'
+    // (no 'regular' remains). A new later 'latest' must evict the oldest
+    // 'latest' and never the 'reappeared' (ADR-033 decision detail 8).
+    await persistIssueContribution(
+      pool,
+      contribution('evt-kind-match-0', '2026-08-10T10:00:00.000Z', 'kind-match'),
+    );
+    const issue = await queryRow<{ id: string }>(
+      pool,
+      `SELECT id FROM issues WHERE project_id = $1 AND fingerprint = 'v1|javascript|TypeError|kind-match'`,
+      [PROJECT_A],
+    );
+    const issueId = issue?.id;
+    expect(issueId).toBeDefined();
+    for (let i = 1; i <= 99; i += 1) {
+      const padded = String(i).padStart(3, '0');
+      await pool.query(
+        `INSERT INTO issue_samples (issue_id, project_id, event_id, occurred_at, sample_body, sample_kind)
+         VALUES ($1, $2, 'kind-latest-' || $3, $4::timestamptz, '{"category":"javascript","error":{"message":"kind-match"}}'::jsonb, 'latest')`,
+        [issueId, PROJECT_A, padded, `2026-08-10T10:00:00.${padded}Z`],
+      );
+    }
+    await pool.query(
+      `INSERT INTO issue_samples (issue_id, project_id, event_id, occurred_at, sample_body, sample_kind)
+       VALUES ($1, $2, 'kind-reappeared', '2026-08-10T10:00:00.500Z'::timestamptz, '{"category":"javascript","error":{"message":"kind-match"}}'::jsonb, 'reappeared')`,
+      [issueId, PROJECT_A],
+    );
+    await pool.query(`UPDATE issues SET sample_count = 100, occurrence_count = 100 WHERE id = $1`, [issueId]);
+
+    await persistIssueContribution(
+      pool,
+      contribution('evt-kind-match-new', '2026-08-10T11:00:00.000Z', 'kind-match'),
+    );
+
+    const reappearedStillThere = await queryRow<{ count: string }>(
+      pool,
+      `SELECT count(*)::text AS count FROM issue_samples WHERE issue_id = $1 AND sample_kind = 'reappeared'`,
+      [issueId],
+    );
+    expect(reappearedStillThere?.count).toBe('1');
+    const latestCount = await queryRow<{ count: string }>(
+      pool,
+      `SELECT count(*)::text AS count FROM issue_samples WHERE issue_id = $1 AND sample_kind = 'latest'`,
+      [issueId],
+    );
+    expect(latestCount?.count).toBe('99');
+    const sampleCount = await queryRow<{ sample_count: number }>(
+      pool,
+      `SELECT sample_count FROM issues WHERE id = $1`,
+      [issueId],
+    );
+    expect(sampleCount?.sample_count).toBe(100);
+  });
+
   it('does not reopen when a resolved by_time event arrives before resolved_at', async () => {
     await persistIssueContribution(pool, contribution('evt-issue-r3', '2026-08-10T05:00:00.000Z', 'reopen-late'));
     await pool.query(

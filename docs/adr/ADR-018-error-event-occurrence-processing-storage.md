@@ -254,3 +254,11 @@ Aurora 已接受 ADR-005（event-schema 单一来源）、ADR-008（PostgreSQL �
 - **不修改本 ADR 既有列/约束/幂等键**；不修改 Inbox/event-schema/ingestion-api/OpenAPI；`apps/ingestion-worker` 的 `createErrorEventProcessor` 经 `computeErrorFingerprint` 计算并传入（单一计算点，DAT-13 Issue 聚合键复用同一输出）；
 - 测试：12 个 fingerprint 单元测试（确定性/分组/分离/隐私负例/版本/缺失堆栈/资源/拒绝原因）+ 4 个真实 PostgreSQL 17.10 指纹持久化集成测试（计算/传入/非法/跨项目幂等）+ Worker 6 个真实 PG 集成测试（含指纹落库断言）；全仓质量门禁通过；
 - 状态记录：error event processor core implemented；**fingerprint 算法 implemented（DAT-12）**；Issue 聚合数据模型 not-started（DAT-13，accepted ADR-033）；production worker composition not-started / blocked；request/performance event processor not-started；event processor routing not-started / blocked。
+
+### 2026-08-10：Issue 聚合与有界代表样本存储衔接证据（DAT-13）
+
+- 决策状态保持 `accepted`，实施状态保持 `implemented`；本 ADR 的 occurrence 持久化与 `(project_id, event_id)` 幂等继续是 Issue 聚合的输入（正式规格 [issue-aggregate-representative-sample-store.md](../architecture/issue-aggregate-representative-sample-store.md) approved + implemented，accepted [ADR-033](../adr/ADR-033-issue-aggregate-data-model.md)）；
+- 实施内容：Migration `1722500000008_issue-aggregate-and-samples.ts`（`issues` + `issue_event_applications` + `issue_samples`，accepted ADR-033 决定细节 3/5/5b）；`@aurora/processing-store` `persistIssueContribution` Repository（事件应用登记防计数重复、`GREATEST` last_seen、首次 INSERT 竞态恢复、`by_time` 再次出现重开、`decideIssueSample` 有界样本替换策略）；`apps/ingestion-worker` `createErrorEventProcessor` 注入 `contributeIssue`（默认 no-op 保持 DAT-12 行为，生产接线时注入真实 `persistIssueContribution`）；
+- **不修改本 ADR 表结构/幂等键**；不修改 Inbox/event-schema/ingestion-api/OpenAPI；
+- 测试：8 个 `persistIssueContribution` 单元测试（样本决策矩阵/输入校验）+ 8 个真实 PostgreSQL 17.10 Issue 聚合集成测试（首次创建/重复聚合/幂等重放/乱序 GREATEST/样本有界/项目隔离/`by_time` 重开前后）+ Worker 290 测试；全仓质量门禁通过；
+- 状态记录：error event processor core implemented；fingerprint 算法 implemented（DAT-12）；**Issue 聚合与有界代表样本存储 implemented（DAT-13）**；Issue 生命周期 Command（DAT-14）/Issue Query（DAT-15）not-started；production worker composition not-started / blocked；event processor routing not-started / blocked。

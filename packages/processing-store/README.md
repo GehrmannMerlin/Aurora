@@ -2,12 +2,13 @@
 
 ## 模块定位
 
-`@aurora/processing-store` 承载错误事件 occurrence 明细处理存储第一增量、错误归一化与 fingerprint 分组算法第一增量、请求事件安全样本处理存储第一增量、请求指标聚合存储第一增量与性能指标聚合/有界样本存储第一增量（`packages/processing-store`）。错误部分为未来错误事件 processor 提供稳定存储边界（`error_event_occurrences` + fingerprint 增列，accepted [ADR-018](../../docs/adr/ADR-018-error-event-occurrence-processing-storage.md)）；指纹部分为确定性、版本化的错误归一化分组键（`computeErrorFingerprint`，正式规格 [error-normalization-fingerprint.md](../../docs/architecture/error-normalization-fingerprint.md)，G03 DAT-12）；请求样本部分为"聚合主路径＋有限安全诊断样本"边界中的样本存储能力（`request_event_samples`，accepted [ADR-019](../../docs/adr/ADR-019-request-event-aggregation-and-bounded-diagnostic-sample-storage.md)）；请求指标部分为幂等请求指标桶聚合（`request_metric_buckets` + `request_metric_event_applications`，accepted [ADR-020](../../docs/adr/ADR-020-idempotent-request-metric-bucket-aggregation.md)）；性能部分为聚合主路径＋有界安全诊断样本（`performance_metric_buckets` + `performance_metric_event_applications` + `performance_event_samples`，accepted [ADR-021](../../docs/adr/ADR-021-performance-aggregate-and-bounded-sample-storage.md)）。
+`@aurora/processing-store` 承载错误事件 occurrence 明细处理存储第一增量、错误归一化与 fingerprint 分组算法第一增量、Issue 聚合与有界代表样本存储第一增量、请求事件安全样本处理存储第一增量、请求指标聚合存储第一增量与性能指标聚合/有界样本存储第一增量（`packages/processing-store`）。错误部分为未来错误事件 processor 提供稳定存储边界（`error_event_occurrences` + fingerprint 增列，accepted [ADR-018](../../docs/adr/ADR-018-error-event-occurrence-processing-storage.md)）；指纹部分为确定性、版本化的错误归一化分组键（`computeErrorFingerprint`，正式规格 [error-normalization-fingerprint.md](../../docs/architecture/error-normalization-fingerprint.md)，G03 DAT-12）；Issue 部分为同 fingerprint 错误的项目作用域聚合与有界代表样本（`issues`/`issue_event_applications`/`issue_samples`，accepted [ADR-033](../../docs/adr/ADR-033-issue-aggregate-data-model.md)，G03 DAT-13）；请求样本部分为"聚合主路径＋有限安全诊断样本"边界中的样本存储能力（`request_event_samples`，accepted [ADR-019](../../docs/adr/ADR-019-request-event-aggregation-and-bounded-diagnostic-sample-storage.md)）；请求指标部分为幂等请求指标桶聚合（`request_metric_buckets` + `request_metric_event_applications`，accepted [ADR-020](../../docs/adr/ADR-020-idempotent-request-metric-bucket-aggregation.md)）；性能部分为聚合主路径＋有界安全诊断样本（`performance_metric_buckets` + `performance_metric_event_applications` + `performance_event_samples`，accepted [ADR-021](../../docs/adr/ADR-021-performance-aggregate-and-bounded-sample-storage.md)）。
 
 ## 职责
 
 - `error_event_occurrences` 表与 Migration（追加式，可 up/down，应用启动不自动执行）；`(project_id, event_id)` 唯一幂等；`persistErrorEventOccurrence` Repository；DAT-12 additive 增列 `fingerprint`/`fingerprint_version`（Migration `1722500000007`）；
 - 错误归一化与 fingerprint 纯函数（DAT-12）：`computeErrorFingerprint`（版本 `v1`、确定性、高置信度动态值占位符替换、堆栈关键帧投影、安全 `normalizedTitle`）+ `ERROR_FINGERPRINT_VERSION`；由 [错误归一化与 fingerprint 分组算法正式规格](../../docs/architecture/error-normalization-fingerprint.md) 承载；
+- Issue 聚合与有界代表样本存储（DAT-13，accepted ADR-033）：`issues`（`(project_id, fingerprint, fingerprint_version)` 聚合键、occurrence_count/first/last seen、生命周期列、乐观 version、closed 枚举/计数 CHECK）+ `issue_event_applications`（`(project_id, event_id)` 事件应用登记，防 retry/重放下计数重复）+ `issue_samples`（有界安全代表样本，`(project_id, event_id)` 幂等）；`persistIssueContribution` Repository（`GREATEST` last_seen、首次 INSERT 竞态恢复、`by_time` 再次出现重开、`decideIssueSample` 固定替换策略）；由 [Issue 聚合与有界代表样本处理存储正式规格](../../docs/architecture/issue-aggregate-representative-sample-store.md) 承载；
 - `request_event_samples` 表与 Migration；`(project_id, event_id)` 唯一幂等；`persistRequestEventSample` Repository（只持久化已由上游选中的合法 Request 事件的安全投影）；
 - `request_metric_buckets` + `request_metric_event_applications` 表与 Migration；`persistRequestMetricContribution` Repository（UTC 一分钟桶 + 最小事件应用登记 + 同事务 UPSERT + `(project_id, event_id)` 幂等）；
 - `performance_metric_buckets` + `performance_metric_event_applications` 表与 Migration；`persistPerformanceMetricContribution` Repository（UTC 一分钟桶 + 最小事件应用登记 + 同事务 UPSERT + `(project_id, event_id)` 幂等 + `(project_id, bucket_start, metric_name, unit)` 聚合键 + `observed_count`/`value_sum`/`value_max`）；
@@ -23,7 +24,8 @@
 
 - 不实现具体错误/请求/性能事件 processor、样本选择策略执行器、isFailure/isSlow 分类、percentile/直方图、超标比例、采样外推；
 - 不硬编码慢请求阈值（3000ms）、HTTP 429、HTTP 500—599 或额外状态码；
-- 除 DAT-16 已实现的请求指标/接口列表只读查询与 keyset 分页、DAT-20 已实现的接入诊断可查询证据只读查询、DAT-17 已实现的性能指标查询投影只读查询外，不实现其他查询、过滤、Issue 分组、Source Map、搜索、告警；
+- 除 DAT-16 已实现的请求指标/接口列表只读查询与 keyset 分页、DAT-20 已实现的接入诊断可查询证据只读查询、DAT-17 已实现的性能指标查询投影只读查询外，不实现其他查询、过滤、Source Map、搜索、告警；
+- 不实现 Issue 生命周期 Command/活动/审计表（`issue_activities`/`issue_notes`，DAT-14）与 Issue Query（DAT-15）；
 - 不冻结数据保留天数、不自动删除、不创建定时清理任务；
 - 不修改 Inbox、Worker、event-schema、ingestion-api、OpenAPI、request-event-contract、performance-event-contract；
 - 本轮不把请求样本/请求指标存储/性能存储接入 Worker 生产 composition root；
@@ -37,6 +39,9 @@
 import {
   computeErrorFingerprint,
   ERROR_FINGERPRINT_VERSION,
+  persistIssueContribution,
+  decideIssueSample,
+  DEFAULT_MAX_ISSUE_SAMPLES,
   persistErrorEventOccurrence,
   persistRequestEventSample,
   persistRequestMetricContribution,
