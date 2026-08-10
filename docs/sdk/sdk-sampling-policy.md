@@ -54,16 +54,17 @@ review-cycle: sdk-public-api-or-sampling-change
 
 ```ts
 export function decideSdkSample(
-  eventId: string,
+  eventKey: string,
   rate: number,
   hash: SdkHashInput,                    // 注入的确定性哈希函数（默认 FNV-1a 64 位，可测试注入）
 ): boolean;                              // true = 保留，false = 丢弃
 ```
 
 - `rate <= 0` → 恒 false；`rate >= 1` → 恒 true；
-- `rate` 在 (0,1)：`hash(eventId) / 2^64 < rate` 则保留；
-- `eventId` 为空或不可哈希 → 按 `rate < 1` 时的安全默认（丢弃）并记录 fix；
-- 哈希函数确定性、无外部状态、不依赖时间与随机数，保证多实例与重试一致性。
+- `rate` 在 (0,1)：`hash(eventKey) / 2^64 < rate` 则保留；
+- `eventKey` 为空或不可哈希 → 按 `rate < 1` 时的安全默认（丢弃）并记录 fix；
+- 哈希函数确定性、无外部状态、不依赖时间与随机数，保证多实例与重试一致性；
+- **稳定事件键**：优先使用事件标识（G06 队列阶段的事件 ID）；草稿阶段事件 ID 尚不存在时，控制面使用**规范草稿摘要**（`eventType` + 有界规范 JSON 正文，键排序、深度/大小沿用 `EVENT_SCHEMA_LIMITS`）作为稳定键——同一事件发生同一正文 → 同一键 → 采样判定一致。
 
 ## 4. 公共 TypeScript 契约（`@aurora/sdk`）
 
@@ -71,7 +72,7 @@ export function decideSdkSample(
 export type SdkEventClass = 'error' | 'slow' | 'performance' | 'other';
 
 export interface SdkSamplingContext {
-  readonly eventId: string;                 // 事件稳定标识（草稿阶段使用 Core 事件 ID Provider 输出或草稿 eventId）
+  readonly eventKey?: string;               // 稳定事件键；缺省时控制面使用规范草稿摘要
   readonly class: SdkEventClass;            // 由请求分类（SDK-11）或事件类型推导
   readonly rateOverride?: number;           // 可选按事件覆盖采样率
 }

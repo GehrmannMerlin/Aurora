@@ -236,13 +236,15 @@ export interface SdkPluginContext {
 }
 ```
 
-`processEvent` 处理顺序（与 PRD §5.1.14 一致）：
+`processEvent` 处理顺序（与 PRD §5.1.14 一致，请求分类先于采样以选择采样率）：
 
 ```text
-捕获草稿 → 统一隐私过滤 → beforeSend → 采样判定 → 请求分类（仅 request）→ 轨迹记录
+捕获草稿 → 统一隐私过滤 → beforeSend → 请求分类（仅 request）→ 采样判定 → 轨迹记录
 ```
 
 采样判定使用 `@aurora/sdk` 的采样策略（见 [sdk-sampling-policy.md](sdk-sampling-policy.md)），请求分类使用请求 allowlist/路径归一化策略（见 [request-allowlist-path-normalization-classification.md](request-allowlist-path-normalization-classification.md)），隐私过滤与 beforeSend 见 [unified-privacy-filtering-and-beforesend.md](unified-privacy-filtering-and-beforesend.md)，轨迹见 [safe-activity-trail-and-bounded-buffer.md](safe-activity-trail-and-bounded-buffer.md)。
+
+> 轨迹相关公共面（`SdkControlPlane.recordActivity`/`getActivityTrail`、`SdkPluginContext.recordActivity`）由 SDK-14（Plan C）交付；SDK-10 验收停点只验证本增量控制面（配置/processEvent/submit/destroy），轨迹方法在 SDK-14 关闭后并入同一控制面实例。
 
 ## 5. composition（`@aurora/browser`）
 

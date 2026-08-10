@@ -6,7 +6,7 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 }
 
 describe('browser package contract', () => {
-  it('is private, root-only, sdk-browser layered, and has no runtime dependencies', async () => {
+  it('is private, root-only, sdk-browser layered, and depends only on sdk-core layers', async () => {
     const text = await readFile(
       new URL('../../../packages/browser/package.json', import.meta.url),
       'utf8',
@@ -21,7 +21,11 @@ describe('browser package contract', () => {
       sideEffects: false,
       exports: { '.': { types: './dist/index.d.ts', import: './dist/index.js' } },
       aurora: { layer: 'sdk-browser' },
+      dependencies: { '@aurora/core': 'workspace:*', '@aurora/sdk': 'workspace:*' },
     });
-    expect(manifest.dependencies).toBeUndefined();
+    expect(Object.keys(isRecord(manifest.dependencies) ? manifest.dependencies : {})).toEqual([
+      '@aurora/core',
+      '@aurora/sdk',
+    ]);
   });
 });
