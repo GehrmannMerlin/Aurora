@@ -37,5 +37,11 @@ export {
   queryRequestEndpointPage,
   queryRequestMetricSummary,
 } from './request-metric-query-repository.js';
+export type {
+  MetricAggregate,
+  PerformanceMetricQueryWindow,
+  PerformanceMetricSummary,
+} from './performance-metric-query-types.js';
+export { queryPerformanceMetricSummary } from './performance-metric-query-repository.js';
 export { queryProjectQueryableEvidence } from './queryable-evidence-query.js';
 export type { ProjectQueryableEvidence } from './queryable-evidence-query.js';
