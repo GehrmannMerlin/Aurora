@@ -427,6 +427,37 @@ describeDb('DAT-16 requestsListEndpoints flow (real PostgreSQL 17 + Redis)', () 
     await app.close();
   });
 
+  it('a malformed endpoint cursor (valid base64url, no method\\nurl separator) is a structural 400, not 500', async () => {
+    // The contract `cursor` bound is str(1, 4096), so base64url that decodes to
+    // something without a `method\nurl` separator passes parseInput and reaches
+    // the repository, which throws ProcessingStoreError('invalid_input'). It must
+    // map to 400 structural_error (DAT-16 error-mapping fix) — never a 500.
+    const app = buildApp();
+    const owner = await registerActor(app, `owner-${randomUUID()}@example.com`);
+    const projectId = await createProjectFor(pool, owner);
+
+    // "SGVsbG8gd29ybGQ" is base64url("Hello world") — no `\n`, so it cannot be a
+    // valid endpoint keyset cursor.
+    const response = await app.inject({
+      method: 'GET',
+      url: requestsUrl(
+        owner.organizationId,
+        projectId,
+        WINDOW.start,
+        WINDOW.end,
+        'cursor=SGVsbG8gd29ybGQ',
+      ),
+      headers: { cookie: `aurora_session=${owner.cookie}` },
+    });
+    expect(response.statusCode).toBe(400);
+    const body: ProblemBody = response.json();
+    expect(body.code).toBe('structural_error');
+    // The response must not leak the internal decode failure or a 500.
+    const raw = JSON.stringify(body);
+    expect(raw).not.toContain('malformed endpoint cursor');
+    await app.close();
+  });
+
   it('an absent limit defaults to 50 (contract optional, schema default)', async () => {
     const app = buildApp();
     const owner = await registerActor(app, `owner-${randomUUID()}@example.com`);
