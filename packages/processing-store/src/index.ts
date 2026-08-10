@@ -10,6 +10,11 @@ export {
   type ErrorFingerprintResult,
 } from './error-fingerprint-types.js';
 export { computeErrorFingerprint } from './error-fingerprint.js';
+export {
+  DEFAULT_MAX_ISSUE_SAMPLES,
+  type PersistIssueContributionInput,
+  type PersistIssueContributionResult,
+} from './issue-contribution-types.js';
 export type {
   PersistRequestEventSampleInput,
   PersistRequestEventSampleResult,
