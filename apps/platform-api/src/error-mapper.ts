@@ -1,4 +1,6 @@
 import type { FastifyReply } from 'fastify';
+import { IngestionInboxError } from '@aurora/ingestion-inbox';
+import { IngestionCredentialsError } from '@aurora/ingestion-credentials';
 import { PlatformIdentityError } from '@aurora/platform-identity';
 import { PlatformOrganizationError } from '@aurora/platform-organization';
 import { PlatformProjectGovernanceError } from '@aurora/platform-project-governance';
@@ -131,14 +133,18 @@ export function isStableDataError(
   | PlatformProjectGovernanceError
   | PlatformCredentialsError
   | PlatformAuditError
-  | ProcessingStoreError {
+  | ProcessingStoreError
+  | IngestionInboxError
+  | IngestionCredentialsError {
   return (
     error instanceof PlatformIdentityError ||
     error instanceof PlatformOrganizationError ||
     error instanceof PlatformProjectGovernanceError ||
     error instanceof PlatformCredentialsError ||
     error instanceof PlatformAuditError ||
-    error instanceof ProcessingStoreError
+    error instanceof ProcessingStoreError ||
+    error instanceof IngestionInboxError ||
+    error instanceof IngestionCredentialsError
   );
 }
 

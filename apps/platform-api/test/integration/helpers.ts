@@ -20,6 +20,12 @@ const auditMigrationsDir = fileURLToPath(
 const processingStoreMigrationsDir = fileURLToPath(
   new URL('../../../../packages/processing-store/migrations', import.meta.url),
 );
+const ingestionInboxMigrationsDir = fileURLToPath(
+  new URL('../../../../packages/ingestion-inbox/migrations', import.meta.url),
+);
+const ingestionCredentialsMigrationsDir = fileURLToPath(
+  new URL('../../../../packages/ingestion-credentials/migrations', import.meta.url),
+);
 export function testDatabaseUrl(): string {
   const url = process.env.AURORA_TEST_DATABASE_URL;
   if (url === undefined) {
@@ -85,6 +91,11 @@ export async function runAllMigrations(): Promise<void> {
   await runMigrations(credentialsMigrationsDir);
   await runMigrations(auditMigrationsDir);
   await runMigrations(processingStoreMigrationsDir);
+  // DAT-20 ingestion diagnosis: the handler reads event_inbox (ingestion-inbox)
+  // and ingestion_client_credentials (ingestion-credentials), so those table
+  // sets must exist in the platform-api integration database too.
+  await runMigrations(ingestionInboxMigrationsDir);
+  await runMigrations(ingestionCredentialsMigrationsDir);
 }
 
 /**

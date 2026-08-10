@@ -24,6 +24,8 @@
     "test:coverage": "vitest run --coverage --no-file-parallelism --exclude test/package-entry.test.ts"
   },
   "dependencies": {
+    "@aurora/ingestion-credentials": "workspace:*",
+    "@aurora/ingestion-inbox": "workspace:*",
     "@aurora/platform-audit": "workspace:*",
     "@aurora/platform-contract": "workspace:*",
     "@aurora/platform-credentials": "workspace:*",
