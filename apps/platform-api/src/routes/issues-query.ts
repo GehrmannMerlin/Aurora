@@ -190,9 +190,21 @@ export async function handleListIssues(
     throw error;
   }
 
+  // The `issueListData` contract requires `items` + `pagination` in every
+  // section variant, so an empty window must still return a well-formed shape
+  // (empty items + an honest 0 totalCount) rather than a schema-invalid body
+  // that `serializeOutput` rejects as a 500.
   const issuesSection =
     page.items.length === 0
-      ? { status: 'empty' as const, reason: 'no issues in window' }
+      ? {
+          status: 'empty' as const,
+          reason: 'no issues in window',
+          items: [],
+          pagination: {
+            totalCount: 0,
+            totalCountStatus: 'available' as const,
+          },
+        }
       : {
           status: 'available' as const,
           items: page.items.map((item) => ({

@@ -136,6 +136,33 @@ describeDb('DAT-15 issue Query flow (real PostgreSQL 17 + Redis)', () => {
     void issueId;
   });
 
+  it('returns a well-formed empty list when the window has no issues (regression)', async () => {
+    const app = buildApp();
+    const owner = await registerVerifiedActor(app, pool, `owner-${randomUUID()}@example.com`);
+    const projectId = await createProjectFor(pool, owner);
+
+    const { status, body } = await get(
+      app,
+      owner,
+      owner.organizationId,
+      projectId,
+      `?timeRange[start]=2026-08-10T00:00:00.000Z&timeRange[end]=2026-08-10T12:00:00.000Z`,
+    );
+    // The `issueListData` contract requires `items` + `pagination` in every
+    // variant; an empty window must serialize successfully (200), not 500.
+    expect(status).toBe(200);
+    expect(body.data).toMatchObject({
+      issues: {
+        status: 'empty',
+        reason: 'no issues in window',
+        items: [],
+        pagination: { totalCount: 0, totalCountStatus: 'available' },
+      },
+      environments: { status: 'unavailable' },
+    });
+    await app.close();
+  });
+
   it('returns issue detail with samples and activity', async () => {
     const app = buildApp();
     const owner = await registerVerifiedActor(app, pool, `owner-${randomUUID()}@example.com`);

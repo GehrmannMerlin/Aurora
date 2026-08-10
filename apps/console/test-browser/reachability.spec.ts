@@ -49,13 +49,30 @@ test.afterAll(async () => {
   await server?.close();
 });
 
-const PROJECT_ENTRIES: ReadonlyArray<{ name: string; path: string }> = [
-  { name: '接入', path: '/organizations/org_test_1/projects/prj_test_1/onboarding' },
-  { name: '概览', path: '/organizations/org_test_1/projects/prj_test_1/overview' },
+// PLT-05 flips C1/C2/C7 to real monitoring views (consuming real public Queries).
+// The remaining project entries stay honest unavailable stubs until PLT-06/07/08.
+const REAL_PROJECT_ENTRIES: ReadonlyArray<{ name: string; path: string; view: string }> = [
+  {
+    name: '接入',
+    path: '/organizations/org_test_1/projects/prj_test_1/onboarding',
+    view: 'project-onboarding-view',
+  },
+  {
+    name: '概览',
+    path: '/organizations/org_test_1/projects/prj_test_1/overview',
+    view: 'project-overview-view',
+  },
+  {
+    name: '数据状态',
+    path: '/organizations/org_test_1/projects/prj_test_1/data-status',
+    view: 'project-data-status-view',
+  },
+];
+
+const UNAVAILABLE_PROJECT_ENTRIES: ReadonlyArray<{ name: string; path: string }> = [
   { name: '问题', path: '/organizations/org_test_1/projects/prj_test_1/issues' },
   { name: '请求', path: '/organizations/org_test_1/projects/prj_test_1/requests' },
   { name: '性能', path: '/organizations/org_test_1/projects/prj_test_1/performance' },
-  { name: '数据状态', path: '/organizations/org_test_1/projects/prj_test_1/data-status' },
   { name: '发布', path: '/organizations/org_test_1/projects/prj_test_1/releases' },
   { name: '告警', path: '/organizations/org_test_1/projects/prj_test_1/alerts' },
   { name: '访问', path: '/organizations/org_test_1/projects/prj_test_1/access' },
@@ -72,7 +89,7 @@ const ORG_ENTRIES: ReadonlyArray<{ name: string; path: string; view: string }> =
   { name: '回收站', path: '/organizations/org_test_1/trash', view: 'trash-view' },
 ];
 
-test('every project sidebar entry is reachable by real click and shows unavailable (no fake data)', async ({
+test('every project sidebar entry is reachable by real click — PLT-05 views render, others stay honest unavailable', async ({
   page,
 }) => {
   await page.goto(`${server!.origin}/`);
@@ -80,7 +97,12 @@ test('every project sidebar entry is reachable by real click and shows unavailab
   await setMockScope(page, 'project', 'prj_test_1');
   await page.reload();
   await expect(page.getByRole('navigation', { name: '侧栏导航' })).toBeVisible();
-  for (const entry of PROJECT_ENTRIES) {
+  for (const entry of REAL_PROJECT_ENTRIES) {
+    await page.getByRole('link', { name: entry.name, exact: true }).click();
+    await expect(page).toHaveURL(new RegExp(escapeRegExp(entry.path)));
+    await expect(page.getByTestId(entry.view)).toBeVisible();
+  }
+  for (const entry of UNAVAILABLE_PROJECT_ENTRIES) {
     await page.getByRole('link', { name: entry.name, exact: true }).click();
     await expect(page).toHaveURL(new RegExp(escapeRegExp(entry.path)));
     await expect(page.getByTestId('unavailable-view')).toBeVisible();
@@ -143,7 +165,7 @@ test('a nav entry is reachable by keyboard (focus + Enter)', async ({ page }) =>
   await expect(overview).toBeFocused();
   await page.keyboard.press('Enter');
   await expect(page).toHaveURL(/\/organizations\/org_test_1\/projects\/prj_test_1\/overview$/);
-  await expect(page.getByTestId('unavailable-view')).toBeVisible();
+  await expect(page.getByTestId('project-overview-view')).toBeVisible();
 });
 test('blocked G10-G13 targets parse, protect and represent unavailable (no fake data)', async ({
   page,
