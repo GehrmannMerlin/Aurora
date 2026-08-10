@@ -24,6 +24,9 @@ function fakeClientSequence(responses: ({ readonly rows?: unknown[] } | Error)[]
       const response = responses[index];
       index += 1;
       if (response instanceof Error) return Promise.reject(response);
+      if (response === undefined) {
+        throw new Error('fakeClientSequence exhausted: no more queued responses');
+      }
       return Promise.resolve({ rows: response.rows ?? [] });
     },
     release: () => Promise.resolve(),
