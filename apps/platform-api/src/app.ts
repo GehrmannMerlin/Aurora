@@ -46,6 +46,15 @@ import { handleListSecurityAudit } from './routes/audit.js';
 import { handleListRequestEndpoints } from './routes/requests.js';
 import { handleGetDataStatus } from './routes/diagnostics.js';
 import { handleListPerformancePages } from './routes/performance.js';
+import {
+  handleBatchUpdateIssues,
+  handleCreateIssueNote,
+  handleDeleteIssueNote,
+  handleMergeIssues,
+  handleUpdateIssueAssignee,
+  handleUpdateIssuePriority,
+  handleUpdateIssueState,
+} from './routes/issues.js';
 import { handleListTrash, handleRestoreProject } from './routes/trash.js';
 import {
   handleInvitationLink,
@@ -272,6 +281,51 @@ export function buildPlatformApi(deps: PlatformApiDependencies): FastifyInstance
     '/api/platform/v1/organizations/:organizationId/projects/:projectId/performance',
     async (request, reply) => {
       await handleListPerformancePages(request, reply, routeContext);
+    },
+  );
+
+  // DAT-14 Issue lifecycle Commands (7). Project handle authorization, CSRF,
+  // idempotency, optimistic version, activity and audit live in the handlers.
+  app.post(
+    '/api/platform/v1/organizations/:organizationId/projects/:projectId/issues/:issueId/state',
+    async (request, reply) => {
+      await handleUpdateIssueState(request, reply, routeContext);
+    },
+  );
+  app.post(
+    '/api/platform/v1/organizations/:organizationId/projects/:projectId/issues/:issueId/assignee',
+    async (request, reply) => {
+      await handleUpdateIssueAssignee(request, reply, routeContext);
+    },
+  );
+  app.post(
+    '/api/platform/v1/organizations/:organizationId/projects/:projectId/issues/:issueId/priority',
+    async (request, reply) => {
+      await handleUpdateIssuePriority(request, reply, routeContext);
+    },
+  );
+  app.post(
+    '/api/platform/v1/organizations/:organizationId/projects/:projectId/issues/:issueId/notes',
+    async (request, reply) => {
+      await handleCreateIssueNote(request, reply, routeContext);
+    },
+  );
+  app.post(
+    '/api/platform/v1/organizations/:organizationId/projects/:projectId/issues/:issueId/notes/:noteId/delete',
+    async (request, reply) => {
+      await handleDeleteIssueNote(request, reply, routeContext);
+    },
+  );
+  app.post(
+    '/api/platform/v1/organizations/:organizationId/projects/:projectId/issues/:issueId/merge',
+    async (request, reply) => {
+      await handleMergeIssues(request, reply, routeContext);
+    },
+  );
+  app.post(
+    '/api/platform/v1/organizations/:organizationId/projects/:projectId/issues/batch',
+    async (request, reply) => {
+      await handleBatchUpdateIssues(request, reply, routeContext);
     },
   );
 

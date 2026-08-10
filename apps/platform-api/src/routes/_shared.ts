@@ -2,7 +2,7 @@ import type { FastifyReply, FastifyRequest } from 'fastify';
 import type { PoolClient } from 'pg';
 import type { SessionPayload } from '@aurora/platform-session';
 import type { RouteTargetId } from '@aurora/platform-contract';
-import { checkProjectAccess } from '@aurora/platform-project-governance';
+import { checkProjectAccess, getProjectAccessRole } from '@aurora/platform-project-governance';
 import { effectivePermissions, type EffectivePermissions } from '../authorization.js';
 import { sendProblem } from '../error-mapper.js';
 import { sendMappedError, ServiceError } from '../service-error.js';
@@ -199,6 +199,45 @@ export async function requireProjectAccess(
       403,
       'authorization',
       'You do not have permission to view this project.',
+    );
+    return false;
+  }
+  return true;
+}
+
+/**
+ * Require project-scoped Issue-handle capability for a DAT-14 Command (spec §4):
+ * an org manager or a `project_members` row with role `project_admin`/`developer`
+ * may handle; `read_only` and non-members get a closed 403. Cross-org / absent
+ * project -> closed 404 (no existence leak). Returns true when allowed; otherwise
+ * a problem was already sent.
+ */
+export async function requireProjectHandleAccess(
+  accountId: string,
+  organizationId: string,
+  projectId: string,
+  deps: PlatformApiRouteDependencies,
+  reply: FastifyReply,
+  requestId: string,
+): Promise<boolean> {
+  let result;
+  try {
+    result = await getProjectAccessRole(deps.pool, { organizationId, projectId, accountId });
+  } catch (error) {
+    if (await sendMappedError(reply, requestId, error)) return false;
+    throw error;
+  }
+  if (result.outcome === 'not_found') {
+    await sendProblem(reply, requestId, 404, 'not_found', 'Project not found.');
+    return false;
+  }
+  if (result.outcome === 'forbidden' || result.role === 'read_only') {
+    await sendProblem(
+      reply,
+      requestId,
+      403,
+      'authorization',
+      'You do not have permission to handle issues in this project.',
     );
     return false;
   }

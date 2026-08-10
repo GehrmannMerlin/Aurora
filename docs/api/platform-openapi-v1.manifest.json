@@ -6715,7 +6715,7 @@
                   },
                   "issueId": {
                     "type": "string",
-                    "minLength": 3,
+                    "minLength": 1,
                     "maxLength": 64
                   },
                   "version": {
@@ -6776,7 +6776,7 @@
                   },
                   "issueId": {
                     "type": "string",
-                    "minLength": 3,
+                    "minLength": 1,
                     "maxLength": 64
                   },
                   "version": {
@@ -6837,7 +6837,7 @@
                   },
                   "issueId": {
                     "type": "string",
-                    "minLength": 3,
+                    "minLength": 1,
                     "maxLength": 64
                   },
                   "version": {
@@ -6897,7 +6897,7 @@
                   },
                   "issueId": {
                     "type": "string",
-                    "minLength": 3,
+                    "minLength": 1,
                     "maxLength": 64
                   },
                   "noteId": {
@@ -6934,7 +6934,7 @@
                   },
                   "issueId": {
                     "type": "string",
-                    "minLength": 3,
+                    "minLength": 1,
                     "maxLength": 64
                   },
                   "noteId": {
@@ -6971,12 +6971,12 @@
                   },
                   "issueId": {
                     "type": "string",
-                    "minLength": 3,
+                    "minLength": 1,
                     "maxLength": 64
                   },
                   "mergedIntoIssueId": {
                     "type": "string",
-                    "minLength": 3,
+                    "minLength": 1,
                     "maxLength": 64
                   }
                 }
@@ -7026,7 +7026,7 @@
                       "properties": {
                         "issueId": {
                           "type": "string",
-                          "minLength": 3,
+                          "minLength": 1,
                           "maxLength": 64
                         },
                         "ok": {

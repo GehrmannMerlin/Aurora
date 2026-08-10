@@ -1060,7 +1060,7 @@ paths:
           required: true
           schema: &a9
             type: string
-            minLength: 3
+            minLength: 1
             maxLength: 64
             description: IssueId
       requestBody:
