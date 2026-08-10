@@ -79,6 +79,9 @@ describeDb('processing-store request metric aggregation (real PostgreSQL 17)', (
     await pool.query('DROP TABLE IF EXISTS request_metric_buckets CASCADE');
     await pool.query('DROP TABLE IF EXISTS request_event_samples CASCADE');
     await pool.query('DROP TABLE IF EXISTS error_event_occurrences CASCADE');
+    await pool.query('DROP TABLE IF EXISTS issue_samples CASCADE');
+    await pool.query('DROP TABLE IF EXISTS issue_event_applications CASCADE');
+    await pool.query('DROP TABLE IF EXISTS issues CASCADE');
     await pool.query('DROP TABLE IF EXISTS performance_metric_event_applications CASCADE');
     await pool.query('DROP TABLE IF EXISTS performance_metric_buckets CASCADE');
     await pool.query('DROP TABLE IF EXISTS performance_event_samples CASCADE');
