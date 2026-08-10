@@ -5,5 +5,5 @@ Spec: docs/architecture/issue-query-projection.md
 
 - [x] Task 1: Query repositories in processing-store
 - [x] Task 2: Contract operations (unblock)
-- [ ] Task 3: platform-api handlers
+- [x] Task 3: platform-api handlers
 - [ ] Task 4: Docs sync + leaf verification

@@ -55,6 +55,7 @@ import {
   handleUpdateIssuePriority,
   handleUpdateIssueState,
 } from './routes/issues.js';
+import { handleGetIssueDetail, handleListIssues } from './routes/issues-query.js';
 import { handleListTrash, handleRestoreProject } from './routes/trash.js';
 import {
   handleInvitationLink,
@@ -281,6 +282,21 @@ export function buildPlatformApi(deps: PlatformApiDependencies): FastifyInstance
     '/api/platform/v1/organizations/:organizationId/projects/:projectId/performance',
     async (request, reply) => {
       await handleListPerformancePages(request, reply, routeContext);
+    },
+  );
+
+  // DAT-15 Issue list/detail Query (2). Project view authorization and safe
+  // projection live in the handlers.
+  app.get(
+    '/api/platform/v1/organizations/:organizationId/projects/:projectId/issues',
+    async (request, reply) => {
+      await handleListIssues(request, reply, routeContext);
+    },
+  );
+  app.get(
+    '/api/platform/v1/organizations/:organizationId/projects/:projectId/issues/:issueId',
+    async (request, reply) => {
+      await handleGetIssueDetail(request, reply, routeContext);
     },
   );
 
