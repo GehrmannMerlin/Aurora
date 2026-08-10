@@ -12,6 +12,7 @@ Aurora SDK 公共控制面：环境无关的配置模型、统一隐私过滤、
 - **确定性采样**：`decideEventSample`/`decideSdkSample` 基于 FNV-1a 64 位稳定键，同一事件重试/多实例判定一致，无采样外推。
 - **请求分类**：`classifyRequestEvent` 落实 PRD §5.1.2—5.1.8——allowlist 判断、路径归一化（动态段/开发者模板）与 error/slow/normal 分类，不采集 body/凭据/未批准查询参数。
 - **控制面**：`createSdkControlPlane` 按 `隐私过滤 → beforeSend → 请求分类 → 采样` 顺序处理草稿，`processEvent`/`submit` 返回稳定结果。
+- **安全操作轨迹**：`createSdkActivityTrail` 提供有界缓冲（默认 30、丢最旧、多实例隔离）；控制面暴露 `recordActivity`/`getActivityTrail` 并自动记录 `request_summary`/`prior_error`/`sdk_report` 安全事实；轨迹**不进 wire 事件**（SDK-14）。
 
 ## 明确非职责
 

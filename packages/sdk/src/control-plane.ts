@@ -1,4 +1,5 @@
 import { EventType, parseRequestEventBody } from '@aurora/event-schema';
+import { createSdkActivityTrail, type SafeActivityEntry, type SdkRecordActivityResult } from './activity-trail.js';
 import { applySdkBeforeSend } from './before-send.js';
 import type { SdkConfigSnapshot } from './configuration.js';
 import { isSdkEventDraft, type SdkEventDraft } from './event-draft.js';
@@ -41,7 +42,15 @@ export interface SdkControlPlane {
   readonly getConfig: () => SdkConfigSnapshot;
   readonly processEvent: (draft: SdkEventDraft) => SdkProcessEventResult;
   readonly submit: (draft: SdkEventDraft, submitToCore: SdkSubmitDraft) => SdkSubmitResult;
+  readonly recordActivity: (entry: unknown) => SdkRecordActivityResult;
+  readonly getActivityTrail: () => readonly SafeActivityEntry[];
   readonly destroy: () => void;
+}
+
+export interface SdkPluginContext {
+  readonly submitEvent: (draft: SdkEventDraft) => SdkSubmitResult;
+  readonly getConfig: () => SdkConfigSnapshot;
+  readonly recordActivity: (entry: unknown) => SdkRecordActivityResult;
 }
 
 export interface SdkControlPlaneOptions {
@@ -52,6 +61,13 @@ function dropped(code: SdkDropCode): SdkDroppedEvent {
   return Object.freeze({ ok: false, code });
 }
 
+function recordWithOccurredAt(
+  trail: ReturnType<typeof createSdkActivityTrail>,
+  entry: Readonly<Record<string, unknown>>,
+): SdkRecordActivityResult {
+  return trail.record(Object.freeze({ ...entry, occurredAt: Date.now() }));
+}
+
 export function createSdkControlPlane(
   config: SdkConfigSnapshot,
   options: SdkControlPlaneOptions = {},
@@ -60,6 +76,10 @@ export function createSdkControlPlane(
     pageOrigin: options.pageOrigin ?? null,
     sdkReportUrls: [],
   };
+  const trail = createSdkActivityTrail({
+    capacity: config.maxActivityTrailEntries,
+    enabled: config.interactionTrailEnabled,
+  });
 
   function processEvent(draft: SdkEventDraft): SdkProcessEventResult {
     if (!isSdkEventDraft(draft)) return dropped('invalid_draft');
@@ -85,11 +105,31 @@ export function createSdkControlPlane(
         body: Object.freeze({ ...(current.body as object), url: classified.normalizedUrl }),
       });
       eventClass = eventClassOf(EventType.Request, classified.class);
+      const summaryBody = current.body as Record<string, unknown>;
+      void recordWithOccurredAt(trail, {
+        kind: 'request_summary',
+        method: String(summaryBody.method ?? ''),
+        normalizedUrl: classified.normalizedUrl,
+        outcome: String(summaryBody.outcome ?? ''),
+        statusCode: typeof summaryBody.statusCode === 'number' ? summaryBody.statusCode : undefined,
+        durationMs: typeof summaryBody.durationMs === 'number' ? summaryBody.durationMs : 0,
+      });
     } else {
       eventClass = eventClassOf(current.eventType, null);
+      if (current.eventType === EventType.Error) {
+        const body = current.body as Record<string, unknown>;
+        void recordWithOccurredAt(trail, {
+          kind: 'prior_error',
+          errorClass: String(body.category ?? 'unknown'),
+        });
+      }
     }
     const decision = decideEventSample(current, config, { class: eventClass });
-    if (!decision.sampled) return dropped('sampled_out');
+    if (!decision.sampled) {
+      void recordWithOccurredAt(trail, { kind: 'sdk_report', action: 'sample_dropped' });
+      return dropped('sampled_out');
+    }
+    void recordWithOccurredAt(trail, { kind: 'sdk_report', action: 'event_submitted' });
     return Object.freeze({ ok: true, event: current, sampledOut: false });
   }
 
@@ -102,8 +142,10 @@ export function createSdkControlPlane(
       if (processed.sampledOut) return { ok: false, code: 'sampled_out' };
       return submitToCore(processed.event);
     },
+    recordActivity: (entry: unknown): SdkRecordActivityResult => trail.record(entry),
+    getActivityTrail: (): readonly SafeActivityEntry[] => trail.entries,
     destroy: (): void => {
-      // SDK-14 adds bounded-trail cleanup here.
+      trail.destroy();
     },
   });
 }

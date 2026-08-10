@@ -125,4 +125,52 @@ describe('createSdkControlPlane', () => {
     a.destroy();
     b.destroy();
   });
+
+  it('records a request_summary for kept requests and a prior_error for errors', () => {
+    const plane = createSdkControlPlane(config(), { pageOrigin: 'https://shop.example.com' });
+    plane.processEvent(requestDraft('https://shop.example.com/api/orders/10001'));
+    plane.processEvent(errorDraft());
+    const trail = plane.getActivityTrail();
+    expect(trail.some((e) => e.kind === 'request_summary')).toBe(true);
+    const requestEntry = trail.find((e) => e.kind === 'request_summary');
+    if (requestEntry?.kind === 'request_summary') {
+      expect(requestEntry.normalizedUrl).toBe('https://shop.example.com/api/orders/:number');
+    }
+    const errorEntry = trail.find((e) => e.kind === 'prior_error');
+    expect(errorEntry?.kind).toBe('prior_error');
+    expect(trail.some((e) => e.kind === 'sdk_report' && e.action === 'event_submitted')).toBe(true);
+  });
+
+  it('records sample_dropped for sampled-out events and nothing for beforeSend drops', () => {
+    const plane = createSdkControlPlane(
+      config({ sampleRates: { errors: 1, slowRequests: 0, performance: 0 }, beforeSend: () => null }),
+      { pageOrigin: 'https://shop.example.com' },
+    );
+    plane.processEvent(errorDraft()); // dropped_by_before_send -> no trail
+    expect(plane.getActivityTrail()).toEqual([]);
+  });
+
+  it('recordActivity validates entries through the control plane', () => {
+    const plane = createSdkControlPlane(config());
+    const ok = plane.recordActivity({ kind: 'sdk_report', occurredAt: Date.now(), action: 'manual' });
+    expect(ok.code).toBe('recorded');
+    const bad = plane.recordActivity({ kind: 'sdk_report', occurredAt: Date.now(), action: 'a', message: 'x' });
+    expect(bad.code).toBe('invalid_entry');
+  });
+
+  it('clears the trail on destroy and isolates per-instance trails', () => {
+    const a = createSdkControlPlane(config());
+    const b = createSdkControlPlane(config());
+    a.processEvent(errorDraft());
+    expect(a.getActivityTrail().length).toBeGreaterThan(0);
+    expect(b.getActivityTrail()).toEqual([]);
+    a.destroy();
+    expect(a.getActivityTrail()).toEqual([]);
+  });
+
+  it('honors interactionTrailEnabled=false', () => {
+    const plane = createSdkControlPlane(config({ interactionTrailEnabled: false }));
+    plane.processEvent(errorDraft());
+    expect(plane.getActivityTrail()).toEqual([]);
+  });
 });

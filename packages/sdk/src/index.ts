@@ -1,3 +1,18 @@
+export {
+  createSdkActivityTrail,
+  type SafeActivityEntry,
+  type SafeActivityEntryKind,
+  type SafePageEnterEntry,
+  type SafePriorErrorEntry,
+  type SafeRequestSummaryEntry,
+  type SafeResourceErrorEntry,
+  type SafeRouteChangeEntry,
+  type SafeSdkReportEntry,
+  type SdkActivityTrail,
+  type SdkActivityTrailOptions,
+  type SdkRecordActivityCode,
+  type SdkRecordActivityResult,
+} from './activity-trail.js';
 export { applySdkBeforeSend } from './before-send.js';
 export type { SdkBeforeSend, SdkBeforeSendCode, SdkBeforeSendFunction, SdkBeforeSendResult } from './before-send.js';
 export {
@@ -17,6 +32,7 @@ export {
   type SdkControlPlaneOptions,
   type SdkDroppedEvent,
   type SdkDropCode,
+  type SdkPluginContext,
   type SdkProcessedEvent,
   type SdkProcessEventResult,
   type SdkSubmitDraft,

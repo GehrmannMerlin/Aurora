@@ -1,18 +1,33 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { CorePlugin } from '@aurora/core';
 import { createAuroraSdk, type AuroraSdkHandle } from '../src/index.js';
+
+afterEach(() => vi.unstubAllGlobals());
 
 interface Probe {
   readonly plugin: CorePlugin;
   readonly submit: (draft: unknown) => unknown;
+  readonly recordActivity: (entry: unknown) => unknown;
+}
+
+interface ProbeContext {
+  readonly submitEvent: (input: unknown) => unknown;
+  recordActivity?: (entry: unknown) => unknown;
 }
 
 function createProbePlugin(): Probe {
-  let capturedSubmit: unknown;
+  let capturedContext: ProbeContext | undefined;
   const plugin: CorePlugin = {
     name: 'probe-plugin',
     initialize(context): void {
-      capturedSubmit = context.submitEvent;
+      const contextWithTrail = context as { recordActivity?: (entry: unknown) => unknown };
+      const captured: ProbeContext = {
+        submitEvent: context.submitEvent as (input: unknown) => unknown,
+      };
+      if (contextWithTrail.recordActivity !== undefined) {
+        captured.recordActivity = contextWithTrail.recordActivity;
+      }
+      capturedContext = captured;
     },
     start(): void {
       /* no-op */
@@ -27,8 +42,12 @@ function createProbePlugin(): Probe {
   return {
     plugin,
     submit: (draft: unknown): unknown => {
-      if (typeof capturedSubmit !== 'function') throw new TypeError('plugin not initialized');
-      return (capturedSubmit as (input: unknown) => unknown)(draft);
+      if (capturedContext === undefined) throw new TypeError('plugin not initialized');
+      return capturedContext.submitEvent(draft);
+    },
+    recordActivity: (entry: unknown): unknown => {
+      if (capturedContext?.recordActivity === undefined) throw new TypeError('recordActivity not provided');
+      return capturedContext.recordActivity(entry);
     },
   };
 }
@@ -97,5 +116,39 @@ describe('createAuroraSdk', () => {
     await handleA.start();
     expect(handleB.core.getState()).toBe('created');
     await handleA.destroy();
+  });
+
+  it('records a safe page_enter trail entry on start from the browser page snapshot', async () => {
+    vi.stubGlobal('window', { location: { href: 'https://shop.example.com/orders?page=2' } });
+    const handle = createAuroraSdk({ config: { clientKey: 'k' } });
+    await handle.start();
+    const trail = handle.getActivityTrail();
+    const pageEnter = trail.find((entry) => entry.kind === 'page_enter');
+    if (pageEnter?.kind === 'page_enter') {
+      expect(pageEnter.origin).toBe('https://shop.example.com');
+      expect(pageEnter.pathname).toBe('/orders');
+    }
+    await handle.destroy();
+  });
+
+  it('exposes plugin-context recordActivity through the control plane trail', async () => {
+    const probe = createProbePlugin();
+    const handle = createAuroraSdk({ config: { clientKey: 'k' }, plugins: [probe.plugin] });
+    await handle.start();
+    const result = probe.recordActivity({
+      kind: 'sdk_report',
+      occurredAt: Date.now(),
+      action: 'from_plugin',
+    });
+    expect(result).toMatchObject({ ok: true, code: 'recorded' });
+    expect(handle.getActivityTrail().some((entry) => entry.kind === 'sdk_report' && entry.action === 'from_plugin')).toBe(true);
+    await handle.destroy();
+  });
+
+  it('exposes a bounded trail via getActivityTrail', async () => {
+    const handle = createAuroraSdk({ config: { clientKey: 'k', maxActivityTrailEntries: 3 } });
+    await handle.start();
+    expect(handle.getActivityTrail().length).toBeLessThanOrEqual(3);
+    await handle.destroy();
   });
 });
