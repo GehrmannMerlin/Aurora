@@ -18,6 +18,13 @@ export {
   type EventEnvelopeParseSuccess,
 } from './event-envelope.js';
 export {
+  negotiateProtocolVersion,
+  type ProtocolNegotiationCode,
+  type ProtocolNegotiationResult,
+  type ProtocolNegotiationSupported,
+  type ProtocolNegotiationUnsupported,
+} from './protocol-negotiation.js';
+export {
   ERROR_EVENT_LIMITS,
   ErrorCategory,
   ErrorResourceType,

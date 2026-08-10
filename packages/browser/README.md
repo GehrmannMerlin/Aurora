@@ -29,9 +29,12 @@
 
 ## 公共 API
 
+浏览器 SDK composition：`createAuroraSdk({ config, plugins?, pageOrigin? })` 把配置、Core、控制面（`@aurora/sdk`）与注入插件组装为完整 SDK 句柄（配置快照、Core、控制面、生命周期、`getActivityTrail()`），插件事件经统一控制面（隐私过滤 → beforeSend → 请求分类 → 采样）后进入 Core（SDK-10）；启动时用安全页面快照记录 `page_enter` 安全操作轨迹（SDK-14）。
+
 ```ts
 import {
   createBrowserEnvironment,
+  createAuroraSdk,
   BrowserErrorSourceEventType,
   BrowserPerformanceMetricName,
   BrowserPerformanceMetricUnit,

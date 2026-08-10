@@ -1,9 +1,9 @@
 {
-  "name": "@aurora/browser",
+  "name": "@aurora/sdk",
   "version": "0.0.0",
   "private": true,
   "type": "module",
-  "description": "Aurora browser environment and page lifecycle foundation",
+  "description": "Aurora SDK public control plane (configuration, privacy, beforeSend, sampling, request classification)",
   "sideEffects": false,
   "engines": {
     "node": ">=24.18.0 <25"
@@ -15,28 +15,26 @@
     }
   },
   "files": [
-    "dist"
+    "dist",
+    "README.md"
   ],
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
-    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p tsconfig.no-dom.json --noEmit",
     "test": "vitest run --exclude test/package-entry.test.ts",
     "test:coverage": "vitest run --coverage --exclude test/package-entry.test.ts",
-    "test:package": "pnpm build && vitest run test/package-entry.test.ts",
-    "test:browser": "pnpm build && playwright test --config playwright.config.ts"
+    "test:package": "pnpm build && vitest run test/package-entry.test.ts"
   },
   "dependencies": {
-    "@aurora/core": "workspace:*",
-    "@aurora/sdk": "workspace:*"
+    "@aurora/event-schema": "workspace:*"
   },
   "devDependencies": {
-    "@playwright/test": "1.62.0",
     "@types/node": "24.13.3",
     "@vitest/coverage-v8": "4.1.10",
     "typescript": "6.0.3",
     "vitest": "4.1.10"
   },
   "aurora": {
-    "layer": "sdk-browser"
+    "layer": "sdk-core"
   }
 }

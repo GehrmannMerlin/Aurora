@@ -45,6 +45,16 @@ describe('built package entries', () => {
     expect(result.stdout).toContain('parseIngestionEventReceipt');
   });
 
+  it('exposes version negotiation but no compatibility converters (empty conversion boundary)', () => {
+    const result = importFromPackage('@aurora/event-schema');
+    expect(result.status).toBe(0);
+    expect(result.stderr).toBe('');
+    expect(result.stdout).toContain('negotiateProtocolVersion');
+    const keys = result.stdout.split(',');
+    const converterKeys = keys.filter((k) => /convert|upgrade|downgrade|migrate/i.test(k));
+    expect(converterKeys).toEqual([]);
+  });
+
   it('loads the declared contract-testkit entry', () => {
     const result = importFromPackage('@aurora/event-schema/contract-testkit');
     expect(result.status).toBe(0);

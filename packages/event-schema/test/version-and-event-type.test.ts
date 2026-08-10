@@ -6,6 +6,7 @@ import {
   SUPPORTED_PROTOCOL_VERSIONS,
   isEventType,
   isSupportedProtocolVersion,
+  negotiateProtocolVersion,
 } from '../src/index.js';
 
 describe('protocol version contract', () => {
@@ -16,6 +17,11 @@ describe('protocol version contract', () => {
     expect(isSupportedProtocolVersion(0)).toBe(false);
     expect(isSupportedProtocolVersion(2)).toBe(false);
     expect(isSupportedProtocolVersion('1')).toBe(false);
+  });
+
+  it('exposes a public version negotiation entry point', () => {
+    expect(negotiateProtocolVersion(1)).toMatchObject({ ok: true, code: 'supported', version: 1 });
+    expect(negotiateProtocolVersion(2)).toMatchObject({ ok: false, code: 'unsupported_version' });
   });
 });
 
