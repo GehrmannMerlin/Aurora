@@ -285,3 +285,11 @@ Aurora 已接受 ADR-004/005/008/010/012/018/019/020/021，`@aurora/processing-s
 - 测试：单元测试（`decideIssueSample` 决策矩阵 + `persistIssueContribution` 输入校验）+ 真实 PostgreSQL 17.10 集成测试（迁移 4 + Issue 聚合 8 + 既有回归全绿，共 12 文件 94 集成测试）+ Worker 290 测试，覆盖率达 lines ≥ 85%、branches ≥ 80%、functions ≥ 85%、statements ≥ 85%，全仓质量门禁通过；
 - 正式规格：[issue-aggregate-representative-sample-store.md](../architecture/issue-aggregate-representative-sample-store.md)（approved + implemented）；
 - 状态记录：issue aggregate and bounded representative sample store implemented；Issue lifecycle Commands not-started（DAT-14）；Issue Query not-started（DAT-15）；production worker composition not-started / blocked（DAT-13 处理器贡献为可注入，未接入生产 composition root）；本 ADR 实施状态更新为 implemented。
+
+### 2026-08-10：DAT-14 Issue 生命周期 Command、活动与审计实施证据
+
+- 决策状态保持 `accepted`，实施状态保持 `implemented`；本 ADR 决定细节 3/4/5c/5d（生命周期列、乐观 `version`、`issue_activities`/`issue_notes` 表）由 DAT-14 实施（正式规格 [issue-lifecycle-commands.md](../architecture/issue-lifecycle-commands.md) approved + implemented）；
+- 实施内容：Migration `1722500000009_issue-activities-notes.ts`（`issue_activities` immutable 时间线 + `issue_notes` 软删除备注，`ON DELETE NO ACTION`）；`@aurora/processing-store` 生命周期 Repository（`updateIssueState`：closed 转移表 + 开始处理自动分配同事务 + resolution/ignore 载荷 + 乐观 `version` + 活动；`updateIssueAssignee`/`updateIssuePriority`/`createIssueNote`/`deleteIssueNote`（作者或管理员）/`mergeIssues`（计数/首末次并入主问题 + 原问题标记）/`batchUpdateIssues`（≤100 逐项部分结果））；`@aurora/platform-project-governance` `getProjectAccessRole`（org manager → project_admin，project_members role）；`@aurora/platform-contract` 7 个 Command 操作（`issuesUpdateState`/`Assignee`/`Priority`/`CreateNote`/`DeleteNote`/`Merge`/`BatchUpdate`）；`apps/platform-api` 7 个 handler（`requireProjectHandleAccess`、CSRF、幂等、审计经 `insertAuditEvent`）；
+- **不修改本 ADR 决定细节**：生命周期列/`version`/活动/备注表结构按决定细节 3/4/5c/5d 实施；`by_time` 重开由 DAT-13 聚合侧保持；`by_version` 重开仍 deferred（契约缺口）；
+- 测试：`@aurora/processing-store` 129 单元 + 94 真实 PG 集成；`@aurora/platform-contract` 244 契约测试 + drift；`apps/platform-api` 20 文件 132 真实 PG+Redis 集成（含 5 个 issue Command 流：状态转移+自动分配+审计、read_only 403、跨项目 404、版本冲突 409、备注创建/删除）；全仓质量门禁通过；
+- 状态记录：issue lifecycle Commands implemented（DAT-14）；Issue Query not-started（DAT-15）；production worker composition not-started / blocked；`issue_activities`/`issue_notes` implemented。
