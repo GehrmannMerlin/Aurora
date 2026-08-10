@@ -69,7 +69,11 @@ interface RequestsBody {
     summary?: {
       status?: string;
       reason?: string;
-      data?: { methods?: readonly MethodAggregateBody[]; dataThrough?: string; isPartial?: boolean };
+      data?: {
+        methods?: readonly MethodAggregateBody[];
+        dataThrough?: string;
+        isPartial?: boolean;
+      };
     };
     endpoints?: {
       status?: string;
@@ -407,7 +411,13 @@ describeDb('DAT-16 requestsListEndpoints flow (real PostgreSQL 17 + Redis)', () 
     for (const badLimit of ['abc', '1.5', '0', '101']) {
       const response = await app.inject({
         method: 'GET',
-        url: requestsUrl(owner.organizationId, projectId, WINDOW.start, WINDOW.end, `limit=${badLimit}`),
+        url: requestsUrl(
+          owner.organizationId,
+          projectId,
+          WINDOW.start,
+          WINDOW.end,
+          `limit=${badLimit}`,
+        ),
         headers: { cookie: `aurora_session=${owner.cookie}` },
       });
       expect(response.statusCode).toBe(400);
@@ -428,6 +438,69 @@ describeDb('DAT-16 requestsListEndpoints flow (real PostgreSQL 17 + Redis)', () 
     const data = (body as RequestsBody).data;
     expect(data?.summary?.status).toBe('available');
     expect(data?.endpoints?.data?.pagination?.totalCount).toBe(2);
+    await app.close();
+  });
+
+  it('paginates a long-URL endpoint with a >64-char keyset cursor (DAT-16 cursor bound fix)', async () => {
+    // The endpoint keyset cursor is base64url(method\nurl). A long URL encodes to
+    // far more than the old str(1,64)/str(1,512) bounds, which previously made the
+    // response fail serializeOutput → 500. This end-to-end flow must return 200 on
+    // both the page producing the long nextCursor and the page consuming it.
+    const app = buildApp();
+    const owner = await registerActor(app, `owner-${randomUUID()}@example.com`);
+    const projectId = await createProjectFor(pool, owner);
+    await seedProjectData(pool, projectId);
+    const longUrl = 'https://api.example.test/zzz-checkout/' + 'z'.repeat(380);
+    await persistRequestEventSample(pool, {
+      projectId,
+      eventEnvelope: {
+        protocolVersion: 1,
+        eventId: `flow-smp-${randomUUID()}`,
+        eventType: 'request',
+        occurredAt: SEED_MS,
+        body: {
+          method: 'GET',
+          url: longUrl,
+          startedAt: SEED_MS,
+          durationMs: 200,
+          outcome: 'success',
+          statusCode: 200,
+        },
+      },
+    });
+    // Deterministic created_at so `isPartial` semantics stay stable.
+    await pool.query('UPDATE request_event_samples SET created_at = $1 WHERE project_id = $2', [
+      UPDATED_AT,
+      projectId,
+    ]);
+
+    // ORDER BY method, url → GET/orders, GET/zzz-checkout/…, POST/payments; with
+    // limit=2 the nextCursor is the (long-URL) GET/zzz-checkout keyset.
+    const first = await getRequests(app, owner, owner.organizationId, projectId, 'limit=2');
+    expect(first.status).toBe(200);
+    const data1 = (first.body as RequestsBody).data;
+    expect(data1?.endpoints?.data?.pagination?.totalCount).toBe(3);
+    const nextCursor = data1?.endpoints?.data?.pagination?.nextCursor;
+    expect(nextCursor).toBeDefined();
+    if (nextCursor === undefined) {
+      throw new Error('expected a nextCursor from the first page');
+    }
+    expect(nextCursor.length).toBeGreaterThan(64);
+
+    const second = await getRequests(
+      app,
+      owner,
+      owner.organizationId,
+      projectId,
+      `limit=2&cursor=${encodeURIComponent(nextCursor)}`,
+    );
+    expect(second.status).toBe(200);
+    const data2 = (second.body as RequestsBody).data;
+    expect(data2?.endpoints?.status).toBe('available');
+    const items2 = data2?.endpoints?.data?.items ?? [];
+    expect(items2).toHaveLength(1);
+    expect(items2[0]?.url).toBe(PAYMENTS_URL);
+    expect(data2?.endpoints?.data?.pagination?.nextCursor).toBeUndefined();
     await app.close();
   });
 

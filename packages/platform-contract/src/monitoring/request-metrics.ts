@@ -14,7 +14,10 @@ export const requestsListEndpointsPathParams = obj({
 
 export const requestsListEndpointsQuery = obj({
   timeRange,
-  cursor: optional(str(1, 512)),
+  // Keyset cursor is base64url(method\nurl) (DAT-16): encoded length scales with
+  // the URL, so a 64/512-char bound 500s on any real URL. 4096 comfortably fits
+  // the largest encoded endpoint cursor.
+  cursor: optional(str(1, 4096)),
   limit: optional(num(1, 100)),
 });
 

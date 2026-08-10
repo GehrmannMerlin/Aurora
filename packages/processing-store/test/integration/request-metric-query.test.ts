@@ -79,8 +79,8 @@ function requestSample(
 }
 
 function sortOutcomes(
-  outcomes: ReadonlyArray<{ readonly outcome: string; readonly count: number }>,
-): Array<{ outcome: string; count: number }> {
+  outcomes: readonly { readonly outcome: string; readonly count: number }[],
+): { outcome: string; count: number }[] {
   return [...outcomes]
     .map((o) => ({ outcome: o.outcome, count: o.count }))
     .sort((a, b) => a.outcome.localeCompare(b.outcome));
@@ -256,7 +256,9 @@ describeDb('processing-store request metric query repositories (real PostgreSQL 
     expect(first.items[0]?.url).toBe(ORDERS_URL);
     expect(first.totalCount).toBe(2);
     expect(first.nextCursor).not.toBeNull();
-    expect(decodeEndpointCursor(first.nextCursor as string)).toEqual({
+    const nextCursor = first.nextCursor;
+    if (nextCursor === null) throw new Error('expected a nextCursor');
+    expect(decodeEndpointCursor(nextCursor)).toEqual({
       method: 'GET',
       url: ORDERS_URL,
     });
@@ -264,7 +266,7 @@ describeDb('processing-store request metric query repositories (real PostgreSQL 
     const second = await queryRequestEndpointPage(pool, {
       projectId: projectA,
       ...WINDOW,
-      cursor: first.nextCursor as string,
+      cursor: nextCursor,
       limit: 1,
     });
     expect(second.items).toHaveLength(1);
@@ -309,5 +311,51 @@ describeDb('processing-store request metric query repositories (real PostgreSQL 
     const isolated = await queryRequestEndpointPage(pool, { projectId: projectB, ...WINDOW, limit: 50 });
     expect(isolated.items).toEqual([]);
     expect(isolated.totalCount).toBe(0);
+  });
+
+  it('round-trips a long endpoint URL through the keyset cursor (DAT-16 cursor bound fix)', async () => {
+    // A real URL (e.g. a checkout path) encodes to a cursor far longer than 64
+    // chars; the contract paginationMeta bound was widened to 4096 so this
+    // round-trip must survive encode → query → decode → query.
+    const longUrl = 'https://api.example.test/checkout/' + 'y'.repeat(380);
+    await persistRequestEventSample(
+      pool,
+      requestSample(
+        projectB,
+        'q-smp-long-1',
+        { method: 'GET', url: longUrl, startedAt: 1_800_000_054_000, durationMs: 120, outcome: 'success', statusCode: 200 },
+        1_800_000_054_000,
+      ),
+    );
+    await persistRequestEventSample(
+      pool,
+      requestSample(
+        projectB,
+        'q-smp-long-2',
+        { method: 'POST', url: longUrl, startedAt: 1_800_000_054_500, durationMs: 400, outcome: 'success', statusCode: 201 },
+        1_800_000_054_500,
+      ),
+    );
+
+    const first = await queryRequestEndpointPage(pool, { projectId: projectB, ...WINDOW, limit: 1 });
+    expect(first.items).toHaveLength(1);
+    expect(first.totalCount).toBe(2);
+    expect(first.nextCursor).not.toBeNull();
+    const cursor = first.nextCursor;
+    if (cursor === null) throw new Error('expected a nextCursor from the first page');
+    expect(cursor.length).toBeGreaterThan(64);
+    expect(decodeEndpointCursor(cursor)).toEqual({ method: 'GET', url: longUrl });
+
+    const second = await queryRequestEndpointPage(pool, {
+      projectId: projectB,
+      ...WINDOW,
+      cursor,
+      limit: 1,
+    });
+    expect(second.items).toHaveLength(1);
+    expect(second.items[0]?.url).toBe(longUrl);
+    expect(second.items[0]?.method).toBe('POST');
+    expect(second.totalCount).toBe(2);
+    expect(second.nextCursor).toBeNull();
   });
 });

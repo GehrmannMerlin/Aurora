@@ -962,7 +962,7 @@ paths:
               cursor:
                 type: string
                 minLength: 1
-                maxLength: 512
+                maxLength: 4096
               limit:
                 type: number
                 minimum: 1
@@ -1884,11 +1884,11 @@ components:
             cursor:
               type: string
               minLength: 1
-              maxLength: 64
+              maxLength: 4096
             nextCursor:
               type: string
               minLength: 1
-              maxLength: 64
+              maxLength: 4096
             totalCount:
               type: number
               minimum: 0

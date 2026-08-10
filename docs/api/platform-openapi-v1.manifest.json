@@ -2799,12 +2799,12 @@
                   "cursor": {
                     "type": "string",
                     "minLength": 1,
-                    "maxLength": 64
+                    "maxLength": 4096
                   },
                   "nextCursor": {
                     "type": "string",
                     "minLength": 1,
-                    "maxLength": 64
+                    "maxLength": 4096
                   },
                   "totalCount": {
                     "type": "number",
@@ -3320,12 +3320,12 @@
                                   "cursor": {
                                     "type": "string",
                                     "minLength": 1,
-                                    "maxLength": 64
+                                    "maxLength": 4096
                                   },
                                   "nextCursor": {
                                     "type": "string",
                                     "minLength": 1,
-                                    "maxLength": 64
+                                    "maxLength": 4096
                                   },
                                   "totalCount": {
                                     "type": "number",
@@ -3478,12 +3478,12 @@
                                   "cursor": {
                                     "type": "string",
                                     "minLength": 1,
-                                    "maxLength": 64
+                                    "maxLength": 4096
                                   },
                                   "nextCursor": {
                                     "type": "string",
                                     "minLength": 1,
-                                    "maxLength": 64
+                                    "maxLength": 4096
                                   },
                                   "totalCount": {
                                     "type": "number",
@@ -3621,12 +3621,12 @@
                                   "cursor": {
                                     "type": "string",
                                     "minLength": 1,
-                                    "maxLength": 64
+                                    "maxLength": 4096
                                   },
                                   "nextCursor": {
                                     "type": "string",
                                     "minLength": 1,
-                                    "maxLength": 64
+                                    "maxLength": 4096
                                   },
                                   "totalCount": {
                                     "type": "number",
