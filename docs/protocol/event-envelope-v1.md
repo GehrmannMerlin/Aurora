@@ -87,6 +87,8 @@ review-cycle: protocol-change-or-release
 
 当前仅支持版本 `1`，不存在历史协议转换。版本 `0` 与 `2` 都明确拒绝。同版本信封可以在 `body` 中增加通用边界允许的可选数据；这只证明信封级兼容，不能代替未来具体事件字段兼容。删除/重释字段、改变类型、把可选字段改为必填或改变枚举含义是不兼容变化，必须先有 accepted ADR、迁移和旧版本处理方案。
 
+版本协商公共入口：`negotiateProtocolVersion(input)`（见[协议兼容边界](protocol-compatibility-boundary.md)）返回 `{ ok: true, code: 'supported' }` 或 `{ ok: false, code: 'unsupported_version' }`；SDK 与消费者不得把未知/更新版本降级、猜测或改写。当前兼容转换能力为空，`@aurora/event-schema` 不导出任何转换函数。
+
 ## 8. 共享样本
 
 SDK、数据接入和数据处理的契约测试统一从 `@aurora/event-schema/contract-testkit` 导入合法、非法和边界样本。消费者不得复制并改写这些样本的协议含义。

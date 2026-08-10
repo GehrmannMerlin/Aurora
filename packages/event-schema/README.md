@@ -32,6 +32,7 @@ import {
   CURRENT_PROTOCOL_VERSION,
   EVENT_SCHEMA_LIMITS,
   EventType,
+  negotiateProtocolVersion,
   parseEventEnvelope,
   type EventEnvelope,
   type EventEnvelopeParseResult,
@@ -307,6 +308,8 @@ import {
 ## 错误与兼容性
 
 普通非法输入不抛异常、不记录正文，返回 `success: false` 和最多 50 个 issue。仅精确版本 `1` 受支持；版本 `0`、`2` 和其他未知值明确拒绝。同版本新增可选正文数据保持信封兼容，但具体正文兼容性必须由后续事件 Schema 定义。不兼容公共协议变化需要 accepted ADR、迁移和旧版本处理方案。
+
+协议版本协商：根入口导出 `negotiateProtocolVersion(input)`，返回稳定的 `supported` / `unsupported_version` 判别结果。SDK 始终只产生 `CURRENT_PROTOCOL_VERSION` 事件，不改变公共 wire contract。当前不存在历史协议版本，因此本包不导出任何 `convert*`/`upgrade*`/`downgrade*` 转换函数（空转换边界）；任何兼容转换需求必须先经 ADR-005 门禁。
 
 ## 开发与测试
 
