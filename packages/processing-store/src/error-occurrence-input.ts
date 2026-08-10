@@ -1,7 +1,18 @@
 import { parseErrorEventEnvelope } from '@aurora/event-schema';
+import { computeErrorFingerprint } from './error-fingerprint.js';
+import { ERROR_FINGERPRINT_VERSION } from './error-fingerprint-types.js';
 import type { ErrorOccurrenceDbParams } from './error-occurrence-types.js';
 
 const TOP_LEVEL_FIELDS = ['projectId', 'eventEnvelope'] as const;
+
+/** A fingerprint is a non-empty bounded stable string (DAT-12 spec §4). */
+function isValidFingerprint(value: unknown): value is string {
+  return typeof value === 'string' && value.length > 0 && value.length <= 1024;
+}
+
+function isValidFingerprintVersion(value: unknown): value is number {
+  return typeof value === 'number' && Number.isInteger(value) && value === ERROR_FINGERPRINT_VERSION;
+}
 
 function isPlainRecord(input: unknown): input is Record<string, unknown> {
   if (typeof input !== 'object' || input === null || Array.isArray(input)) return false;
@@ -40,6 +51,31 @@ export function parsePersistErrorEventOccurrenceInput(
   }
   const envelope = parsed.data;
 
+  // Fingerprint: use the processor-passed value when present (validate format),
+  // otherwise compute internally as a legacy-caller fallback so the NOT NULL
+  // column is always populated (DAT-12 §11).
+  const passedFingerprint = input.fingerprint;
+  let fingerprint: string;
+  if (passedFingerprint !== undefined) {
+    if (!isValidFingerprint(passedFingerprint)) {
+      return invalid('invalid_fingerprint');
+    }
+    fingerprint = passedFingerprint;
+  } else {
+    fingerprint = computeErrorFingerprint({ projectId, body: envelope.body }).fingerprint;
+  }
+
+  const passedVersion = input.fingerprintVersion;
+  let fingerprintVersion: number;
+  if (passedVersion !== undefined) {
+    if (!isValidFingerprintVersion(passedVersion)) {
+      return invalid('invalid_fingerprint_version');
+    }
+    fingerprintVersion = passedVersion;
+  } else {
+    fingerprintVersion = ERROR_FINGERPRINT_VERSION;
+  }
+
   return {
     projectId,
     eventId: envelope.eventId,
@@ -47,5 +83,7 @@ export function parsePersistErrorEventOccurrenceInput(
     occurredAtIso: new Date(envelope.occurredAt).toISOString(),
     errorCategory: envelope.body.category,
     normalizedBody: envelope.body,
+    fingerprint,
+    fingerprintVersion,
   };
 }

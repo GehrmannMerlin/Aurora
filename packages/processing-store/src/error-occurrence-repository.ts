@@ -4,9 +4,9 @@ import type { PersistErrorEventOccurrenceResult } from './error-occurrence-types
 
 const INSERT_SQL = `
   INSERT INTO error_event_occurrences
-    (project_id, event_id, protocol_version, occurred_at, error_category, normalized_body)
+    (project_id, event_id, protocol_version, occurred_at, error_category, normalized_body, fingerprint, fingerprint_version)
   VALUES
-    ($1, $2, $3, $4, $5, $6::jsonb)
+    ($1, $2, $3, $4, $5, $6::jsonb, $7, $8)
   ON CONFLICT (project_id, event_id) DO NOTHING
   RETURNING id
 `;
@@ -35,6 +35,8 @@ export async function persistErrorEventOccurrence(
       parsed.occurredAtIso,
       parsed.errorCategory,
       JSON.stringify(parsed.normalizedBody),
+      parsed.fingerprint,
+      parsed.fingerprintVersion,
     ]);
     await client.query('COMMIT');
     if (result.rows.length === 0) return { status: 'duplicate' };
