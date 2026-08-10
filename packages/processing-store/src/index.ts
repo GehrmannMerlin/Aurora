@@ -4,6 +4,12 @@ export type {
   PersistErrorEventOccurrenceResult,
 } from './error-occurrence-types.js';
 export { persistErrorEventOccurrence } from './error-occurrence-repository.js';
+export {
+  ERROR_FINGERPRINT_VERSION,
+  type ErrorFingerprintInput,
+  type ErrorFingerprintResult,
+} from './error-fingerprint-types.js';
+export { computeErrorFingerprint } from './error-fingerprint.js';
 export type {
   PersistRequestEventSampleInput,
   PersistRequestEventSampleResult,
