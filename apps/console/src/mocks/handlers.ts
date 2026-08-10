@@ -77,6 +77,281 @@ const navigationBody = JSON.parse(JSON.stringify(validNavigationSamples[0])) as 
   currentScope: unknown;
 };
 
+// Monitoring workspace mock projections (PLT-05/PLT-06). These mirror the
+// approved public Query contract shapes and are used ONLY by the test-mode MSW
+// harness (unit + browser reachability). They are never production data and are
+// never used as completion evidence for the G11 browser acceptance, which runs
+// against a real Platform API.
+const MONITORING_READ_AT = '2026-08-10T09:00:00.000Z';
+
+function mockDataStatus(organizationId: string, projectId: string) {
+  return {
+    data: {
+      summary: {
+        status: 'available',
+        data: { status: 'receiving', asOf: MONITORING_READ_AT },
+      },
+      stages: {
+        status: 'available',
+        data: {
+          received: { count: 5, latestAt: '2026-08-10T08:59:00.000Z' },
+          processing: { count: 2, latestAt: '2026-08-10T08:58:00.000Z' },
+          processed: { count: 3, latestAt: '2026-08-10T08:57:00.000Z' },
+          deadLetter: { count: 0 },
+        },
+      },
+      recent: {
+        status: 'available',
+        data: {
+          latestReceivedAt: '2026-08-10T08:59:00.000Z',
+          receivedCount: 5,
+          latestProcessedAt: '2026-08-10T08:57:00.000Z',
+          processedCount: 3,
+          environmentBreakdown: {
+            status: 'unavailable',
+            reason: 'environment not persisted (deferred)',
+          },
+        },
+      },
+      rejection: {
+        status: 'unavailable',
+        reason: 'rejected batches are not persisted (deferred)',
+      },
+      credential: {
+        status: 'available',
+        data: {
+          activeCount: 1,
+          disabledCount: 0,
+          revokedCount: 0,
+          latestCreatedAt: '2026-08-10T07:00:00.000Z',
+        },
+      },
+      queryable: {
+        status: 'available',
+        data: {
+          errorOccurrences: 3,
+          requestMetricBuckets: 0,
+          performanceMetricBuckets: 0,
+          latestProcessedAt: '2026-08-10T08:57:00.000Z',
+        },
+      },
+      actionTargets: [
+        {
+          routeId: 'project.requests',
+          pathParams: { organizationId, projectId },
+          query: {},
+        },
+        {
+          routeId: 'project.performance',
+          pathParams: { organizationId, projectId },
+          query: {},
+        },
+      ],
+    },
+    meta: { requestId: 'req_test_data_status', readAt: MONITORING_READ_AT, normalizedQuery: {} },
+    allowedActions: ['read'],
+    navigationTargets: [],
+  };
+}
+
+function mockIssueList() {
+  return {
+    data: {
+      issues: {
+        status: 'available',
+        items: [
+          {
+            issueId: 'issue_test_1',
+            title: 'TypeError: Cannot read properties of undefined (reading "x")',
+            status: 'open',
+            occurrenceCount: 12,
+            sampleCount: 3,
+            firstSeenAt: '2026-08-09T10:00:00.000Z',
+            lastSeenAt: '2026-08-10T08:00:00.000Z',
+            priority: 'high',
+            version: 1,
+          },
+          {
+            issueId: 'issue_test_2',
+            title: 'ReferenceError: foo is not defined',
+            status: 'open',
+            occurrenceCount: 4,
+            sampleCount: 1,
+            firstSeenAt: '2026-08-10T01:00:00.000Z',
+            lastSeenAt: '2026-08-10T07:00:00.000Z',
+            version: 1,
+          },
+        ],
+        pagination: { totalCount: 2, totalCountStatus: 'available' },
+      },
+      filters: { status: 'available' },
+      summary: { status: 'available' },
+      environments: {
+        status: 'unavailable',
+        reason: 'environment dimension deferred (contract gap)',
+      },
+      releases: { status: 'unavailable', reason: 'release dimension deferred (contract gap)' },
+    },
+    meta: { requestId: 'req_test_issues', readAt: MONITORING_READ_AT, normalizedQuery: {} },
+    allowedActions: ['read'],
+    navigationTargets: [],
+  };
+}
+
+function mockIssueDetail(issueId: string) {
+  return {
+    data: {
+      issue: {
+        status: 'available',
+        data: {
+          issueId,
+          title: 'TypeError: Cannot read properties of undefined (reading "x")',
+          category: 'runtime',
+          fingerprintVersion: 1,
+          occurrenceCount: 12,
+          sampleCount: 3,
+          firstSeenAt: '2026-08-09T10:00:00.000Z',
+          lastSeenAt: '2026-08-10T08:00:00.000Z',
+          status: 'open',
+          priority: 'high',
+          version: 1,
+        },
+      },
+      samples: {
+        status: 'available',
+        items: [
+          {
+            sampleId: 'sample_test_1',
+            occurredAt: '2026-08-10T08:00:00.000Z',
+            sampleKind: 'error',
+            sampleBody: { message: 'Cannot read properties of undefined', category: 'runtime' },
+          },
+        ],
+      },
+      activity: {
+        status: 'available',
+        activities: [
+          {
+            activityType: 'issue_created',
+            createdAt: '2026-08-09T10:00:00.000Z',
+            details: {},
+          },
+        ],
+        notes: [],
+      },
+    },
+    meta: { requestId: 'req_test_issue_detail', readAt: MONITORING_READ_AT, normalizedQuery: {} },
+    allowedActions: ['read'],
+    navigationTargets: [],
+  };
+}
+
+function mockRequestEndpoints() {
+  return {
+    data: {
+      summary: {
+        status: 'available',
+        data: {
+          methods: [
+            {
+              method: 'GET',
+              observedCount: 120,
+              failureCount: 3,
+              slowCount: 1,
+              durationSumMs: 120000,
+              durationMaxMs: 4000,
+              outcomes: [
+                { outcome: 'success', count: 117 },
+                { outcome: 'error', count: 3 },
+              ],
+            },
+          ],
+          dataThrough: '2026-08-10T08:59:00.000Z',
+          isPartial: false,
+        },
+      },
+      endpoints: {
+        status: 'available',
+        data: {
+          items: [
+            {
+              endpointId: 'ep_test_1',
+              method: 'GET',
+              url: '/api/items',
+              sampleCount: 120,
+              outcomeCounts: [
+                { outcome: 'success', count: 117 },
+                { outcome: 'error', count: 3 },
+              ],
+              dataThrough: '2026-08-10T08:59:00.000Z',
+              isPartial: false,
+              completeness: { source: 'samples', bounded: true },
+            },
+          ],
+          pagination: { totalCount: 1, totalCountStatus: 'available' },
+        },
+      },
+      percentiles: { status: 'unavailable', reason: 'percentile raw material deferred (ADR-021)' },
+    },
+    meta: { requestId: 'req_test_requests', readAt: MONITORING_READ_AT, normalizedQuery: {} },
+    allowedActions: ['read'],
+    navigationTargets: [],
+  };
+}
+
+function mockPerformancePages() {
+  return {
+    data: {
+      metrics: {
+        status: 'available',
+        data: {
+          metrics: [
+            {
+              metricName: 'lcp',
+              unit: 'millisecond',
+              observedCount: 40,
+              valueSum: 100000,
+              valueMax: 5000,
+              mean: 2500,
+            },
+            {
+              metricName: 'inp',
+              unit: 'millisecond',
+              observedCount: 40,
+              valueSum: 4000,
+              valueMax: 400,
+              mean: 100,
+            },
+            {
+              metricName: 'cls',
+              unit: 'ratio',
+              observedCount: 40,
+              valueSum: 40,
+              valueMax: 2,
+              mean: 1,
+            },
+            {
+              metricName: 'page_load',
+              unit: 'millisecond',
+              observedCount: 40,
+              valueSum: 120000,
+              valueMax: 6000,
+              mean: 3000,
+            },
+          ],
+          dataThrough: '2026-08-10T08:59:00.000Z',
+          isPartial: false,
+        },
+      },
+      pages: { status: 'unavailable', reason: 'page dimension not present in data (DAT-17)' },
+      percentiles: { status: 'unavailable', reason: 'percentile raw material deferred (ADR-021)' },
+    },
+    meta: { requestId: 'req_test_performance', readAt: MONITORING_READ_AT, normalizedQuery: {} },
+    allowedActions: ['read'],
+    navigationTargets: [],
+  };
+}
+
 export const handlerControls = {
   delayMs: 0,
   sessionRequests: 0,
@@ -109,6 +384,11 @@ export const handlerControls = {
   requestAccountDeletionRequests: 0,
   deleteAccountRequests: 0,
   cancelDeletionRequests: 0,
+  dataStatusRequests: 0,
+  listIssuesRequests: 0,
+  getIssueDetailRequests: 0,
+  listRequestEndpointsRequests: 0,
+  listPerformancePagesRequests: 0,
   /** Toggle for the session projection: true = authenticated, false = 401. */
   sessionAuthenticated: readStoredSessionAuthenticated(),
   /** Toggle for the A5 deletion preflight projection: ready = no blocker. */
@@ -532,6 +812,51 @@ export function createPlatformHandlers() {
       await maybeDelay();
       return HttpResponse.json(CANCEL_DELETION_SUCCESS as JsonBodyType, { status: 200 });
     }),
+    http.get(
+      '/api/platform/v1/organizations/:organizationId/projects/:projectId/data-status',
+      async ({ params }) => {
+        handlerControls.dataStatusRequests += 1;
+        await maybeDelay();
+        return HttpResponse.json(
+          mockDataStatus(String(params.organizationId), String(params.projectId)) as JsonBodyType,
+          { status: 200 },
+        );
+      },
+    ),
+    http.get(
+      '/api/platform/v1/organizations/:organizationId/projects/:projectId/issues',
+      async () => {
+        handlerControls.listIssuesRequests += 1;
+        await maybeDelay();
+        return HttpResponse.json(mockIssueList() as JsonBodyType, { status: 200 });
+      },
+    ),
+    http.get(
+      '/api/platform/v1/organizations/:organizationId/projects/:projectId/issues/:issueId',
+      async ({ params }) => {
+        handlerControls.getIssueDetailRequests += 1;
+        await maybeDelay();
+        return HttpResponse.json(mockIssueDetail(String(params.issueId)) as JsonBodyType, {
+          status: 200,
+        });
+      },
+    ),
+    http.get(
+      '/api/platform/v1/organizations/:organizationId/projects/:projectId/requests',
+      async () => {
+        handlerControls.listRequestEndpointsRequests += 1;
+        await maybeDelay();
+        return HttpResponse.json(mockRequestEndpoints() as JsonBodyType, { status: 200 });
+      },
+    ),
+    http.get(
+      '/api/platform/v1/organizations/:organizationId/projects/:projectId/performance',
+      async () => {
+        handlerControls.listPerformancePagesRequests += 1;
+        await maybeDelay();
+        return HttpResponse.json(mockPerformancePages() as JsonBodyType, { status: 200 });
+      },
+    ),
     http.post('/__mock/scope', async ({ request }) => {
       const body = (await request.json()) as MockScope;
       setMockScope(

@@ -95,6 +95,15 @@ describe('RouteTarget registry', () => {
       'organization.tokens',
       'organization.audit',
       'organization.trash',
+      // PLT-05 replaces these unavailable stubs with real monitoring views.
+      'project.onboarding',
+      'project.overview',
+      'project.data-status',
+      // PLT-06 replaces these unavailable stubs with real workspace views.
+      'project.issues',
+      'project.issue-detail',
+      'project.requests',
+      'project.performance',
     ]);
     for (const entry of ROUTE_REGISTRY) {
       if (entry.routeId === 'workspace.home') continue;

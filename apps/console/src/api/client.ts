@@ -87,6 +87,34 @@ function interpolatePathParams(
   return interpolated;
 }
 
+/**
+ * Serialize a query object into URL search params. Scalar values are set as
+ * `name=value`; nested plain objects use bracket notation (`timeRange[start]=…`),
+ * which is what the platform-api `normalizeBracketQuery` parses back into an
+ * object (DAT-16/20 handlers). `undefined` values are omitted so optional
+ * contract fields never appear as empty strings on the wire.
+ */
+function appendQueryParams(
+  params: URLSearchParams,
+  query: Readonly<Record<string, unknown>>,
+  prefix = '',
+): void {
+  for (const [key, value] of Object.entries(query)) {
+    if (value === undefined) continue;
+    const name = prefix === '' ? key : `${prefix}[${key}]`;
+    if (value !== null && typeof value === 'object' && !Array.isArray(value)) {
+      appendQueryParams(params, value as Readonly<Record<string, unknown>>, name);
+    } else if (
+      typeof value === 'string' ||
+      typeof value === 'number' ||
+      typeof value === 'boolean'
+    ) {
+      // Contract query values are string/number/boolean scalars or nested objects.
+      params.set(name, String(value));
+    }
+  }
+}
+
 export async function platformRequest<T>(
   operationId: string,
   input: PlatformRequestInput,
@@ -110,9 +138,7 @@ export async function platformRequest<T>(
     window.location.origin,
   );
   if (request.query !== undefined) {
-    for (const [key, value] of Object.entries(request.query as Readonly<Record<string, unknown>>)) {
-      url.searchParams.set(key, String(value));
-    }
+    appendQueryParams(url.searchParams, request.query as Readonly<Record<string, unknown>>);
   }
   let response: Response;
   try {

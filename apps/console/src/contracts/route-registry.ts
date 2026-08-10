@@ -18,6 +18,20 @@ const anyQuery = z.record(z.string(), z.string());
 
 const unavailable = (): Promise<Component> => import('../components/pages/UnavailableView.vue');
 const workspaceHome = (): Promise<Component> => import('../views/workspace/WorkspaceHomeView.vue');
+const projectOnboardingView = (): Promise<Component> =>
+  import('../views/project/ProjectOnboardingView.vue');
+const projectOverviewView = (): Promise<Component> =>
+  import('../views/project/ProjectOverviewView.vue');
+const projectDataStatusView = (): Promise<Component> =>
+  import('../views/project/ProjectDataStatusView.vue');
+const projectIssuesView = (): Promise<Component> =>
+  import('../views/project/ProjectIssuesView.vue');
+const projectIssueDetailView = (): Promise<Component> =>
+  import('../views/project/ProjectIssueDetailView.vue');
+const projectRequestsView = (): Promise<Component> =>
+  import('../views/project/ProjectRequestsView.vue');
+const projectPerformanceView = (): Promise<Component> =>
+  import('../views/project/ProjectPerformanceView.vue');
 const usageView = (): Promise<Component> => import('../views/organization/UsageView.vue');
 const projectCreateView = (): Promise<Component> =>
   import('../views/organization/ProjectCreateView.vue');
@@ -249,9 +263,9 @@ export const ROUTE_REGISTRY: readonly RouteEntry[] = [
     label: '接入',
     paramsSchema: projectParams,
     querySchema: anyQuery,
-    lazy: unavailable,
+    lazy: projectOnboardingView,
     menu: true,
-    unavailableReason: 'capability-not-provided',
+    unavailableReason: null,
   },
   {
     routeId: 'project.overview',
@@ -260,9 +274,9 @@ export const ROUTE_REGISTRY: readonly RouteEntry[] = [
     label: '概览',
     paramsSchema: projectParams,
     querySchema: anyQuery,
-    lazy: unavailable,
+    lazy: projectOverviewView,
     menu: true,
-    unavailableReason: 'capability-not-provided',
+    unavailableReason: null,
   },
   {
     routeId: 'project.issues',
@@ -271,9 +285,9 @@ export const ROUTE_REGISTRY: readonly RouteEntry[] = [
     label: '问题',
     paramsSchema: projectParams,
     querySchema: anyQuery,
-    lazy: unavailable,
+    lazy: projectIssuesView,
     menu: true,
-    unavailableReason: 'capability-not-provided',
+    unavailableReason: null,
   },
   {
     routeId: 'project.issue-detail',
@@ -283,9 +297,9 @@ export const ROUTE_REGISTRY: readonly RouteEntry[] = [
     parent: 'project.issues',
     paramsSchema: issueParams,
     querySchema: anyQuery,
-    lazy: unavailable,
+    lazy: projectIssueDetailView,
     menu: false,
-    unavailableReason: 'capability-not-provided',
+    unavailableReason: null,
   },
   {
     routeId: 'project.requests',
@@ -294,9 +308,9 @@ export const ROUTE_REGISTRY: readonly RouteEntry[] = [
     label: '请求',
     paramsSchema: projectParams,
     querySchema: anyQuery,
-    lazy: unavailable,
+    lazy: projectRequestsView,
     menu: true,
-    unavailableReason: 'capability-not-provided',
+    unavailableReason: null,
   },
   {
     routeId: 'project.performance',
@@ -305,9 +319,9 @@ export const ROUTE_REGISTRY: readonly RouteEntry[] = [
     label: '性能',
     paramsSchema: projectParams,
     querySchema: anyQuery,
-    lazy: unavailable,
+    lazy: projectPerformanceView,
     menu: true,
-    unavailableReason: 'capability-not-provided',
+    unavailableReason: null,
   },
   {
     routeId: 'project.data-status',
@@ -316,9 +330,9 @@ export const ROUTE_REGISTRY: readonly RouteEntry[] = [
     label: '数据状态',
     paramsSchema: projectParams,
     querySchema: anyQuery,
-    lazy: unavailable,
+    lazy: projectDataStatusView,
     menu: true,
-    unavailableReason: 'capability-not-provided',
+    unavailableReason: null,
   },
   {
     routeId: 'project.releases',

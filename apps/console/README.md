@@ -78,7 +78,7 @@ App.vue → components/shell/AppShell（TopBar + LayeredSidebar + ScopeSwitcher 
 
 ## 非职责
 
-- 无 G10—G13 业务：本壳层不实现认证、组织/工作空间、项目、问题、指标、发布、告警、通知等任何领域页面（仅占位状态页），不消费未上线的 Session/Query/Command 端点。
+- 无 G11 剩余—G13 业务：本壳层已实现认证、组织/工作空间（G10）、监控入口页面 C1/C2/C7（PLT-05，`project.onboarding`/`project.overview`/`project.data-status`）与 Issue/请求/性能工作区 C3—C6（PLT-06，`project.issues`/`project.issue-detail`/`project.requests`/`project.performance`，含 DAT-14 生命周期 Command）；发布、告警、通知等领域页面仍为占位状态页，不消费未上线的端点。
 - 无 ECharts/Storybook：不引入图表库与组件画册；图表依赖在更下游模块按需评估。
 - 无暗色主题 / Web Font：视觉语言为浅色内容区 + 深石墨顶栏 + 纯色琥珀橙侧栏；字体走系统字体栈。
 - 无 fake data：除 MSW 前端测试 handler 外，不内置虚构业务数据；状态页文案为纯静态壳层文案。

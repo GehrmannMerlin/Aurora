@@ -44,7 +44,9 @@ describe('console router', () => {
       const mod = await loader();
       expect(mod.default, String(child.name)).toBeDefined();
     }
-  });
+    // Resolving every lazy loader compiles every view; the monitoring views
+    // (PLT-05) add imports, so this legitimately exceeds the default 5s timeout.
+  }, 30_000);
 
   it('projects unavailable-route metadata onto the status view props', () => {
     const root = rootRoute();
