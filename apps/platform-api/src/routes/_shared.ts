@@ -259,7 +259,11 @@ export async function requireProjectHandleAccessOnTransaction(
 ): Promise<void> {
   const result = await getProjectAccessRole(client, { organizationId, projectId, accountId });
   if (result.outcome !== 'allowed' || result.role === 'read_only') {
-    throw new ServiceError(403, 'authorization', 'You do not have permission to handle issues in this project.');
+    throw new ServiceError(
+      403,
+      'authorization',
+      'You do not have permission to handle issues in this project.',
+    );
   }
 }
 

@@ -129,11 +129,18 @@ describeDb('DAT-14 issue lifecycle Commands (real PostgreSQL 17 + Redis)', () =>
     const projectId = await createProjectFor(pool, owner);
     const issueId = await seedIssue(pool, projectId);
 
-    const { status, body } = await postIssue(app, owner, owner.organizationId, projectId, `${issueId}/state`, {
-      status: 'in_progress',
-      version: 1,
-      idempotencyKey: `idem-${randomUUID()}`,
-    });
+    const { status, body } = await postIssue(
+      app,
+      owner,
+      owner.organizationId,
+      projectId,
+      `${issueId}/state`,
+      {
+        status: 'in_progress',
+        version: 1,
+        idempotencyKey: `idem-${randomUUID()}`,
+      },
+    );
     expect(status).toBe(200);
     const data = body.data as { version?: number; activity?: { type?: string } };
     expect(data.version).toBe(2);
@@ -170,11 +177,18 @@ describeDb('DAT-14 issue lifecycle Commands (real PostgreSQL 17 + Redis)', () =>
       role: 'developer',
     });
 
-    const { status } = await postIssue(app, developer, owner.organizationId, projectId, `${issueId}/state`, {
-      status: 'in_progress',
-      version: 1,
-      idempotencyKey: `idem-${randomUUID()}`,
-    });
+    const { status } = await postIssue(
+      app,
+      developer,
+      owner.organizationId,
+      projectId,
+      `${issueId}/state`,
+      {
+        status: 'in_progress',
+        version: 1,
+        idempotencyKey: `idem-${randomUUID()}`,
+      },
+    );
     expect(status).toBe(200);
     await app.close();
   });
@@ -197,11 +211,18 @@ describeDb('DAT-14 issue lifecycle Commands (real PostgreSQL 17 + Redis)', () =>
       role: 'read_only',
     });
 
-    const { status, body } = await postIssue(app, member, owner.organizationId, projectId, `${issueId}/state`, {
-      status: 'in_progress',
-      version: 1,
-      idempotencyKey: `idem-${randomUUID()}`,
-    });
+    const { status, body } = await postIssue(
+      app,
+      member,
+      owner.organizationId,
+      projectId,
+      `${issueId}/state`,
+      {
+        status: 'in_progress',
+        version: 1,
+        idempotencyKey: `idem-${randomUUID()}`,
+      },
+    );
     expect(status).toBe(403);
     expect((body as ProblemBody).code).toBe('authorization');
     await app.close();
@@ -214,11 +235,18 @@ describeDb('DAT-14 issue lifecycle Commands (real PostgreSQL 17 + Redis)', () =>
     const projectA = await createProjectFor(pool, ownerA);
     const issueA = await seedIssue(pool, projectA);
 
-    const { status } = await postIssue(app, ownerB, ownerB.organizationId, '00000000-0000-4000-8000-000000000000', `${issueA}/state`, {
-      status: 'in_progress',
-      version: 1,
-      idempotencyKey: `idem-${randomUUID()}`,
-    });
+    const { status } = await postIssue(
+      app,
+      ownerB,
+      ownerB.organizationId,
+      '00000000-0000-4000-8000-000000000000',
+      `${issueA}/state`,
+      {
+        status: 'in_progress',
+        version: 1,
+        idempotencyKey: `idem-${randomUUID()}`,
+      },
+    );
     expect(status).toBe(404);
     await app.close();
   });
@@ -252,18 +280,35 @@ describeDb('DAT-14 issue lifecycle Commands (real PostgreSQL 17 + Redis)', () =>
     const projectId = await createProjectFor(pool, owner);
     const issueId = await seedIssue(pool, projectId);
 
-    const created = await postIssue(app, owner, owner.organizationId, projectId, `${issueId}/notes`, {
-      content: 'Root cause identified.',
-      idempotencyKey: `idem-${randomUUID()}`,
-    });
+    const created = await postIssue(
+      app,
+      owner,
+      owner.organizationId,
+      projectId,
+      `${issueId}/notes`,
+      {
+        content: 'Root cause identified.',
+        idempotencyKey: `idem-${randomUUID()}`,
+      },
+    );
     expect(created.status).toBe(200);
 
-    const note = await pool.query<{ id: string }>(`SELECT id FROM issue_notes WHERE issue_id = $1`, [issueId]);
+    const note = await pool.query<{ id: string }>(
+      `SELECT id FROM issue_notes WHERE issue_id = $1`,
+      [issueId],
+    );
     const noteId = note.rows[0]?.id ?? '';
     expect(noteId).not.toBe('');
-    const deleted = await postIssue(app, owner, owner.organizationId, projectId, `${issueId}/notes/${noteId}/delete`, {
-      idempotencyKey: `idem-${randomUUID()}`,
-    });
+    const deleted = await postIssue(
+      app,
+      owner,
+      owner.organizationId,
+      projectId,
+      `${issueId}/notes/${noteId}/delete`,
+      {
+        idempotencyKey: `idem-${randomUUID()}`,
+      },
+    );
     expect(deleted.status).toBe(200);
     await app.close();
   });

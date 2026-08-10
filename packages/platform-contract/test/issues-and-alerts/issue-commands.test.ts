@@ -29,9 +29,9 @@ describe('issue lifecycle Command contracts', () => {
 
   it('requires organizationId/projectId/issueId path params', () => {
     const schema = issuesUpdateStatePathParams.zod;
-    expect(schema.safeParse({ organizationId: ORG, projectId: PROJECT, issueId: ISSUE }).success).toBe(
-      true,
-    );
+    expect(
+      schema.safeParse({ organizationId: ORG, projectId: PROJECT, issueId: ISSUE }).success,
+    ).toBe(true);
     expect(schema.safeParse({ organizationId: ORG, projectId: PROJECT }).success).toBe(false);
   });
 

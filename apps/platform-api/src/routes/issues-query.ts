@@ -1,8 +1,5 @@
 import type { FastifyReply, FastifyRequest } from 'fastify';
-import {
-  OPERATION_ID_GET_ISSUE_DETAIL,
-  OPERATION_ID_LIST_ISSUES,
-} from '@aurora/platform-contract';
+import { OPERATION_ID_GET_ISSUE_DETAIL, OPERATION_ID_LIST_ISSUES } from '@aurora/platform-contract';
 import { parseInput, serializeOutput, type OperationDef } from '@aurora/platform-contract/server';
 import {
   queryIssueActivity,
@@ -89,13 +86,25 @@ export async function handleListIssues(
   const rawLimit = rawQuery.limit;
   const limit = typeof rawLimit === 'string' ? Number(rawLimit) : rawLimit;
   if (typeof limit === 'number' && !Number.isInteger(limit)) {
-    await sendProblem(reply, requestId, 400, 'structural_error', 'Request does not match the public contract.');
+    await sendProblem(
+      reply,
+      requestId,
+      400,
+      'structural_error',
+      'Request does not match the public contract.',
+    );
     return;
   }
   const query = { ...rawQuery, limit };
   const parsed = parseInput(LIST_ISSUES_OPERATION, { params: request.params, query });
   if (!parsed.ok) {
-    await sendProblem(reply, requestId, 400, 'structural_error', 'Request does not match the public contract.');
+    await sendProblem(
+      reply,
+      requestId,
+      400,
+      'structural_error',
+      'Request does not match the public contract.',
+    );
     return;
   }
   const params = request.params as { organizationId?: string; projectId?: string };
@@ -119,7 +128,13 @@ export async function handleListIssues(
     endMs - startMs > MAX_WINDOW_MS ||
     endMs > deps.now().getTime() + CLOCK_SKEW_MS
   ) {
-    await sendProblem(reply, requestId, 400, 'structural_error', 'Request does not match the public contract.');
+    await sendProblem(
+      reply,
+      requestId,
+      400,
+      'structural_error',
+      'Request does not match the public contract.',
+    );
     return;
   }
 
@@ -133,11 +148,25 @@ export async function handleListIssues(
     throw error;
   }
   if (permissions.orgRole === null) {
-    await sendProblem(reply, requestId, 403, 'authorization', 'You do not have permission to access this organization.');
+    await sendProblem(
+      reply,
+      requestId,
+      403,
+      'authorization',
+      'You do not have permission to access this organization.',
+    );
     return;
   }
   if (
-    !(await requireProjectAccess(permissions, session.accountId, organizationId, projectId, deps, reply, requestId))
+    !(await requireProjectAccess(
+      permissions,
+      session.accountId,
+      organizationId,
+      projectId,
+      deps,
+      reply,
+      requestId,
+    ))
   ) {
     return;
   }
@@ -149,7 +178,9 @@ export async function handleListIssues(
       startIso: input.timeRange.start,
       endIso: input.timeRange.end,
       ...(input.status === undefined ? {} : { status: input.status }),
-      ...(input.assigneeAccountId === undefined ? {} : { assigneeAccountId: input.assigneeAccountId }),
+      ...(input.assigneeAccountId === undefined
+        ? {}
+        : { assigneeAccountId: input.assigneeAccountId }),
       ...(input.priority === undefined ? {} : { priority: input.priority }),
       ...(input.cursor === undefined ? {} : { cursor: input.cursor }),
       limit: input.limit ?? 50,
@@ -164,7 +195,10 @@ export async function handleListIssues(
       ? { status: 'empty' as const, reason: 'no issues in window' }
       : {
           status: 'available' as const,
-          items: page.items.map((item) => ({ ...item, occurrenceCount: Number(item.occurrenceCount) })),
+          items: page.items.map((item) => ({
+            ...item,
+            occurrenceCount: Number(item.occurrenceCount),
+          })),
           pagination: {
             ...(input.cursor === undefined ? {} : { cursor: input.cursor }),
             ...(page.nextCursor === undefined ? {} : { nextCursor: page.nextCursor }),
@@ -210,13 +244,36 @@ export async function handleGetIssueDetail(
   const requestId = deps.requestIdProvider();
   const parsed = parseInput(GET_ISSUE_DETAIL_OPERATION, { params: request.params });
   if (!parsed.ok) {
-    await sendProblem(reply, requestId, 400, 'structural_error', 'Request does not match the public contract.');
+    await sendProblem(
+      reply,
+      requestId,
+      400,
+      'structural_error',
+      'Request does not match the public contract.',
+    );
     return;
   }
-  const params = request.params as { organizationId?: string; projectId?: string; issueId?: string };
-  if (!requireUuidParams({ organizationId: params.organizationId, projectId: params.projectId }, reply, requestId)) return;
+  const params = request.params as {
+    organizationId?: string;
+    projectId?: string;
+    issueId?: string;
+  };
+  if (
+    !requireUuidParams(
+      { organizationId: params.organizationId, projectId: params.projectId },
+      reply,
+      requestId,
+    )
+  )
+    return;
   if (!numericId(params.issueId)) {
-    await sendProblem(reply, requestId, 400, 'structural_error', 'Request does not match the public contract.');
+    await sendProblem(
+      reply,
+      requestId,
+      400,
+      'structural_error',
+      'Request does not match the public contract.',
+    );
     return;
   }
   const organizationId = params.organizationId ?? '';
@@ -233,11 +290,25 @@ export async function handleGetIssueDetail(
     throw error;
   }
   if (permissions.orgRole === null) {
-    await sendProblem(reply, requestId, 403, 'authorization', 'You do not have permission to access this organization.');
+    await sendProblem(
+      reply,
+      requestId,
+      403,
+      'authorization',
+      'You do not have permission to access this organization.',
+    );
     return;
   }
   if (
-    !(await requireProjectAccess(permissions, session.accountId, organizationId, projectId, deps, reply, requestId))
+    !(await requireProjectAccess(
+      permissions,
+      session.accountId,
+      organizationId,
+      projectId,
+      deps,
+      reply,
+      requestId,
+    ))
   ) {
     return;
   }

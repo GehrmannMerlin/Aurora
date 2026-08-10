@@ -32,7 +32,9 @@ describe('issue Query contracts', () => {
     const listSchema = issuesListIssuesPathParams.zod;
     expect(listSchema.safeParse({ organizationId: ORG, projectId: PROJECT }).success).toBe(true);
     const detailSchema = issuesGetIssueDetailPathParams.zod;
-    expect(detailSchema.safeParse({ organizationId: ORG, projectId: PROJECT, issueId: '1' }).success).toBe(true);
+    expect(
+      detailSchema.safeParse({ organizationId: ORG, projectId: PROJECT, issueId: '1' }).success,
+    ).toBe(true);
     expect(detailSchema.safeParse({ organizationId: ORG, projectId: PROJECT }).success).toBe(false);
   });
 });

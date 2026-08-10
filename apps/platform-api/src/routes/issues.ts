@@ -31,11 +31,7 @@ import {
   requireUuidParams,
 } from './_shared.js';
 import { getProjectAccessRole } from '@aurora/platform-project-governance';
-import {
-  lookupIdempotency,
-  requestDigest,
-  runIdempotentCommand,
-} from '../idempotency.js';
+import { lookupIdempotency, requestDigest, runIdempotentCommand } from '../idempotency.js';
 import type { PlatformApiRouteDependencies } from '../route-deps.js';
 
 const UPDATE_STATE_OP = operationById(OPERATION_ID_UPDATE_ISSUE_STATE);
@@ -47,18 +43,22 @@ const MERGE_OP = operationById(OPERATION_ID_MERGE_ISSUES);
 const BATCH_OP = operationById(OPERATION_ID_BATCH_UPDATE_ISSUES);
 
 /** Conditionally include the actor field (exactOptionalPropertyTypes-safe). */
-function actorField(accountId: string | undefined): { actorAccountId: string } | Record<string, never> {
+function actorField(
+  accountId: string | undefined,
+): { actorAccountId: string } | Record<string, never> {
   return accountId === undefined ? {} : { actorAccountId: accountId };
 }
 
 /** Issue ids are bigint rendered as text; reject non-numeric before PostgreSQL. */
-function requireNumericId(
-  value: unknown,
-  reply: FastifyReply,
-  requestId: string,
-): value is string {
+function requireNumericId(value: unknown, reply: FastifyReply, requestId: string): value is string {
   if (typeof value !== 'string' || !/^\d{1,19}$/.test(value)) {
-    sendProblem(reply, requestId, 400, 'structural_error', 'Request does not match the public contract.');
+    sendProblem(
+      reply,
+      requestId,
+      400,
+      'structural_error',
+      'Request does not match the public contract.',
+    );
     return false;
   }
   return true;
@@ -78,7 +78,13 @@ async function authorizeIssueCommand(
   requestId: string,
 ): Promise<{ organizationId: string; projectId: string; issueId: string } | null> {
   const params = request.params as IssuePathParams;
-  if (!requireUuidParams({ organizationId: params.organizationId, projectId: params.projectId }, reply, requestId)) {
+  if (
+    !requireUuidParams(
+      { organizationId: params.organizationId, projectId: params.projectId },
+      reply,
+      requestId,
+    )
+  ) {
     return null;
   }
   if (!requireNumericId(params.issueId, reply, requestId)) return null;
@@ -95,12 +101,33 @@ async function authorizeIssueCommand(
     throw error;
   }
   if (permissions.orgRole === null) {
-    await sendProblem(reply, requestId, 403, 'authorization', 'You do not have permission to access this organization.');
+    await sendProblem(
+      reply,
+      requestId,
+      403,
+      'authorization',
+      'You do not have permission to access this organization.',
+    );
     return null;
   }
   if (
-    !(await requireProjectAccess(permissions, session.accountId, organizationId, projectId, deps, reply, requestId)) ||
-    !(await requireProjectHandleAccess(session.accountId, organizationId, projectId, deps, reply, requestId))
+    !(await requireProjectAccess(
+      permissions,
+      session.accountId,
+      organizationId,
+      projectId,
+      deps,
+      reply,
+      requestId,
+    )) ||
+    !(await requireProjectHandleAccess(
+      session.accountId,
+      organizationId,
+      projectId,
+      deps,
+      reply,
+      requestId,
+    ))
   ) {
     return null;
   }
@@ -120,7 +147,13 @@ export async function handleUpdateIssueState(
   const requestId = deps.requestIdProvider();
   const parsed = parseInput(UPDATE_STATE_OP, { params: request.params, body: request.body });
   if (!parsed.ok) {
-    await sendProblem(reply, requestId, 400, 'structural_error', 'Request does not match the public contract.');
+    await sendProblem(
+      reply,
+      requestId,
+      400,
+      'structural_error',
+      'Request does not match the public contract.',
+    );
     return;
   }
   const auth = await authorizeIssueCommand(request, reply, deps, requestId);
@@ -141,7 +174,13 @@ export async function handleUpdateIssueState(
     return;
   }
   if (probe.outcome === 'conflict') {
-    await sendProblem(reply, requestId, 409, 'idempotency_conflict', 'Idempotency key was used with a different request.');
+    await sendProblem(
+      reply,
+      requestId,
+      409,
+      'idempotency_conflict',
+      'Idempotency key was used with a different request.',
+    );
     return;
   }
 
@@ -174,9 +213,12 @@ export async function handleUpdateIssueState(
               }),
           ...(body.ignoredUntilIso === undefined ? {} : { ignoredUntilIso: body.ignoredUntilIso }),
         });
-        if (result.status === 'conflict') throw new ServiceError(409, 'conflict', 'The issue was updated by another member.');
-        if (result.status === 'not_found') throw new ServiceError(404, 'not_found', 'The issue was not found.');
-        if (result.status === 'invalid_input') throw new ServiceError(422, 'field_validation', result.code);
+        if (result.status === 'conflict')
+          throw new ServiceError(409, 'conflict', 'The issue was updated by another member.');
+        if (result.status === 'not_found')
+          throw new ServiceError(404, 'not_found', 'The issue was not found.');
+        if (result.status === 'invalid_input')
+          throw new ServiceError(422, 'field_validation', result.code);
         await insertAuditEvent(client, {
           organizationId: auth.organizationId,
           ...actorField(session?.accountId),
@@ -187,7 +229,11 @@ export async function handleUpdateIssueState(
           status: 'succeeded',
           issueId: auth.issueId,
           version: body.version + 1,
-          activity: { type: 'status_changed', createdAt: deps.now().toISOString(), actorAccountId: session?.accountId },
+          activity: {
+            type: 'status_changed',
+            createdAt: deps.now().toISOString(),
+            actorAccountId: session?.accountId,
+          },
         };
       },
     });
@@ -211,12 +257,22 @@ export async function handleUpdateIssueAssignee(
   const requestId = deps.requestIdProvider();
   const parsed = parseInput(UPDATE_ASSIGNEE_OP, { params: request.params, body: request.body });
   if (!parsed.ok) {
-    await sendProblem(reply, requestId, 400, 'structural_error', 'Request does not match the public contract.');
+    await sendProblem(
+      reply,
+      requestId,
+      400,
+      'structural_error',
+      'Request does not match the public contract.',
+    );
     return;
   }
   const auth = await authorizeIssueCommand(request, reply, deps, requestId);
   if (auth === null) return;
-  const body = parsed.data.body as { assigneeAccountId?: string; version: number; idempotencyKey: string };
+  const body = parsed.data.body as {
+    assigneeAccountId?: string;
+    version: number;
+    idempotencyKey: string;
+  };
   const session = request.sessionPayload;
   const digest = requestDigest(body);
   const probe = await lookupIdempotency(deps.pool, body.idempotencyKey, digest);
@@ -225,7 +281,13 @@ export async function handleUpdateIssueAssignee(
     return;
   }
   if (probe.outcome === 'conflict') {
-    await sendProblem(reply, requestId, 409, 'idempotency_conflict', 'Idempotency key was used with a different request.');
+    await sendProblem(
+      reply,
+      requestId,
+      409,
+      'idempotency_conflict',
+      'Idempotency key was used with a different request.',
+    );
     return;
   }
   try {
@@ -248,19 +310,29 @@ export async function handleUpdateIssueAssignee(
           version: body.version,
           actorAccountId: session?.accountId ?? '',
         });
-        if (result.status === 'conflict') throw new ServiceError(409, 'conflict', 'The issue was updated by another member.');
-        if (result.status === 'not_found') throw new ServiceError(404, 'not_found', 'The issue was not found.');
+        if (result.status === 'conflict')
+          throw new ServiceError(409, 'conflict', 'The issue was updated by another member.');
+        if (result.status === 'not_found')
+          throw new ServiceError(404, 'not_found', 'The issue was not found.');
         await insertAuditEvent(client, {
           organizationId: auth.organizationId,
           ...actorField(session?.accountId),
           action: 'issue_assignee_changed',
-          details: { projectId: auth.projectId, issueId: auth.issueId, to: body.assigneeAccountId ?? null },
+          details: {
+            projectId: auth.projectId,
+            issueId: auth.issueId,
+            to: body.assigneeAccountId ?? null,
+          },
         });
         return {
           status: 'succeeded',
           issueId: auth.issueId,
           version: body.version + 1,
-          activity: { type: 'assignee_changed', createdAt: deps.now().toISOString(), actorAccountId: session?.accountId },
+          activity: {
+            type: 'assignee_changed',
+            createdAt: deps.now().toISOString(),
+            actorAccountId: session?.accountId,
+          },
         };
       },
     });
@@ -284,7 +356,13 @@ export async function handleUpdateIssuePriority(
   const requestId = deps.requestIdProvider();
   const parsed = parseInput(UPDATE_PRIORITY_OP, { params: request.params, body: request.body });
   if (!parsed.ok) {
-    await sendProblem(reply, requestId, 400, 'structural_error', 'Request does not match the public contract.');
+    await sendProblem(
+      reply,
+      requestId,
+      400,
+      'structural_error',
+      'Request does not match the public contract.',
+    );
     return;
   }
   const auth = await authorizeIssueCommand(request, reply, deps, requestId);
@@ -298,7 +376,13 @@ export async function handleUpdateIssuePriority(
     return;
   }
   if (probe.outcome === 'conflict') {
-    await sendProblem(reply, requestId, 409, 'idempotency_conflict', 'Idempotency key was used with a different request.');
+    await sendProblem(
+      reply,
+      requestId,
+      409,
+      'idempotency_conflict',
+      'Idempotency key was used with a different request.',
+    );
     return;
   }
   try {
@@ -321,8 +405,10 @@ export async function handleUpdateIssuePriority(
           version: body.version,
           actorAccountId: session?.accountId ?? '',
         });
-        if (result.status === 'conflict') throw new ServiceError(409, 'conflict', 'The issue was updated by another member.');
-        if (result.status === 'not_found') throw new ServiceError(404, 'not_found', 'The issue was not found.');
+        if (result.status === 'conflict')
+          throw new ServiceError(409, 'conflict', 'The issue was updated by another member.');
+        if (result.status === 'not_found')
+          throw new ServiceError(404, 'not_found', 'The issue was not found.');
         await insertAuditEvent(client, {
           organizationId: auth.organizationId,
           ...actorField(session?.accountId),
@@ -333,7 +419,11 @@ export async function handleUpdateIssuePriority(
           status: 'succeeded',
           issueId: auth.issueId,
           version: body.version + 1,
-          activity: { type: 'priority_changed', createdAt: deps.now().toISOString(), actorAccountId: session?.accountId },
+          activity: {
+            type: 'priority_changed',
+            createdAt: deps.now().toISOString(),
+            actorAccountId: session?.accountId,
+          },
         };
       },
     });
@@ -357,7 +447,13 @@ export async function handleCreateIssueNote(
   const requestId = deps.requestIdProvider();
   const parsed = parseInput(CREATE_NOTE_OP, { params: request.params, body: request.body });
   if (!parsed.ok) {
-    await sendProblem(reply, requestId, 400, 'structural_error', 'Request does not match the public contract.');
+    await sendProblem(
+      reply,
+      requestId,
+      400,
+      'structural_error',
+      'Request does not match the public contract.',
+    );
     return;
   }
   const auth = await authorizeIssueCommand(request, reply, deps, requestId);
@@ -371,7 +467,13 @@ export async function handleCreateIssueNote(
     return;
   }
   if (probe.outcome === 'conflict') {
-    await sendProblem(reply, requestId, 409, 'idempotency_conflict', 'Idempotency key was used with a different request.');
+    await sendProblem(
+      reply,
+      requestId,
+      409,
+      'idempotency_conflict',
+      'Idempotency key was used with a different request.',
+    );
     return;
   }
   try {
@@ -393,8 +495,10 @@ export async function handleCreateIssueNote(
           authorAccountId: session?.accountId ?? '',
           content: body.content,
         });
-        if (result.status === 'not_found') throw new ServiceError(404, 'not_found', 'The issue was not found.');
-        if (result.status === 'invalid_input') throw new ServiceError(422, 'field_validation', result.code);
+        if (result.status === 'not_found')
+          throw new ServiceError(404, 'not_found', 'The issue was not found.');
+        if (result.status === 'invalid_input')
+          throw new ServiceError(422, 'field_validation', result.code);
         return {
           status: 'succeeded',
           issueId: auth.issueId,
@@ -422,7 +526,13 @@ export async function handleDeleteIssueNote(
   const requestId = deps.requestIdProvider();
   const parsed = parseInput(DELETE_NOTE_OP, { params: request.params, body: request.body });
   if (!parsed.ok) {
-    await sendProblem(reply, requestId, 400, 'structural_error', 'Request does not match the public contract.');
+    await sendProblem(
+      reply,
+      requestId,
+      400,
+      'structural_error',
+      'Request does not match the public contract.',
+    );
     return;
   }
   const auth = await authorizeIssueCommand(request, reply, deps, requestId);
@@ -438,7 +548,13 @@ export async function handleDeleteIssueNote(
     return;
   }
   if (probe.outcome === 'conflict') {
-    await sendProblem(reply, requestId, 409, 'idempotency_conflict', 'Idempotency key was used with a different request.');
+    await sendProblem(
+      reply,
+      requestId,
+      409,
+      'idempotency_conflict',
+      'Idempotency key was used with a different request.',
+    );
     return;
   }
   try {
@@ -460,8 +576,7 @@ export async function handleDeleteIssueNote(
           projectId: auth.projectId,
           accountId: session?.accountId ?? '',
         });
-        const canDeleteSensitive =
-          role.outcome === 'allowed' && role.role === 'project_admin';
+        const canDeleteSensitive = role.outcome === 'allowed' && role.role === 'project_admin';
         const result = await deleteIssueNote(client, {
           issueId: auth.issueId,
           projectId: auth.projectId,
@@ -469,8 +584,10 @@ export async function handleDeleteIssueNote(
           actorAccountId: session?.accountId ?? '',
           canDeleteSensitive,
         });
-        if (result.status === 'forbidden') throw new ServiceError(403, 'authorization', 'You cannot delete this note.');
-        if (result.status === 'not_found') throw new ServiceError(404, 'not_found', 'The note was not found.');
+        if (result.status === 'forbidden')
+          throw new ServiceError(403, 'authorization', 'You cannot delete this note.');
+        if (result.status === 'not_found')
+          throw new ServiceError(404, 'not_found', 'The note was not found.');
         await insertAuditEvent(client, {
           organizationId: auth.organizationId,
           ...actorField(session?.accountId),
@@ -500,12 +617,22 @@ export async function handleMergeIssues(
   const requestId = deps.requestIdProvider();
   const parsed = parseInput(MERGE_OP, { params: request.params, body: request.body });
   if (!parsed.ok) {
-    await sendProblem(reply, requestId, 400, 'structural_error', 'Request does not match the public contract.');
+    await sendProblem(
+      reply,
+      requestId,
+      400,
+      'structural_error',
+      'Request does not match the public contract.',
+    );
     return;
   }
   const auth = await authorizeIssueCommand(request, reply, deps, requestId);
   if (auth === null) return;
-  const body = parsed.data.body as { primaryIssueId: string; version: number; idempotencyKey: string };
+  const body = parsed.data.body as {
+    primaryIssueId: string;
+    version: number;
+    idempotencyKey: string;
+  };
   if (!requireNumericId(body.primaryIssueId, reply, requestId)) return;
   const session = request.sessionPayload;
   const digest = requestDigest(body);
@@ -515,7 +642,13 @@ export async function handleMergeIssues(
     return;
   }
   if (probe.outcome === 'conflict') {
-    await sendProblem(reply, requestId, 409, 'idempotency_conflict', 'Idempotency key was used with a different request.');
+    await sendProblem(
+      reply,
+      requestId,
+      409,
+      'idempotency_conflict',
+      'Idempotency key was used with a different request.',
+    );
     return;
   }
   try {
@@ -538,15 +671,21 @@ export async function handleMergeIssues(
           version: body.version,
           actorAccountId: session?.accountId ?? '',
         });
-        if (result.status === 'conflict') throw new ServiceError(409, 'conflict', 'The issue was updated by another member.');
-        if (result.status === 'not_found') throw new ServiceError(404, 'not_found', 'The issue was not found.');
+        if (result.status === 'conflict')
+          throw new ServiceError(409, 'conflict', 'The issue was updated by another member.');
+        if (result.status === 'not_found')
+          throw new ServiceError(404, 'not_found', 'The issue was not found.');
         await insertAuditEvent(client, {
           organizationId: auth.organizationId,
           ...actorField(session?.accountId),
           action: 'issue_merged',
           details: { projectId: auth.projectId, issueId: auth.issueId, into: body.primaryIssueId },
         });
-        return { status: 'succeeded', issueId: body.primaryIssueId, mergedIntoIssueId: body.primaryIssueId };
+        return {
+          status: 'succeeded',
+          issueId: body.primaryIssueId,
+          mergedIntoIssueId: body.primaryIssueId,
+        };
       },
     });
     if (idempotency.outcome === 'conflict') {
@@ -569,7 +708,13 @@ export async function handleBatchUpdateIssues(
   const requestId = deps.requestIdProvider();
   const parsed = parseInput(BATCH_OP, { params: request.params, body: request.body });
   if (!parsed.ok) {
-    await sendProblem(reply, requestId, 400, 'structural_error', 'Request does not match the public contract.');
+    await sendProblem(
+      reply,
+      requestId,
+      400,
+      'structural_error',
+      'Request does not match the public contract.',
+    );
     return;
   }
   const params = request.params as { organizationId?: string; projectId?: string };
@@ -587,8 +732,23 @@ export async function handleBatchUpdateIssues(
   }
   if (
     permissions.orgRole === null ||
-    !(await requireProjectAccess(permissions, session.accountId, organizationId, projectId, deps, reply, requestId)) ||
-    !(await requireProjectHandleAccess(session.accountId, organizationId, projectId, deps, reply, requestId))
+    !(await requireProjectAccess(
+      permissions,
+      session.accountId,
+      organizationId,
+      projectId,
+      deps,
+      reply,
+      requestId,
+    )) ||
+    !(await requireProjectHandleAccess(
+      session.accountId,
+      organizationId,
+      projectId,
+      deps,
+      reply,
+      requestId,
+    ))
   ) {
     return;
   }
@@ -603,7 +763,13 @@ export async function handleBatchUpdateIssues(
     return;
   }
   if (probe.outcome === 'conflict') {
-    await sendProblem(reply, requestId, 409, 'idempotency_conflict', 'Idempotency key was used with a different request.');
+    await sendProblem(
+      reply,
+      requestId,
+      409,
+      'idempotency_conflict',
+      'Idempotency key was used with a different request.',
+    );
     return;
   }
   try {
@@ -613,7 +779,12 @@ export async function handleBatchUpdateIssues(
       operation: OPERATION_ID_BATCH_UPDATE_ISSUES,
       digest,
       execute: async (client) => {
-        await requireProjectHandleAccessOnTransaction(client, session.accountId, organizationId, projectId);
+        await requireProjectHandleAccessOnTransaction(
+          client,
+          session.accountId,
+          organizationId,
+          projectId,
+        );
         const result = await batchUpdateIssues(client, {
           projectId,
           actorAccountId: session.accountId,
@@ -624,7 +795,8 @@ export async function handleBatchUpdateIssues(
             version: item.version,
           })),
         });
-        if (result.status === 'invalid_input') throw new ServiceError(422, 'field_validation', result.code);
+        if (result.status === 'invalid_input')
+          throw new ServiceError(422, 'field_validation', result.code);
         await insertAuditEvent(client, {
           organizationId,
           actorAccountId: session.accountId,

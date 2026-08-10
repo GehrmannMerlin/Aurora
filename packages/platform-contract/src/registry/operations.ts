@@ -961,7 +961,8 @@ export const PLATFORM_OPERATIONS: readonly OperationDef[] = [
     authLevel: 'session',
     method: 'GET',
     path: '/api/platform/v1/organizations/:organizationId/projects/:projectId/data-status',
-    summary: 'Resolve the ingestion data-status diagnosis projection for a project (safe summaries)',
+    summary:
+      'Resolve the ingestion data-status diagnosis projection for a project (safe summaries)',
     request: {
       pathParams: diagnosticsGetDataStatusPathParams,
       query: diagnosticsGetDataStatusQuery,
@@ -986,7 +987,8 @@ export const PLATFORM_OPERATIONS: readonly OperationDef[] = [
     authLevel: 'session',
     method: 'GET',
     path: '/api/platform/v1/organizations/:organizationId/projects/:projectId/performance',
-    summary: 'List performance metric projections for a project time window (LCP/INP/CLS/page-load)',
+    summary:
+      'List performance metric projections for a project time window (LCP/INP/CLS/page-load)',
     request: {
       pathParams: performanceListPagesPathParams,
       query: performanceListPagesQuery,

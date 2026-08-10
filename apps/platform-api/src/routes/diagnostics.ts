@@ -41,16 +41,9 @@ const REJECTION_UNAVAILABLE_REASON = 'rejected batches are not persisted (deferr
 const ENVIRONMENT_UNAVAILABLE_REASON = 'environment not persisted (deferred)';
 
 export type DiagnosisSummaryStatus =
-  | 'receiving'
-  | 'processing'
-  | 'blocked'
-  | 'not_receiving'
-  | 'unknown';
+  'receiving' | 'processing' | 'blocked' | 'not_receiving' | 'unknown';
 export type DiagnosisPrimaryCause =
-  | 'credential_inactive'
-  | 'no_credential'
-  | 'no_received_events'
-  | 'processing_backlog';
+  'credential_inactive' | 'no_credential' | 'no_received_events' | 'processing_backlog';
 
 /** Pure inputs needed to derive the DiagnosisSummary (spec §5.3). */
 export interface DiagnosisSummaryInput {
@@ -78,9 +71,7 @@ export interface DerivedDiagnosisSummary {
  * (5) processedCount > 0 → receiving (no primaryCause);
  * (6) otherwise → unknown. A pure function so the priority rules are unit-tested.
  */
-export function deriveDiagnosisSummary(
-  input: DiagnosisSummaryInput,
-): DerivedDiagnosisSummary {
+export function deriveDiagnosisSummary(input: DiagnosisSummaryInput): DerivedDiagnosisSummary {
   const credentialExists = input.activeCount + input.disabledCount + input.revokedCount > 0;
   if (credentialExists && input.activeCount === 0) {
     return { status: 'blocked', primaryCause: 'credential_inactive' };
@@ -321,16 +312,12 @@ export async function handleGetDataStatus(
           data: {
             received: {
               count: receivedCount,
-              ...(inbox.latestReceivedAt === null
-                ? {}
-                : { latestAt: inbox.latestReceivedAt }),
+              ...(inbox.latestReceivedAt === null ? {} : { latestAt: inbox.latestReceivedAt }),
             },
             processing: { count: processingCount },
             processed: {
               count: processedCount,
-              ...(inbox.latestProcessedAt === null
-                ? {}
-                : { latestAt: inbox.latestProcessedAt }),
+              ...(inbox.latestProcessedAt === null ? {} : { latestAt: inbox.latestProcessedAt }),
             },
             deadLetter: {
               count: deadLetterCount,
@@ -348,7 +335,9 @@ export async function handleGetDataStatus(
       : {
           status: 'available' as const,
           data: {
-            ...(inbox.latestReceivedAt === null ? {} : { latestReceivedAt: inbox.latestReceivedAt }),
+            ...(inbox.latestReceivedAt === null
+              ? {}
+              : { latestReceivedAt: inbox.latestReceivedAt }),
             receivedCount,
             ...(inbox.latestProcessedAt === null
               ? {}
@@ -389,9 +378,7 @@ export async function handleGetDataStatus(
       errorOccurrences: queryable.errorOccurrences,
       requestMetricBuckets: queryable.requestMetricBuckets,
       performanceMetricBuckets: queryable.performanceMetricBuckets,
-      ...(inbox.latestProcessedAt === null
-        ? {}
-        : { latestProcessedAt: inbox.latestProcessedAt }),
+      ...(inbox.latestProcessedAt === null ? {} : { latestProcessedAt: inbox.latestProcessedAt }),
     },
   };
 
