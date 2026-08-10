@@ -2,7 +2,7 @@
 title: Aurora 错误归一化与 fingerprint 分组算法第一增量
 status: approved
 implementation-status: not-started
-approval-status: pending-g03-approval-package
+approval-status: approved
 owner: processing/backend
 created: 2026-08-10
 last-reviewed: 2026-08-10
@@ -32,7 +32,7 @@ review-cycle: error-fingerprint-algorithm-or-compatibility-change
 
 本文冻结 DAT-12（错误归一化、fingerprint 与分组版本）第一增量。该增量把已存在的、经 `@aurora/event-schema` 精确错误契约校验的错误事件正文，安全、稳定地规范化为带版本语义的 fingerprint/group key，并随错误 occurrence 一起持久化。
 
-**批准状态**：本文是 G03 正式化扫掠产物，纳入 [G03 APPROVAL PACKAGE](../superpowers/g03-approval-package.md) 统一批准。批准后 `status: approved`、`approval-status: approved`；`implementation-status` 于计划执行后更新为 `implemented`。
+**批准状态**：本文随 [G03 APPROVAL PACKAGE](../superpowers/g03-approval-package.md) 于 2026-08-10 由用户整体批准，`status: approved`、`approval-status: approved`；`implementation-status` 于计划执行后更新为 `implemented`。
 
 **ADR 判断**：本增量**不创建新 ADR**。PRD §9.6 已固定聚合算法版本语义（问题记录算法版本；新事件用新算法；不自动重组历史数据），作为 approved 产品规则直接派生；fingerprint 是 `data` 层内部确定性纯函数与既有 `error_event_occurrences` 表的 additive 增列，不改变五系统边界、依赖方向、公开事件协议或长期兼容策略，属于“已批准架构内的普通功能实现”（`Aurora ADR 规范` §7.2）。
 
@@ -273,4 +273,4 @@ PRD §9.5 允许 SDK 设置自定义 `fingerprint`。但 v1 错误事件契约�
 - 不新增包、不修改公开事件协议、不修改 ADR 决策；
 - 无占位/TBD，全部常量与类型签名冻结。
 
-自动审批依据：本文语义全部由 approved PRD §9.1—9.6、approved 错误事件协议契约、approved 错误 occurrence 处理存储规格与 accepted ADR-005/006/018 无歧义派生；无新增产品/架构/安全/隐私决策（自定义 fingerprint 与页面上下文进入指纹属未来契约扩展，非本增量决策）；不创建新 ADR。纳入 G03 APPROVAL PACKAGE 统一批准。
+自动审批依据：本文语义全部由 approved PRD §9.1—9.6、approved 错误事件协议契约、approved 错误 occurrence 处理存储规格与 accepted ADR-005/006/018 无歧义派生；无新增产品/架构/安全/隐私决策（自定义 fingerprint 与页面上下文进入指纹属未来契约扩展，非本增量决策）；不创建新 ADR。已随 G03 APPROVAL PACKAGE 于 2026-08-10 由用户批准为 approved。

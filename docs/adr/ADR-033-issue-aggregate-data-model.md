@@ -1,8 +1,8 @@
 ---
 title: ADR-033：Issue 聚合与有界代表样本数据模型
-status: proposed
+status: accepted
 implementation-status: not-started
-approval-status: awaiting-user-approval
+approval-status: approved
 owner: processing/backend
 date: 2026-08-10
 last-reviewed: 2026-08-10
@@ -259,3 +259,19 @@ Aurora 已接受 ADR-004/005/008/010/012/018/019/020/021，`@aurora/processing-s
 - **`by_version` 重开 deferred**：依赖发布字段（v1 错误契约缺省，契约缺口），需未来协议扩展；
 - **页面/环境/发布/浏览器维度 deferred**：契约缺口，恒 `unavailable` 不伪造；
 - 用户批准前：不创建正式 Migration、不实现代码、不进入 writing-plans。
+
+### 2026-08-10：用户正式批准（accepted）
+
+- 用户已于 2026-08-10 对 G03 APPROVAL PACKAGE 作出整体正式批准（"整体批准（Recommended）"），批准范围（逐条）：
+  1. 方案 B：Issue 聚合表＋有界代表样本表；
+  2. `(project_id, fingerprint, fingerprint_version)` 项目作用域聚合键（fingerprint 来自 DAT-12 `computeErrorFingerprint`，`fingerprint_version` 保留历史 Issue 身份）；
+  3. `issue_event_applications (project_id, event_id)` 事件应用登记（防 retry/重放下计数重复累加）；
+  4. `occurrence_count`/`first_seen_at`/`last_seen_at`（`GREATEST`）聚合语义与 `DEFAULT_MAX_ISSUE_SAMPLES = 100` 有界样本固定替换策略；
+  5. 生命周期列（四状态/负责人/优先级/解决/忽略/合并，乐观 `version` 每次生命周期写递增）与 `issue_activities`/`issue_notes` 生命周期证据表；
+  6. `error_event_occurrences` 指纹增列（DAT-12 实施）；
+  7. v1 只实现 `by_time` 重开；`by_version` 重开与页面/环境/发布/浏览器维度为契约缺口 deferred；
+  8. 扩展 `@aurora/processing-store`，不新建包；
+  9. 本 ADR 从 proposed 转为 accepted。
+- 批准范围仅适用于本 ADR 已记录并经过评审修订的决策范围；不得扩大到 DAT-14/15 之外的 Command/Query 实现、自定义 fingerprint、Source Map、告警、数据保留、新基础设施；
+- 状态更新：`status: accepted`、`decision-status: accepted`、`approval-status: approved`、`implementation-status: not-started`；
+- 原 proposed 历史记录完整保留；实施状态保持 `not-started`，直到 DAT-13 正式实施开始；本 ADR 不得在此时标记为 implemented 或 in-progress。

@@ -2,7 +2,7 @@
 title: Aurora Issue 列表/详情 Query 与安全投影第一增量
 status: approved
 implementation-status: not-started
-approval-status: pending-g03-approval-package
+approval-status: approved
 owner: platform/backend
 created: 2026-08-10
 last-reviewed: 2026-08-10
@@ -34,9 +34,9 @@ review-cycle: issue-query-or-projection-change
 
 本文冻结 DAT-15（Issue 列表/详情 Query 与安全投影）第一增量。该增量提供 C3/C4 后续页面可真实消费的公开 Issue Query：`issuesListIssues`（列表）与 `issuesGetIssueDetail`（详情），复用 G02 已建立的分页、时间范围、项目授权、安全投影与错误语义，**不重新建立平行 Query 基础**。
 
-**批准状态**：本文是 G03 正式化扫掠产物，纳入 [G03 APPROVAL PACKAGE](../superpowers/g03-approval-package.md) 统一批准。批准后 `status: approved`、`approval-status: approved`；`implementation-status` 于计划执行后更新为 `implemented`。
+**批准状态**：本文随 [G03 APPROVAL PACKAGE](../superpowers/g03-approval-package.md) 于 2026-08-10 由用户整体批准，`status: approved`、`approval-status: approved`；`implementation-status` 于计划执行后更新为 `implemented`。
 
-**ADR 判断**：本增量**不创建新 ADR**。Issue 数据模型由 proposed [ADR-033](../adr/ADR-033-issue-aggregate-data-model.md)（待用户批准为 accepted）冻结；Query 只读投影复用 G02（DAT-16/17/20）已批准的契约模式与授权实现；无新增产品/架构/安全/隐私决策。**ADR-033 accepted 前，本文不授权任何 Migration/实现。**
+**ADR 判断**：本增量**不创建新 ADR**。Issue 数据模型由 accepted [ADR-033](../adr/ADR-033-issue-aggregate-data-model.md)（用户 2026-08-10 批准）冻结；Query 只读投影复用 G02（DAT-16/17/20）已批准的契约模式与授权实现；无新增产品/架构/安全/隐私决策。
 
 ## 2. 元数据、Owner 和范围
 
@@ -165,4 +165,4 @@ review-cycle: issue-query-or-projection-change
 - 测试覆盖列表/详情真实 PG、权限负例、分页/过滤、样本/活动安全投影；
 - 无占位/TBD，全部常量与类型签名冻结。
 
-自动审批依据：本文语义全部由 approved UX C3/C4、approved Platform OpenAPI 设计、G02（DAT-16/17/20）已实施 Query 模式与 **proposed ADR-033**（待用户批准为 accepted）派生；无新增产品/架构/安全/隐私决策；不创建新 ADR。**批准顺序：ADR-033 先经用户批准为 accepted，本文再随 G03 APPROVAL PACKAGE 生效为 approved。**
+自动审批依据：本文语义全部由 approved UX C3/C4、approved Platform OpenAPI 设计、G02（DAT-16/17/20）已实施 Query 模式与 **accepted ADR-033**（用户 2026-08-10 批准）派生；无新增产品/架构/安全/隐私决策；不创建新 ADR。已随 G03 APPROVAL PACKAGE 于 2026-08-10 由用户批准为 approved。

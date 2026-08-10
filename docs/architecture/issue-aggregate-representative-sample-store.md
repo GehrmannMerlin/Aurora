@@ -2,7 +2,7 @@
 title: Aurora Issue 聚合与有界代表样本处理存储第一增量
 status: approved
 implementation-status: not-started
-approval-status: pending-g03-approval-package
+approval-status: approved
 owner: processing/backend
 created: 2026-08-10
 last-reviewed: 2026-08-10
@@ -35,9 +35,9 @@ review-cycle: issue-aggregate-storage-or-sample-policy-change
 
 本文冻结 DAT-13（Issue 聚合、代表样本和数据模型）第一增量。该增量把 DAT-12 已 fingerprint 的错误 occurrence 聚合为项目作用域的真实 Issue 聚合，并持久化有界、安全的代表样本。
 
-**批准状态**：本文是 G03 正式化扫掠产物，纳入 [G03 APPROVAL PACKAGE](../superpowers/g03-approval-package.md) 统一批准。批准后 `status: approved`、`approval-status: approved`；`implementation-status` 于计划执行后更新为 `implemented`。
+**批准状态**：本文随 [G03 APPROVAL PACKAGE](../superpowers/g03-approval-package.md) 于 2026-08-10 由用户整体批准，`status: approved`、`approval-status: approved`；`implementation-status` 于计划执行后更新为 `implemented`。
 
-**ADR 判断**：本增量执行 accepted 决策前的 proposed [ADR-033](../adr/ADR-033-issue-aggregate-data-model.md)。**在 ADR-033 被用户批准为 accepted 前，本文不授权任何 Migration/实现。** ADR-033 accepted 后，本规格自动成为 DAT-13 实施唯一权威来源。
+**ADR 判断**：本增量执行 accepted [ADR-033](../adr/ADR-033-issue-aggregate-data-model.md)（用户 2026-08-10 批准为 accepted）。ADR-033 冻结 Issue 数据模型；本文是 DAT-13 实施唯一权威来源。
 
 ## 2. 元数据、Owner 和范围
 
@@ -236,4 +236,4 @@ export type IssueSampleDecision =
 - 测试覆盖首次创建、重复聚合、并发、样本有界、项目隔离、再次出现重开；
 - 无占位/TBD，全部常量与类型签名冻结。
 
-自动审批依据：本文语义全部由 accepted ADR-018、approved DAT-12 规格、approved 错误事件协议契约与 **proposed ADR-033**（待用户批准为 accepted）派生；本规格本身不引入新的产品/架构/安全/隐私决策。**批准顺序：ADR-033 先经用户批准为 accepted，本文再随 G03 APPROVAL PACKAGE 生效为 approved。**
+自动审批依据：本文语义全部由 accepted ADR-018、approved DAT-12 规格、approved 错误事件协议契约与 **accepted ADR-033**（用户 2026-08-10 批准）派生；本规格本身不引入新的产品/架构/安全/隐私决策。已随 G03 APPROVAL PACKAGE 于 2026-08-10 由用户批准为 approved。

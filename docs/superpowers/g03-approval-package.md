@@ -1,17 +1,17 @@
 # G03 APPROVAL PACKAGE — 错误归一化与 Issue 主链
 
-**日期：2026-08-10（创建）；待用户正式批准**
+**日期：2026-08-10（创建）；2026-08-10（用户正式批准）**
 **分支：`feature/g03-error-issue-mainline`（基于 origin/main `617b9b0`，G02 merged）**
-**状态：⏳ 等待用户批准（G03 正式化扫掠产物）**
+**状态：✅ 用户已于 2026-08-10 整体批准全部项**
 
-> **批准请求**：本包包含 G03 四叶子的正式规格与唯一 required ADR（Issue 数据模型）。请批准以下全部项（视为整体批准）：
-> 1. **ADR-033**（Issue 聚合与有界代表样本数据模型）→ accepted；
-> 2. **DAT-12 正式规格**（错误归一化与 fingerprint 分组算法）→ approved；
-> 3. **DAT-13 正式规格**（Issue 聚合与有界代表样本存储）→ approved；
-> 4. **DAT-14 正式规格**（Issue 生命周期 Command、活动与审计）→ approved；
-> 5. **DAT-15 正式规格**（Issue 列表/详情 Query 与安全投影）→ approved。
+> **批准记录**：用户于 2026-08-10 对本包作出整体正式批准（"整体批准（Recommended）"）：
+> 1. **ADR-033**（Issue 聚合与有界代表样本数据模型）→ **accepted**（含 `issues`/`issue_samples`/`issue_event_applications`/`issue_activities`/`issue_notes` 表、`(project_id, fingerprint, fingerprint_version)` 聚合键、有界代表样本策略、乐观 `version`、`error_event_occurrences` 指纹增列、v1 只实现 `by_time` 重开）；
+> 2. **DAT-12 正式规格** → **approved**；
+> 3. **DAT-13 正式规格** → **approved**；
+> 4. **DAT-14 正式规格** → **approved**；
+> 5. **DAT-15 正式规格** → **approved**。
 >
-> **批准前**：不写任何 writing-plans，不创建 Schema/Migration/Repository/handler，不自行标记 ADR-033 accepted，不进入 subagent-driven-development。
+> **批准后**：依次进入 DAT-12 writing-plans → DAT-12 执行/验收 → DAT-13 → … → DAT-15 → G03 group verification → feature PR/CI → merge main。各 ADR/规格的 `implementation-status` 保持 not-started，直到对应代码实施真正开始。
 
 ---
 
