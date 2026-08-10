@@ -68,7 +68,7 @@ interface MethodAccumulator {
   slowCount: number;
   durationSumMs: number;
   durationMaxMs: number;
-  outcomes: Array<{ outcome: RequestOutcome; count: number }>;
+  outcomes: { outcome: RequestOutcome; count: number }[];
 }
 
 /** Validate and normalize a jsonb outcome-counts array produced by the page query. */
@@ -182,7 +182,7 @@ export async function queryRequestEndpointPage(
   const params: unknown[] = [input.projectId, input.startIso, input.endIso];
   let keyset = '';
   if (decoded !== null) {
-    keyset = `AND (sample_body->>'method', sample_body->>'url') > ($${params.length + 1}, $${params.length + 2})`;
+    keyset = `AND (sample_body->>'method', sample_body->>'url') > ($${String(params.length + 1)}, $${String(params.length + 2)})`;
     params.push(decoded.method, decoded.url);
   }
   const limitPlusOne = input.limit + 1;
@@ -214,7 +214,7 @@ export async function queryRequestEndpointPage(
        ) sub
        GROUP BY sub.method, sub.url
        ORDER BY sub.method, sub.url
-       LIMIT $${params.length}`,
+       LIMIT $${String(params.length)}`,
       params,
     );
 
