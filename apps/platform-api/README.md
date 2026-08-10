@@ -12,6 +12,7 @@
 - `GET /api/platform/v1/health`：存活检查；
 - `GET /api/platform/v1/organizations/:organizationId/projects/:projectId/requests`（requestsListEndpoints，DAT-16）：项目级授权下的请求指标/接口列表只读查询（复用 `requireSession` + `effectivePermissions` + `requireProjectAccess`，无权限 403 不查数据、项目不属于 org 404；返回 `queryResponse`，percentile `unavailable`）；
 - `GET /api/platform/v1/organizations/:organizationId/projects/:projectId/data-status`（diagnosticsGetDataStatus，DAT-20）：项目级授权下的接入诊断状态只读查询（复用 `requireProjectAccess`；组合 event_inbox 状态机/凭证安全状态/processing-store 可查询证据三个只读查询，安全投影，rejection 恒 `unavailable`，缺失恒 `empty`/`not_receiving`）；
+- `GET /api/platform/v1/organizations/:organizationId/projects/:projectId/performance`（performanceListPages，DAT-17）：项目级授权下的性能指标查询只读投影（复用 `requireProjectAccess`；`queryPerformanceMetricSummary` 半开窗口聚合，无权限 403 不查数据、项目不属于 org 404；返回 `queryResponse`，`pages`/`percentiles` 恒 `unavailable`）；
 - 插件：cookie-session（`aurora_session` HttpOnly Cookie 解析、`getSession`、受保护操作缺失/过期/撤销 → 401、Redis down → 503 失败关闭）、csrf（非安全方法 `X-Aurora-CSRF` 校验，失败 → 403）、origin（状态改变请求 Origin allow-list + `Sec-Fetch-Site: cross-site` 拒绝）；
 - RFC 9457 `auroraProblem` 错误映射（structural_error/authentication/authorization/not_found/business_validation/authority_unavailable 等），绝不泄漏 SQL/栈/约束名/password/token/sessionId/csrf/email；
 - 生命周期：启动、graceful shutdown、PostgreSQL Pool + Redis session store 释放。
@@ -54,3 +55,4 @@ cd ../.. && pnpm check:boundaries
 - [ADR-030 平台 Session/CSRF/密码物理参数](../../docs/adr/ADR-030-platform-session-csrf-password-physical-parameters.md)
 - [请求指标查询投影正式规格](../../docs/architecture/request-metric-query-projection.md)
 - [接入诊断状态查询正式规格](../../docs/architecture/ingestion-diagnostics-status-query.md)
+- [性能指标查询投影正式规格](../../docs/architecture/performance-query-projection.md)

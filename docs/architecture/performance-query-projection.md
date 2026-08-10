@@ -1,7 +1,7 @@
 ---
 title: Aurora 性能指标查询投影（Performance Query Projection）
 status: approved
-implementation-status: in-progress
+implementation-status: implemented
 approval-status: approved
 owner: ingestion/backend
 created: 2026-08-10
@@ -30,7 +30,13 @@ review-cycle: performance-query-schema-or-contract-change
 
 本文冻结性能指标查询投影（DAT-17）第一增量：把已实施的性能指标聚合存储（`performance_metric_buckets`，accepted ADR-021，DAT-08）中由真实 Performance Processor（DAT-09）写入的数据，形成**正式、安全、项目隔离的公开 Query 投影**，暴露为平台公开 API 操作 `performanceListPages`（C6 性能监控页面 `project.performance` Route Target）。它不建设任何写侧能力，只新增只读查询 Repository、契约操作与平台 handler。
 
-**批准状态**：本文由用户于 2026-08-10 预先批准（`status: approved`）。`implementation-status` 将在 DAT-17 独立验收后更新为 `implemented`。本文由 accepted ADR-021、approved 性能事件协议契约、approved C6 性能监控 UX/UI 设计（§9.19）、G10 授权模型与平台 Query 通用约束无歧义派生；自动审批依据见规格自检节。
+**批准状态**：本文由用户于 2026-08-10 预先批准（`status: approved`），并经独立验收后于 2026-08-10 更新为 `implementation-status: implemented`。本文由 accepted ADR-021、approved 性能事件协议契约、approved C6 性能监控 UX/UI 设计（§9.19）、G10 授权模型与平台 Query 通用约束无歧义派生；自动审批依据见规格自检节。
+
+**独立验收证据（2026-08-10，DAT-17 全量 Task 实施完成）**：
+- 契约层：`@aurora/platform-contract` 契约测试 237 passed（30 files，含 `performanceListPages` 操作/路径/响应 schema 断言：metricName/unit 闭枚举、observedCount/valueSum/valueMax/mean 边界、`pages`/`percentiles` unavailable 变体）与 `test:package` 3 passed（client/server 适配器含 `performanceListPages`，包入口无 `ERR_PACKAGE_PATH_NOT_EXPORTED`）；OpenAPI 重新生成 `docs/api/platform-openapi-v1.yaml`/`platform-openapi-v1.manifest.json`（35 stable ops，`performanceListPages` stable、`project.performance` coverage stable）通过 `openapi:platform:lint`；`@aurora/platform-contract-drift` 漂移门禁 19 passed（生成物与契约源码逐字节一致、compat 兼容性差异检测全绿）。
+- 查询层（真实 PostgreSQL 17.10，无新 Migration）：`@aurora/processing-store` 单元测试 105 passed + 集成测试 78 passed（含 `queryPerformanceMetricSummary` 半开窗口 `[startIso, endIso)` 聚合、`(metric_name, unit)` 分组、observedCount/valueSum/valueMax/mean 正确性、`dataThrough` RFC 3339、`observedCount === 0` 行不返回、空窗口 `metrics: []`/`dataThrough: null`、项目隔离双向、隐私负例）。
+- 服务层：`@aurora/platform-api` 单元测试 51 passed + 真实 PostgreSQL 17.10/Redis 集成测试 127 passed（19 files，含 `performanceListPages` 端到端 flow：manager 200 真实聚合数据、member `read`、403 无权限不查数据、跨 org 404、空项目 `metrics` empty、`pages`/`percentiles` 恒 unavailable 且 reason 固定、`timeRange` 校验 400、隐私负例）；`platform-api`/`processing-store`/`platform-contract` typecheck 全绿。
+- 门禁：`pnpm --filter @aurora/platform-contract build && pnpm --filter @aurora/platform-contract test:package && pnpm platform-contract:generate && pnpm openapi:platform:lint && pnpm --filter @aurora/platform-contract-drift test` 在 DAT-17 Task 4 复跑全绿（generate 幂等，无 diff）；DAT-17 Task 4 另以最终状态复跑 processing-store 集成（78）与 platform-api 集成（127，真实 PostgreSQL 17.10/Redis）全部通过；`git diff --check` 干净。
 
 **声明边界**：本模块只公开服务端**真实存在**的数据。`performance_metric_buckets` 聚合键为 `(project_id, bucket_start, metric_name, unit)`，**没有页面/路由维度**；`performance_event_samples` 在 V1 不写入（DAT-09 产品边界：V1 聚合全部有效性能事件、不持久化有界诊断样本）。因此：
 - **页面/路由维度不可枚举** → `pages` 区恒为 `unavailable`（真实数据中不存在页面标识）；

@@ -12,6 +12,7 @@
 - 维护 A1—D2 操作集的操作注册表与预期操作清单（`src/registry`）；
 - 定义请求监控投影稳定操作 `requestsListEndpoints`（`src/monitoring/request-metrics.ts`，DAT-16）：请求/响应 Schema 与项目级查询契约；分页游标承载接口 keyset 游标 `base64url(method\nurl)`（`paginationMeta.cursor`/`nextCursor` 与 `requestsListEndpointsQuery.cursor` bound `4096`）；
 - 定义接入诊断状态查询稳定操作 `diagnosticsGetDataStatus`（`src/monitoring/diagnostics.ts`，DAT-20）：GET `/api/platform/v1/organizations/:organizationId/projects/:projectId/data-status`，`queryResponse` 六区段响应 Schema（summary/stages/recent/rejection/credential/queryable + actionTargets）与可选 `timeRange` 查询参数（`utcTimestamp` 窗口）；
+- 定义性能指标查询投影稳定操作 `performanceListPages`（`src/monitoring/performance.ts`，DAT-17）：GET `/api/platform/v1/organizations/:organizationId/projects/:projectId/performance`，`queryResponse` 三区段响应 Schema（`metrics`（metricName/unit 闭枚举、observedCount/valueSum/valueMax/mean）/`pages`/`percentiles` 恒 unavailable）与可选 `timeRange` 查询参数（`utcTimestamp` 窗口）；
 - 以确定性生成器产出机器可读 Platform OpenAPI v1（`docs/api/platform-openapi-v1.yaml`）与覆盖清单（`docs/api/platform-openapi-v1.manifest.json`）；
 - 提供已生成的 Client 适配器（`/client`）与服务端适配器（`/server`）；
 - 提供契约测试样本与辅助工具（`/contract-testkit`）；
