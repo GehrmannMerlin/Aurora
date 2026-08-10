@@ -37,11 +37,14 @@ export type {
   ProjectStatus,
 } from './repositories/projects.js';
 export {
+  checkProjectAccess,
   createProject,
   getProjectById,
   insertProjectMember,
   listProjects,
   updateProjectStatus,
+  type CheckProjectAccessInput,
+  type CheckProjectAccessResult,
   type CreateProjectInput,
   type CreateProjectResult,
   type GetProjectInput,

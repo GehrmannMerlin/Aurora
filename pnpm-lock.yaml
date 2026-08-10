@@ -189,6 +189,9 @@ importers:
       '@aurora/platform-session':
         specifier: workspace:*
         version: link:../../packages/platform-session
+      '@aurora/processing-store':
+        specifier: workspace:*
+        version: link:../../packages/processing-store
       fastify:
         specifier: 5.10.0
         version: 5.10.0

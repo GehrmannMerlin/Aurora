@@ -263,6 +263,64 @@ export async function listProjects(
   }
 }
 
+export type ProjectAccessOutcome = 'allowed' | 'forbidden' | 'not_found';
+
+export interface CheckProjectAccessInput {
+  readonly organizationId: string;
+  readonly projectId: string;
+  readonly accountId: string;
+}
+
+export type CheckProjectAccessResult =
+  | { readonly outcome: 'allowed' }
+  | { readonly outcome: 'forbidden' }
+  | { readonly outcome: 'not_found' };
+
+/**
+ * Read-only project-scoped access check for the first project-scoped Platform
+ * query (DAT-16). Mirrors `listProjects`' membership-filter semantics: an org
+ * manager (owner/admin) of the project's org is `allowed` regardless of any
+ * `project_members` row; any other org member is `allowed` only when they hold
+ * a `project_members` row for the project. `not_found` is returned for both an
+ * absent project AND a project that belongs to a different organization, so
+ * project existence is never leaked to a caller who cannot already see the org.
+ * The org-manager privilege is scoped to the PATH organization, so this is
+ * called for every caller (including org managers) by the route guard — a
+ * manager of org B must get `not_found` for a project owned by org A. Never
+ * returns internal rows.
+ */
+export async function checkProjectAccess(
+  pool: Pool | PoolClient,
+  input: CheckProjectAccessInput,
+): Promise<CheckProjectAccessResult> {
+  try {
+    const project = await pool.query<{ organization_id: string }>(
+      'SELECT organization_id FROM projects WHERE project_id = $1',
+      [input.projectId],
+    );
+    const row = project.rows[0];
+    if (row?.organization_id !== input.organizationId) {
+      return { outcome: 'not_found' };
+    }
+    const access = await pool.query<{ allowed: boolean }>(
+      `SELECT (
+         EXISTS (
+           SELECT 1 FROM organization_members om
+           WHERE om.organization_id = $1 AND om.account_id = $3 AND om.role IN ('owner','admin')
+         )
+         OR EXISTS (
+           SELECT 1 FROM project_members pm
+           WHERE pm.project_id = $2 AND pm.account_id = $3
+         )
+       ) AS allowed`,
+      [input.organizationId, input.projectId, input.accountId],
+    );
+    return access.rows[0]?.allowed ? { outcome: 'allowed' } : { outcome: 'forbidden' };
+  } catch (error) {
+    throw toStableError(error);
+  }
+}
+
 /** Get a single project by primary key (scoped to its organization); null when absent. */
 export async function getProjectById(
   pool: Pool | PoolClient,
