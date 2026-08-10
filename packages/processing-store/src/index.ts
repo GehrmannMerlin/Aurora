@@ -21,6 +21,31 @@ export {
   type IssueSampleDecision,
 } from './issue-sample-decision.js';
 export { persistIssueContribution } from './issue-contribution-repository.js';
+export {
+  validateStateTransition,
+  updateIssueState,
+  updateIssueAssignee,
+  updateIssuePriority,
+  createIssueNote,
+  deleteIssueNote,
+  mergeIssues,
+  batchUpdateIssues,
+} from './issue-lifecycle-repository.js';
+export {
+  ISSUE_STATUSES,
+  ISSUE_PRIORITIES,
+  MAX_ISSUE_NOTE_LENGTH,
+  ALLOWED_STATUS_TRANSITIONS,
+  type IssueLifecycleResult,
+  type IssueBatchItem,
+  type IssueBatchResult,
+  type UpdateIssueStateInput,
+  type UpdateIssueAssigneeInput,
+  type UpdateIssuePriorityInput,
+  type CreateIssueNoteInput,
+  type DeleteIssueNoteInput,
+  type MergeIssuesInput,
+} from './issue-lifecycle-types.js';
 export type {
   PersistRequestEventSampleInput,
   PersistRequestEventSampleResult,
