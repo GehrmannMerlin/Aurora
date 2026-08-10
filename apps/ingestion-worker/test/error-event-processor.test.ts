@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
+import { computeErrorFingerprint } from '@aurora/processing-store';
 import {
   createErrorEventProcessor,
   mapPersistResultToWorkerResult,
@@ -60,9 +61,15 @@ describe('createErrorEventProcessor', () => {
     });
     const result = await processor.process(validInput(), new AbortController().signal);
     expect(result).toEqual({ outcome: 'processed' });
+    const expected = computeErrorFingerprint({
+      projectId: validInput().projectId,
+      body: validInput().event.body as Parameters<typeof computeErrorFingerprint>[0]['body'],
+    });
     expect(store).toHaveBeenCalledWith({
       projectId: validInput().projectId,
       eventEnvelope: validInput().event,
+      fingerprint: expected.fingerprint,
+      fingerprintVersion: expected.fingerprintVersion,
     });
   });
 

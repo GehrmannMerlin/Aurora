@@ -1,6 +1,6 @@
 import type { Pool } from 'pg';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { persistErrorEventOccurrence } from '@aurora/processing-store';
+import { computeErrorFingerprint, persistErrorEventOccurrence } from '@aurora/processing-store';
 import { createErrorEventProcessor } from '../../src/error-event-processor.js';
 import type { ProcessIngestionEventInput } from '../../src/processor.js';
 import {
@@ -25,6 +25,8 @@ interface OccurrenceRow {
   event_id: string;
   protocol_version: number;
   error_category: string;
+  fingerprint: string;
+  fingerprint_version: number;
 }
 
 function errorEnvelope(eventId: string): unknown {
@@ -106,6 +108,31 @@ describeDb('error event processor (real PostgreSQL 17)', () => {
     expect(row?.project_id).toBe(projectA);
     expect(row?.protocol_version).toBe(1);
     expect(row?.error_category).toBe('javascript');
+  });
+
+  it('persists the DAT-12 fingerprint computed by the processor', async () => {
+    const processor = createErrorEventProcessor({
+      persist: (input) => persistErrorEventOccurrence(pool, input),
+      backoff: { initialDelayMs: 100, maxDelayMs: 1000 },
+    });
+    const result = await processor.process(
+      processorInput(5, projectA, 'pg-proc-fp-1', errorEnvelope('pg-proc-fp-1')),
+      new AbortController().signal,
+    );
+    expect(result).toEqual({ outcome: 'processed' });
+
+    const row = await queryRow<OccurrenceRow>(
+      pool,
+      `SELECT fingerprint, fingerprint_version FROM error_event_occurrences WHERE event_id = 'pg-proc-fp-1'`,
+    );
+    const expected = computeErrorFingerprint({
+      projectId: projectA,
+      body: (
+        errorEnvelope('pg-proc-fp-1') as { body: Parameters<typeof computeErrorFingerprint>[0]['body'] }
+      ).body,
+    });
+    expect(row?.fingerprint).toBe(expected.fingerprint);
+    expect(row?.fingerprint_version).toBe(1);
   });
 
   it('treats a duplicate occurrence as idempotent success', async () => {

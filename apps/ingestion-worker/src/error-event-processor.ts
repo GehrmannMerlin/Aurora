@@ -1,5 +1,8 @@
-import type { IngestionErrorCode } from '@aurora/event-schema';
-import type { PersistErrorEventOccurrenceResult } from '@aurora/processing-store';
+import { parseErrorEventEnvelope, type IngestionErrorCode } from '@aurora/event-schema';
+import {
+  computeErrorFingerprint,
+  type PersistErrorEventOccurrenceResult,
+} from '@aurora/processing-store';
 import type {
   IngestionEventProcessor,
   ProcessIngestionEventInput,
@@ -26,6 +29,9 @@ export interface ErrorEventProcessorDiagnostics {
 export type PersistErrorEventOccurrenceFn = (input: {
   readonly projectId: string;
   readonly eventEnvelope: unknown;
+  /** DAT-12 group key computed by this processor (store validates + persists). */
+  readonly fingerprint?: string;
+  readonly fingerprintVersion?: number;
 }) => Promise<PersistErrorEventOccurrenceResult>;
 
 export interface CreateErrorEventProcessorInput {
@@ -98,9 +104,28 @@ export function createErrorEventProcessor(
       return { outcome: 'dead-letter', errorCode: 'invalid_event_type' };
     }
 
+    // DAT-12: compute the stable fingerprint from the validated error body so
+    // the occurrence carries its group key. This is the single computation point
+    // (DAT-13 reuses the same output for the Issue aggregate key). The store
+    // validates and persists it; on a parse failure (should not occur after
+    // Inbox validation) the store's own validation still dead-letters it.
+    let fingerprintInput: { fingerprint: string; fingerprintVersion: number } | undefined;
+    const parsed = parseErrorEventEnvelope(processorInput.event);
+    if (parsed.success) {
+      const fingerprint = computeErrorFingerprint({
+        projectId: processorInput.projectId,
+        body: parsed.data.body,
+      });
+      fingerprintInput = {
+        fingerprint: fingerprint.fingerprint,
+        fingerprintVersion: fingerprint.fingerprintVersion,
+      };
+    }
+
     const result = await input.persist({
       projectId: processorInput.projectId,
       eventEnvelope: processorInput.event,
+      ...(fingerprintInput ?? {}),
     });
 
     if (result.status === 'inserted') {
