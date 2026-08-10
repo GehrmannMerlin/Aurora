@@ -6,5 +6,5 @@ ADR: docs/adr/ADR-033-issue-aggregate-data-model.md (accepted)
 
 - [x] Task 1: Migration + types + package exports
 - [x] Task 2: decideIssueSample + persistIssueContribution repository
-- [ ] Task 3: Error Processor integration
+- [x] Task 3: Error Processor integration
 - [ ] Task 4: Real-PG integration + docs sync + leaf verification

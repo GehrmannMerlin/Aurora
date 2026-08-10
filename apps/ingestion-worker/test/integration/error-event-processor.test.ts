@@ -1,6 +1,10 @@
 import type { Pool } from 'pg';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { computeErrorFingerprint, persistErrorEventOccurrence } from '@aurora/processing-store';
+import {
+  computeErrorFingerprint,
+  persistErrorEventOccurrence,
+  persistIssueContribution,
+} from '@aurora/processing-store';
 import { createErrorEventProcessor } from '../../src/error-event-processor.js';
 import type { ProcessIngestionEventInput } from '../../src/processor.js';
 import {
@@ -80,11 +84,17 @@ describeDb('error event processor (real PostgreSQL 17)', () => {
     pool = createTestPool();
     await migrateUp();
     await ensureErrorOccurrenceTable();
+    await pool.query('DELETE FROM issue_samples');
+    await pool.query('DELETE FROM issue_event_applications');
+    await pool.query('DELETE FROM issues');
     await pool.query('DELETE FROM error_event_occurrences');
     await clearEventInbox(pool);
   });
 
   afterAll(async () => {
+    await pool.query('DELETE FROM issue_samples').catch(() => undefined);
+    await pool.query('DELETE FROM issue_event_applications').catch(() => undefined);
+    await pool.query('DELETE FROM issues').catch(() => undefined);
     await pool.query('DELETE FROM error_event_occurrences').catch(() => undefined);
     await clearEventInbox(pool).catch(() => undefined);
     await pool.end();
@@ -108,6 +118,102 @@ describeDb('error event processor (real PostgreSQL 17)', () => {
     expect(row?.project_id).toBe(projectA);
     expect(row?.protocol_version).toBe(1);
     expect(row?.error_category).toBe('javascript');
+  });
+
+  it('creates an Issue aggregate and first sample through the real contribution', async () => {
+    const processor = createErrorEventProcessor({
+      persist: (input) => persistErrorEventOccurrence(pool, input),
+      backoff: { initialDelayMs: 100, maxDelayMs: 1000 },
+      contributeIssue: (input) => persistIssueContribution(pool, input),
+    });
+    const eventId = 'pg-issue-fp-1';
+    const result = await processor.process(
+      processorInput(6, projectA, eventId, errorEnvelope(eventId)),
+      new AbortController().signal,
+    );
+    expect(result).toEqual({ outcome: 'processed' });
+
+    const issue = await queryRow<{
+      occurrence_count: string;
+      sample_count: number;
+      status: string;
+    }>(pool, `SELECT occurrence_count, sample_count, status FROM issues WHERE project_id = $1`, [
+      projectA,
+    ]);
+    expect(issue?.occurrence_count).toBe('1');
+    expect(issue?.sample_count).toBe(1);
+    expect(issue?.status).toBe('open');
+    const sample = await queryRow<{ sample_kind: string }>(
+      pool,
+      `SELECT sample_kind FROM issue_samples WHERE project_id = $1 AND event_id = $2`,
+      [projectA, eventId],
+    );
+    expect(sample?.sample_kind).toBe('first');
+    const application = await queryRow<{ event_id: string }>(
+      pool,
+      `SELECT event_id FROM issue_event_applications WHERE project_id = $1 AND event_id = $2`,
+      [projectA, eventId],
+    );
+    expect(application?.event_id).toBe(eventId);
+  });
+
+  it('aggregates distinct events of the same fingerprint without duplicating on replay', async () => {
+    const makeProcessor = () =>
+      createErrorEventProcessor({
+        persist: (input) => persistErrorEventOccurrence(pool, input),
+        backoff: { initialDelayMs: 100, maxDelayMs: 1000 },
+        contributeIssue: (input) => persistIssueContribution(pool, input),
+      });
+    const envelopeFor = (eventId: string) => ({
+      protocolVersion: 1,
+      eventId,
+      eventType: 'error' as const,
+      occurredAt: 1_800_000_000_100,
+      body: { category: 'javascript', error: { message: 'Distinct aggregate message' } },
+    });
+
+    // Isolated on projectB so this test does not collide with the other tests.
+    // Two distinct events of the same fingerprint -> one Issue, count = 2.
+    await makeProcessor().process(
+      processorInput(7, projectB, 'pg-issue-fp-a', envelopeFor('pg-issue-fp-a')),
+      new AbortController().signal,
+    );
+    await makeProcessor().process(
+      processorInput(7, projectB, 'pg-issue-fp-b', envelopeFor('pg-issue-fp-b')),
+      new AbortController().signal,
+    );
+
+    const issue = await queryRow<{ occurrence_count: string; sample_count: number }>(
+      pool,
+      `SELECT occurrence_count, sample_count FROM issues WHERE project_id = $1 AND normalized_title = 'Distinct aggregate message'`,
+      [projectB],
+    );
+    expect(issue?.occurrence_count).toBe('2');
+    expect(issue?.sample_count).toBe(2);
+    const applications = await queryRow<{ count: string }>(
+      pool,
+      `SELECT count(*)::text AS count FROM issue_event_applications WHERE project_id = $1`,
+      [projectB],
+    );
+    expect(applications?.count).toBe('2');
+    const samples = await queryRow<{ count: string }>(
+      pool,
+      `SELECT count(*)::text AS count FROM issue_samples WHERE project_id = $1`,
+      [projectB],
+    );
+    expect(samples?.count).toBe('2');
+
+    // Replaying the first event neither increments the count nor duplicates.
+    await makeProcessor().process(
+      processorInput(7, projectB, 'pg-issue-fp-a', envelopeFor('pg-issue-fp-a')),
+      new AbortController().signal,
+    );
+    const afterReplay = await queryRow<{ occurrence_count: string }>(
+      pool,
+      `SELECT occurrence_count FROM issues WHERE project_id = $1 AND normalized_title = 'Distinct aggregate message'`,
+      [projectB],
+    );
+    expect(afterReplay?.occurrence_count).toBe('2');
   });
 
   it('persists the DAT-12 fingerprint computed by the processor', async () => {

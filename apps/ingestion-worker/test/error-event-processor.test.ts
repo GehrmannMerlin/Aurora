@@ -1,5 +1,8 @@
 import { describe, expect, it, vi } from 'vitest';
-import { computeErrorFingerprint } from '@aurora/processing-store';
+import {
+  computeErrorFingerprint,
+  type PersistIssueContributionInput,
+} from '@aurora/processing-store';
 import {
   createErrorEventProcessor,
   mapPersistResultToWorkerResult,
@@ -231,5 +234,69 @@ describe('mapPersistResultToWorkerResult', () => {
     expect(() =>
       mapPersistResultToWorkerResult({ status: 'temporarily_unavailable' }),
     ).toThrow();
+  });
+
+  it('contributes the fingerprinted event to the Issue aggregate after occurrence persist', async () => {
+    const store: PersistErrorEventOccurrenceFn = vi.fn().mockResolvedValue({
+      status: 'inserted',
+      occurrenceId: '7',
+    });
+    const contribute = vi.fn().mockResolvedValue({ status: 'applied' });
+    const processor = createErrorEventProcessor({
+      persist: store,
+      backoff,
+      entropyProvider: zeroEntropy(),
+      now: () => NOW,
+      contributeIssue: contribute,
+    });
+    const result = await processor.process(validInput(), new AbortController().signal);
+    expect(result).toEqual({ outcome: 'processed' });
+    const fp = computeErrorFingerprint({
+      projectId: validInput().projectId,
+      body: validInput().event.body as Parameters<typeof computeErrorFingerprint>[0]['body'],
+    });
+    const captured = contribute.mock.calls[0]?.[0] as PersistIssueContributionInput;
+    expect(captured.fingerprint).toBe(fp.fingerprint);
+    expect(captured.fingerprintVersion).toBe(1);
+    expect(captured.category).toBe('javascript');
+    expect(captured.normalizedTitle).toBe(fp.normalizedTitle);
+    expect(captured.eventId).toBe(validInput().eventId);
+    expect(captured.sampleBody).toEqual(validInput().event.body);
+  });
+
+  it('maps a temporarily_unavailable Issue contribution to retry', async () => {
+    const store: PersistErrorEventOccurrenceFn = vi.fn().mockResolvedValue({
+      status: 'inserted',
+      occurrenceId: '7',
+    });
+    const contribute = vi.fn().mockResolvedValue({ status: 'temporarily_unavailable' });
+    const processor = createErrorEventProcessor({
+      persist: store,
+      backoff,
+      entropyProvider: zeroEntropy(),
+      now: () => NOW,
+      contributeIssue: contribute,
+    });
+    const result = await processor.process(validInput(), new AbortController().signal);
+    expect(result.outcome).toBe('retry');
+    if (result.outcome === 'retry') {
+      expect(result.errorCode).toBe('service_temporarily_unavailable');
+      expect(result.availableAt.getTime()).toBe(new Date('2026-08-03T00:00:00.050Z').getTime());
+    }
+  });
+
+  it('keeps contributing on a duplicate occurrence (cross-store convergence)', async () => {
+    const store: PersistErrorEventOccurrenceFn = vi.fn().mockResolvedValue({ status: 'duplicate' });
+    const contribute = vi.fn().mockResolvedValue({ status: 'applied' });
+    const processor = createErrorEventProcessor({
+      persist: store,
+      backoff,
+      entropyProvider: zeroEntropy(),
+      now: () => NOW,
+      contributeIssue: contribute,
+    });
+    const result = await processor.process(validInput(), new AbortController().signal);
+    expect(result).toEqual({ outcome: 'processed' });
+    expect(contribute).toHaveBeenCalledTimes(1);
   });
 });
