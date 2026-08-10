@@ -151,6 +151,29 @@ describe('computeErrorFingerprint', () => {
     );
   });
 
+  it('bounds the fingerprint to 1024 chars even for very long stack frame files', () => {
+    const longPath = 'static/js/' + 'very-long-path-segment-'.repeat(40) + '/app.js';
+    const result = computeErrorFingerprint({
+      projectId: 'p',
+      body: js({
+        name: 'Error',
+        message: 'boom',
+        stack: 'at f (https://cdn.test/' + longPath + ':123:4)',
+      }),
+    });
+    expect(result.fingerprint.length).toBeLessThanOrEqual(1024);
+    expect(result.fingerprint).toContain(':truncated');
+  });
+
+  it('preserves dotted version numbers and short numbers (does not over-normalize)', () => {
+    const result = computeErrorFingerprint({
+      projectId: 'p',
+      body: js({ name: 'Error', message: 'failed at 1.2.3 endpoint /api/items count 7' }),
+    });
+    expect(result.fingerprint).toContain('1.2.3');
+    expect(result.fingerprint).toContain('7');
+  });
+
   it('non-standard rejection reasons produce a deterministic canonical projection', () => {
     const body1: ErrorEventBody = {
       category: 'unhandled_rejection',

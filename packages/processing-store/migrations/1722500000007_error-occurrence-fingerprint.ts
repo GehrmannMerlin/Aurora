@@ -9,6 +9,12 @@ export const shorthands = undefined;
  * always populates `fingerprint`/`fingerprint_version` (computed by the error
  * processor or internally as a legacy-caller fallback), so both columns are
  * NOT NULL.
+ *
+ * Pre-production assumption: this runs while `error_event_occurrences` is empty
+ * (the error processor is not yet wired to a production composition root), so a
+ * bare NOT NULL column is safe. If this migration ever runs on a populated
+ * table, a backfill step (add nullable → backfill from `normalized_body` →
+ * SET NOT NULL) must be added first — flagged by DAT-12 leaf review N1.
  */
 export const up = (pgm: MigrationBuilder): void => {
   pgm.addColumn('error_event_occurrences', {

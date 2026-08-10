@@ -20,14 +20,17 @@ const REPLACEMENTS: readonly { readonly pattern: RegExp; readonly placeholder: s
   { pattern: /\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b/g, placeholder: ':email' },
   { pattern: /\b\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:?\d{2})?\b/g, placeholder: ':timestamp' },
   { pattern: /\b1[3-9]\d{9}\b/g, placeholder: ':phone' },
-  { pattern: /\b(?:\+\d{1,3}[-.\s]?)?(?:\(\d{2,4}\)[-.\s]?)?\d{2,4}[-.\s]\d{3,4}[-.\s]\d{3,4}\b/g, placeholder: ':phone' },
+  { pattern: /\+\d{1,3}[-.\s]?\d{2,4}[-.\s]?\d{3,4}[-.\s]?\d{3,4}\b/g, placeholder: ':phone' },
+  { pattern: /\b\(\d{2,4}\)[-.\s]?\d{3,4}[-.\s]?\d{4}\b/g, placeholder: ':phone' },
   { pattern: /\b[0-9a-f]{16,}\b/g, placeholder: ':hash' },
   { pattern: /\b\d{8,}\b/g, placeholder: ':number' },
   { pattern: /\b(?=[A-Za-z0-9]*[A-Za-z])(?=[A-Za-z0-9]*[0-9])[A-Za-z0-9]{16,}\b/g, placeholder: ':random' },
 ];
 
-/** Bounded component length for the fingerprint message (spec §5.4). */
+/** Bounded component lengths (spec §4.3): the total fingerprint stays ≤ 1024. */
 const MAX_MESSAGE_COMPONENT = 512;
+const MAX_KEYLOCATION_FILE = 256;
+const MAX_FINGERPRINT_LENGTH = 1024;
 const TRUNCATED_SUFFIX = ':truncated';
 
 /** Replace high-confidence dynamic values in free text with stable placeholders. */
@@ -150,12 +153,18 @@ function canonicalizeNonStandard(value: unknown, depth: number): string {
   if (typeof value === 'string') return normalizeText(value);
   if (typeof value === 'number' || typeof value === 'boolean') return String(value);
   if (Array.isArray(value)) {
-    return `[${value.map((item) => canonicalizeNonStandard(item, depth + 1)).join(',')}]`;
+    return '[' + value.map((item) => canonicalizeNonStandard(item, depth + 1)).join(',') + ']';
   }
   if (typeof value === 'object') {
     const record = value as Record<string, unknown>;
     const keys = Object.keys(record).sort();
-    return `{${keys.map((key) => `${key}:${canonicalizeNonStandard(record[key], depth + 1)}`).join(',')}}`;
+    return (
+      '{' +
+      keys
+        .map((key) => key + ':' + canonicalizeNonStandard(record[key], depth + 1))
+        .join(',') +
+      '}'
+    );
   }
   return ':unknown';
 }
@@ -190,18 +199,23 @@ function messageComponent(body: ErrorEventBody): string {
  * composition of spec §4.2: `v{version}|{type}|{keyLocation?}|{normalizedMessage}`.
  */
 export function computeErrorFingerprint(input: ErrorFingerprintInput): ErrorFingerprintResult {
-  const parts: string[] = [`v${String(ERROR_FINGERPRINT_VERSION)}`, computeType(input.body)];
+  const parts: string[] = ['v' + String(ERROR_FINGERPRINT_VERSION), computeType(input.body)];
   const stack = stackOf(input.body);
   if (stack !== undefined) {
     const keyFrame = selectKeyFrame(stack);
     if (keyFrame !== undefined) {
-      parts.push(`${projectFile(keyFrame.file)}:${String(keyFrame.line)}`);
+      parts.push(
+        truncate(projectFile(keyFrame.file), MAX_KEYLOCATION_FILE) + ':' + String(keyFrame.line),
+      );
     }
   }
   const message = messageComponent(input.body);
   parts.push(message);
+  const joined = parts.map(escapeComponent).join('|');
   return {
-    fingerprint: parts.map(escapeComponent).join('|'),
+    // Belt-and-suspenders: even if a component slipped past its bound, the total
+    // stays ≤ MAX_FINGERPRINT_LENGTH so the store's 1024-char column never overflows.
+    fingerprint: truncate(joined, MAX_FINGERPRINT_LENGTH),
     fingerprintVersion: ERROR_FINGERPRINT_VERSION,
     normalizedTitle: message,
   };
