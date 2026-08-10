@@ -163,6 +163,23 @@ describeDb('DAT-15 issue Query flow (real PostgreSQL 17 + Redis)', () => {
     await app.close();
   });
 
+  it('rejects a malformed cursor with a structural 400, not 500', async () => {
+    const app = buildApp();
+    const owner = await registerVerifiedActor(app, pool, `owner-${randomUUID()}@example.com`);
+    const projectId = await createProjectFor(pool, owner);
+
+    const { status, body } = await get(
+      app,
+      owner,
+      owner.organizationId,
+      projectId,
+      `?timeRange[start]=2026-08-10T00:00:00.000Z&timeRange[end]=2026-08-10T12:00:00.000Z&cursor=not-a-valid-cursor`,
+    );
+    expect(status).toBe(400);
+    expect(body).toMatchObject({ code: 'structural_error' });
+    await app.close();
+  });
+
   it('returns issue detail with samples and activity', async () => {
     const app = buildApp();
     const owner = await registerVerifiedActor(app, pool, `owner-${randomUUID()}@example.com`);

@@ -271,6 +271,24 @@ describeDb('platform-project-governance projects repository (real PostgreSQL 17)
     });
     expect(result).toEqual({ status: 'not_found' });
   });
+  it('updateProjectStatus rejects archiving a project that is not active or archived', async () => {
+    const { orgId, ownerId } = await createOrgWithOwner();
+    const created = await createProject(pool, {
+      orgId,
+      name: 'Trashed',
+      frameworkType: 'react',
+      createdBy: ownerId,
+    });
+    await pool.query(`UPDATE projects SET status = 'trash' WHERE project_id = $1`, [
+      created.projectId,
+    ]);
+    const result = await updateProjectStatus(pool, {
+      orgId,
+      projectId: created.projectId,
+      actorId: ownerId,
+    });
+    expect(result).toEqual({ status: 'state_machine_conflict', currentStatus: 'trash' });
+  });
   it('insertProjectMember validates project role and membership', async () => {
     const { orgId, ownerId } = await createOrgWithOwner();
     const memberId = await createTestAccount(pool, `member-${crypto.randomUUID()}@example.com`);
