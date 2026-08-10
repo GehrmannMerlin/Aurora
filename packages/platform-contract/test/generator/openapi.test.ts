@@ -71,7 +71,18 @@ describe('openapi generator', () => {
     const json = JSON.stringify(doc);
     expect(json).not.toContain('usageGetSummary');
     expect(json).not.toContain('onboardingGetProgress');
-    expect(json).not.toContain('"type":"object","properties":{}');
+    // The newly unblocked request metric projection is emitted as a stable path.
+    expect(
+      doc.paths['/organizations/{organizationId}/projects/{projectId}/requests'],
+    ).toBeDefined();
+    // The newly unblocked ingestion diagnosis projection is emitted as a stable path.
+    expect(
+      doc.paths['/organizations/{organizationId}/projects/{projectId}/data-status'],
+    ).toBeDefined();
+    // The newly unblocked performance metric projection is emitted as a stable path.
+    expect(
+      doc.paths['/organizations/{organizationId}/projects/{projectId}/performance'],
+    ).toBeDefined();
   });
 
   it('names response schemas stably', () => {

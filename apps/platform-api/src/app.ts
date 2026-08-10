@@ -43,6 +43,9 @@ import {
   handleRevokePrivateToken,
 } from './routes/private-tokens.js';
 import { handleListSecurityAudit } from './routes/audit.js';
+import { handleListRequestEndpoints } from './routes/requests.js';
+import { handleGetDataStatus } from './routes/diagnostics.js';
+import { handleListPerformancePages } from './routes/performance.js';
 import { handleListTrash, handleRestoreProject } from './routes/trash.js';
 import {
   handleInvitationLink,
@@ -244,6 +247,33 @@ export function buildPlatformApi(deps: PlatformApiDependencies): FastifyInstance
   app.get('/api/platform/v1/organizations/:organizationId/audit', async (request, reply) => {
     await handleListSecurityAudit(request, reply, routeContext);
   });
+
+  // DAT-16 C5 request monitoring query (first project-scoped route). Session +
+  // org membership + project-access gating live in the handler/guards.
+  app.get(
+    '/api/platform/v1/organizations/:organizationId/projects/:projectId/requests',
+    async (request, reply) => {
+      await handleListRequestEndpoints(request, reply, routeContext);
+    },
+  );
+
+  // DAT-20 C7 ingestion diagnosis status query (second project-scoped route).
+  // Session + org membership + project-access gating live in the handler/guards.
+  app.get(
+    '/api/platform/v1/organizations/:organizationId/projects/:projectId/data-status',
+    async (request, reply) => {
+      await handleGetDataStatus(request, reply, routeContext);
+    },
+  );
+
+  // DAT-17 C6 performance metric query projection (third project-scoped route).
+  // Session + org membership + project-access gating live in the handler/guards.
+  app.get(
+    '/api/platform/v1/organizations/:organizationId/projects/:projectId/performance',
+    async (request, reply) => {
+      await handleListPerformancePages(request, reply, routeContext);
+    },
+  );
 
   app.get('/api/platform/v1/organizations/:organizationId/trash', async (request, reply) => {
     await handleListTrash(request, reply, routeContext);

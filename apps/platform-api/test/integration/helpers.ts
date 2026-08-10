@@ -17,6 +17,15 @@ const credentialsMigrationsDir = fileURLToPath(
 const auditMigrationsDir = fileURLToPath(
   new URL('../../../../packages/platform-audit/migrations', import.meta.url),
 );
+const processingStoreMigrationsDir = fileURLToPath(
+  new URL('../../../../packages/processing-store/migrations', import.meta.url),
+);
+const ingestionInboxMigrationsDir = fileURLToPath(
+  new URL('../../../../packages/ingestion-inbox/migrations', import.meta.url),
+);
+const ingestionCredentialsMigrationsDir = fileURLToPath(
+  new URL('../../../../packages/ingestion-credentials/migrations', import.meta.url),
+);
 export function testDatabaseUrl(): string {
   const url = process.env.AURORA_TEST_DATABASE_URL;
   if (url === undefined) {
@@ -69,9 +78,11 @@ async function runMigrations(dir: string): Promise<void> {
 
 /**
  * Run all PLT-03 identity migrations plus the four PLT-04 data-package
- * migrations (organization, project-governance, credentials, audit) so the full
- * PLT-03/04 table set exists. Order is fixed: identity first (base tables), then
- * the packages that extend them (timestamp order). Idempotent.
+ * migrations (organization, project-governance, credentials, audit) AND the
+ * @aurora/processing-store migrations (request metric buckets / event samples /
+ * performance stores) so the full PLT-03/04 table set exists. Order is fixed:
+ * identity first (base tables), then the packages that extend them (timestamp
+ * order). Idempotent.
  */
 export async function runAllMigrations(): Promise<void> {
   await runMigrations(identityMigrationsDir);
@@ -79,6 +90,12 @@ export async function runAllMigrations(): Promise<void> {
   await runMigrations(projectGovernanceMigrationsDir);
   await runMigrations(credentialsMigrationsDir);
   await runMigrations(auditMigrationsDir);
+  await runMigrations(processingStoreMigrationsDir);
+  // DAT-20 ingestion diagnosis: the handler reads event_inbox (ingestion-inbox)
+  // and ingestion_client_credentials (ingestion-credentials), so those table
+  // sets must exist in the platform-api integration database too.
+  await runMigrations(ingestionInboxMigrationsDir);
+  await runMigrations(ingestionCredentialsMigrationsDir);
 }
 
 /**

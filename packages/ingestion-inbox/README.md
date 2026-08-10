@@ -12,6 +12,7 @@
 - 原子批次持久化 `persistBatch`：事务内插入 + `ON CONFLICT DO NOTHING`，区分 `inserted`/`duplicate`；
 - 原子领取 `claimAvailable`（`FOR UPDATE SKIP LOCKED`）、lease fencing（`lease_id`）、`renewLease`、`markProcessed`、`scheduleRetry`、`markDeadLettered`；
 - 死信人工重放 `replayDeadLettered`：单事件 `dead_lettered → pending`、`replay_generation` 新处理代次、`attemptCount` 重置、`operationId` 幂等、事务 + 行锁、项目隔离、最小操作记录表；
+- 只读接入诊断查询 `queryProjectInboxDiagnostics`（DAT-20）：按 `received_at` 半开窗口对 `event_inbox` 状态机按状态计数（byState 五值）并报告 latest 时间戳与最近死信 `last_error_code`（无新 Migration、只读状态/时间戳，不读 envelope）；
 - `node-pg-migrate` Migration 执行入口（显式命令，应用启动不自动迁移）；
 - 真实 PostgreSQL 17 集成测试（写侧 + 处理侧并发/租约/状态转换 + 人工重放）。
 
@@ -27,7 +28,7 @@
 
 ## 对外接口
 
-包根导出：`persistBatch`、`claimAvailable`、`renewLease`、`markProcessed`、`scheduleRetry`、`markDeadLettered`、`replayDeadLettered`、`IngestionInboxError`、`eventEnvelopeToJson`/`jsonToEventEnvelope`、`claimableWhereClause`/`expiredLeaseWhereClause`、`CLAIMABLE_STATES` 及公共类型。
+包根导出：`persistBatch`、`claimAvailable`、`renewLease`、`markProcessed`、`scheduleRetry`、`markDeadLettered`、`replayDeadLettered`、`queryProjectInboxDiagnostics`、`IngestionInboxError`、`eventEnvelopeToJson`/`jsonToEventEnvelope`、`claimableWhereClause`/`expiredLeaseWhereClause`、`CLAIMABLE_STATES` 及公共类型（`ProjectInboxDiagnostics`）。
 
 ```ts
 export interface IngestionInboxRepository {
@@ -70,6 +71,7 @@ AURORA_TEST_DATABASE_URL=... pnpm --filter @aurora/ingestion-inbox migrate  # �
 - [Inbox 数据模型正式规格](../../docs/architecture/ingestion-inbox-data-model.md)
 - [Inbox 处理侧 Repository 正式规格](../../docs/architecture/ingestion-inbox-processing-repository.md)
 - [死信人工重放核心正式规格](../../docs/architecture/ingestion-dead-letter-manual-replay.md)
+- [接入诊断状态查询正式规格](../../docs/architecture/ingestion-diagnostics-status-query.md)
 - [ADR-017 死信人工重放核心](../../docs/adr/ADR-017-ingestion-dead-letter-manual-replay.md)
 - [数据接入批次与接收结果协议](../../docs/protocol/ingestion-batch-and-receipt-contract.md)
 - [ADR-008 数据接入可靠缓冲](../../docs/adr/ADR-008-ingestion-durable-buffering.md)

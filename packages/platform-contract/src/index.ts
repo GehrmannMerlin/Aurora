@@ -28,5 +28,8 @@ export * from './project-governance/create.js';
 export * from './project-governance/trash.js';
 export * from './credentials/private-tokens.js';
 export * from './audit/security-audit.js';
+export * from './monitoring/request-metrics.js';
+export * from './monitoring/diagnostics.js';
+export * from './monitoring/performance.js';
 export * from './registry/operations.js';
 export * from './registry/manifest.js';

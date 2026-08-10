@@ -37,3 +37,5 @@ export type {
   ReplayDeadLetteredEventInput,
   ReplayDeadLetteredEventResult,
 } from './replay-types.js';
+export { queryProjectInboxDiagnostics } from './diagnostics-query.js';
+export type { ProjectInboxDiagnostics } from './diagnostics-types.js';

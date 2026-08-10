@@ -14,6 +14,7 @@
 - `verifyIngestionCredential` 固定验证顺序与稳定结果；
 - `normalizeOrigin` WHATWG URL 规范化；
 - 凭证生命周期服务：`createIngestionClientCredential`（单一事务、一次性完整密钥返回）、`rotateIngestionClientCredential`（`SELECT ... FOR UPDATE` 行锁、新 active + 旧 revoked 原子提交、原样继承策略与 expiresAt）、`disableIngestionClientCredential`/`enableIngestionClientCredential`/`revokeIngestionClientCredential`（事务内状态判断与写入、数据库时间判断过期、disabled 可恢复、revoked 永久终态）；
+- 只读安全状态查询 `queryProjectCredentialSafeStatus`（DAT-20）：按 status 计数 active/disabled/revoked 并报告 `latestCreatedAt`，只读 `status`/`created_at`，绝不读 `secret_digest`/`key_id`/origin/environment（无新 Migration）；`IngestionCredentialsError` 稳定错误类；
 - 单元测试与真实 PostgreSQL 17 集成测试。
 
 ## 非职责
@@ -37,7 +38,7 @@
 
 ## 对外接口
 
-包根导出：`parseIngestionClientKey`、`decodeSecretBytes`、`sha256Digest`、`timingSafeDigestEqual`、`DUMMY_DIGEST`、`normalizeOrigin`、`verifyIngestionCredential`、`IngestionCredentialVerificationResult`、`VerifyIngestionCredentialInput` 及格式常量；生命周期：`generateClientKeyPair`、`createIngestionClientCredential`、`rotateIngestionClientCredential`、`disableIngestionClientCredential`、`enableIngestionClientCredential`、`revokeIngestionClientCredential` 及生命周期输入/结果类型。
+包根导出：`parseIngestionClientKey`、`decodeSecretBytes`、`sha256Digest`、`timingSafeDigestEqual`、`DUMMY_DIGEST`、`normalizeOrigin`、`verifyIngestionCredential`、`IngestionCredentialVerificationResult`、`VerifyIngestionCredentialInput` 及格式常量；生命周期：`generateClientKeyPair`、`createIngestionClientCredential`、`rotateIngestionClientCredential`、`disableIngestionClientCredential`、`enableIngestionClientCredential`、`revokeIngestionClientCredential` 及生命周期输入/结果类型；DAT-20 只读诊断：`queryProjectCredentialSafeStatus`、`ProjectCredentialSafeStatus`、`IngestionCredentialsError`/`IngestionCredentialsErrorKind`。
 
 ```ts
 export type IngestionCredentialVerificationResult =
@@ -99,3 +100,4 @@ pnpm --filter @aurora/ingestion-credentials build            # 构建 dist
 - [数据接入传输与客户端上报密钥安全决策包](../../docs/security/ingestion-transport-and-client-credential.md)
 - [ADR-009 数据接入公开传输与客户端上报密钥安全语义](../../docs/adr/ADR-009-ingestion-transport-and-client-credential.md)
 - [ADR-010 数据库访问与 Migration 工具链](../../docs/adr/ADR-010-postgresql-access-and-migration-tooling.md)
+- [接入诊断状态查询正式规格](../../docs/architecture/ingestion-diagnostics-status-query.md)

@@ -1,9 +1,12 @@
 import type { FastifyReply } from 'fastify';
+import { IngestionInboxError } from '@aurora/ingestion-inbox';
+import { IngestionCredentialsError } from '@aurora/ingestion-credentials';
 import { PlatformIdentityError } from '@aurora/platform-identity';
 import { PlatformOrganizationError } from '@aurora/platform-organization';
 import { PlatformProjectGovernanceError } from '@aurora/platform-project-governance';
 import { PlatformCredentialsError } from '@aurora/platform-credentials';
 import { PlatformAuditError } from '@aurora/platform-audit';
+import { ProcessingStoreError } from '@aurora/processing-store';
 
 /** A single field-level validation error (RFC 9457 `fieldErrors`). */
 export interface AuroraProblemFieldError {
@@ -129,13 +132,19 @@ export function isStableDataError(
   | PlatformOrganizationError
   | PlatformProjectGovernanceError
   | PlatformCredentialsError
-  | PlatformAuditError {
+  | PlatformAuditError
+  | ProcessingStoreError
+  | IngestionInboxError
+  | IngestionCredentialsError {
   return (
     error instanceof PlatformIdentityError ||
     error instanceof PlatformOrganizationError ||
     error instanceof PlatformProjectGovernanceError ||
     error instanceof PlatformCredentialsError ||
-    error instanceof PlatformAuditError
+    error instanceof PlatformAuditError ||
+    error instanceof ProcessingStoreError ||
+    error instanceof IngestionInboxError ||
+    error instanceof IngestionCredentialsError
   );
 }
 

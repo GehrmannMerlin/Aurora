@@ -8,6 +8,12 @@ import {
   type CompatibilityBaseline,
 } from './compat.js';
 
+// The committed OpenAPI is a trusted, self-generated, version-controlled artifact. yaml's default
+// maxAliasCount (100) is a DoS guard for untrusted input; the generator emits anchors/aliases for
+// every repeated shared schema reference, and the count grows with the operation set (DAT-20's
+// diagnostics op crossed 100). 1000 keeps headroom for future stable ops without disabling the guard.
+const PARSE_OPTIONS = { maxAliasCount: 1000 } as const;
+
 // NOTE: from tooling/platform-contract-drift/src/index.ts, THREE levels up is required to reach
 // the repo root. The brief originally specified four ('../../../../'), which empirically resolves
 // to .claude/worktrees/docs/api/platform-openapi-v1.yaml (does not exist). Three levels up is
@@ -35,7 +41,7 @@ export function detectUnregisteredOperations(ops: readonly { operationId: string
 export async function assertPlatformDrift(): Promise<void> {
   const yamlText = await readFile(ARTIFACT, 'utf8');
   const body = yamlText.startsWith(HEADER) ? yamlText.slice(HEADER.length) : yamlText;
-  const doc = parse(body) as {
+  const doc = parse(body, PARSE_OPTIONS) as {
     paths?: Record<
       string,
       {

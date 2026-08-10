@@ -2,9 +2,11 @@ import type { FastifyReply, FastifyRequest } from 'fastify';
 import type { PoolClient } from 'pg';
 import type { SessionPayload } from '@aurora/platform-session';
 import type { RouteTargetId } from '@aurora/platform-contract';
+import { checkProjectAccess } from '@aurora/platform-project-governance';
 import { effectivePermissions, type EffectivePermissions } from '../authorization.js';
 import { sendProblem } from '../error-mapper.js';
-import { ServiceError } from '../service-error.js';
+import { sendMappedError, ServiceError } from '../service-error.js';
+import type { PlatformApiRouteDependencies } from '../route-deps.js';
 
 /**
  * Canonical UUID shape. The contract's branded-id schemas are length-bounded
@@ -139,6 +141,68 @@ export function orgNavigation(
   organizationId: string,
 ): readonly OrgNavigationTarget[] {
   return [{ routeId, pathParams: { organizationId }, query: {} }];
+}
+
+/**
+ * Build the project-scoped `navigationTargets` array for a project query
+ * response (DAT-16): a single closed Route Target carrying the current
+ * organization AND project in its path params (contract `navigationTargets`).
+ */
+export function projectNavigation(
+  routeId: RouteTargetId,
+  organizationId: string,
+  projectId: string,
+): readonly OrgNavigationTarget[] {
+  return [{ routeId, pathParams: { organizationId, projectId }, query: {} }];
+}
+
+/**
+ * Require project-scoped view access for a project-scoped query handler
+ * (DAT-16, spec §6). `checkProjectAccess` enforces the full privilege model in
+ * one place: an org manager (owner/admin) of the project's org is allowed
+ * regardless of a `project_members` row; any other org member must hold a
+ * `project_members` row for the project. It is called for EVERY caller (no
+ * org-manager short-circuit): the manager privilege is scoped to the path org,
+ * so a manager of org B must still get `not_found` for a project that belongs
+ * to org A — a short-circuit would leak another org's project data.
+ * `not_found` → closed 404 (an absent project AND a project owned by a
+ * different org both map here, so project existence is never leaked);
+ * `forbidden` → closed 403. A data-layer failure is mapped via `sendMappedError`
+ * (503 authority_unavailable for DB down). Returns true when access is allowed;
+ * otherwise a problem was already sent.
+ */
+export async function requireProjectAccess(
+  permissions: EffectivePermissions,
+  accountId: string,
+  organizationId: string,
+  projectId: string,
+  deps: PlatformApiRouteDependencies,
+  reply: FastifyReply,
+  requestId: string,
+): Promise<boolean> {
+  void permissions;
+  let result;
+  try {
+    result = await checkProjectAccess(deps.pool, { organizationId, projectId, accountId });
+  } catch (error) {
+    if (await sendMappedError(reply, requestId, error)) return false;
+    throw error;
+  }
+  if (result.outcome === 'not_found') {
+    await sendProblem(reply, requestId, 404, 'not_found', 'Project not found.');
+    return false;
+  }
+  if (result.outcome === 'forbidden') {
+    await sendProblem(
+      reply,
+      requestId,
+      403,
+      'authorization',
+      'You do not have permission to view this project.',
+    );
+    return false;
+  }
+  return true;
 }
 
 /**

@@ -24,3 +24,24 @@ export type {
   PersistPerformanceEventSampleResult,
 } from './performance-sample-types.js';
 export { persistPerformanceEventSample } from './performance-sample-repository.js';
+export type {
+  MethodAggregate,
+  OutcomeAggregate,
+  RequestEndpointPage,
+  RequestEndpointPageQuery,
+  RequestEndpointSummary,
+  RequestMetricQueryWindow,
+  RequestMetricSummary,
+} from './request-metric-query-types.js';
+export {
+  queryRequestEndpointPage,
+  queryRequestMetricSummary,
+} from './request-metric-query-repository.js';
+export type {
+  MetricAggregate,
+  PerformanceMetricQueryWindow,
+  PerformanceMetricSummary,
+} from './performance-metric-query-types.js';
+export { queryPerformanceMetricSummary } from './performance-metric-query-repository.js';
+export { queryProjectQueryableEvidence } from './queryable-evidence-query.js';
+export type { ProjectQueryableEvidence } from './queryable-evidence-query.js';
