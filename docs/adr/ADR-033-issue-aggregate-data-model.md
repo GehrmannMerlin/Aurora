@@ -293,3 +293,11 @@ Aurora 已接受 ADR-004/005/008/010/012/018/019/020/021，`@aurora/processing-s
 - **不修改本 ADR 决定细节**：生命周期列/`version`/活动/备注表结构按决定细节 3/4/5c/5d 实施；`by_time` 重开由 DAT-13 聚合侧保持；`by_version` 重开仍 deferred（契约缺口）；
 - 测试：`@aurora/processing-store` 129 单元 + 94 真实 PG 集成；`@aurora/platform-contract` 244 契约测试 + drift；`apps/platform-api` 20 文件 132 真实 PG+Redis 集成（含 5 个 issue Command 流：状态转移+自动分配+审计、read_only 403、跨项目 404、版本冲突 409、备注创建/删除）；全仓质量门禁通过；
 - 状态记录：issue lifecycle Commands implemented（DAT-14）；Issue Query not-started（DAT-15）；production worker composition not-started / blocked；`issue_activities`/`issue_notes` implemented。
+
+### 2026-08-10：DAT-15 Issue 列表/详情 Query 实施证据
+
+- 决策状态保持 `accepted`，实施状态保持 `implemented`；本 ADR 决定细节 19（DAT-15 只经公开 Query/投影接口读取，不直接执行写侧 SQL）由 DAT-15 实施（正式规格 [issue-query-projection.md](../architecture/issue-query-projection.md) approved + implemented）；
+- 实施内容：`@aurora/processing-store` 只读 Query Repository（`queryIssueListPage` keyset 分页 + 状态/负责人/优先级过滤 + 过滤感知 totalCount；`queryIssueDetail` 聚合/生命周期/合并投影；`queryIssueSamples` 有界安全样本 ≤100；`queryIssueActivity` 活动时间线 + 备注，已删除备注不返回 content）；`@aurora/platform-contract` `issuesListIssues`/`issuesGetIssueDetail` 从 `BLOCKED_OPERATIONS` 移入稳定 GET 操作（zod schemas + OpenAPI 重新生成 + drift）；`apps/platform-api` 2 个 Query handler（复用 DAT-16 `requireProjectAccess`，诚实 `empty`/`unavailable`，`environments`/`releases` 恒 `unavailable`）；
+- **不修改本 ADR 数据模型**；无新 Migration；不修改写侧 Repository/Worker/ingestion-api；
+- 测试：`@aurora/processing-store` 129 单元 + 103 真实 PG 集成（含 7 个 Issue Query）；`@aurora/platform-contract` 244 契约 + drift；`apps/platform-api` 21 文件真实 PG+Redis 集成（含 4 个 Issue Query 流：列表/详情样本+活动/跨项目 404/只读成员）；全仓质量门禁通过；
+- 状态记录：Issue list/detail Query implemented（DAT-15）；Console C3/C4（G11）not-started；`by_version` 重开、页面/环境/发布维度 deferred（契约缺口）。

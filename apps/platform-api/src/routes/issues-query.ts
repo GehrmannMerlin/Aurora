@@ -146,6 +146,8 @@ export async function handleListIssues(
   try {
     page = await queryIssueListPage(deps.pool, {
       projectId,
+      startIso: input.timeRange.start,
+      endIso: input.timeRange.end,
       ...(input.status === undefined ? {} : { status: input.status }),
       ...(input.assigneeAccountId === undefined ? {} : { assigneeAccountId: input.assigneeAccountId }),
       ...(input.priority === undefined ? {} : { priority: input.priority }),

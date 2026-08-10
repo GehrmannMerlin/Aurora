@@ -7546,7 +7546,11 @@
                             },
                             "sampleBody": {
                               "type": "object",
-                              "properties": {}
+                              "additionalProperties": {
+                                "type": "string",
+                                "minLength": 1,
+                                "maxLength": 4096
+                              }
                             }
                           }
                         }
@@ -7595,7 +7599,11 @@
                             },
                             "details": {
                               "type": "object",
-                              "properties": {}
+                              "additionalProperties": {
+                                "type": "string",
+                                "minLength": 1,
+                                "maxLength": 4096
+                              }
                             }
                           }
                         }

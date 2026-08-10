@@ -6,6 +6,9 @@
 
 export interface IssueListQuery {
   readonly projectId: string;
+  /** Half-open window [startIso, endIso) applied to `last_seen_at`. */
+  readonly startIso?: string;
+  readonly endIso?: string;
   readonly status?: string;
   readonly assigneeAccountId?: string;
   readonly priority?: string;

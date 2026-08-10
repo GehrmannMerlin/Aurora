@@ -87,6 +87,19 @@ describeDb('processing-store issue query repositories (real PostgreSQL 17)', () 
     expect(resolved.items[0]?.title).toBe('query-list-b');
   });
 
+  it('filters the list by the half-open last_seen window', async () => {
+    await seedIssue(pool, PROJECT, 'query-window-a', '2026-08-10T08:00:00.000Z');
+    await seedIssue(pool, PROJECT, 'query-window-b', '2026-08-10T09:00:00.000Z');
+    const inWindow = await queryIssueListPage(pool, {
+      projectId: PROJECT,
+      startIso: '2026-08-10T08:30:00.000Z',
+      endIso: '2026-08-10T09:30:00.000Z',
+    });
+    expect(inWindow.items.length).toBe(1);
+    expect(inWindow.items[0]?.title).toBe('query-window-b');
+    expect(inWindow.totalCount).toBe('1');
+  });
+
   it('returns an empty page for a project with no issues', async () => {
     const page = await queryIssueListPage(pool, { projectId: OTHER_PROJECT });
     expect(page.items).toHaveLength(0);

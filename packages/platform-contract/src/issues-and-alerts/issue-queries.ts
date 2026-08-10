@@ -1,4 +1,4 @@
-import { arr, num, obj, optional, str } from '../common/schema.js';
+import { arr, num, obj, optional, rec, str } from '../common/schema.js';
 import { IssueId, OrganizationId, ProjectId } from '../common/identifiers.js';
 import { timeRange, utcTimestamp } from '../common/time.js';
 import { queryResponse } from '../common/query.js';
@@ -92,11 +92,12 @@ const issueDetailSection = obj({
   data: optional(issueDetail),
 });
 
+/** Flat safe projection of a representative sample body (never raw PII/URLs). */
 const sampleProjection = obj({
   sampleId: str(1, 64),
   occurredAt: utcTimestamp,
   sampleKind: str(1, 32),
-  sampleBody: obj({}),
+  sampleBody: rec(str(1, 4096)),
 });
 
 const samplesSection = obj({
@@ -109,7 +110,7 @@ const activityEntry = obj({
   activityType: str(1, 32),
   createdAt: utcTimestamp,
   actorAccountId: optional(str(1, 64)),
-  details: obj({}),
+  details: rec(str(1, 4096)),
 });
 
 const noteProjection = obj({

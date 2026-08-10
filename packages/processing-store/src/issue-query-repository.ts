@@ -65,6 +65,14 @@ export async function queryIssueListPage(
   try {
     const where: string[] = ['project_id = $1'];
     const params: unknown[] = [query.projectId];
+    if (query.startIso !== undefined) {
+      params.push(query.startIso);
+      where.push(`last_seen_at >= $${String(params.length)}::timestamptz`);
+    }
+    if (query.endIso !== undefined) {
+      params.push(query.endIso);
+      where.push(`last_seen_at < $${String(params.length)}::timestamptz`);
+    }
     if (query.status !== undefined) {
       params.push(query.status);
       where.push(`status = $${String(params.length)}`);
@@ -78,6 +86,9 @@ export async function queryIssueListPage(
       where.push(`priority = $${String(params.length)}`);
     }
     const decoded = query.cursor === undefined ? null : decodeIssueCursor(query.cursor);
+    if (query.cursor !== undefined && decoded === null) {
+      throw new ProcessingStoreError('invalid_input', 'malformed issue cursor');
+    }
     if (decoded !== null) {
       params.push(decoded.lastSeenAtIso, decoded.issueId);
       where.push(`(last_seen_at, id) < ($` + String(params.length - 1) + `::timestamptz, $` + String(params.length) + `)`);
@@ -94,6 +105,14 @@ export async function queryIssueListPage(
     );
     const totalParams: unknown[] = [query.projectId];
     const totalWhere: string[] = ['project_id = $1'];
+    if (query.startIso !== undefined) {
+      totalParams.push(query.startIso);
+      totalWhere.push(`last_seen_at >= $${String(totalParams.length)}::timestamptz`);
+    }
+    if (query.endIso !== undefined) {
+      totalParams.push(query.endIso);
+      totalWhere.push(`last_seen_at < $${String(totalParams.length)}::timestamptz`);
+    }
     if (query.status !== undefined) {
       totalParams.push(query.status);
       totalWhere.push(`status = $${String(totalParams.length)}`);

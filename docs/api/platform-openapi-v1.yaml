@@ -4284,8 +4284,10 @@ components:
                         maxLength: 32
                       sampleBody:
                         type: object
-                        properties: {}
-                        additionalProperties: false
+                        additionalProperties:
+                          type: string
+                          minLength: 1
+                          maxLength: 4096
                     additionalProperties: false
                     required:
                       - sampleId
@@ -4322,8 +4324,10 @@ components:
                         maxLength: 64
                       details:
                         type: object
-                        properties: {}
-                        additionalProperties: false
+                        additionalProperties:
+                          type: string
+                          minLength: 1
+                          maxLength: 4096
                     additionalProperties: false
                     required:
                       - activityType
