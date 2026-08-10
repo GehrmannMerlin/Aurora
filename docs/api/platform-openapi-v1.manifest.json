@@ -34,7 +34,14 @@
     "auditListSecurityAudit",
     "requestsListEndpoints",
     "diagnosticsGetDataStatus",
-    "performanceListPages"
+    "performanceListPages",
+    "issuesUpdateState",
+    "issuesUpdateAssignee",
+    "issuesUpdatePriority",
+    "issuesCreateNote",
+    "issuesDeleteNote",
+    "issuesMerge",
+    "issuesBatchUpdate"
   ],
   "blocked": {
     "usageGetSummary": "B5 usage module absent (G10/G11)",
@@ -75,8 +82,8 @@
     "organization.trash": "stable",
     "project.onboarding": "blocked",
     "project.overview": "blocked",
-    "project.issues": "blocked",
-    "project.issue-detail": "blocked",
+    "project.issues": "stable",
+    "project.issue-detail": "stable",
     "project.requests": "stable",
     "project.performance": "stable",
     "project.data-status": "stable",
@@ -6675,6 +6682,361 @@
                         "type": "string",
                         "minLength": 1,
                         "maxLength": 512
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "issuesUpdateState": {
+        "responses": {
+          "200": {
+            "type": "object",
+            "required": [
+              "data"
+            ],
+            "properties": {
+              "data": {
+                "type": "object",
+                "required": [
+                  "status",
+                  "issueId",
+                  "version",
+                  "activity"
+                ],
+                "properties": {
+                  "status": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 16
+                  },
+                  "issueId": {
+                    "type": "string",
+                    "minLength": 3,
+                    "maxLength": 64
+                  },
+                  "version": {
+                    "type": "number",
+                    "minimum": 1
+                  },
+                  "activity": {
+                    "type": "object",
+                    "required": [
+                      "type",
+                      "createdAt"
+                    ],
+                    "properties": {
+                      "type": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 32
+                      },
+                      "createdAt": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 40
+                      },
+                      "actorAccountId": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 64
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "issuesUpdateAssignee": {
+        "responses": {
+          "200": {
+            "type": "object",
+            "required": [
+              "data"
+            ],
+            "properties": {
+              "data": {
+                "type": "object",
+                "required": [
+                  "status",
+                  "issueId",
+                  "version",
+                  "activity"
+                ],
+                "properties": {
+                  "status": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 16
+                  },
+                  "issueId": {
+                    "type": "string",
+                    "minLength": 3,
+                    "maxLength": 64
+                  },
+                  "version": {
+                    "type": "number",
+                    "minimum": 1
+                  },
+                  "activity": {
+                    "type": "object",
+                    "required": [
+                      "type",
+                      "createdAt"
+                    ],
+                    "properties": {
+                      "type": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 32
+                      },
+                      "createdAt": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 40
+                      },
+                      "actorAccountId": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 64
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "issuesUpdatePriority": {
+        "responses": {
+          "200": {
+            "type": "object",
+            "required": [
+              "data"
+            ],
+            "properties": {
+              "data": {
+                "type": "object",
+                "required": [
+                  "status",
+                  "issueId",
+                  "version",
+                  "activity"
+                ],
+                "properties": {
+                  "status": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 16
+                  },
+                  "issueId": {
+                    "type": "string",
+                    "minLength": 3,
+                    "maxLength": 64
+                  },
+                  "version": {
+                    "type": "number",
+                    "minimum": 1
+                  },
+                  "activity": {
+                    "type": "object",
+                    "required": [
+                      "type",
+                      "createdAt"
+                    ],
+                    "properties": {
+                      "type": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 32
+                      },
+                      "createdAt": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 40
+                      },
+                      "actorAccountId": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 64
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "issuesCreateNote": {
+        "responses": {
+          "200": {
+            "type": "object",
+            "required": [
+              "data"
+            ],
+            "properties": {
+              "data": {
+                "type": "object",
+                "required": [
+                  "status",
+                  "issueId",
+                  "noteId"
+                ],
+                "properties": {
+                  "status": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 16
+                  },
+                  "issueId": {
+                    "type": "string",
+                    "minLength": 3,
+                    "maxLength": 64
+                  },
+                  "noteId": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 64
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "issuesDeleteNote": {
+        "responses": {
+          "200": {
+            "type": "object",
+            "required": [
+              "data"
+            ],
+            "properties": {
+              "data": {
+                "type": "object",
+                "required": [
+                  "status",
+                  "issueId",
+                  "noteId"
+                ],
+                "properties": {
+                  "status": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 16
+                  },
+                  "issueId": {
+                    "type": "string",
+                    "minLength": 3,
+                    "maxLength": 64
+                  },
+                  "noteId": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 64
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "issuesMerge": {
+        "responses": {
+          "200": {
+            "type": "object",
+            "required": [
+              "data"
+            ],
+            "properties": {
+              "data": {
+                "type": "object",
+                "required": [
+                  "status",
+                  "issueId",
+                  "mergedIntoIssueId"
+                ],
+                "properties": {
+                  "status": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 16
+                  },
+                  "issueId": {
+                    "type": "string",
+                    "minLength": 3,
+                    "maxLength": 64
+                  },
+                  "mergedIntoIssueId": {
+                    "type": "string",
+                    "minLength": 3,
+                    "maxLength": 64
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "issuesBatchUpdate": {
+        "responses": {
+          "200": {
+            "type": "object",
+            "required": [
+              "data"
+            ],
+            "properties": {
+              "data": {
+                "type": "object",
+                "required": [
+                  "status",
+                  "succeeded",
+                  "failed",
+                  "items"
+                ],
+                "properties": {
+                  "status": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 16
+                  },
+                  "succeeded": {
+                    "type": "number",
+                    "minimum": 0
+                  },
+                  "failed": {
+                    "type": "number",
+                    "minimum": 0
+                  },
+                  "items": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "required": [
+                        "issueId",
+                        "ok"
+                      ],
+                      "properties": {
+                        "issueId": {
+                          "type": "string",
+                          "minLength": 3,
+                          "maxLength": 64
+                        },
+                        "ok": {
+                          "type": "boolean"
+                        },
+                        "code": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 32
+                        }
                       }
                     }
                   }

@@ -45,6 +45,13 @@ describe('operation registry and manifest', () => {
       'requestsListEndpoints',
       'diagnosticsGetDataStatus',
       'performanceListPages',
+      'issuesUpdateState',
+      'issuesUpdateAssignee',
+      'issuesUpdatePriority',
+      'issuesCreateNote',
+      'issuesDeleteNote',
+      'issuesMerge',
+      'issuesBatchUpdate',
     ]);
   });
 
@@ -154,8 +161,8 @@ describe('operation registry and manifest', () => {
       'organization.trash': 'stable',
       'project.onboarding': 'blocked',
       'project.overview': 'blocked',
-      'project.issues': 'blocked',
-      'project.issue-detail': 'blocked',
+      'project.issues': 'stable',
+      'project.issue-detail': 'stable',
       'project.requests': 'stable',
       'project.performance': 'stable',
       'project.data-status': 'stable',
