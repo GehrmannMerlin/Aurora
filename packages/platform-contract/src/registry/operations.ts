@@ -137,6 +137,12 @@ import {
   requestsListEndpointsQuery,
   requestsListEndpointsResponse,
 } from '../monitoring/request-metrics.js';
+import {
+  OPERATION_ID_GET_DATA_STATUS,
+  diagnosticsGetDataStatusPathParams,
+  diagnosticsGetDataStatusQuery,
+  diagnosticsGetDataStatusResponse,
+} from '../monitoring/diagnostics.js';
 
 export type HttpMethod = 'GET' | 'POST' | 'PATCH' | 'DELETE';
 export type AuthLevel = 'public' | 'intent' | 'session' | 'recent-verification';
@@ -904,6 +910,31 @@ export const PLATFORM_OPERATIONS: readonly OperationDef[] = [
     page: 'project.requests',
     tags: ['monitoring', 'requests'],
   },
+  {
+    operationId: OPERATION_ID_GET_DATA_STATUS,
+    domain: 'monitoring-projections',
+    authLevel: 'session',
+    method: 'GET',
+    path: '/api/platform/v1/organizations/:organizationId/projects/:projectId/data-status',
+    summary: 'Resolve the ingestion data-status diagnosis projection for a project (safe summaries)',
+    request: {
+      pathParams: diagnosticsGetDataStatusPathParams,
+      query: diagnosticsGetDataStatusQuery,
+      csrf: false,
+      idempotency: false,
+    },
+    responses: { 200: diagnosticsGetDataStatusResponse },
+    errorCodes: [
+      'structural_error',
+      'authentication',
+      'authorization',
+      'not_found',
+      'rate_limited',
+      'authority_unavailable',
+    ],
+    page: 'project.data-status',
+    tags: ['monitoring', 'diagnostics'],
+  },
 ];
 
 export interface BlockedOperation {
@@ -942,11 +973,6 @@ export const BLOCKED_OPERATIONS: readonly BlockedOperation[] = [
     operationId: 'performanceListPages',
     domain: 'monitoring-projections',
     reason: 'C6 performance metric Query absent (G11)',
-  },
-  {
-    operationId: 'diagnosticsGetDataStatus',
-    domain: 'monitoring-projections',
-    reason: 'C7 diagnostics Query absent (G11)',
   },
   {
     operationId: 'releasesListReleases',

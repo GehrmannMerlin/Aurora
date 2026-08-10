@@ -77,6 +77,10 @@ describe('openapi generator', () => {
     expect(
       doc.paths['/organizations/{organizationId}/projects/{projectId}/requests'],
     ).toBeDefined();
+    // The newly unblocked ingestion diagnosis projection is emitted as a stable path.
+    expect(
+      doc.paths['/organizations/{organizationId}/projects/{projectId}/data-status'],
+    ).toBeDefined();
   });
 
   it('names response schemas stably', () => {

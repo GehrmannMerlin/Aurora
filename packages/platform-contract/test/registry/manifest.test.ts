@@ -8,7 +8,7 @@ import { BLOCKED_OPERATIONS, PLATFORM_OPERATIONS } from '../../src/registry/oper
 import { ROUTE_TARGET_IDS, type RouteTargetId } from '../../src/common/navigation.js';
 
 describe('operation registry and manifest', () => {
-  it('exposes the thirty-three stable operations', () => {
+  it('exposes the thirty-four stable operations', () => {
     expect(PLATFORM_OPERATIONS.map((o) => o.operationId)).toEqual([
       'identityGetSession',
       'navigationGetContext',
@@ -43,6 +43,7 @@ describe('operation registry and manifest', () => {
       'credentialsRevokePrivateToken',
       'auditListSecurityAudit',
       'requestsListEndpoints',
+      'diagnosticsGetDataStatus',
     ]);
   });
 
@@ -156,7 +157,7 @@ describe('operation registry and manifest', () => {
       'project.issue-detail': 'blocked',
       'project.requests': 'stable',
       'project.performance': 'blocked',
-      'project.data-status': 'blocked',
+      'project.data-status': 'stable',
       'project.releases': 'blocked',
       'project.release-detail': 'unavailable',
       'project.source-maps': 'blocked',

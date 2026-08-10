@@ -32,7 +32,8 @@
     "credentialsCreatePrivateToken",
     "credentialsRevokePrivateToken",
     "auditListSecurityAudit",
-    "requestsListEndpoints"
+    "requestsListEndpoints",
+    "diagnosticsGetDataStatus"
   ],
   "blocked": {
     "usageGetSummary": "B5 usage module absent (G10/G11)",
@@ -41,7 +42,6 @@
     "issuesListIssues": "C3 processing-store Query contract absent (G11)",
     "issuesGetIssueDetail": "C4 processing-store Query contract absent (G11)",
     "performanceListPages": "C6 performance metric Query absent (G11)",
-    "diagnosticsGetDataStatus": "C7 diagnostics Query absent (G11)",
     "releasesListReleases": "C8 releases model not formalized (G12)",
     "sourceMapsListFiles": "C9 Source Map/object store not formalized (G12)",
     "alertsListRulesAndInstances": "C10 alert model not formalized (G12)",
@@ -79,7 +79,7 @@
     "project.issue-detail": "blocked",
     "project.requests": "stable",
     "project.performance": "blocked",
-    "project.data-status": "blocked",
+    "project.data-status": "stable",
     "project.releases": "blocked",
     "project.release-detail": "unavailable",
     "project.source-maps": "blocked",
@@ -3832,6 +3832,1991 @@
                         }
                       }
                     ]
+                  }
+                }
+              },
+              "meta": {
+                "type": "object",
+                "required": [
+                  "requestId",
+                  "readAt"
+                ],
+                "properties": {
+                  "requestId": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 64
+                  },
+                  "readAt": {
+                    "type": "string",
+                    "format": "date-time"
+                  },
+                  "normalizedQuery": {
+                    "type": "object",
+                    "additionalProperties": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 512
+                    }
+                  }
+                }
+              },
+              "allowedActions": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "enum": [
+                    "create",
+                    "read",
+                    "update",
+                    "delete",
+                    "manage",
+                    "restore",
+                    "transfer",
+                    "revoke"
+                  ],
+                  "openEnum": false
+                }
+              },
+              "navigationTargets": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "routeId",
+                    "pathParams",
+                    "query"
+                  ],
+                  "properties": {
+                    "routeId": {
+                      "type": "string",
+                      "enum": [
+                        "auth.register",
+                        "auth.verify-email",
+                        "auth.verify-email-confirm",
+                        "auth.login",
+                        "auth.forgot-password",
+                        "auth.reset-password",
+                        "invitation.accept",
+                        "account.security",
+                        "account.deletion-cancel",
+                        "account.deletion-confirm",
+                        "workspace.home",
+                        "organization.project-create",
+                        "organization.members",
+                        "organization.settings",
+                        "organization.usage",
+                        "organization.tokens",
+                        "organization.audit",
+                        "organization.trash",
+                        "project.onboarding",
+                        "project.overview",
+                        "project.issues",
+                        "project.issue-detail",
+                        "project.requests",
+                        "project.performance",
+                        "project.data-status",
+                        "project.releases",
+                        "project.release-detail",
+                        "project.source-maps",
+                        "project.alerts",
+                        "project.alert-rule-create",
+                        "project.alert-rule-edit",
+                        "project.alert-instance-detail",
+                        "project.access",
+                        "project.client-keys",
+                        "project.settings",
+                        "project.lifecycle",
+                        "account.notifications",
+                        "platform.resource-policies"
+                      ],
+                      "openEnum": false
+                    },
+                    "pathParams": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 256
+                      }
+                    },
+                    "query": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 512
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "diagnosticsGetDataStatus": {
+        "responses": {
+          "200": {
+            "type": "object",
+            "required": [
+              "data",
+              "meta",
+              "allowedActions",
+              "navigationTargets"
+            ],
+            "properties": {
+              "data": {
+                "type": "object",
+                "required": [
+                  "summary",
+                  "stages",
+                  "recent",
+                  "rejection",
+                  "credential",
+                  "queryable",
+                  "actionTargets"
+                ],
+                "properties": {
+                  "summary": {
+                    "anyOf": [
+                      {
+                        "type": "object",
+                        "required": [
+                          "status",
+                          "data"
+                        ],
+                        "properties": {
+                          "status": {
+                            "type": "string",
+                            "enum": [
+                              "available"
+                            ],
+                            "openEnum": false
+                          },
+                          "data": {
+                            "type": "object",
+                            "required": [
+                              "status",
+                              "asOf"
+                            ],
+                            "properties": {
+                              "status": {
+                                "type": "string",
+                                "enum": [
+                                  "receiving",
+                                  "processing",
+                                  "blocked",
+                                  "not_receiving",
+                                  "unknown"
+                                ],
+                                "openEnum": false
+                              },
+                              "primaryCause": {
+                                "type": "string",
+                                "enum": [
+                                  "credential_inactive",
+                                  "no_credential",
+                                  "no_received_events",
+                                  "processing_backlog"
+                                ],
+                                "openEnum": false
+                              },
+                              "asOf": {
+                                "type": "string",
+                                "format": "date-time"
+                              }
+                            }
+                          }
+                        }
+                      },
+                      {
+                        "type": "object",
+                        "required": [
+                          "status",
+                          "reason"
+                        ],
+                        "properties": {
+                          "status": {
+                            "type": "string",
+                            "enum": [
+                              "empty"
+                            ],
+                            "openEnum": false
+                          },
+                          "reason": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 256
+                          }
+                        }
+                      },
+                      {
+                        "type": "object",
+                        "required": [
+                          "status",
+                          "data",
+                          "missing"
+                        ],
+                        "properties": {
+                          "status": {
+                            "type": "string",
+                            "enum": [
+                              "partial"
+                            ],
+                            "openEnum": false
+                          },
+                          "data": {
+                            "type": "object",
+                            "required": [
+                              "status",
+                              "asOf"
+                            ],
+                            "properties": {
+                              "status": {
+                                "type": "string",
+                                "enum": [
+                                  "receiving",
+                                  "processing",
+                                  "blocked",
+                                  "not_receiving",
+                                  "unknown"
+                                ],
+                                "openEnum": false
+                              },
+                              "primaryCause": {
+                                "type": "string",
+                                "enum": [
+                                  "credential_inactive",
+                                  "no_credential",
+                                  "no_received_events",
+                                  "processing_backlog"
+                                ],
+                                "openEnum": false
+                              },
+                              "asOf": {
+                                "type": "string",
+                                "format": "date-time"
+                              }
+                            }
+                          },
+                          "missing": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 256
+                          }
+                        }
+                      },
+                      {
+                        "type": "object",
+                        "required": [
+                          "status",
+                          "data",
+                          "freshAt",
+                          "staleReason"
+                        ],
+                        "properties": {
+                          "status": {
+                            "type": "string",
+                            "enum": [
+                              "stale"
+                            ],
+                            "openEnum": false
+                          },
+                          "data": {
+                            "type": "object",
+                            "required": [
+                              "status",
+                              "asOf"
+                            ],
+                            "properties": {
+                              "status": {
+                                "type": "string",
+                                "enum": [
+                                  "receiving",
+                                  "processing",
+                                  "blocked",
+                                  "not_receiving",
+                                  "unknown"
+                                ],
+                                "openEnum": false
+                              },
+                              "primaryCause": {
+                                "type": "string",
+                                "enum": [
+                                  "credential_inactive",
+                                  "no_credential",
+                                  "no_received_events",
+                                  "processing_backlog"
+                                ],
+                                "openEnum": false
+                              },
+                              "asOf": {
+                                "type": "string",
+                                "format": "date-time"
+                              }
+                            }
+                          },
+                          "freshAt": {
+                            "type": "string",
+                            "minLength": 20,
+                            "maxLength": 24
+                          },
+                          "staleReason": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 256
+                          }
+                        }
+                      },
+                      {
+                        "type": "object",
+                        "required": [
+                          "status",
+                          "reason"
+                        ],
+                        "properties": {
+                          "status": {
+                            "type": "string",
+                            "enum": [
+                              "unavailable"
+                            ],
+                            "openEnum": false
+                          },
+                          "reason": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 256
+                          }
+                        }
+                      },
+                      {
+                        "type": "object",
+                        "required": [
+                          "status"
+                        ],
+                        "properties": {
+                          "status": {
+                            "type": "string",
+                            "enum": [
+                              "forbidden"
+                            ],
+                            "openEnum": false
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  "stages": {
+                    "anyOf": [
+                      {
+                        "type": "object",
+                        "required": [
+                          "status",
+                          "data"
+                        ],
+                        "properties": {
+                          "status": {
+                            "type": "string",
+                            "enum": [
+                              "available"
+                            ],
+                            "openEnum": false
+                          },
+                          "data": {
+                            "type": "object",
+                            "required": [
+                              "received",
+                              "processing",
+                              "processed",
+                              "deadLetter"
+                            ],
+                            "properties": {
+                              "received": {
+                                "type": "object",
+                                "required": [
+                                  "count"
+                                ],
+                                "properties": {
+                                  "count": {
+                                    "type": "number",
+                                    "minimum": 0
+                                  },
+                                  "latestAt": {
+                                    "type": "string",
+                                    "format": "date-time"
+                                  }
+                                }
+                              },
+                              "processing": {
+                                "type": "object",
+                                "required": [
+                                  "count"
+                                ],
+                                "properties": {
+                                  "count": {
+                                    "type": "number",
+                                    "minimum": 0
+                                  },
+                                  "latestAt": {
+                                    "type": "string",
+                                    "format": "date-time"
+                                  }
+                                }
+                              },
+                              "processed": {
+                                "type": "object",
+                                "required": [
+                                  "count"
+                                ],
+                                "properties": {
+                                  "count": {
+                                    "type": "number",
+                                    "minimum": 0
+                                  },
+                                  "latestAt": {
+                                    "type": "string",
+                                    "format": "date-time"
+                                  }
+                                }
+                              },
+                              "deadLetter": {
+                                "type": "object",
+                                "required": [
+                                  "count"
+                                ],
+                                "properties": {
+                                  "count": {
+                                    "type": "number",
+                                    "minimum": 0
+                                  },
+                                  "latestAt": {
+                                    "type": "string",
+                                    "format": "date-time"
+                                  },
+                                  "lastErrorCode": {
+                                    "type": "string",
+                                    "minLength": 1,
+                                    "maxLength": 64
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      },
+                      {
+                        "type": "object",
+                        "required": [
+                          "status",
+                          "reason"
+                        ],
+                        "properties": {
+                          "status": {
+                            "type": "string",
+                            "enum": [
+                              "empty"
+                            ],
+                            "openEnum": false
+                          },
+                          "reason": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 256
+                          }
+                        }
+                      },
+                      {
+                        "type": "object",
+                        "required": [
+                          "status",
+                          "data",
+                          "missing"
+                        ],
+                        "properties": {
+                          "status": {
+                            "type": "string",
+                            "enum": [
+                              "partial"
+                            ],
+                            "openEnum": false
+                          },
+                          "data": {
+                            "type": "object",
+                            "required": [
+                              "received",
+                              "processing",
+                              "processed",
+                              "deadLetter"
+                            ],
+                            "properties": {
+                              "received": {
+                                "type": "object",
+                                "required": [
+                                  "count"
+                                ],
+                                "properties": {
+                                  "count": {
+                                    "type": "number",
+                                    "minimum": 0
+                                  },
+                                  "latestAt": {
+                                    "type": "string",
+                                    "format": "date-time"
+                                  }
+                                }
+                              },
+                              "processing": {
+                                "type": "object",
+                                "required": [
+                                  "count"
+                                ],
+                                "properties": {
+                                  "count": {
+                                    "type": "number",
+                                    "minimum": 0
+                                  },
+                                  "latestAt": {
+                                    "type": "string",
+                                    "format": "date-time"
+                                  }
+                                }
+                              },
+                              "processed": {
+                                "type": "object",
+                                "required": [
+                                  "count"
+                                ],
+                                "properties": {
+                                  "count": {
+                                    "type": "number",
+                                    "minimum": 0
+                                  },
+                                  "latestAt": {
+                                    "type": "string",
+                                    "format": "date-time"
+                                  }
+                                }
+                              },
+                              "deadLetter": {
+                                "type": "object",
+                                "required": [
+                                  "count"
+                                ],
+                                "properties": {
+                                  "count": {
+                                    "type": "number",
+                                    "minimum": 0
+                                  },
+                                  "latestAt": {
+                                    "type": "string",
+                                    "format": "date-time"
+                                  },
+                                  "lastErrorCode": {
+                                    "type": "string",
+                                    "minLength": 1,
+                                    "maxLength": 64
+                                  }
+                                }
+                              }
+                            }
+                          },
+                          "missing": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 256
+                          }
+                        }
+                      },
+                      {
+                        "type": "object",
+                        "required": [
+                          "status",
+                          "data",
+                          "freshAt",
+                          "staleReason"
+                        ],
+                        "properties": {
+                          "status": {
+                            "type": "string",
+                            "enum": [
+                              "stale"
+                            ],
+                            "openEnum": false
+                          },
+                          "data": {
+                            "type": "object",
+                            "required": [
+                              "received",
+                              "processing",
+                              "processed",
+                              "deadLetter"
+                            ],
+                            "properties": {
+                              "received": {
+                                "type": "object",
+                                "required": [
+                                  "count"
+                                ],
+                                "properties": {
+                                  "count": {
+                                    "type": "number",
+                                    "minimum": 0
+                                  },
+                                  "latestAt": {
+                                    "type": "string",
+                                    "format": "date-time"
+                                  }
+                                }
+                              },
+                              "processing": {
+                                "type": "object",
+                                "required": [
+                                  "count"
+                                ],
+                                "properties": {
+                                  "count": {
+                                    "type": "number",
+                                    "minimum": 0
+                                  },
+                                  "latestAt": {
+                                    "type": "string",
+                                    "format": "date-time"
+                                  }
+                                }
+                              },
+                              "processed": {
+                                "type": "object",
+                                "required": [
+                                  "count"
+                                ],
+                                "properties": {
+                                  "count": {
+                                    "type": "number",
+                                    "minimum": 0
+                                  },
+                                  "latestAt": {
+                                    "type": "string",
+                                    "format": "date-time"
+                                  }
+                                }
+                              },
+                              "deadLetter": {
+                                "type": "object",
+                                "required": [
+                                  "count"
+                                ],
+                                "properties": {
+                                  "count": {
+                                    "type": "number",
+                                    "minimum": 0
+                                  },
+                                  "latestAt": {
+                                    "type": "string",
+                                    "format": "date-time"
+                                  },
+                                  "lastErrorCode": {
+                                    "type": "string",
+                                    "minLength": 1,
+                                    "maxLength": 64
+                                  }
+                                }
+                              }
+                            }
+                          },
+                          "freshAt": {
+                            "type": "string",
+                            "minLength": 20,
+                            "maxLength": 24
+                          },
+                          "staleReason": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 256
+                          }
+                        }
+                      },
+                      {
+                        "type": "object",
+                        "required": [
+                          "status",
+                          "reason"
+                        ],
+                        "properties": {
+                          "status": {
+                            "type": "string",
+                            "enum": [
+                              "unavailable"
+                            ],
+                            "openEnum": false
+                          },
+                          "reason": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 256
+                          }
+                        }
+                      },
+                      {
+                        "type": "object",
+                        "required": [
+                          "status"
+                        ],
+                        "properties": {
+                          "status": {
+                            "type": "string",
+                            "enum": [
+                              "forbidden"
+                            ],
+                            "openEnum": false
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  "recent": {
+                    "anyOf": [
+                      {
+                        "type": "object",
+                        "required": [
+                          "status",
+                          "data"
+                        ],
+                        "properties": {
+                          "status": {
+                            "type": "string",
+                            "enum": [
+                              "available"
+                            ],
+                            "openEnum": false
+                          },
+                          "data": {
+                            "type": "object",
+                            "required": [
+                              "receivedCount",
+                              "processedCount",
+                              "environmentBreakdown"
+                            ],
+                            "properties": {
+                              "latestReceivedAt": {
+                                "type": "string",
+                                "format": "date-time"
+                              },
+                              "receivedCount": {
+                                "type": "number",
+                                "minimum": 0
+                              },
+                              "latestProcessedAt": {
+                                "type": "string",
+                                "format": "date-time"
+                              },
+                              "processedCount": {
+                                "type": "number",
+                                "minimum": 0
+                              },
+                              "environmentBreakdown": {
+                                "anyOf": [
+                                  {
+                                    "type": "object",
+                                    "required": [
+                                      "status",
+                                      "data"
+                                    ],
+                                    "properties": {
+                                      "status": {
+                                        "type": "string",
+                                        "enum": [
+                                          "available"
+                                        ],
+                                        "openEnum": false
+                                      },
+                                      "data": {
+                                        "type": "object",
+                                        "properties": {}
+                                      }
+                                    }
+                                  },
+                                  {
+                                    "type": "object",
+                                    "required": [
+                                      "status",
+                                      "reason"
+                                    ],
+                                    "properties": {
+                                      "status": {
+                                        "type": "string",
+                                        "enum": [
+                                          "empty"
+                                        ],
+                                        "openEnum": false
+                                      },
+                                      "reason": {
+                                        "type": "string",
+                                        "minLength": 1,
+                                        "maxLength": 256
+                                      }
+                                    }
+                                  },
+                                  {
+                                    "type": "object",
+                                    "required": [
+                                      "status",
+                                      "data",
+                                      "missing"
+                                    ],
+                                    "properties": {
+                                      "status": {
+                                        "type": "string",
+                                        "enum": [
+                                          "partial"
+                                        ],
+                                        "openEnum": false
+                                      },
+                                      "data": {
+                                        "type": "object",
+                                        "properties": {}
+                                      },
+                                      "missing": {
+                                        "type": "string",
+                                        "minLength": 1,
+                                        "maxLength": 256
+                                      }
+                                    }
+                                  },
+                                  {
+                                    "type": "object",
+                                    "required": [
+                                      "status",
+                                      "data",
+                                      "freshAt",
+                                      "staleReason"
+                                    ],
+                                    "properties": {
+                                      "status": {
+                                        "type": "string",
+                                        "enum": [
+                                          "stale"
+                                        ],
+                                        "openEnum": false
+                                      },
+                                      "data": {
+                                        "type": "object",
+                                        "properties": {}
+                                      },
+                                      "freshAt": {
+                                        "type": "string",
+                                        "minLength": 20,
+                                        "maxLength": 24
+                                      },
+                                      "staleReason": {
+                                        "type": "string",
+                                        "minLength": 1,
+                                        "maxLength": 256
+                                      }
+                                    }
+                                  },
+                                  {
+                                    "type": "object",
+                                    "required": [
+                                      "status",
+                                      "reason"
+                                    ],
+                                    "properties": {
+                                      "status": {
+                                        "type": "string",
+                                        "enum": [
+                                          "unavailable"
+                                        ],
+                                        "openEnum": false
+                                      },
+                                      "reason": {
+                                        "type": "string",
+                                        "minLength": 1,
+                                        "maxLength": 256
+                                      }
+                                    }
+                                  },
+                                  {
+                                    "type": "object",
+                                    "required": [
+                                      "status"
+                                    ],
+                                    "properties": {
+                                      "status": {
+                                        "type": "string",
+                                        "enum": [
+                                          "forbidden"
+                                        ],
+                                        "openEnum": false
+                                      }
+                                    }
+                                  }
+                                ]
+                              }
+                            }
+                          }
+                        }
+                      },
+                      {
+                        "type": "object",
+                        "required": [
+                          "status",
+                          "reason"
+                        ],
+                        "properties": {
+                          "status": {
+                            "type": "string",
+                            "enum": [
+                              "empty"
+                            ],
+                            "openEnum": false
+                          },
+                          "reason": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 256
+                          }
+                        }
+                      },
+                      {
+                        "type": "object",
+                        "required": [
+                          "status",
+                          "data",
+                          "missing"
+                        ],
+                        "properties": {
+                          "status": {
+                            "type": "string",
+                            "enum": [
+                              "partial"
+                            ],
+                            "openEnum": false
+                          },
+                          "data": {
+                            "type": "object",
+                            "required": [
+                              "receivedCount",
+                              "processedCount",
+                              "environmentBreakdown"
+                            ],
+                            "properties": {
+                              "latestReceivedAt": {
+                                "type": "string",
+                                "format": "date-time"
+                              },
+                              "receivedCount": {
+                                "type": "number",
+                                "minimum": 0
+                              },
+                              "latestProcessedAt": {
+                                "type": "string",
+                                "format": "date-time"
+                              },
+                              "processedCount": {
+                                "type": "number",
+                                "minimum": 0
+                              },
+                              "environmentBreakdown": {
+                                "anyOf": [
+                                  {
+                                    "type": "object",
+                                    "required": [
+                                      "status",
+                                      "data"
+                                    ],
+                                    "properties": {
+                                      "status": {
+                                        "type": "string",
+                                        "enum": [
+                                          "available"
+                                        ],
+                                        "openEnum": false
+                                      },
+                                      "data": {
+                                        "type": "object",
+                                        "properties": {}
+                                      }
+                                    }
+                                  },
+                                  {
+                                    "type": "object",
+                                    "required": [
+                                      "status",
+                                      "reason"
+                                    ],
+                                    "properties": {
+                                      "status": {
+                                        "type": "string",
+                                        "enum": [
+                                          "empty"
+                                        ],
+                                        "openEnum": false
+                                      },
+                                      "reason": {
+                                        "type": "string",
+                                        "minLength": 1,
+                                        "maxLength": 256
+                                      }
+                                    }
+                                  },
+                                  {
+                                    "type": "object",
+                                    "required": [
+                                      "status",
+                                      "data",
+                                      "missing"
+                                    ],
+                                    "properties": {
+                                      "status": {
+                                        "type": "string",
+                                        "enum": [
+                                          "partial"
+                                        ],
+                                        "openEnum": false
+                                      },
+                                      "data": {
+                                        "type": "object",
+                                        "properties": {}
+                                      },
+                                      "missing": {
+                                        "type": "string",
+                                        "minLength": 1,
+                                        "maxLength": 256
+                                      }
+                                    }
+                                  },
+                                  {
+                                    "type": "object",
+                                    "required": [
+                                      "status",
+                                      "data",
+                                      "freshAt",
+                                      "staleReason"
+                                    ],
+                                    "properties": {
+                                      "status": {
+                                        "type": "string",
+                                        "enum": [
+                                          "stale"
+                                        ],
+                                        "openEnum": false
+                                      },
+                                      "data": {
+                                        "type": "object",
+                                        "properties": {}
+                                      },
+                                      "freshAt": {
+                                        "type": "string",
+                                        "minLength": 20,
+                                        "maxLength": 24
+                                      },
+                                      "staleReason": {
+                                        "type": "string",
+                                        "minLength": 1,
+                                        "maxLength": 256
+                                      }
+                                    }
+                                  },
+                                  {
+                                    "type": "object",
+                                    "required": [
+                                      "status",
+                                      "reason"
+                                    ],
+                                    "properties": {
+                                      "status": {
+                                        "type": "string",
+                                        "enum": [
+                                          "unavailable"
+                                        ],
+                                        "openEnum": false
+                                      },
+                                      "reason": {
+                                        "type": "string",
+                                        "minLength": 1,
+                                        "maxLength": 256
+                                      }
+                                    }
+                                  },
+                                  {
+                                    "type": "object",
+                                    "required": [
+                                      "status"
+                                    ],
+                                    "properties": {
+                                      "status": {
+                                        "type": "string",
+                                        "enum": [
+                                          "forbidden"
+                                        ],
+                                        "openEnum": false
+                                      }
+                                    }
+                                  }
+                                ]
+                              }
+                            }
+                          },
+                          "missing": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 256
+                          }
+                        }
+                      },
+                      {
+                        "type": "object",
+                        "required": [
+                          "status",
+                          "data",
+                          "freshAt",
+                          "staleReason"
+                        ],
+                        "properties": {
+                          "status": {
+                            "type": "string",
+                            "enum": [
+                              "stale"
+                            ],
+                            "openEnum": false
+                          },
+                          "data": {
+                            "type": "object",
+                            "required": [
+                              "receivedCount",
+                              "processedCount",
+                              "environmentBreakdown"
+                            ],
+                            "properties": {
+                              "latestReceivedAt": {
+                                "type": "string",
+                                "format": "date-time"
+                              },
+                              "receivedCount": {
+                                "type": "number",
+                                "minimum": 0
+                              },
+                              "latestProcessedAt": {
+                                "type": "string",
+                                "format": "date-time"
+                              },
+                              "processedCount": {
+                                "type": "number",
+                                "minimum": 0
+                              },
+                              "environmentBreakdown": {
+                                "anyOf": [
+                                  {
+                                    "type": "object",
+                                    "required": [
+                                      "status",
+                                      "data"
+                                    ],
+                                    "properties": {
+                                      "status": {
+                                        "type": "string",
+                                        "enum": [
+                                          "available"
+                                        ],
+                                        "openEnum": false
+                                      },
+                                      "data": {
+                                        "type": "object",
+                                        "properties": {}
+                                      }
+                                    }
+                                  },
+                                  {
+                                    "type": "object",
+                                    "required": [
+                                      "status",
+                                      "reason"
+                                    ],
+                                    "properties": {
+                                      "status": {
+                                        "type": "string",
+                                        "enum": [
+                                          "empty"
+                                        ],
+                                        "openEnum": false
+                                      },
+                                      "reason": {
+                                        "type": "string",
+                                        "minLength": 1,
+                                        "maxLength": 256
+                                      }
+                                    }
+                                  },
+                                  {
+                                    "type": "object",
+                                    "required": [
+                                      "status",
+                                      "data",
+                                      "missing"
+                                    ],
+                                    "properties": {
+                                      "status": {
+                                        "type": "string",
+                                        "enum": [
+                                          "partial"
+                                        ],
+                                        "openEnum": false
+                                      },
+                                      "data": {
+                                        "type": "object",
+                                        "properties": {}
+                                      },
+                                      "missing": {
+                                        "type": "string",
+                                        "minLength": 1,
+                                        "maxLength": 256
+                                      }
+                                    }
+                                  },
+                                  {
+                                    "type": "object",
+                                    "required": [
+                                      "status",
+                                      "data",
+                                      "freshAt",
+                                      "staleReason"
+                                    ],
+                                    "properties": {
+                                      "status": {
+                                        "type": "string",
+                                        "enum": [
+                                          "stale"
+                                        ],
+                                        "openEnum": false
+                                      },
+                                      "data": {
+                                        "type": "object",
+                                        "properties": {}
+                                      },
+                                      "freshAt": {
+                                        "type": "string",
+                                        "minLength": 20,
+                                        "maxLength": 24
+                                      },
+                                      "staleReason": {
+                                        "type": "string",
+                                        "minLength": 1,
+                                        "maxLength": 256
+                                      }
+                                    }
+                                  },
+                                  {
+                                    "type": "object",
+                                    "required": [
+                                      "status",
+                                      "reason"
+                                    ],
+                                    "properties": {
+                                      "status": {
+                                        "type": "string",
+                                        "enum": [
+                                          "unavailable"
+                                        ],
+                                        "openEnum": false
+                                      },
+                                      "reason": {
+                                        "type": "string",
+                                        "minLength": 1,
+                                        "maxLength": 256
+                                      }
+                                    }
+                                  },
+                                  {
+                                    "type": "object",
+                                    "required": [
+                                      "status"
+                                    ],
+                                    "properties": {
+                                      "status": {
+                                        "type": "string",
+                                        "enum": [
+                                          "forbidden"
+                                        ],
+                                        "openEnum": false
+                                      }
+                                    }
+                                  }
+                                ]
+                              }
+                            }
+                          },
+                          "freshAt": {
+                            "type": "string",
+                            "minLength": 20,
+                            "maxLength": 24
+                          },
+                          "staleReason": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 256
+                          }
+                        }
+                      },
+                      {
+                        "type": "object",
+                        "required": [
+                          "status",
+                          "reason"
+                        ],
+                        "properties": {
+                          "status": {
+                            "type": "string",
+                            "enum": [
+                              "unavailable"
+                            ],
+                            "openEnum": false
+                          },
+                          "reason": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 256
+                          }
+                        }
+                      },
+                      {
+                        "type": "object",
+                        "required": [
+                          "status"
+                        ],
+                        "properties": {
+                          "status": {
+                            "type": "string",
+                            "enum": [
+                              "forbidden"
+                            ],
+                            "openEnum": false
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  "rejection": {
+                    "anyOf": [
+                      {
+                        "type": "object",
+                        "required": [
+                          "status",
+                          "data"
+                        ],
+                        "properties": {
+                          "status": {
+                            "type": "string",
+                            "enum": [
+                              "available"
+                            ],
+                            "openEnum": false
+                          },
+                          "data": {
+                            "type": "object",
+                            "properties": {}
+                          }
+                        }
+                      },
+                      {
+                        "type": "object",
+                        "required": [
+                          "status",
+                          "reason"
+                        ],
+                        "properties": {
+                          "status": {
+                            "type": "string",
+                            "enum": [
+                              "empty"
+                            ],
+                            "openEnum": false
+                          },
+                          "reason": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 256
+                          }
+                        }
+                      },
+                      {
+                        "type": "object",
+                        "required": [
+                          "status",
+                          "data",
+                          "missing"
+                        ],
+                        "properties": {
+                          "status": {
+                            "type": "string",
+                            "enum": [
+                              "partial"
+                            ],
+                            "openEnum": false
+                          },
+                          "data": {
+                            "type": "object",
+                            "properties": {}
+                          },
+                          "missing": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 256
+                          }
+                        }
+                      },
+                      {
+                        "type": "object",
+                        "required": [
+                          "status",
+                          "data",
+                          "freshAt",
+                          "staleReason"
+                        ],
+                        "properties": {
+                          "status": {
+                            "type": "string",
+                            "enum": [
+                              "stale"
+                            ],
+                            "openEnum": false
+                          },
+                          "data": {
+                            "type": "object",
+                            "properties": {}
+                          },
+                          "freshAt": {
+                            "type": "string",
+                            "minLength": 20,
+                            "maxLength": 24
+                          },
+                          "staleReason": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 256
+                          }
+                        }
+                      },
+                      {
+                        "type": "object",
+                        "required": [
+                          "status",
+                          "reason"
+                        ],
+                        "properties": {
+                          "status": {
+                            "type": "string",
+                            "enum": [
+                              "unavailable"
+                            ],
+                            "openEnum": false
+                          },
+                          "reason": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 256
+                          }
+                        }
+                      },
+                      {
+                        "type": "object",
+                        "required": [
+                          "status"
+                        ],
+                        "properties": {
+                          "status": {
+                            "type": "string",
+                            "enum": [
+                              "forbidden"
+                            ],
+                            "openEnum": false
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  "credential": {
+                    "anyOf": [
+                      {
+                        "type": "object",
+                        "required": [
+                          "status",
+                          "data"
+                        ],
+                        "properties": {
+                          "status": {
+                            "type": "string",
+                            "enum": [
+                              "available"
+                            ],
+                            "openEnum": false
+                          },
+                          "data": {
+                            "type": "object",
+                            "required": [
+                              "activeCount",
+                              "disabledCount",
+                              "revokedCount"
+                            ],
+                            "properties": {
+                              "activeCount": {
+                                "type": "number",
+                                "minimum": 0
+                              },
+                              "disabledCount": {
+                                "type": "number",
+                                "minimum": 0
+                              },
+                              "revokedCount": {
+                                "type": "number",
+                                "minimum": 0
+                              },
+                              "latestCreatedAt": {
+                                "type": "string",
+                                "format": "date-time"
+                              }
+                            }
+                          }
+                        }
+                      },
+                      {
+                        "type": "object",
+                        "required": [
+                          "status",
+                          "reason"
+                        ],
+                        "properties": {
+                          "status": {
+                            "type": "string",
+                            "enum": [
+                              "empty"
+                            ],
+                            "openEnum": false
+                          },
+                          "reason": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 256
+                          }
+                        }
+                      },
+                      {
+                        "type": "object",
+                        "required": [
+                          "status",
+                          "data",
+                          "missing"
+                        ],
+                        "properties": {
+                          "status": {
+                            "type": "string",
+                            "enum": [
+                              "partial"
+                            ],
+                            "openEnum": false
+                          },
+                          "data": {
+                            "type": "object",
+                            "required": [
+                              "activeCount",
+                              "disabledCount",
+                              "revokedCount"
+                            ],
+                            "properties": {
+                              "activeCount": {
+                                "type": "number",
+                                "minimum": 0
+                              },
+                              "disabledCount": {
+                                "type": "number",
+                                "minimum": 0
+                              },
+                              "revokedCount": {
+                                "type": "number",
+                                "minimum": 0
+                              },
+                              "latestCreatedAt": {
+                                "type": "string",
+                                "format": "date-time"
+                              }
+                            }
+                          },
+                          "missing": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 256
+                          }
+                        }
+                      },
+                      {
+                        "type": "object",
+                        "required": [
+                          "status",
+                          "data",
+                          "freshAt",
+                          "staleReason"
+                        ],
+                        "properties": {
+                          "status": {
+                            "type": "string",
+                            "enum": [
+                              "stale"
+                            ],
+                            "openEnum": false
+                          },
+                          "data": {
+                            "type": "object",
+                            "required": [
+                              "activeCount",
+                              "disabledCount",
+                              "revokedCount"
+                            ],
+                            "properties": {
+                              "activeCount": {
+                                "type": "number",
+                                "minimum": 0
+                              },
+                              "disabledCount": {
+                                "type": "number",
+                                "minimum": 0
+                              },
+                              "revokedCount": {
+                                "type": "number",
+                                "minimum": 0
+                              },
+                              "latestCreatedAt": {
+                                "type": "string",
+                                "format": "date-time"
+                              }
+                            }
+                          },
+                          "freshAt": {
+                            "type": "string",
+                            "minLength": 20,
+                            "maxLength": 24
+                          },
+                          "staleReason": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 256
+                          }
+                        }
+                      },
+                      {
+                        "type": "object",
+                        "required": [
+                          "status",
+                          "reason"
+                        ],
+                        "properties": {
+                          "status": {
+                            "type": "string",
+                            "enum": [
+                              "unavailable"
+                            ],
+                            "openEnum": false
+                          },
+                          "reason": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 256
+                          }
+                        }
+                      },
+                      {
+                        "type": "object",
+                        "required": [
+                          "status"
+                        ],
+                        "properties": {
+                          "status": {
+                            "type": "string",
+                            "enum": [
+                              "forbidden"
+                            ],
+                            "openEnum": false
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  "queryable": {
+                    "anyOf": [
+                      {
+                        "type": "object",
+                        "required": [
+                          "status",
+                          "data"
+                        ],
+                        "properties": {
+                          "status": {
+                            "type": "string",
+                            "enum": [
+                              "available"
+                            ],
+                            "openEnum": false
+                          },
+                          "data": {
+                            "type": "object",
+                            "required": [
+                              "errorOccurrences",
+                              "requestMetricBuckets",
+                              "performanceMetricBuckets"
+                            ],
+                            "properties": {
+                              "errorOccurrences": {
+                                "type": "number",
+                                "minimum": 0
+                              },
+                              "requestMetricBuckets": {
+                                "type": "number",
+                                "minimum": 0
+                              },
+                              "performanceMetricBuckets": {
+                                "type": "number",
+                                "minimum": 0
+                              },
+                              "latestProcessedAt": {
+                                "type": "string",
+                                "format": "date-time"
+                              }
+                            }
+                          }
+                        }
+                      },
+                      {
+                        "type": "object",
+                        "required": [
+                          "status",
+                          "reason"
+                        ],
+                        "properties": {
+                          "status": {
+                            "type": "string",
+                            "enum": [
+                              "empty"
+                            ],
+                            "openEnum": false
+                          },
+                          "reason": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 256
+                          }
+                        }
+                      },
+                      {
+                        "type": "object",
+                        "required": [
+                          "status",
+                          "data",
+                          "missing"
+                        ],
+                        "properties": {
+                          "status": {
+                            "type": "string",
+                            "enum": [
+                              "partial"
+                            ],
+                            "openEnum": false
+                          },
+                          "data": {
+                            "type": "object",
+                            "required": [
+                              "errorOccurrences",
+                              "requestMetricBuckets",
+                              "performanceMetricBuckets"
+                            ],
+                            "properties": {
+                              "errorOccurrences": {
+                                "type": "number",
+                                "minimum": 0
+                              },
+                              "requestMetricBuckets": {
+                                "type": "number",
+                                "minimum": 0
+                              },
+                              "performanceMetricBuckets": {
+                                "type": "number",
+                                "minimum": 0
+                              },
+                              "latestProcessedAt": {
+                                "type": "string",
+                                "format": "date-time"
+                              }
+                            }
+                          },
+                          "missing": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 256
+                          }
+                        }
+                      },
+                      {
+                        "type": "object",
+                        "required": [
+                          "status",
+                          "data",
+                          "freshAt",
+                          "staleReason"
+                        ],
+                        "properties": {
+                          "status": {
+                            "type": "string",
+                            "enum": [
+                              "stale"
+                            ],
+                            "openEnum": false
+                          },
+                          "data": {
+                            "type": "object",
+                            "required": [
+                              "errorOccurrences",
+                              "requestMetricBuckets",
+                              "performanceMetricBuckets"
+                            ],
+                            "properties": {
+                              "errorOccurrences": {
+                                "type": "number",
+                                "minimum": 0
+                              },
+                              "requestMetricBuckets": {
+                                "type": "number",
+                                "minimum": 0
+                              },
+                              "performanceMetricBuckets": {
+                                "type": "number",
+                                "minimum": 0
+                              },
+                              "latestProcessedAt": {
+                                "type": "string",
+                                "format": "date-time"
+                              }
+                            }
+                          },
+                          "freshAt": {
+                            "type": "string",
+                            "minLength": 20,
+                            "maxLength": 24
+                          },
+                          "staleReason": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 256
+                          }
+                        }
+                      },
+                      {
+                        "type": "object",
+                        "required": [
+                          "status",
+                          "reason"
+                        ],
+                        "properties": {
+                          "status": {
+                            "type": "string",
+                            "enum": [
+                              "unavailable"
+                            ],
+                            "openEnum": false
+                          },
+                          "reason": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 256
+                          }
+                        }
+                      },
+                      {
+                        "type": "object",
+                        "required": [
+                          "status"
+                        ],
+                        "properties": {
+                          "status": {
+                            "type": "string",
+                            "enum": [
+                              "forbidden"
+                            ],
+                            "openEnum": false
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  "actionTargets": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "required": [
+                        "routeId",
+                        "pathParams",
+                        "query"
+                      ],
+                      "properties": {
+                        "routeId": {
+                          "type": "string",
+                          "enum": [
+                            "auth.register",
+                            "auth.verify-email",
+                            "auth.verify-email-confirm",
+                            "auth.login",
+                            "auth.forgot-password",
+                            "auth.reset-password",
+                            "invitation.accept",
+                            "account.security",
+                            "account.deletion-cancel",
+                            "account.deletion-confirm",
+                            "workspace.home",
+                            "organization.project-create",
+                            "organization.members",
+                            "organization.settings",
+                            "organization.usage",
+                            "organization.tokens",
+                            "organization.audit",
+                            "organization.trash",
+                            "project.onboarding",
+                            "project.overview",
+                            "project.issues",
+                            "project.issue-detail",
+                            "project.requests",
+                            "project.performance",
+                            "project.data-status",
+                            "project.releases",
+                            "project.release-detail",
+                            "project.source-maps",
+                            "project.alerts",
+                            "project.alert-rule-create",
+                            "project.alert-rule-edit",
+                            "project.alert-instance-detail",
+                            "project.access",
+                            "project.client-keys",
+                            "project.settings",
+                            "project.lifecycle",
+                            "account.notifications",
+                            "platform.resource-policies"
+                          ],
+                          "openEnum": false
+                        },
+                        "pathParams": {
+                          "type": "object",
+                          "additionalProperties": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 256
+                          }
+                        },
+                        "query": {
+                          "type": "object",
+                          "additionalProperties": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 512
+                          }
+                        }
+                      }
+                    }
                   }
                 }
               },
