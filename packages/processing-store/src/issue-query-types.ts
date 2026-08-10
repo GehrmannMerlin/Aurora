@@ -1,7 +1,7 @@
 /**
  * Read-only Issue query projections (DAT-15 spec §5/§6 / accepted ADR-033
  * decision detail 19). Only safe, project-scoped fields are exposed; raw error
- * messages, full emails, tokens and secrets never leave these types.
+ * messages, full emails and credential material never leave these types.
  */
 
 export interface IssueListQuery {
