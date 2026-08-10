@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { loadPlatformApiConfig } from '../src/config.js';
 import { problem } from '../src/error-mapper.js';
 import { maskEmail } from '../src/routes/register.js';
+import { parseIntentCookie, serializeIntentCookie } from '../src/intent-cookie.js';
 import {
   readSessionCookie,
   serializeSessionCookie,
@@ -19,6 +20,57 @@ describe('maskEmail', () => {
   });
   it('keeps a short local part masked', () => {
     expect(maskEmail('ab@example.com')).toBe('a***@example.com');
+  });
+  it('masks a local part with no @ domain', () => {
+    expect(maskEmail('no-at-sign')).toBe('no***');
+  });
+});
+
+describe('parseIntentCookie', () => {
+  it('returns null when the intent cookie is absent or malformed', () => {
+    expect(parseIntentCookie(undefined)).toBeNull();
+    expect(parseIntentCookie('other=x')).toBeNull();
+    expect(parseIntentCookie('aurora_intent=only-two:parts')).toBeNull();
+    expect(parseIntentCookie('aurora_intent=not_a_kind:tok:sec')).toBeNull();
+    expect(parseIntentCookie('aurora_intent=email_verification::sec')).toBeNull();
+    expect(parseIntentCookie('aurora_intent=email_verification:tok:')).toBeNull();
+  });
+
+  it('parses a well-formed intent cookie into the safe payload', () => {
+    expect(parseIntentCookie('aurora_intent=email_verification:tok123:sec456')).toEqual({
+      kind: 'email_verification',
+      token: 'tok123',
+      csrfSecret: 'sec456',
+    });
+  });
+});
+
+describe('serializeIntentCookie', () => {
+  const options = {
+    httpOnly: true as const,
+    secure: true,
+    sameSite: 'lax' as const,
+    path: '/' as const,
+  };
+
+  it('emits Secure, capitalized SameSite and a floored Max-Age', () => {
+    const header = serializeIntentCookie('email_verification', 'tok', 'sec', options, 1500);
+    expect(header).toContain('HttpOnly');
+    expect(header).toContain('Secure');
+    expect(header).toContain('SameSite=Lax');
+    expect(header).toContain('Max-Age=1');
+  });
+
+  it('omits Secure and floors a sub-second Max-Age to 0', () => {
+    const header = serializeIntentCookie(
+      'password_reset',
+      'tok',
+      'sec',
+      { ...options, secure: false },
+      500,
+    );
+    expect(header).not.toContain('Secure');
+    expect(header).toContain('Max-Age=0');
   });
 });
 

@@ -159,6 +159,44 @@ describeDb('DAT-14 issue lifecycle Commands (real PostgreSQL 17 + Redis)', () =>
     await app.close();
   });
 
+  it('rejects an invalid state transition (resolved → in_progress) with a field_validation 422', async () => {
+    const app = buildApp();
+    const owner = await registerVerifiedActor(app, pool, `owner-${randomUUID()}@example.com`);
+    const projectId = await createProjectFor(pool, owner);
+    const issueId = await seedIssue(pool, projectId);
+
+    const resolved = await postIssue(
+      app,
+      owner,
+      owner.organizationId,
+      projectId,
+      `${issueId}/state`,
+      {
+        status: 'resolved',
+        version: 1,
+        resolution: { reason: 'by_time', resolvedAtIso: new Date().toISOString() },
+        idempotencyKey: `idem-${randomUUID()}`,
+      },
+    );
+    expect(resolved.status).toBe(200);
+
+    const invalid = await postIssue(
+      app,
+      owner,
+      owner.organizationId,
+      projectId,
+      `${issueId}/state`,
+      {
+        status: 'in_progress',
+        version: 2,
+        idempotencyKey: `idem-${randomUUID()}`,
+      },
+    );
+    expect(invalid.status).toBe(422);
+    expect(invalid.body).toMatchObject({ code: 'field_validation' });
+    await app.close();
+  });
+
   it('a developer project member may transition state (not org-manager-only)', async () => {
     const app = buildApp();
     const owner = await registerVerifiedActor(app, pool, `owner-${randomUUID()}@example.com`);
