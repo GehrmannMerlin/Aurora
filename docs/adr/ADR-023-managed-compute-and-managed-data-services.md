@@ -1,8 +1,8 @@
 ---
 title: ADR-023：托管计算与托管数据服务（ECS/Fargate、RDS PostgreSQL、Redis 边界）
-status: proposed
-implementation-status: not-started
-approval-status: awaiting-user-approval
+status: accepted
+implementation-status: in-progress
+approval-status: approved
 owner: cloud/operations
 date: 2026-08-07
 last-reviewed: 2026-08-07
@@ -26,10 +26,10 @@ superseded-by: none
 
 ## 元数据
 
-- 状态：proposed
-- 决策状态：proposed
-- 实施状态：not-started
-- 审批状态：awaiting-user-approval
+- 状态：accepted
+- 决策状态：accepted
+- 实施状态：in-progress
+- 审批状态：approved
 - 日期：2026-08-07
 - Owner：cloud/operations
 - 适用范围：Aurora 第一版托管计算（ECS/Fargate）与托管数据服务（RDS PostgreSQL、ElastiCache Redis 提供边界）的基础资源决策
@@ -44,6 +44,8 @@ superseded-by: none
 ## 状态说明
 
 本 ADR 于 2026-08-07 由 G16/OPS-04 前置门禁创建为 `proposed / not-started / awaiting-user-approval`。门禁确认：托管容器与托管数据服务方向已 approved（TDR §3.1 方案 A），但精确服务形态（ECS/Fargate、RDS、ElastiCache）、提供边界与生产资源授权均无 accepted 决策。本 ADR 只记录候选与推荐，**在用户批准前不得创建任何计算或数据资源**；不创建 ECS/RDS/ECR、不运行 `writing-plans`。
+
+> **2026-08-11 用户批准（append-only）**：用户正式批准 G16/OPS-04 Cloud Decision Package 中 D8/D10 推荐方案，本 ADR 决策状态由 `proposed` 更新为 `accepted`，审批状态 `approved`。批准内容：**方案 A——ECS/Fargate 承载全部服务、RDS PostgreSQL 生产 Multi-AZ、ElastiCache（Redis Session/BullMQ/缓存）保留 integration boundary 但不立即 provision（等真实消费者 platform-api 存在 + 对应 backend ADR accepted 后落位）**。OPS-04 只创建 ECS cluster/ECR/任务角色/RDS 基础资源（IaC 定义），ECS Service 创建与部署设置属 OPS-05；本 ADR 不授权任何服务部署。实施状态由 OPS-04 实施进度承载（`in-progress`：IaC 基础工程已创建，实际资源与 OPS-05 部署仍 not-started）。
 
 ## 背景
 
@@ -105,7 +107,7 @@ Aurora 已批准 AWS 托管容器与托管数据服务模型、SPA=CloudFront+�
 
 ## 最终决策
 
-**待用户批准（Decision Package D10/D8）。** 本 ADR 推荐：方案 A——ECS/Fargate 承载全部服务、RDS PostgreSQL 生产 Multi-AZ、ElastiCache 保留 integration boundary 但不立即 provision。最终选择由用户批准后写入本 ADR 并更新为 `accepted`。
+**已批准（2026-08-11，Decision Package D10/D8）。** 用户批准方案 A：**ECS/Fargate 承载全部服务**（镜像存 ECR、按 digest 晋级、`awsvpc` 网络模式、私有子网、最小权限 task role）；**RDS PostgreSQL 生产 Multi-AZ**（`publicly_accessible=false`、卷加密、删除保护、自动备份 35 天 + PITR）；**ElastiCache Redis 保留 integration boundary 但不立即 provision**（真实消费者 platform-api + backend ADR accepted 后落位）；**私有 S3（Source Map 等）同样 defer 至真实消费者**。OPS-04 只建立 ECS cluster/ECR/任务角色/RDS 等基础资源（IaC 定义，供 OPS-05 作为部署目标）；ECS Service 创建、健康阈值、最小健康比例与部署熔断属 OPS-05。
 
 ## 结果与影响
 

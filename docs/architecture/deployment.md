@@ -24,6 +24,8 @@ review-cycle: infrastructure-or-release-change
 
 本文正式承载 approved AWS 单主云部署设计。它不证明 AWS 账号、VPC、ECS、数据库、Redis、Bucket、DNS、证书、KMS、秘密或 IaC 已经创建。主区域、精确拓扑、容量和成本为 `deferred`/`requires-benchmark`；AWS/IaC 长期选择为 `requires-accepted-adr`。
 
+> **2026-08-11 状态追加（append-only）**：G16/OPS-04 Cloud Decision Package 已获用户批准（D1—D11 全部推荐方案），ADR-022/023/024 转为 `accepted / in-progress`。正式 G16 基础设施方向确定为：**双 AWS 账号（非生产 + 生产）、主区域 `ap-southeast-1`（OPS-04 默认，provisioning 前可重新评估）、CDK TypeScript**；**ECS/Fargate 承载全部服务、RDS PostgreSQL 生产 Multi-AZ、ElastiCache Redis 与私有 S3（Source Map）defer 至真实消费者**；**CloudFront/ALB 边缘 + Route 53 + ACM + KMS/Secrets Manager + GitHub OIDC**（生产域名值由用户提供）。本文件正文的拓扑与边界继续有效；"主区域/账号/IaC 长期选择 requires-accepted-adr" 已由上述 accepted ADR 收口，精确子网/SG/WAF/Endpoint/KMS 策略仍属 `implementation-detail`，由 IaC 评审（OPS-04 实施）产生。阿里云单机 Public Preview 保持 `temporary-operational-snapshot`，在 OPS-05 建立 approved 部署流水线后替换/重新评估。
+
 ## 2. 环境与账号
 
 | 环境 | 用途 | 隔离要求 |

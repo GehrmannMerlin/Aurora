@@ -1,8 +1,8 @@
 ---
 title: ADR-022：AWS 账号、区域、网络与 IaC 基础设施基础
-status: proposed
-implementation-status: not-started
-approval-status: awaiting-user-approval
+status: accepted
+implementation-status: in-progress
+approval-status: approved
 owner: cloud/operations
 date: 2026-08-07
 last-reviewed: 2026-08-07
@@ -28,10 +28,10 @@ superseded-by: none
 
 ## 元数据
 
-- 状态：proposed
-- 决策状态：proposed
-- 实施状态：not-started
-- 审批状态：awaiting-user-approval
+- 状态：accepted
+- 决策状态：accepted
+- 实施状态：in-progress
+- 审批状态：approved
 - 日期：2026-08-07
 - Owner：cloud/operations
 - 适用范围：Aurora 第一版云基础设施的账号/环境模型、主区域、网络模型与 IaC 工具选择
@@ -47,6 +47,8 @@ superseded-by: none
 本 ADR 于 2026-08-07 由 G16/OPS-04 前置门禁创建为 `proposed / not-started / awaiting-user-approval`。门禁确认：AWS 主云方向已 approved（TDR §3.1 方案 A），但主区域（TDR-GAP-01）、账号/环境细化、网络模型与 IaC 工具均无 accepted 决策；deployment.md 明确这些增量为 `deferred`/`requires-accepted-adr`。本 ADR 只记录决策候选与推荐，**在用户批准前不得约束任何正式实现**；不创建 IaC、不运行 `writing-plans`。
 
 > **临时部署路径说明（2026-08-08，append-only 状态追加）**：用户选择先使用阿里云单主机公网预览桥接（`public-preview`，见 [public-preview-single-host-deployment.md](../operations/public-preview-single-host-deployment.md)），以获得当前已实现应用的公网运行环境。这**不表示用户接受或拒绝本 AWS 生产 ADR**；正式 G16 基础设施架构保持 `deferred`。本 ADR 继续 `proposed / not-started`，不因临时桥接改变状态；当 G16/OPS-05 重新评估正式基础设施时，再据此更新。
+
+> **2026-08-11 用户批准（append-only）**：用户正式批准 G16/OPS-04 Cloud Decision Package（[g16-ops04-cloud-decision-package.md](../operations/g16-ops04-cloud-decision-package.md)）中 D1—D11 全部推荐方案，本 ADR 决策状态由 `proposed` 更新为 `accepted`，审批状态 `approved`。批准内容：**双 AWS 账号（非生产 + 生产）、主区域 `ap-southeast-1`（新加坡，OPS-04 默认选择，正式 provisioning 前可重新评估）、CDK TypeScript**。实施状态由 OPS-04 实施进度承载（本文件标为 `in-progress`：IaC 基础工程已创建，实际 AWS 资源与 OPS-05 部署仍 not-started）。临时阿里云 Preview 桥接保持 `temporary-operational-snapshot`，不因本批准关闭；OPS-04 不因桥接标记 completed。
 
 ## 背景
 
@@ -107,7 +109,7 @@ Aurora 已批准 AWS 单一主云方向、至少非生产/生产账号隔离、�
 
 ## 最终决策
 
-**待用户批准（Decision Package D3/D2/D9）。** 本 ADR 推荐：双 AWS 账号（方案 A）、主区域由用户决策决定、CDK TypeScript（方案 A）。最终选择由用户在 G16/OPS-04 Cloud Decision Package 中批准后写入本 ADR 的"最终决策"，并把状态更新为 `accepted`。在此之前本 ADR 保持 `proposed`。
+**已批准（2026-08-11，Decision Package D1/D2/D3/D7/D9）。** 用户批准方案 A：**双 AWS 账号（非生产账号承载 staging/CI/PR，生产账号承载生产；各自独立 VPC/KMS/秘密/数据）**；**主区域 `ap-southeast-1`（新加坡）**——OPS-04 默认主区域，理由：国际区服务能力完整稳定、对中国大陆用户连接良好、避免 AWS 中国区 ICP/独立账号负担；该值作为 IaC 配置项可在正式 provisioning 前重新评估（数据驻留/合规要求变化时）**；IaC 工具 **AWS CDK（TypeScript）**。生产与非生产账号 ID 作为环境配置输入（`CDK_*`/部署环境变量），不硬编码进仓库。
 
 ## 结果与影响
 

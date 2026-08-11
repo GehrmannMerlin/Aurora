@@ -1,8 +1,8 @@
 ---
 title: Aurora AWS 区域、账号、网络与 IaC 基础设施基础（OPS-04）
-status: proposed
-implementation-status: not-started
-approval-status: awaiting-user-approval
+status: approved
+implementation-status: in-progress
+approval-status: approved
 owner: cloud/operations
 created: 2026-08-07
 last-reviewed: 2026-08-07
@@ -33,7 +33,7 @@ review-cycle: cloud-foundation-or-approval
 
 本文是 OPS-04 叶子模块（AWS region/account/network/IaC foundation）的正式规格草案。它把已批准部署架构 [deployment.md](deployment.md) 中标记为 `deferred`/`requires-accepted-adr` 的增量——主区域、账号/环境细化、网络模型、IaC 工具、托管计算、托管 PostgreSQL、Redis/对象存储提供边界、秘密与加密、边缘/DNS/TLS——正式化为可审批的基础设施边界。
 
-**当前状态**：`status: proposed`、`implementation-status: not-started`、`approval-status: awaiting-user-approval`。本文不授权创建任何真实 AWS 资源、不授权编写 IaC 工程、不进入 `writing-plans`。只有用户对本轮 Cloud Decision Package（见[决策包](#19-待用户批准决策包索引)）明确批准，并更新 required ADR 为 `accepted` 后，本文才转为 `approved` 并可作为后续 OPS-05 与 IaC 实施的权威依据。
+**当前状态**：`status: approved`、`implementation-status: in-progress`、`approval-status: approved`（2026-08-11 用户批准 [Cloud Decision Package](../operations/g16-ops04-cloud-decision-package.md) D1—D11 全部推荐方案；required ADR-022/023/024 已同步为 `accepted`）。本文现可作为 OPS-04 实施与后续 OPS-05 的权威依据。本增量实现只建立 **IaC 基础工程与基础设施边界契约**（`tooling/aws-infra`，CDK TypeScript，经 `cdk synth` 验证），**不创建任何真实 AWS 资源、不购买域名、不运行 OPS-05 部署**；实际 provisioning 与 ECS Service 部署属 OPS-05。
 
 **临时部署路径（2026-08-08，状态追加）**：用户选择先使用阿里云单主机公网预览桥接（`public-preview`，见 [public-preview-single-host-deployment.md](../operations/public-preview-single-host-deployment.md)），以获得当前已实现应用的公网运行环境。本桥接不改变本文状态，不表示用户接受或拒绝本 OPS-04 正式基础设施方向；正式 G16 基础设施架构保持 `deferred`。OPS-04 不因本桥接标记 completed；当 G16/OPS-05 重新评估正式基础设施时，再更新本文。
 
