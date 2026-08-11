@@ -31,4 +31,14 @@ describe('runbook contract', () => {
       expect(content, `owner for ${rule.id}`).toMatch(/^owner: /m);
     }
   });
+
+  it('keeps the OPS-07 backup/restore/DR runbook present with full frontmatter', () => {
+    const path = join(RUNBOOKS_DIR, 'backup-restore-dr.md');
+    expect(existsSync(path), 'missing backup-restore-dr.md').toBe(true);
+    const content = readFileSync(path, 'utf8');
+    expect(content).toMatch(/^---\n/);
+    expect(content).toMatch(/^title: /m);
+    expect(content).toMatch(/^alert-ids: /m);
+    expect(content).toMatch(/^owner: /m);
+  });
 });

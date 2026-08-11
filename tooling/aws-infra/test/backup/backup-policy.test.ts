@@ -22,6 +22,15 @@ describe('backup policy', () => {
     expect(AURORA_BACKUP_POLICY.crossRegionCopy.targetRegion).toBeUndefined();
   });
 
+  it('keeps RPO/RTO targets consistent with test-strategy §6 and 测试/部署设计 §11.1', () => {
+    // single-region Multi-AZ: RPO <= 5min, RTO <= 60min
+    expect(AURORA_BACKUP_POLICY.targets.singleRegionRpoSeconds).toBeLessThanOrEqual(300);
+    expect(AURORA_BACKUP_POLICY.targets.singleRegionRtoSeconds).toBeLessThanOrEqual(3600);
+    // regional: RPO <= 24h, RTO <= 8h
+    expect(AURORA_BACKUP_POLICY.targets.regionalRpoSeconds).toBeLessThanOrEqual(86400);
+    expect(AURORA_BACKUP_POLICY.targets.regionalRtoSeconds).toBeLessThanOrEqual(28800);
+  });
+
   it('validates the frozen policy', () => {
     expect(validateBackupPolicy(AURORA_BACKUP_POLICY)).toEqual([]);
   });
