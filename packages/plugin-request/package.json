@@ -1,7 +1,6 @@
 {
   "name": "@aurora/plugin-request",
   "version": "0.0.0",
-  "private": true,
   "type": "module",
   "description": "Aurora browser request capture plugin",
   "sideEffects": false,
@@ -40,5 +39,8 @@
     "@vitest/coverage-v8": "4.1.10",
     "typescript": "6.0.3",
     "vitest": "4.1.10"
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }
