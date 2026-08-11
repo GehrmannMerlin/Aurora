@@ -63,3 +63,13 @@ export {
   type SdkSamplingContext,
   type SdkSamplingDecision,
 } from './sampling.js';
+export {
+  createSdkDeliveryQueue,
+  DEFAULT_DELIVERY_QUEUE_CAPACITY,
+  type SdkDeliveryQueue,
+  type SdkDeliveryQueueOptions,
+  type SdkEnqueueCode,
+  type SdkEnqueueResult,
+  type SdkQueuedEvent,
+} from './delivery-queue.js';
+export { buildDeliveryBatch, type SdkBatchBuildFailure, type SdkBatchBuildResult } from './batch-builder.js';
