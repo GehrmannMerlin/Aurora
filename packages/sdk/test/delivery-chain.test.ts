@@ -128,6 +128,62 @@ describe('createSdkDeliveryChain', () => {
     expect(chain.getDiagnostics().some((d) => d.code === 'batch_dropped')).toBe(true);
   });
 
+  it('retries a retryable HTTP 429 up to maxRetries', async () => {
+    let sends = 0;
+    const chain = createSdkDeliveryChain(
+      { clientKey: 'k', environment: null },
+      {
+        transport: {
+          send: async () => {
+            sends += 1;
+            return { kind: 'http_error', status: 429, retryAfterMs: 1000 };
+          },
+        },
+        maxRetries: 2,
+        schedule: (fn) => fn(),
+        now: () => 1_000,
+        entropy: () => 0,
+      },
+    );
+    chain.enqueue(errorEnvelope('e1'));
+    const result = await chain.flush();
+    expect(sends).toBe(3); // first + 2 retries
+    expect(result.eventsDropped).toBe(1); // retry budget exhausted
+    expect(chain.size).toBe(0);
+  });
+
+  it('handles an http_error with a per-event receipt', async () => {
+    const sent: string[][] = [];
+    const attempts: Record<string, number> = {};
+    const chain = createSdkDeliveryChain(
+      { clientKey: 'k', environment: null },
+      {
+        transport: {
+          send: async (request) => {
+            sent.push(request.events.map((e) => e.eventId));
+            const states = request.events.map((e) => {
+              const count = (attempts[e.eventId] ?? 0) + 1;
+              attempts[e.eventId] = count;
+              return e.eventId === 'retry' && count === 1 ? 'temporarily_failed' : 'accepted';
+            });
+            return { kind: 'http_error', status: 429, retryAfterMs: 100, receipt: receiptFor(request.events, states) };
+          },
+        },
+        maxRetries: 2,
+        schedule: (fn) => fn(),
+        now: () => 1_000,
+        entropy: () => 0,
+      },
+    );
+    chain.enqueue(errorEnvelope('retry'));
+    const result = await chain.flush();
+    expect(sent).toHaveLength(2);
+    expect(sent[0]).toEqual(['retry']);
+    expect(sent[1]).toEqual(['retry']);
+    expect(result.eventsDropped).toBe(0);
+    expect(chain.size).toBe(0);
+  });
+
   it('handles a partial receipt per-event: accepted done, permanent dropped, temporary retried', async () => {
     const sent: string[][] = [];
     const attempts: Record<string, number> = {};

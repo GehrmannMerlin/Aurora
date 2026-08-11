@@ -22,7 +22,7 @@ function createProbePlugin(): Probe {
     initialize(context): void {
       const contextWithTrail = context as { recordActivity?: (entry: unknown) => unknown };
       const captured: ProbeContext = {
-        submitEvent: context.submitEvent as (input: unknown) => unknown,
+        submitEvent: context.submitEvent,
       };
       if (contextWithTrail.recordActivity !== undefined) {
         captured.recordActivity = contextWithTrail.recordActivity;
@@ -155,17 +155,21 @@ describe('createAuroraSdk', () => {
   it('wires accepted events into the delivery chain via an injected transport', async () => {
     const sent: string[][] = [];
     const transport = {
-      send: async (request: { events: readonly { eventId: string }[] }) => {
+      send: (request: { events: readonly { eventId: string }[] }) => {
         sent.push(request.events.map((e) => e.eventId));
-        return {
+        return Promise.resolve({
           kind: 'success' as const,
           status: 200,
           receipt: {
             batchState: 'accepted' as const,
             retryable: false,
-            perEventResults: request.events.map((e) => ({ eventId: e.eventId, state: 'accepted' as const, retryable: false })),
+            perEventResults: request.events.map((e) => ({
+              eventId: e.eventId,
+              state: 'accepted' as const,
+              retryable: false,
+            })),
           },
-        };
+        });
       },
     };
     const probe = createProbePlugin();
@@ -183,7 +187,16 @@ describe('createAuroraSdk', () => {
     const handle = createAuroraSdk({
       config: { clientKey: 'k' },
       transport: {
-        send: async () => ({ kind: 'success' as const, status: 200, receipt: { batchState: 'accepted' as const, retryable: false, perEventResults: [] } }),
+        send: () =>
+          Promise.resolve({
+            kind: 'success' as const,
+            status: 200,
+            receipt: {
+              batchState: 'accepted' as const,
+              retryable: false,
+              perEventResults: [],
+            },
+          }),
       },
     });
     expect(handle.delivery).toBeDefined();

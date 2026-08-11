@@ -39,30 +39,30 @@ function jsonResponse(body: unknown, status: number, headers?: Record<string, st
 
 describe('createBrowserBatchTransport', () => {
   it('POSTs to {endpoint}/v1/batches with chain-provided headers', async () => {
-    const fetchImpl = vi.fn(async () => jsonResponse(receiptBody(), 200));
-    const transport = createBrowserBatchTransport({
-      ingestEndpoint: 'https://ingest.example.test/',
-      fetchImpl: fetchImpl as unknown as typeof fetch,
-    });
+    const spy = vi.fn(() => Promise.resolve(jsonResponse(receiptBody(), 200)));
+    const transport = createBrowserBatchTransport({ ingestEndpoint: 'https://ingest.example.test/', fetchImpl: spy });
     const result = await transport.send(batch() as Parameters<SdkBatchTransport['send']>[0], context());
-    expect(fetchImpl).toHaveBeenCalledTimes(1);
-    const [url, init] = fetchImpl.mock.calls[0] as unknown as [string, RequestInit];
+    expect(spy).toHaveBeenCalledTimes(1);
+    const [url, init] = (spy.mock.calls[0] as unknown as [string, RequestInit | undefined]);
     expect(url).toBe('https://ingest.example.test/v1/batches');
-    expect(init.method).toBe('POST');
-    const headers = init.headers as Record<string, string>;
-    expect(headers['X-Aurora-Client-Key']).toBe('aurora_ingest_k1_s');
-    expect(headers['X-Aurora-Environment']).toBe('prod');
+    expect(init?.method).toBe('POST');
+    const headers = init?.headers as Record<string, string> | undefined;
+    expect(headers?.['X-Aurora-Client-Key']).toBe('aurora_ingest_k1_s');
+    expect(headers?.['X-Aurora-Environment']).toBe('prod');
     expect(result.kind).toBe('success');
   });
 
   it('maps HTTP 429 to a retryable http_error with Retry-After', async () => {
-    const fetchImpl = vi.fn(async () =>
-      jsonResponse({ batchState: 'temporarily_failed', retryable: true, errorCode: 'rate_limited', perEventResults: [] }, 429, { 'Retry-After': '2' }),
+    const spy = vi.fn(() =>
+      Promise.resolve(
+        jsonResponse(
+          { batchState: 'temporarily_failed', retryable: true, errorCode: 'rate_limited', perEventResults: [] },
+          429,
+          { 'Retry-After': '2' },
+        ),
+      ),
     );
-    const transport = createBrowserBatchTransport({
-      ingestEndpoint: 'https://ingest.example.test',
-      fetchImpl: fetchImpl as unknown as typeof fetch,
-    });
+    const transport = createBrowserBatchTransport({ ingestEndpoint: 'https://ingest.example.test', fetchImpl: spy });
     const result = await transport.send(batch() as Parameters<SdkBatchTransport['send']>[0], context());
     expect(result.kind).toBe('http_error');
     if (result.kind !== 'http_error') return;
@@ -71,27 +71,18 @@ describe('createBrowserBatchTransport', () => {
   });
 
   it('maps network failure to transport_failure and never throws', async () => {
-    const fetchImpl = vi.fn(async () => {
-      throw new TypeError('network down');
-    });
-    const transport = createBrowserBatchTransport({
-      ingestEndpoint: 'https://ingest.example.test',
-      fetchImpl: fetchImpl as unknown as typeof fetch,
-    });
+    const spy = vi.fn(() => Promise.reject(new TypeError('network down')));
+    const transport = createBrowserBatchTransport({ ingestEndpoint: 'https://ingest.example.test', fetchImpl: spy });
     const result = await transport.send(batch() as Parameters<SdkBatchTransport['send']>[0], context());
     expect(result.kind).toBe('transport_failure');
   });
 
   it('uses fetch keepalive in best_effort mode', async () => {
-    const fetchImpl = vi.fn(async () => jsonResponse(receiptBody(), 200));
-    const transport = createBrowserBatchTransport({
-      ingestEndpoint: 'https://ingest.example.test',
-      fetchImpl: fetchImpl as unknown as typeof fetch,
-    });
+    const spy = vi.fn(() => Promise.resolve(jsonResponse(receiptBody(), 200)));
+    const transport = createBrowserBatchTransport({ ingestEndpoint: 'https://ingest.example.test', fetchImpl: spy });
     await transport.send(batch() as Parameters<SdkBatchTransport['send']>[0], { ...context(), mode: 'best_effort' });
-    const calls = fetchImpl.mock.calls as unknown as Array<[string, RequestInit]>;
-    const init = calls[0]?.[1];
-    expect(init?.keepalive).toBe(true);
+    const calls = spy.mock.calls as unknown as [string, RequestInit | undefined][];
+    expect(calls[0]?.[1]?.keepalive).toBe(true);
   });
 
   it('returns non-retryable http_error when no ingest endpoint is configured', async () => {
@@ -100,5 +91,41 @@ describe('createBrowserBatchTransport', () => {
     expect(result.kind).toBe('http_error');
     if (result.kind !== 'http_error') return;
     expect(result.status).toBe(0);
+  });
+
+  it('maps an unparseable 200 body to transport_failure', async () => {
+    const transport = createBrowserBatchTransport({
+      ingestEndpoint: 'https://ingest.example.test',
+      fetchImpl: () => Promise.resolve(new Response('not-json', { status: 200 })),
+    });
+    const result = await transport.send(batch() as Parameters<SdkBatchTransport['send']>[0], context());
+    expect(result.kind).toBe('transport_failure');
+  });
+
+  it('maps an unparseable error body to http_error without a receipt', async () => {
+    const transport = createBrowserBatchTransport({
+      ingestEndpoint: 'https://ingest.example.test',
+      fetchImpl: () => Promise.resolve(new Response('not-json', { status: 500 })),
+    });
+    const result = await transport.send(batch() as Parameters<SdkBatchTransport['send']>[0], context());
+    expect(result.kind).toBe('http_error');
+    if (result.kind !== 'http_error') return;
+    expect(result.status).toBe(500);
+    expect(result.receipt).toBeUndefined();
+  });
+
+  it('maps a body read failure to transport_failure', async () => {
+    const failingResponse = {
+      ok: true,
+      status: 200,
+      headers: { get: () => null },
+      text: () => Promise.reject(new TypeError('read aborted')),
+    } as unknown as Response;
+    const transport = createBrowserBatchTransport({
+      ingestEndpoint: 'https://ingest.example.test',
+      fetchImpl: () => Promise.resolve(failingResponse),
+    });
+    const result = await transport.send(batch() as Parameters<SdkBatchTransport['send']>[0], context());
+    expect(result.kind).toBe('transport_failure');
   });
 });
