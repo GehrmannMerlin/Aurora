@@ -24,8 +24,8 @@ const CLEANUP_STORE_ORDER: readonly CleanupStoreId[] = [
   'postgres',
   'redis-sessions',
   'object-storage',
-  'audit',
   'backup-lifecycle',
+  'audit',
 ];
 
 /** Fixed store order: identity/memberships first, then sessions/objects, then audit/backup. */

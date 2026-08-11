@@ -15,6 +15,8 @@ export interface PlatformWorkerConfig {
   readonly outboxBatchLimit: number;
   /** Delivery attempt budget before a row is dead-lettered. */
   readonly outboxMaxAttempts: number;
+  /** SEC-02 cleanup attempt budget before a handoff is dead-lettered. */
+  readonly cleanupMaxAttempts: number;
   /** Graceful shutdown timeout in milliseconds (operational knob). */
   readonly gracefulShutdownTimeoutMs: number;
 }
@@ -53,6 +55,7 @@ export function loadPlatformWorkerConfig(env: NodeJS.ProcessEnv): PlatformWorker
     outboxPollIntervalMs: optionalPositiveInt(env, 'OUTBOX_POLL_INTERVAL_MS', 2000),
     outboxBatchLimit,
     outboxMaxAttempts: optionalPositiveInt(env, 'OUTBOX_MAX_ATTEMPTS', 5),
+    cleanupMaxAttempts: optionalPositiveInt(env, 'CLEANUP_MAX_ATTEMPTS', 5),
     gracefulShutdownTimeoutMs: optionalPositiveInt(env, 'GRACEFUL_SHUTDOWN_TIMEOUT_MS', 5000),
   };
   return Object.freeze(config);

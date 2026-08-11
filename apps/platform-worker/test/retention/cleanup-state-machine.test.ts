@@ -16,13 +16,13 @@ const pendingSteps: readonly [CleanupStep, CleanupStep, CleanupStep, CleanupStep
 ];
 
 describe('SEC-02 cleanup state machine', () => {
-  it('decides the fixed cross-store order (postgres first, backup last)', () => {
+  it('decides the fixed cross-store order (postgres first, audit records completion last)', () => {
     expect(decideCleanupStores()).toEqual([
       'postgres',
       'redis-sessions',
       'object-storage',
-      'audit',
       'backup-lifecycle',
+      'audit',
     ]);
   });
 

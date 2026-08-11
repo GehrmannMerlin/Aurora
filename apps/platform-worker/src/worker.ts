@@ -2,8 +2,15 @@ import type { Pool } from 'pg';
 import { consumeOutboxEmails, type OutboxRepository } from '@aurora/platform-email';
 import type { EmailDeliveryPort } from '@aurora/platform-email';
 import { defaultSleeper, type SleeperPort } from './timers.js';
+import type { CleanupAdapter } from './retention/cleanup-adapters.js';
+import { runCleanupRound } from './retention/cleanup-orchestrator.js';
 
 export type PlatformWorkerStatus = 'created' | 'running' | 'stopping' | 'stopped';
+
+export interface CleanupWorkerSettings {
+  readonly adapters: readonly CleanupAdapter[];
+  readonly maxAttempts: number;
+}
 
 export interface PlatformWorker {
   readonly status: PlatformWorkerStatus;
@@ -18,6 +25,8 @@ export interface BuildPlatformWorkerInput {
   readonly pollIntervalMs: number;
   readonly batchLimit: number;
   readonly maxAttempts: number;
+  /** Optional SEC-02 cross-store cleanup loop (retention worker). */
+  readonly cleanup?: CleanupWorkerSettings;
   /** Injectable sleeper for tests; production uses the real setTimeout sleeper. */
   readonly sleeper?: SleeperPort;
 }
@@ -54,6 +63,13 @@ export function buildPlatformWorker(input: BuildPlatformWorkerInput): PlatformWo
       limit: input.batchLimit,
       maxAttempts: input.maxAttempts,
     });
+    if (input.cleanup !== undefined) {
+      await runCleanupRound({
+        pool: input.pool,
+        adapters: input.cleanup.adapters,
+        maxAttempts: input.cleanup.maxAttempts,
+      });
+    }
   };
 
   const runLoop = async (): Promise<void> => {

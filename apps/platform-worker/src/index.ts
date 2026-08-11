@@ -5,6 +5,7 @@ import {
   type OutboxRepository,
 } from '@aurora/platform-email';
 import { claimOutboxRows, insertOutboxRow, markOutboxResult } from '@aurora/platform-identity';
+import type { CleanupAdapter } from './retention/cleanup-adapters.js';
 import { buildPlatformWorker, type PlatformWorker } from './worker.js';
 
 export { loadPlatformWorkerConfig, type PlatformWorkerConfig } from './config.js';
@@ -43,6 +44,8 @@ export interface BuildPlatformWorkerCompositionInput {
   readonly pollIntervalMs: number;
   readonly batchLimit: number;
   readonly maxAttempts: number;
+  readonly cleanupMaxAttempts: number;
+  readonly cleanupAdapters: readonly CleanupAdapter[];
 }
 
 /**
@@ -59,5 +62,9 @@ export function buildPlatformWorkerComposition(
     pollIntervalMs: input.pollIntervalMs,
     batchLimit: input.batchLimit,
     maxAttempts: input.maxAttempts,
+    cleanup: {
+      adapters: input.cleanupAdapters,
+      maxAttempts: input.cleanupMaxAttempts,
+    },
   });
 }
