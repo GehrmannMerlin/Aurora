@@ -110,3 +110,5 @@ review-cycle: cloud-foundation-or-approval
 - `docs/README.md` §2 权威表**无 G15/OPS-03 条目**：SDK 发布工程规格 `docs/releases/sdk-package-versioning-and-release.md` 未索引（该规格在 G15 feature branch，未 merge main；索引同步与 G15 合并同批处理）。
 - `docs/releases/release-migration-and-rollback.md` 开头"流水线均不存在"表述随 G14/G15 过期，待 G14/G15 合并后修正为"生产部署/发布基础设施不存在；CI 质量与 SDK 发布 workflow 已在 feature branch"。
 - 状态同步纪律：本轮不修改 AGENTS.md/AURORA_RULES.md 的 G16 状态（`started / temporary-preview-bridge-active` 不变），不关闭任何叶子；计数保持 62/16，直到 G14 远程 PASS 后按用户规则更新。
+
+> **2026-08-11 追加（OPS-04 实施后）**：用户已批准 G16/OPS-04 Cloud Decision Package D1—D11；ADR-022/023/024 转为 `accepted / in-progress / approved`；OPS-04 正式规格转 `approved`。`docs/README.md` 已新增 G16/OPS-04 权威索引条目。OPS-04 IaC 基础已实施为 `tooling/aws-infra`（`@aurora/aws-infra`，CDK TS）：Network/Compute/Data/Identity 四栈 × staging/production，`pnpm synth` 无凭据生成 8 个 CloudFormation 模板并通过定向测试（29 个）。OPS-04 implementation = completed（本增量）；acceptance 待独立 IaC 评审 + OPS-05 provisioning 证据（从空环境重复创建、`POST /v1/batches` 冒烟）。**计数保持 62/16**；阿里云 Preview 保持 temporary-operational-snapshot。G15/OPS-03 索引与 release-migration 表述修正仍待 G14/G15 合并。

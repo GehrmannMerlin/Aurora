@@ -47,7 +47,7 @@ describe('Browser documentation contract', () => {
       expect(text, path).toContain('浏览器环境能力与页面生命周期基础第一增量');
     }
     expect(await rootFile('docs/architecture/sdk-architecture.md')).toContain(
-      '通用资源/行为事件正文、行为插件、采样算法与框架适配仍不存在',
+      '通用资源/行为事件正文、行为插件与采样算法仍不存在',
     );
     expect(await rootFile('docs/architecture/sdk-architecture.md')).toContain('请求采集插件只从');
     expect(await rootFile('docs/sdk/browser-error-source.md')).toContain(
