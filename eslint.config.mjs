@@ -12,6 +12,7 @@ export default tseslint.config(
       'tooling/ingestion-openapi-contract/**/*.ts',
       'tooling/platform-contract-drift/**/*.ts',
       'tooling/aws-infra/**/*.ts',
+      'tooling/aurora-release/**/*.ts',
       'tooling/ingestion-benchmark/**/*.ts',
       'packages/event-schema/**/*.ts',
       'packages/core/**/*.ts',
