@@ -1,0 +1,48 @@
+{
+  "name": "@aurora/sdk-reference",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Aurora SDK reference fixture for browser/device/accessibility/performance compatibility validation (OPS-02)",
+  "sideEffects": false,
+  "engines": {
+    "node": ">=24.18.0 <25"
+  },
+  "exports": {
+    "./fixture-server": {
+      "types": "./dist/fixture-server.d.ts",
+      "import": "./dist/fixture-server.js"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run",
+    "test:browser": "pnpm build && playwright test --config playwright.config.ts --project=chromium-desktop",
+    "test:matrix": "pnpm build && playwright test --config playwright.config.ts",
+    "test:performance": "pnpm build && playwright test --config playwright.performance.config.ts"
+  },
+  "dependencies": {
+    "@aurora/browser": "workspace:*",
+    "@aurora/core": "workspace:*",
+    "@aurora/event-schema": "workspace:*",
+    "@aurora/plugin-error": "workspace:*",
+    "@aurora/plugin-performance": "workspace:*",
+    "@aurora/plugin-request": "workspace:*",
+    "@aurora/sdk": "workspace:*"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.62.1",
+    "@types/node": "24.13.3",
+    "@vitest/coverage-v8": "4.1.10",
+    "typescript": "6.0.3",
+    "vitest": "4.1.10"
+  },
+  "aurora": {
+    "layer": "sdk-reference"
+  }
+}

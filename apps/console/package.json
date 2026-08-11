@@ -20,7 +20,8 @@
     "test": "vitest run --exclude test/package-entry.test.ts",
     "test:coverage": "vitest run --coverage --exclude test/package-entry.test.ts",
     "test:package": "pnpm build && vitest run test/package-entry.test.ts",
-    "test:browser": "pnpm build:test && playwright test --config playwright.config.ts"
+    "test:browser": "pnpm build:test && playwright test --config playwright.config.ts",
+    "test:matrix": "pnpm build:test && playwright test --config playwright.matrix.config.ts"
   },
   "dependencies": {
     "@aurora/platform-contract": "workspace:*",

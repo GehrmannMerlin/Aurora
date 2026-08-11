@@ -322,16 +322,35 @@ describe('Workspace dependency policy', () => {
     },
   );
 
-  it.each(['sdk-framework'] as const)(
-    'rejects sdk-plugin dependency on %s',
+  it.each(['sdk-core', 'sdk-browser', 'sdk-plugin', 'protocol'] as const)(
+    'allows sdk-reference to depend on %s',
     async (layer) => {
-      const plugin = validManifest('@aurora/plugin-error');
-      plugin.aurora = { layer: 'sdk-plugin' };
-      plugin.dependencies = { '@aurora/target': 'workspace:*' };
+      const reference = validManifest('@aurora/sdk-reference');
+      reference.aurora = { layer: 'sdk-reference' };
+      reference.dependencies = { '@aurora/target': 'workspace:*' };
       const target = validManifest('@aurora/target');
       target.aurora = { layer };
       fixture = await createWorkspaceFixture([
-        { directory: 'packages/plugin-error', manifest: plugin },
+        { directory: 'examples/sdk-reference', manifest: reference },
+        { directory: 'packages/target', manifest: target },
+      ]);
+      await expect(checkWorkspace(fixture.rootDir)).resolves.toEqual({
+        ok: true,
+        violations: [],
+      });
+    },
+  );
+
+  it.each(['sdk-framework', 'service', 'data', 'tooling', 'console'] as const)(
+    'rejects sdk-reference dependency on %s',
+    async (layer) => {
+      const reference = validManifest('@aurora/sdk-reference');
+      reference.aurora = { layer: 'sdk-reference' };
+      reference.dependencies = { '@aurora/target': 'workspace:*' };
+      const target = validManifest('@aurora/target');
+      target.aurora = { layer };
+      fixture = await createWorkspaceFixture([
+        { directory: 'examples/sdk-reference', manifest: reference },
         { directory: 'packages/target', manifest: target },
       ]);
       const result = await checkWorkspace(fixture.rootDir);
@@ -339,12 +358,33 @@ describe('Workspace dependency policy', () => {
         expect.arrayContaining([
           expect.objectContaining({
             code: 'forbidden-layer-dependency',
-            packageName: '@aurora/plugin-error',
+            packageName: '@aurora/sdk-reference',
           }),
         ]),
       );
     },
   );
+
+  it.each(['sdk-framework'] as const)('rejects sdk-plugin dependency on %s', async (layer) => {
+    const plugin = validManifest('@aurora/plugin-error');
+    plugin.aurora = { layer: 'sdk-plugin' };
+    plugin.dependencies = { '@aurora/target': 'workspace:*' };
+    const target = validManifest('@aurora/target');
+    target.aurora = { layer };
+    fixture = await createWorkspaceFixture([
+      { directory: 'packages/plugin-error', manifest: plugin },
+      { directory: 'packages/target', manifest: target },
+    ]);
+    const result = await checkWorkspace(fixture.rootDir);
+    expect(result.violations).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          code: 'forbidden-layer-dependency',
+          packageName: '@aurora/plugin-error',
+        }),
+      ]),
+    );
+  });
 
   it.each(['service', 'data', 'protocol'] as const)(
     'allows tooling to depend on %s',
