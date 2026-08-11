@@ -5,12 +5,14 @@ import { ComputeStack } from './stacks/compute-stack.js';
 import { DataStack } from './stacks/data-stack.js';
 import { IdentityStack } from './stacks/identity-stack.js';
 import { NetworkStack } from './stacks/network-stack.js';
+import { ObservabilityStack } from './stacks/observability-stack.js';
 
 export interface AuroraEnvironmentStacks {
   readonly network: NetworkStack;
   readonly compute: ComputeStack;
   readonly data: DataStack;
   readonly identity: IdentityStack;
+  readonly observability: ObservabilityStack;
 }
 
 /**
@@ -43,8 +45,14 @@ function buildEnvironment(scope: Construct, envName: EnvironmentName): AuroraEnv
     databaseSecurityGroup: network.databaseSecurityGroup,
   });
   const identity = new IdentityStack(scope, `Identity-${envName}`, { env });
-  for (const stack of [network, compute, data, identity]) {
+  const observability = new ObservabilityStack(scope, `Observability-${envName}`, {
+    env,
+    services: compute.services,
+    logGroups: compute.logGroups,
+    database: data.database,
+  });
+  for (const stack of [network, compute, data, identity, observability]) {
     stack.terminationProtection = env.isProduction;
   }
-  return { network, compute, data, identity };
+  return { network, compute, data, identity, observability };
 }

@@ -70,6 +70,7 @@ export class ComputeStack extends Stack {
   public readonly repositories: Readonly<Record<string, ecr.Repository>>;
   public readonly taskExecutionRole: iam.Role;
   public readonly services: Readonly<Record<string, ecs.FargateService>>;
+  public readonly logGroups: Readonly<Record<string, logs.ILogGroup>>;
 
   constructor(scope: Construct, id: string, props: ComputeStackProps) {
     const { env, vpc, serviceSecurityGroup } = props;
@@ -104,12 +105,14 @@ export class ComputeStack extends Stack {
     });
 
     const services: Record<string, ecs.FargateService> = {};
+    const logGroups: Record<string, logs.ILogGroup> = {};
     for (const spec of DEPLOY_SERVICES) {
       const logGroup = new logs.LogGroup(this, `LogGroup${spec.repoKey}`, {
         logGroupName: resourceName(env, 'logs', spec.repoKey),
         retention: logs.RetentionDays.THREE_MONTHS,
         removalPolicy: env.isProduction ? RemovalPolicy.RETAIN : RemovalPolicy.DESTROY,
       });
+      logGroups[spec.repoKey] = logGroup;
 
       const taskRole = new iam.Role(this, `TaskRole${spec.repoKey}`, {
         roleName: resourceName(env, 'iam', `task-${spec.repoKey}`),
@@ -165,6 +168,7 @@ export class ComputeStack extends Stack {
       services[spec.repoKey] = fargateService;
     }
     this.services = services;
+    this.logGroups = logGroups;
 
     for (const [key, value] of Object.entries(standardTags(env))) {
       Tags.of(this).add(key, value);

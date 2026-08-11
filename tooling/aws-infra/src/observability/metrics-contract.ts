@@ -86,9 +86,10 @@ export const OPERATIONAL_METRICS: readonly OperationalMetric[] = Object.freeze([
   {
     name: 'Ingestion.ErrorCount',
     unit: 'Count',
-    dimensions: ['environment'],
+    dimensions: [],
     source: 'logs-metric-filter',
-    description: 'error-level ingestion-api log entries (Logs metric filter)',
+    description:
+      'error-level ingestion-api log entries (Logs metric filter; CDK MetricFilter emits without dimensions)',
   },
 ]);
 
