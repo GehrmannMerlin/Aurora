@@ -31,12 +31,12 @@ review-cycle: release-policy-or-public-api-change
 
 ## 2. 已批准发布决策（G15 用户授权，不复述为候选）
 
-| 决策 | 内容 |
-|---|---|
-| B 版本 | **独立包版本（independent package versions）**：9 个 public 包可独立升级；version bump / changelog / 依赖更新由 `@aurora/release-tool` version 机制管理（`.changeset/*.md` + SemVer bump + `workspace:*` → `^range` 改写 + CHANGELOG）；不强制统一版本 |
-| F registry/scope | 目标 registry 为**公开 npm**，scope `@aurora`；public 包恰为 9 个（见 §3）；其余 platform-*/ingestion-*/processing-store/internal tooling/apps 保持 private，不得发布 |
-| E prerelease | SemVer prerelease `alpha.N`/`beta.N`；预发布使用 dist-tag **`next`**；稳定版本使用 **`latest`**；预发布不得覆盖 `latest` |
-| G dist-tag/回滚 | `latest` 仅指向稳定版本；`next` 用于 alpha/beta/canary；坏版本 `npm deprecate` + 发布 corrected patch + 恢复/保持 `latest` 到最后已知稳定版本；禁止覆盖已发布 immutable version、禁止修改历史 tag |
+| 决策             | 内容                                                                                                                                                                                                                                                   |
+| ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| B 版本           | **独立包版本（independent package versions）**：9 个 public 包可独立升级；version bump / changelog / 依赖更新由 `@aurora/release-tool` version 机制管理（`.changeset/*.md` + SemVer bump + `workspace:*` → `^range` 改写 + CHANGELOG）；不强制统一版本 |
+| F registry/scope | 目标 registry 为**公开 npm**，scope `@aurora`；public 包恰为 9 个（见 §3）；其余 platform-_/ingestion-_/processing-store/internal tooling/apps 保持 private，不得发布                                                                                  |
+| E prerelease     | SemVer prerelease `alpha.N`/`beta.N`；预发布使用 dist-tag **`next`**；稳定版本使用 **`latest`**；预发布不得覆盖 `latest`                                                                                                                               |
+| G dist-tag/回滚  | `latest` 仅指向稳定版本；`next` 用于 alpha/beta/canary；坏版本 `npm deprecate` + 发布 corrected patch + 恢复/保持 `latest` 到最后已知稳定版本；禁止覆盖已发布 immutable version、禁止修改历史 tag                                                      |
 
 沿用既有 approved 依据（不重复批准）：SemVer 政策（Release 文档 §5 + 设计 §10.4）、协议兼容（PRO-06 + ADR-005）、发布授权（设计 §10.4 受保护 npm Environment/Trusted Publishing/2FA/最小权限 + §14 角色）、provenance/签名（设计 §10.4）、回滚/deprecate（Release 文档 §5）。
 
@@ -49,7 +49,7 @@ review-cycle: release-policy-or-public-api-change
 规则：
 
 - 上述包必须 `publishConfig.access === "public"`，`private` 不得为 `true`，`files` 必须包含 `dist`（存在 README/LICENSE 时必须一并包含），`exports["."]` 必须含 `types` 与 `import`；
-- 其余所有 `@aurora/*` 包（platform-*、ingestion-*、processing-store、internal tooling、apps）必须保持 `private: true` 且不设 `publishConfig.access: "public"`；
+- 其余所有 `@aurora/*` 包（platform-_、ingestion-_、processing-store、internal tooling、apps）必须保持 `private: true` 且不设 `publishConfig.access: "public"`；
 - 校验由 `release-tool validate` 强制执行（9 public + 其余 private，任一违反即 FAIL）。
 
 ## 4. 版本与兼容
@@ -69,25 +69,27 @@ review-cycle: release-policy-or-public-api-change
 
 测量定义（`release-tool size`，esbuild bundle+minify 后 gzip）：
 
-| 对象 | 测量 | 阈值 | 实测（2026-08-11） |
-|---|---|---|---|
-| Core 基础包 | bundle `@aurora/core` 入口（`--external:@aurora/*`） | gzip ≤ 10 KiB | 2.79 KiB |
-| Browser＋Core 最小接入 | bundle `@aurora/browser` 入口（无 external） | gzip ≤ 30 KiB | 18.79 KiB |
-| 单个可选插件增量 | bundle 插件入口（`--external:@aurora/*`） | gzip ≤ 8 KiB | 1.21–1.80 KiB |
-| 单个 Vue/React 适配增量 | bundle 适配入口（`--external:@aurora/*` + `vue`/`react`/`react-dom`） | gzip ≤ 5 KiB | 0.88–1.00 KiB |
-| event-schema / sdk | 同口径 bundle | 记录为证据 | event-schema 5.95 KiB；sdk 7.46 KiB |
+| 对象                    | 测量                                                                  | 阈值          | 实测（2026-08-11）                  |
+| ----------------------- | --------------------------------------------------------------------- | ------------- | ----------------------------------- |
+| Core 基础包             | bundle `@aurora/core` 入口（`--external:@aurora/*`）                  | gzip ≤ 10 KiB | 2.79 KiB                            |
+| Browser＋Core 最小接入  | bundle `@aurora/browser` 入口（无 external）                          | gzip ≤ 30 KiB | 18.79 KiB                           |
+| 单个可选插件增量        | bundle 插件入口（`--external:@aurora/*`）                             | gzip ≤ 8 KiB  | 1.21–1.80 KiB                       |
+| 单个 Vue/React 适配增量 | bundle 适配入口（`--external:@aurora/*` + `vue`/`react`/`react-dom`） | gzip ≤ 5 KiB  | 0.88–1.00 KiB                       |
+| event-schema / sdk      | 同口径 bundle                                                         | 记录为证据    | event-schema 5.95 KiB；sdk 7.46 KiB |
 
 不得为过线降低阈值、删除功能或作弊 exclude；超限先判断意外依赖/打包问题，仅真实问题允许最小修复。测量值以本规格证据表与发布证据为准，不代表生产 SLO/成本。
 
 ## 7. 发布与回滚流程
 
-发布链（`release.yml` 扩展，`release-tool` 各门禁）：
+发布链（`release.yml` 扩展：`release-gate`（全量质量门禁）→ `sdk-release-gate`（validate/pack/compat/size）→ `sdk-publish`（受保护环境 + publish），`release-tool` 各门禁）：
 
-1. 校验版本 plan → `release-tool version`（bump + 依赖改写 + CHANGELOG）；
-2. 打 release tag（exact SHA）→ `release-tool validate` → `release-tool pack` → `release-tool compat` → `release-tool size`；
-3. provenance/签名：`npm publish --provenance --access public`（受保护 npm Environment + Trusted Publishing + OIDC；当前 registry credential 不存在 → **`LIVE_PUBLISH_CREDENTIAL_PENDING`**，该 step 静态存在但不执行，禁止伪造 publish success）；
+1. 校验版本 plan → `release-tool version --apply`（bump + 依赖改写 + CHANGELOG）；
+2. 打 release tag（exact SHA）→ `sdk-release-gate`：`release:validate` → `release:pack` → `release:compat` → `release:size`；
+3. provenance/签名：`sdk-publish` 用 `pnpm publish --provenance --access public --tag <tag>`（受保护 npm Environment `sdk-npm-publish` + Trusted Publishing + OIDC；当前 registry credential 不存在 → **`LIVE_PUBLISH_CREDENTIAL_PENDING`**，`sdk-publish` 由 `if: secrets.NPM_TOKEN != ''` 守卫，门禁可运行但 publish 不执行，禁止伪造 publish success）；
 4. dist-tag：prerelease（alpha/beta）→ `--tag next`；stable → `--tag latest`；
 5. 发布证据：exact tag、tarball hash、体积表、compat/size 门禁结果、批准者与部署后验证。
+
+`LIVE_PUBLISH_CREDENTIAL_PENDING` 就绪步骤（不阻塞本实现）：在 GitHub 创建 `sdk-npm-publish` Environment + `NPM_TOKEN` secret（最小权限自动化 token），并为 provenance 配置 npm OIDC（`id-token: write` 已声明）。就绪后 `sdk-publish` 自动生效。
 
 回滚/deprecate（`release-tool deprecate`/`latest`/`rollback`）：
 

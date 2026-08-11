@@ -308,3 +308,92 @@ jobs:
           name: performance-reference
           path: .artifacts/reference/
           retention-days: 7
+
+  sdk-release-gate:
+    name: SDK Release Gate (validate/pack/compat/size)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      RELEASE_VERSION: ${{ inputs.version }}
+    steps:
+      - name: Checkout exact release ref
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.version }}
+          fetch-depth: 0
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 11.17.0
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24.18.0
+          cache: pnpm
+      - name: Install (frozen lockfile)
+        run: pnpm install --frozen-lockfile
+      - name: Build (public SDK packages)
+        run: >-
+          pnpm --filter @aurora/event-schema --filter @aurora/core --filter @aurora/sdk
+          --filter @aurora/browser --filter @aurora/plugin-error --filter @aurora/plugin-request
+          --filter @aurora/plugin-performance --filter @aurora/plugin-vue --filter @aurora/plugin-react build
+      - name: Release contract validate
+        run: pnpm release:validate
+      - name: Pack inspection
+        run: pnpm release:pack
+      - name: Compatibility gate
+        run: pnpm release:compat
+      - name: Size gate
+        run: pnpm release:size
+
+  sdk-publish:
+    name: SDK Publish (${{ inputs.release_type }})
+    runs-on: ubuntu-latest
+    needs: [release-gate, sdk-release-gate]
+    if: inputs.release_type != '' && secrets.NPM_TOKEN != ''
+    environment: sdk-npm-publish
+    permissions:
+      contents: read
+      id-token: write
+    env:
+      RELEASE_VERSION: ${{ inputs.version }}
+      RELEASE_TYPE: ${{ inputs.release_type }}
+    steps:
+      - name: Checkout exact release ref
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.version }}
+          fetch-depth: 0
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 11.17.0
+      - name: Setup Node (npm registry)
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24.18.0
+          cache: pnpm
+          registry-url: https://registry.npmjs.org
+      - name: Install (frozen lockfile)
+        run: pnpm install --frozen-lockfile
+      - name: Build (public SDK packages)
+        run: >-
+          pnpm --filter @aurora/event-schema --filter @aurora/core --filter @aurora/sdk
+          --filter @aurora/browser --filter @aurora/plugin-error --filter @aurora/plugin-request
+          --filter @aurora/plugin-performance --filter @aurora/plugin-vue --filter @aurora/plugin-react build
+      - name: Apply independent version plan
+        run: pnpm release:version
+      - name: Publish (provenance, protected environment)
+        run: >-
+          pnpm -r publish --no-git-checks --access public
+          --tag ${{ inputs.release_type == 'prerelease' && 'next' || 'latest' }}
+          --provenance
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+      - name: Release evidence
+        run: |
+          echo "release version: $RELEASE_VERSION"
+          echo "release type: $RELEASE_TYPE"
+          echo "dist-tag: ${{ inputs.release_type == 'prerelease' && 'next' || 'latest' }}"
+          echo "committed SHA: $(git rev-parse HEAD)"
+          echo "artifacts: see pack output above (pnpm -r publish packs each public package)"

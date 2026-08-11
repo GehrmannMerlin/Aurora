@@ -1,23 +1,21 @@
 import { isPublicPackageName } from './contract.js';
 import { validateWorkspace } from './validate.js';
-import { planVersions, readChangesets, renderChangelog } from './version.js';
-import { checkExportsTypes, checkProtocolDecoupling, checkWorkspaceDepRewritePlan } from './compat.js';
+import { planVersions, readChangesets, renderChangelog, rewriteWorkspaceDeps } from './version.js';
+import {
+  checkExportsTypes,
+  checkProtocolDecoupling,
+  checkWorkspaceDepRewritePlan,
+} from './compat.js';
 import { runSizeGate, formatSizeResults } from './size.js';
 import { packPublicPackage } from './pack.js';
 import { discoverPublicPackages, discoverWorkspacePackages } from './contract.js';
 import { buildDeprecateArgs, buildDistTagArgs, describeRollback } from './deprecate.js';
 import { parseSemverResult } from './semver.js';
+import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 export type CommandName =
-  | 'validate'
-  | 'version'
-  | 'pack'
-  | 'compat'
-  | 'size'
-  | 'deprecate'
-  | 'latest'
-  | 'rollback';
+  'validate' | 'version' | 'pack' | 'compat' | 'size' | 'deprecate' | 'latest' | 'rollback';
 
 export interface CliOptions {
   command: CommandName;
@@ -27,6 +25,7 @@ export interface CliOptions {
   version?: string;
   message?: string;
   dryRun: boolean;
+  apply: boolean;
 }
 
 export function parseArgs(argv: readonly string[]): CliOptions {
@@ -37,6 +36,7 @@ export function parseArgs(argv: readonly string[]): CliOptions {
     command,
     root: process.cwd(),
     dryRun: false,
+    apply: false,
   };
   for (let i = 0; i < rest.length; i += 1) {
     const arg = rest[i];
@@ -58,6 +58,8 @@ export function parseArgs(argv: readonly string[]): CliOptions {
       i += 1;
     } else if (arg === '--dry-run') {
       options.dryRun = true;
+    } else if (arg === '--apply') {
+      options.apply = true;
     }
   }
   return options;
@@ -93,7 +95,11 @@ export async function runCli(options: CliOptions, write: (text: string) => void)
         ...checkProtocolDecoupling(root),
         ...checkWorkspaceDepRewritePlan(publicPackages, []),
       ];
-      write(issues.length === 0 ? 'compat: PASS\n' : `compat: FAIL\n${issues.map((i) => `  - ${i.packageName}: ${i.message}`).join('\n')}\n`);
+      write(
+        issues.length === 0
+          ? 'compat: PASS\n'
+          : `compat: FAIL\n${issues.map((i) => `  - ${i.packageName}: ${i.message}`).join('\n')}\n`,
+      );
       return issues.length === 0 ? 0 : 1;
     }
     case 'size': {
@@ -107,7 +113,9 @@ export async function runCli(options: CliOptions, write: (text: string) => void)
       let failed = false;
       for (const pkg of publicPackages.values()) {
         const result = packPublicPackage(pkg);
-        write(`${pkg.name}: ${result.assertion.ok ? 'PASS' : 'FAIL'} (${result.fileCount} files)\n`);
+        write(
+          `${pkg.name}: ${result.assertion.ok ? 'PASS' : 'FAIL'} (${result.fileCount} files)\n`,
+        );
         for (const issue of result.assertion.issues) {
           write(`  - ${issue.message}\n`);
         }
@@ -127,14 +135,51 @@ export async function runCli(options: CliOptions, write: (text: string) => void)
       write(
         plan.length === 0
           ? 'version: no public packages matched changesets\n'
-          : plan.map((entry) => `  ${entry.packageName} ${entry.from} -> ${entry.to} (${entry.bump})`).join('\n') + '\n',
+          : plan
+              .map((entry) => `  ${entry.packageName} ${entry.from} -> ${entry.to} (${entry.bump})`)
+              .join('\n') + '\n',
       );
       write('--- CHANGELOG ---\n');
       write(renderChangelog(plan));
+      if (options.apply && plan.length > 0) {
+        const finalVersions = new Map(plan.map((entry) => [entry.packageName, entry.to]));
+        for (const pkg of packages.values()) {
+          if (!isPublicPackageName(pkg.name)) continue;
+          const manifestPath = join(pkg.dir, 'package.json');
+          const manifest = JSON.parse(readFileSync(manifestPath, 'utf8')) as Record<
+            string,
+            unknown
+          >;
+          const planned = finalVersions.get(pkg.name);
+          if (planned !== undefined) manifest.version = planned;
+          for (const section of ['dependencies', 'peerDependencies'] as const) {
+            const deps = manifest[section];
+            if (typeof deps === 'object' && deps !== null) {
+              manifest[section] = rewriteWorkspaceDeps(
+                deps as Readonly<Record<string, string>>,
+                finalVersions,
+                packages,
+              );
+            }
+          }
+          writeFileSync(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`);
+          const packagePlan = plan.filter((entry) => entry.packageName === pkg.name);
+          if (packagePlan.length > 0) {
+            const changelogPath = join(pkg.dir, 'CHANGELOG.md');
+            const existing = existsSync(changelogPath) ? readFileSync(changelogPath, 'utf8') : '';
+            writeFileSync(changelogPath, `${renderChangelog(packagePlan)}${existing}`);
+          }
+        }
+        write('version: applied\n');
+      }
       return 0;
     }
     case 'deprecate': {
-      if (options.pkg === undefined || options.version === undefined || options.message === undefined) {
+      if (
+        options.pkg === undefined ||
+        options.version === undefined ||
+        options.message === undefined
+      ) {
         write('usage: release-tool deprecate --pkg @aurora/x --version 0.1.0 --message "reason"\n');
         return 2;
       }
@@ -161,7 +206,9 @@ export async function runCli(options: CliOptions, write: (text: string) => void)
     }
     case 'rollback': {
       if (options.pkg === undefined || options.version === undefined) {
-        write('usage: release-tool rollback --pkg @aurora/x --version <known-good-version> (bad version = current latest)\n');
+        write(
+          'usage: release-tool rollback --pkg @aurora/x --version <known-good-version> (bad version = current latest)\n',
+        );
         return 2;
       }
       const steps = describeRollback(options.pkg, 'bad-version', options.version);
