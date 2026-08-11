@@ -63,5 +63,8 @@ export {
 } from './sdk-composition.js';
 export {
   createBrowserBatchTransport,
+  type BrowserFetchLike,
+  type BrowserFetchRequestInit,
+  type BrowserFetchResponseLike,
   type CreateBrowserBatchTransportOptions,
 } from './delivery-transport.js';
