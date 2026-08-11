@@ -196,7 +196,12 @@ function inspectSource(
   workspacePackage: WorkspacePackage,
   file: string,
   sourceText: string,
-  layer: 'protocol' | 'sdk-core' | 'sdk-browser' | 'sdk-plugin',
+  layer:
+    | 'protocol'
+    | 'sdk-core'
+    | 'sdk-browser'
+    | 'sdk-plugin'
+    | 'sdk-framework',
 ): readonly WorkspaceViolation[] {
   const source = ts.createSourceFile(file, sourceText, ts.ScriptTarget.Latest, true);
   const violations: WorkspaceViolation[] = [];
@@ -261,7 +266,7 @@ function inspectSource(
         });
       }
     }
-    if (layer === 'sdk-plugin') {
+    if (layer === 'sdk-plugin' || layer === 'sdk-framework') {
       const isForbiddenPluginRuntime =
         (ts.isIdentifier(node) &&
           forbiddenPluginRuntimeNames.has(node.text) &&
@@ -277,7 +282,10 @@ function inspectSource(
         });
       }
     }
-    if ((layer === 'sdk-browser' || layer === 'sdk-plugin') && isHostEventControl(node)) {
+    if (
+      (layer === 'sdk-browser' || layer === 'sdk-plugin' || layer === 'sdk-framework') &&
+      isHostEventControl(node)
+    ) {
       violations.push({
         code: 'forbidden-host-event-control',
         packageName: workspacePackage.name,
@@ -285,7 +293,10 @@ function inspectSource(
         message: `${layer} source must not control host event defaults or propagation`,
       });
     }
-    if ((layer === 'sdk-browser' || layer === 'sdk-plugin') && isBrowserHostMutation(node)) {
+    if (
+      (layer === 'sdk-browser' || layer === 'sdk-plugin' || layer === 'sdk-framework') &&
+      isBrowserHostMutation(node)
+    ) {
       violations.push({
         code: 'forbidden-host-mutation',
         packageName: workspacePackage.name,
@@ -307,7 +318,8 @@ export async function findEnvironmentViolations(
     layer !== 'protocol' &&
     layer !== 'sdk-core' &&
     layer !== 'sdk-browser' &&
-    layer !== 'sdk-plugin'
+    layer !== 'sdk-plugin' &&
+    layer !== 'sdk-framework'
   ) {
     return [];
   }
