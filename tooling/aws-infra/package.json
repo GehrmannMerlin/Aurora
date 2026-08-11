@@ -1,0 +1,38 @@
+{
+  "name": "@aurora/aws-infra",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Aurora OPS-04 AWS region/account/network/IaC foundation (CDK TypeScript; synth-validated, no provisioning)",
+  "engines": {
+    "node": ">=24.18.0 <25"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run",
+    "synth": "tsx src/entry.ts"
+  },
+  "dependencies": {
+    "aws-cdk-lib": "2.263.0",
+    "constructs": "^10.8.1"
+  },
+  "devDependencies": {
+    "@types/node": "24.13.3",
+    "tsx": "4.23.1",
+    "typescript": "6.0.3",
+    "vitest": "4.1.10"
+  },
+  "aurora": {
+    "layer": "tooling"
+  }
+}
