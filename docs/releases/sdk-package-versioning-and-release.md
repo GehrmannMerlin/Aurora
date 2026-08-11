@@ -69,13 +69,13 @@ review-cycle: release-policy-or-public-api-change
 
 测量定义（`release-tool size`，esbuild bundle+minify 后 gzip）：
 
-| 对象 | 测量 | 阈值 |
-|---|---|---|
-| Core 基础包 | bundle `@aurora/core` 入口（`--external:@aurora/*`） | gzip ≤ 10 KiB |
-| Browser＋Core 最小接入 | bundle `@aurora/browser` 入口（无 external） | gzip ≤ 30 KiB |
-| 单个可选插件增量 | bundle 插件入口（`--external:@aurora/*`） | gzip ≤ 8 KiB |
-| 单个 Vue/React 适配增量 | bundle 适配入口（`--external:@aurora/*` + `vue`/`react`/`react-dom`） | gzip ≤ 5 KiB |
-| event-schema / sdk | 同口径 bundle | 记录为证据（无独立 approved 阈值） |
+| 对象 | 测量 | 阈值 | 实测（2026-08-11） |
+|---|---|---|---|
+| Core 基础包 | bundle `@aurora/core` 入口（`--external:@aurora/*`） | gzip ≤ 10 KiB | 2.79 KiB |
+| Browser＋Core 最小接入 | bundle `@aurora/browser` 入口（无 external） | gzip ≤ 30 KiB | 18.79 KiB |
+| 单个可选插件增量 | bundle 插件入口（`--external:@aurora/*`） | gzip ≤ 8 KiB | 1.21–1.80 KiB |
+| 单个 Vue/React 适配增量 | bundle 适配入口（`--external:@aurora/*` + `vue`/`react`/`react-dom`） | gzip ≤ 5 KiB | 0.88–1.00 KiB |
+| event-schema / sdk | 同口径 bundle | 记录为证据 | event-schema 5.95 KiB；sdk 7.46 KiB |
 
 不得为过线降低阈值、删除功能或作弊 exclude；超限先判断意外依赖/打包问题，仅真实问题允许最小修复。测量值以本规格证据表与发布证据为准，不代表生产 SLO/成本。
 

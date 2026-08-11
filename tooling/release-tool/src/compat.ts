@@ -88,7 +88,8 @@ export function checkWorkspaceDepRewritePlan(
     for (const [depName, spec] of Object.entries(deps)) {
       if (spec !== 'workspace:*') continue;
       if (!depName.startsWith('@aurora/')) continue;
-      const version = finalVersions.get(depName);
+      const version =
+        finalVersions.get(depName) ?? publicPackages.get(depName)?.manifest.version;
       if (version === undefined) {
         issues.push({
           packageName: pkg.name,
