@@ -14,19 +14,25 @@ describe('Browser architecture boundary', () => {
     expect(manifest).toMatchObject({
       exports: { '.': { types: './dist/index.d.ts', import: './dist/index.js' } },
       aurora: { layer: 'sdk-browser' },
-      dependencies: { '@aurora/core': 'workspace:*', '@aurora/sdk': 'workspace:*' },
+      dependencies: {
+        '@aurora/core': 'workspace:*',
+        '@aurora/event-schema': 'workspace:*',
+        '@aurora/sdk': 'workspace:*',
+      },
     });
     expect(Object.keys((manifest as { dependencies: Record<string, unknown> }).dependencies)).toEqual([
       '@aurora/core',
+      '@aurora/event-schema',
       '@aurora/sdk',
     ]);
   });
 
   it('keeps the browser environment foundation free of cross-package, protocol, private, body, or console source', async () => {
-    // sdk-composition.ts is the browser SDK composition entry (SDK-10) and is the
-    // single intentional module that consumes @aurora/core + @aurora/sdk.
+    // sdk-composition.ts (SDK-10) and delivery-transport.ts (G06) are the
+    // intentional modules that consume @aurora/core/@aurora/sdk/@aurora/event-schema.
     const names = (await readdir(new URL('../src/', import.meta.url))).filter(
-      (name) => name.endsWith('.ts') && name !== 'sdk-composition.ts',
+      (name) =>
+        name.endsWith('.ts') && name !== 'sdk-composition.ts' && name !== 'delivery-transport.ts',
     );
     const source = (
       await Promise.all(names.map((name) => readFile(join(packagePath, 'src', name), 'utf8')))

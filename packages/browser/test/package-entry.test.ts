@@ -23,7 +23,7 @@ describe('built Browser package entry', () => {
         'BrowserErrorSourceEventType,BrowserPerformanceMetricName,BrowserPerformanceMetricUnit,' +
         'BrowserRequestMechanism,BrowserRequestOutcome,BrowserRequestSourceEventType,' +
         'BrowserSubscribeCode,BrowserUnsubscribeCode,PageLifecycleEventType,PageVisibilityState,' +
-        'createAuroraSdk,createBrowserEnvironment',
+        'createAuroraSdk,createBrowserBatchTransport,createBrowserEnvironment',
     );
   });
 

@@ -257,6 +257,9 @@ importers:
       '@aurora/core':
         specifier: workspace:*
         version: link:../core
+      '@aurora/event-schema':
+        specifier: workspace:*
+        version: link:../event-schema
       '@aurora/sdk':
         specifier: workspace:*
         version: link:../sdk

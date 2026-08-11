@@ -27,6 +27,7 @@
   },
   "dependencies": {
     "@aurora/core": "workspace:*",
+    "@aurora/event-schema": "workspace:*",
     "@aurora/sdk": "workspace:*"
   },
   "devDependencies": {
