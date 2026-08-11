@@ -1,13 +1,12 @@
 import { execFileSync } from 'node:child_process';
-import { mkdirSync, readdirSync, rmSync } from 'node:fs';
-import { join, relative } from 'node:path';
-import { tmpdir } from 'node:os';
+import { readdirSync } from 'node:fs';
 import type { ValidationIssue, WorkspacePackage } from './contract.js';
 
 /**
- * Reproducible pack verification: produce the real tarball via `pnpm pack`,
- * list its entries and assert the shipped contents match the release contract
- * (dist + types + package metadata, no src/test/coverage/secrets/fixtures).
+ * Reproducible pack verification: compute the exact tarball file list via
+ * `npm pack --dry-run --json` (cross-platform, no tar dependency) and assert
+ * the shipped contents match the release contract (dist + types + package
+ * metadata, no src/test/coverage/secrets/fixtures).
  */
 
 export interface PackedEntry {
@@ -15,13 +14,25 @@ export interface PackedEntry {
   readonly files: readonly string[];
 }
 
-export function listTarballEntries(tarballPath: string): PackedEntry {
-  const output = execFileSync('tar', ['-tzf', tarballPath], { encoding: 'utf8' });
-  const files = output
-    .split('\n')
-    .map((line) => line.trim())
-    .filter((line) => line.length > 0 && line.endsWith('/') === false)
-    .map((line) => (line.startsWith('package/') ? line : `package/${line}`));
+export function listPackedFiles(packageDir: string): PackedEntry {
+  const isWindows = process.platform === 'win32';
+  const output = execFileSync(
+    isWindows ? 'npm.cmd' : 'npm',
+    ['pack', '--dry-run', '--json'],
+    {
+      cwd: packageDir,
+      encoding: 'utf8',
+      stdio: 'pipe',
+      // `.cmd` shims on Windows can only be spawned through a shell.
+      shell: isWindows,
+    },
+  );
+  const parsed = JSON.parse(output) as Array<{ filename?: string; files?: Array<{ path?: string }> }>;
+  const entry = parsed[0];
+  const files = (entry?.files ?? [])
+    .map((file) => file.path)
+    .filter((path): path is string => typeof path === 'string' && path.length > 0)
+    .map((path) => (path.startsWith('package/') ? path : `package/${path}`));
   return { files };
 }
 
@@ -62,7 +73,7 @@ export function assertTarballContents(
   if (expectedEntries.includes('README.md') && !entries.includes('package/README.md')) {
     issues.push({ packageName: 'tarball', message: 'tarball does not contain README.md (declared in files)' });
   }
-  const hasLicense = /^package\/LICENSE(?:\.|$)/.test(entries.join('\n'));
+  const hasLicense = entries.some((entry) => /^package\/LICENSE(?:\.|$)/.test(entry));
   const licenseOnDisk = readdirSync(rootDir).some((entry) => /^LICENSE(?:\..+)?$/i.test(entry));
   if (licenseOnDisk && !hasLicense) {
     issues.push({ packageName: 'tarball', message: 'tarball does not contain LICENSE file present at package root' });
@@ -82,7 +93,10 @@ export function assertTarballContents(
   for (const entry of entries) {
     for (const glob of forbidden) {
       if (entryMatches(entry, glob)) {
-        issues.push({ packageName: 'tarball', message: `forbidden entry in tarball: ${relative('package', entry) || entry}` });
+        issues.push({
+          packageName: 'tarball',
+          message: `forbidden entry in tarball: ${entry.replace(/^package\//, '')}`,
+        });
         break;
       }
     }
@@ -92,33 +106,12 @@ export function assertTarballContents(
 
 export interface PackResult {
   readonly packageName: string;
-  readonly tarballPath: string;
   readonly assertion: TarballAssertion;
+  readonly fileCount: number;
 }
 
 export function packPublicPackage(pkg: WorkspacePackage): PackResult {
-  const packDir = join(tmpdir(), `aurora-pack-${process.pid}-${pkg.name.replace('/', '-')}`);
-  mkdirSync(packDir, { recursive: true });
-  try {
-    execFileSync('pnpm', ['pack', '--pack-destination', packDir], {
-      cwd: pkg.dir,
-      encoding: 'utf8',
-      stdio: 'pipe',
-    });
-  } finally {
-    // tarball is read before cleanup in the caller path that inspects it.
-  }
-  const tarballs = readdirSync(packDir).filter((entry) => entry.endsWith('.tgz'));
-  const tarballName = tarballs[0];
-  if (tarballName === undefined) {
-    throw new Error(`pnpm pack produced no tarball for ${pkg.name}`);
-  }
-  const tarballPath = join(packDir, tarballName);
-  const { files } = listTarballEntries(tarballPath);
+  const { files } = listPackedFiles(pkg.dir);
   const assertion = assertTarballContents(files, pkg.manifest.files ?? ['dist'], pkg.dir);
-  return { packageName: pkg.name, tarballPath, assertion };
-}
-
-export function cleanupPackDir(path: string): void {
-  rmSync(path, { recursive: true, force: true });
+  return { packageName: pkg.name, assertion, fileCount: files.length };
 }

@@ -3,11 +3,11 @@ import { validateWorkspace } from './validate.js';
 import { planVersions, readChangesets, renderChangelog } from './version.js';
 import { checkExportsTypes, checkProtocolDecoupling, checkWorkspaceDepRewritePlan } from './compat.js';
 import { runSizeGate, formatSizeResults } from './size.js';
-import { packPublicPackage, cleanupPackDir } from './pack.js';
+import { packPublicPackage } from './pack.js';
 import { discoverPublicPackages, discoverWorkspacePackages } from './contract.js';
 import { buildDeprecateArgs, buildDistTagArgs, describeRollback } from './deprecate.js';
 import { parseSemverResult } from './semver.js';
-import { dirname, join } from 'node:path';
+import { join } from 'node:path';
 
 export type CommandName =
   | 'validate'
@@ -107,13 +107,11 @@ export async function runCli(options: CliOptions, write: (text: string) => void)
       let failed = false;
       for (const pkg of publicPackages.values()) {
         const result = packPublicPackage(pkg);
-        const dir = dirname(result.tarballPath);
-        write(`${pkg.name}: ${result.assertion.ok ? 'PASS' : 'FAIL'} (${result.tarballPath})\n`);
+        write(`${pkg.name}: ${result.assertion.ok ? 'PASS' : 'FAIL'} (${result.fileCount} files)\n`);
         for (const issue of result.assertion.issues) {
           write(`  - ${issue.message}\n`);
         }
         if (!result.assertion.ok) failed = true;
-        cleanupPackDir(dir);
       }
       return failed ? 1 : 0;
     }

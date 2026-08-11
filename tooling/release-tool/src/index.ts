@@ -59,7 +59,7 @@ export {
 
 export {
   assertTarballContents,
-  listTarballEntries,
+  listPackedFiles,
   type PackedEntry,
   type TarballAssertion,
 } from './pack.js';
