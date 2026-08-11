@@ -22,7 +22,7 @@ function createProbePlugin(): Probe {
     initialize(context): void {
       const contextWithTrail = context as { recordActivity?: (entry: unknown) => unknown };
       const captured: ProbeContext = {
-        submitEvent: context.submitEvent as (input: unknown) => unknown,
+        submitEvent: context.submitEvent,
       };
       if (contextWithTrail.recordActivity !== undefined) {
         captured.recordActivity = contextWithTrail.recordActivity;
@@ -150,5 +150,64 @@ describe('createAuroraSdk', () => {
     await handle.start();
     expect(handle.getActivityTrail().length).toBeLessThanOrEqual(3);
     await handle.destroy();
+  });
+
+  it('wires accepted events into the delivery chain via an injected transport', async () => {
+    const sent: string[][] = [];
+    const transport = {
+      send: (request: { events: readonly { eventId: string }[] }) => {
+        sent.push(request.events.map((e) => e.eventId));
+        return Promise.resolve({
+          kind: 'success' as const,
+          status: 200,
+          receipt: {
+            batchState: 'accepted' as const,
+            retryable: false,
+            perEventResults: request.events.map((e) => ({
+              eventId: e.eventId,
+              state: 'accepted' as const,
+              retryable: false,
+            })),
+          },
+        });
+      },
+    };
+    const probe = createProbePlugin();
+    const handle = createAuroraSdk({ config: { clientKey: 'k' }, transport, plugins: [probe.plugin] });
+    await handle.start();
+    const result = probe.submit(errorDraft({ message: 'boom' }));
+    expect(result).toMatchObject({ ok: true, code: 'accepted' });
+    for (let i = 0; i < 5; i += 1) await Promise.resolve();
+    expect(sent.length).toBeGreaterThanOrEqual(1);
+    expect(sent[0]?.length).toBe(1);
+    await handle.destroy();
+  });
+
+  it('exposes delivery on the handle and destroys it with the handle', async () => {
+    const handle = createAuroraSdk({
+      config: { clientKey: 'k' },
+      transport: {
+        send: () =>
+          Promise.resolve({
+            kind: 'success' as const,
+            status: 200,
+            receipt: {
+              batchState: 'accepted' as const,
+              retryable: false,
+              perEventResults: [],
+            },
+          }),
+      },
+    });
+    expect(handle.delivery).toBeDefined();
+    await handle.destroy();
+    const envelope = {
+      protocolVersion: 1,
+      eventId: 'e1',
+      eventType: 'error',
+      occurredAt: 1,
+      body: { message: 'x' },
+    };
+    expect(handle.delivery.enqueue(envelope).code).toBe('destroyed');
   });
 });

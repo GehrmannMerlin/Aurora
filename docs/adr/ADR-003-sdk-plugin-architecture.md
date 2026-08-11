@@ -332,3 +332,9 @@ ADR accepted 后先定义最小公开接口和生命周期契约，再实现 Cor
 - 实施 Commit：none（如本轮产生真实 Commit，则只把该真实哈希写入本行）
 - Issue/PR：none
 - 剩余工作：采样（PRD 默认 10% 算法未定义）、队列、批量、传输、重试和持久化仍不存在。
+
+### 2026-08-11：G06 SDK 可靠发送链（SDK-15/16）实施证据
+
+- 状态保持 `accepted / in-progress`；
+- `@aurora/sdk` 新增可靠发送链：`createSdkDeliveryQueue`（有界、error-first、去重、溢出丢低优先级、多实例隔离）、`buildDeliveryBatch`、`SdkBatchTransport` 端口、`classifySdkHttpStatus/ReceiptState/TransportReason`（PRD §6.3）、`calculateSdkRetryDelay`（有界退避）、`createSdkDeliveryChain`（enqueue→batch→transport→receipt 逐事件处理、有界重试、flush/best-effort、有界诊断、宿主安全）；`@aurora/core` `CoreEventAccepted.event` 加法；`@aurora/browser` `createBrowserBatchTransport` 与 composition 接线（pagehide → best-effort flush）。队列/批次/重试/传输核心已存在；
+- 剩余工作：浏览器持久化离线队列（PRD §6.2 deferred）、框架适配（G07）、生产凭证管理 HTTP API/UI、行为事件正文与行为插件仍不存在。

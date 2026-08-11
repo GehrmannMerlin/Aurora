@@ -17,7 +17,7 @@ describe('AuroraCore event entry', () => {
     await core.initialize();
     expect(core.submitEvent(envelope)).toMatchObject({ ok: false, code: 'not_started' });
     await core.start();
-    expect(core.submitEvent(envelope)).toEqual({
+    expect(core.submitEvent(envelope)).toMatchObject({
       ok: true,
       code: 'accepted',
       state: 'started',
@@ -118,13 +118,30 @@ describe('AuroraCore draft submission', () => {
     });
     await core.initialize();
     await core.start();
-    expect(core.submitEventDraft({ eventType: EventType.Error, body: {} })).toEqual({
+    expect(core.submitEventDraft({ eventType: EventType.Error, body: {} })).toMatchObject({
       ok: true,
       code: 'accepted',
       state: 'started',
       diagnosticsAdded: 0,
     });
     expect(core.submitEvent(validEventEnvelopeSamples[0])).toMatchObject({ code: 'accepted' });
+  });
+
+  it('exposes the created envelope with a stable eventId on accepted draft submission', async () => {
+    const core = createCore({
+      eventIdProvider: { createEventId: () => 'evt-0001' },
+      eventTimeProvider: { now: () => 1_800_000_000_000 },
+    });
+    await core.initialize();
+    await core.start();
+    const result = core.submitEventDraft({ eventType: EventType.Error, body: { message: 'x' } });
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.event?.eventId).toBe('evt-0001');
+    expect(result.event?.eventType).toBe(EventType.Error);
+    expect(result.event?.protocolVersion).toBe(1);
+    expect(result.event?.occurredAt).toBe(1_800_000_000_000);
+    expect(result.event?.body).toEqual({ message: 'x' });
   });
 
   it.each([

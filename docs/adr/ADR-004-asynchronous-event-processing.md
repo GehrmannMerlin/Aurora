@@ -198,3 +198,9 @@ ADR accepted 后先定义接收结果、事件状态和幂等编号，再选择�
 - `adr_004_006_review` 在修正后完成独立复审并确认无剩余阻断，覆盖全部所需领域视角；
 - 评审确认三项候选真实，接收/处理状态、幂等、重试、死信、积压、恢复、A5 删除事实和 SDK 可见语义边界完整；
 - 当前没有可靠缓冲、消费者、死信、物理选型、容量/性能证据、Issue、实现 PR 或测试结果，本次接受不得解释为处理链路已实现。
+
+### 2026-08-11：G06 SDK 可靠发送链实施证据
+
+- 状态保持 `accepted`；实施状态仍为 `not-started`（指接入/处理物理缓冲，SDK 侧可靠发送链不改变本 ADR 决策）；
+- SDK-15/SDK-16 已实施为 `@aurora/sdk` 可靠发送链：有界内存队列（默认 256）、批次构造（引用 `BATCH_EVENT_LIMITS.maxEventsPerBatch`）、eventId 去重、error-first 优先级与溢出丢低优先级、`calculateSdkRetryDelay` capped exponential backoff + equal jitter、交付链按 receipt 逐事件处理（accepted/duplicate_accepted 完成移除、permanently_rejected 不重试、temporarily_failed 有界重试）、`flush({bestEffort})` 页面退出尽力发送；`@aurora/core` `CoreEventAccepted` 增加可选 `event` 以复用首次创建信封（PRD §6.1 事件 ID 稳定）；`@aurora/browser` 提供 fetch 传输与 composition 接线（pagehide → best-effort flush）；通过 17 个 SDK 单元测试、浏览器单测与全仓质量门禁；
+- 本增量不改写 ADR-004 决策：仍不做浏览器持久化离线队列（PRD §6.2）、重试有上限、永久拒绝不重试、一批单条失败不整批回滚。

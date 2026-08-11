@@ -63,3 +63,39 @@ export {
   type SdkSamplingContext,
   type SdkSamplingDecision,
 } from './sampling.js';
+export {
+  createSdkDeliveryQueue,
+  DEFAULT_DELIVERY_QUEUE_CAPACITY,
+  type SdkDeliveryQueue,
+  type SdkDeliveryQueueOptions,
+  type SdkEnqueueCode,
+  type SdkEnqueueResult,
+  type SdkQueuedEvent,
+} from './delivery-queue.js';
+export { buildDeliveryBatch, type SdkBatchBuildFailure, type SdkBatchBuildResult } from './batch-builder.js';
+export type {
+  SdkBatchTransport,
+  SdkTransportContext,
+  SdkTransportFailure,
+  SdkTransportMode,
+  SdkTransportResult,
+  SdkTransportSuccess,
+} from './transport-types.js';
+export {
+  classifySdkHttpStatus,
+  classifySdkReceiptState,
+  classifySdkTransportReason,
+  type SdkRetryDecision,
+} from './retry-classification.js';
+export { calculateSdkRetryDelay, type SdkBackoffParams } from './retry-backoff.js';
+export {
+  createSdkDeliveryChain,
+  DEFAULT_SDK_BASE_RETRY_DELAY_MS,
+  DEFAULT_SDK_MAX_RETRIES,
+  DEFAULT_SDK_MAX_RETRY_DELAY_MS,
+  type SdkDeliveryChain,
+  type SdkDeliveryChainOptions,
+  type SdkDeliveryDiagnostic,
+  type SdkDeliveryDiagnosticCode,
+  type SdkFlushResult,
+} from './delivery-chain.js';

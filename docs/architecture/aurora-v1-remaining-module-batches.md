@@ -172,8 +172,8 @@ remaining_v1_leaf_modules = 38
 | SDK-12 | 统一隐私过滤与 `beforeSend`            | `BASE-PRD`、`BASE-ARCH`、`BASE-IMPL`、`SDK-ARCH`、`SDK-CORE`、`SDK-SOURCES`、`SDK-PLUGINS`、`PROTO-EVENTS`、`FORM` | PRD §5.1.12—5.1.14、§14；SDK Architecture §5—6；三个 Source/Plugin 的隐私、宿主安全、异常隔离。独立规格缺失。                                     |
 | SDK-13 | 客户端采样策略                         | `BASE-PRD`、`BASE-ARCH`、`BASE-IMPL`、`SDK-ARCH`、`SDK-CORE`、`PROTO-EVENTS`、`FORM`                               | PRD §5.1.14、§15.1—15.2、§15.7；不得自行加入采样外推；算法、配置、稳定性和多实例语义的 approved 规格缺失。                                        |
 | SDK-14 | 安全操作轨迹与有界缓冲                 | `BASE-PRD`、`BASE-ARCH`、`BASE-IMPL`、`SDK-ARCH`、`SDK-CORE`、`SDK-SOURCES`、`PROTO-BASE`、`FORM`                  | PRD §5.1.10、§5.1.13—5.1.14、§14；禁止完整行为轨迹、表单值、DOM 文本和 Session Replay。操作轨迹契约、Source/Buffer 规格缺失。                     |
-| SDK-15 | 内存队列、批次和去重                   | `BASE-PRD`、`BASE-ARCH`、`BASE-IMPL`、`SDK-ARCH`、`SDK-CORE`、`PROTO-EVENTS`、`FORM`                               | PRD §6；ADR-004；Batch/Receipt Contract §4—11；SDK Architecture §3—6。必须冻结上限、溢出、生命周期和多实例隔离。                                  |
-| SDK-16 | Transport、重试、flush 和部分回执      | `BASE-PRD`、`BASE-ARCH`、`BASE-IMPL`、`SDK-ARCH`、`SDK-CORE`、`PROTO-EVENTS`、`ING-HTTP`、`FORM`                   | PRD §5.3、§6—7；传输安全决策 §3—5；OpenAPI §5—25；Browser Environment 页面生命周期。不得创建插件独立上报通道。                                    |
+| SDK-15 | 内存队列、批次和去重                   | `BASE-PRD`、`BASE-ARCH`、`BASE-IMPL`、`SDK-ARCH`、`SDK-CORE`、`PROTO-EVENTS`、`FORM`                               | PRD §6；ADR-004；Batch/Receipt Contract §4—11；SDK Architecture §3—6。**已关闭（2026-08-11，独立验收通过）**：正式规格 [sdk-reliable-delivery-chain.md](../sdk/sdk-reliable-delivery-chain.md) approved + implemented，`@aurora/sdk` `createSdkDeliveryQueue`（有界 256/error-first/去重/溢出丢低优先级/clear/destroy/多实例）+ `buildDeliveryBatch`（`maxEventsPerBatch=50`）已实施并通过 sdk 单测与全仓质量门禁；上限、溢出、生命周期和多实例隔离已冻结。 |
+| SDK-16 | Transport、重试、flush 和部分回执      | `BASE-PRD`、`BASE-ARCH`、`BASE-IMPL`、`SDK-ARCH`、`SDK-CORE`、`PROTO-EVENTS`、`ING-HTTP`、`FORM`                   | PRD §5.3、§6—7；传输安全决策 §3—5；OpenAPI §5—25；Browser Environment 页面生命周期。**已关闭（2026-08-11，独立验收通过）**：`@aurora/sdk` `SdkBatchTransport` 端口/`classifySdkHttpStatus`/`classifySdkReceiptState`/`calculateSdkRetryDelay`（capped exponential + jitter）/`createSdkDeliveryChain`（enqueue→batch→transport→receipt 逐事件处理/flush/best-effort/宿主安全/有界诊断）+ `@aurora/core` `CoreEventAccepted.event` 信封捕获 + `@aurora/browser` `createBrowserBatchTransport` 与 composition 接线（pagehide → best-effort flush）已实施；无插件独立上报通道；浏览器持久化离线队列 deferred（PRD §6.2）。 |
 | SDK-17 | Vue 框架生命周期适配                   | `BASE-PRD`、`BASE-ARCH`、`BASE-IMPL`、`SDK-ARCH`、`SDK-CORE`、`SDK-SOURCES`、`SDK-PLUGINS`、`OPS-QUALITY`、`FORM`  | PRD §4.4.5、§5—6；架构规范 §2.4.4；SDK Architecture §3、§7—8；必须先批准 Vue 版本、公共接口、安装/卸载和真实浏览器矩阵。                          |
 | SDK-18 | React 框架生命周期适配                 | `BASE-PRD`、`BASE-ARCH`、`BASE-IMPL`、`SDK-ARCH`、`SDK-CORE`、`SDK-SOURCES`、`SDK-PLUGINS`、`OPS-QUALITY`、`FORM`  | PRD §4.4.5、§5—6；架构规范 §2.4.4；SDK Architecture §3、§7—8；必须先批准 React 版本、Strict Mode/重复初始化边界和真实浏览器矩阵。                 |
 
@@ -307,6 +307,8 @@ SDK-10—13 可共用计划，是因为它们共同决定事件进入队列前�
 | 退出条件     | 本地队列有界、批次可靠构造、传输可重试、页面生命周期可刷新、部分接收结果可正确处理且不影响宿主 |
 
 两者适合共用计划，因为 Transport 的输入就是 Queue 产生的批次，且必须用同一端到端测试验证队列上限、刷新和部分回执。仍保留两个叶子，避免把“队列正确”误判为“网络发送正确”。
+
+**G06 当前状态（2026-08-11）**：**SDK-15 已关闭（独立验收通过）**：`@aurora/sdk` `createSdkDeliveryQueue` + `buildDeliveryBatch` 已实施（规格 [sdk-reliable-delivery-chain.md](../sdk/sdk-reliable-delivery-chain.md)）。**SDK-16 已关闭（独立验收通过）**：`SdkBatchTransport` 端口/重试分类/有界退避/`createSdkDeliveryChain` + `@aurora/core` `CoreEventAccepted.event` 信封捕获 + `@aurora/browser` `createBrowserBatchTransport` 与 composition 接线已实施。叶子计数：SDK-15 关闭后 `completed` 58→59 / `remaining` 20→19；SDK-16 独立验收通过后 `completed` 59→60 / `remaining` 19→18。G07（框架适配器）不提前实现。
 
 ### G07：框架适配器
 

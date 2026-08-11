@@ -25,16 +25,17 @@
 
 ## 非职责
 
-本包不执行错误/请求/性能协议转换、Core 插件、事件 ID/时间生成、错误去重/分组/指纹、Source Map、采样、队列、传输、重试或持久化；不读取请求/响应正文、请求/响应头、Cookie、凭据或表单；不实现资源或行为信号的捕获、FCP/TTFB/FID/TBT 等未批准性能指标；不创建 `packages/plugin-error`、`packages/plugin-request`、`packages/plugin-performance` 或 React/Vue 适配。
+本包不执行错误/请求/性能协议转换、Core 插件、事件 ID/时间生成、错误去重/分组/指纹、Source Map、采样、队列、重试编排或持久化（队列/批次/重试逻辑在 `@aurora/sdk` 交付链；本包只提供浏览器 fetch 传输与 composition 接线）；不读取请求/响应正文、请求/响应头、Cookie、凭据或表单；不实现资源或行为信号的捕获、FCP/TTFB/FID/TBT 等未批准性能指标；不创建 `packages/plugin-error`、`packages/plugin-request`、`packages/plugin-performance` 或 React/Vue 适配；不实现浏览器持久化离线队列（PRD §6.2 deferred）。
 
 ## 公共 API
 
-浏览器 SDK composition：`createAuroraSdk({ config, plugins?, pageOrigin? })` 把配置、Core、控制面（`@aurora/sdk`）与注入插件组装为完整 SDK 句柄（配置快照、Core、控制面、生命周期、`getActivityTrail()`），插件事件经统一控制面（隐私过滤 → beforeSend → 请求分类 → 采样）后进入 Core（SDK-10）；启动时用安全页面快照记录 `page_enter` 安全操作轨迹（SDK-14）。
+浏览器 SDK composition：`createAuroraSdk({ config, plugins?, pageOrigin?, ingestEndpoint?, transport? })` 把配置、Core、控制面、交付链（`@aurora/sdk`）与注入插件组装为完整 SDK 句柄（配置快照、Core、控制面、交付链、生命周期、`getActivityTrail()`），插件事件经统一控制面（隐私过滤 → beforeSend → 请求分类 → 采样）后进入 Core，Core 创建信封后由交付链入队并按批次发送（SDK-15/16）；启动时用安全页面快照记录 `page_enter` 安全操作轨迹（SDK-14）；`pagehide` 触发 best-effort flush。
 
 ```ts
 import {
   createBrowserEnvironment,
   createAuroraSdk,
+  createBrowserBatchTransport,
   BrowserErrorSourceEventType,
   BrowserPerformanceMetricName,
   BrowserPerformanceMetricUnit,
@@ -59,7 +60,9 @@ import {
 
 `subscribeRequests(listener)` 在第一个订阅者时安装 `window.fetch` 与 `window.XMLHttpRequest` 包装，之后共享同一包装；最后一个订阅者取消或实例销毁时恢复原始宿主引用。包装保持 fetch 参数透传、Promise 语义、Response 不被消费，保持 XHR `instanceof`、`open`/`send`/`abort` 语义、调用方 handler 不被覆盖、正文与敏感 Headers 不被读取。
 
-`subscribePerformance(listener)` 观测 PRD 5.1.9 批准的四项页面性能事实：`page_load`（Navigation Timing）、`lcp`（Largest Contentful Paint）、`cls`（Layout Instability session window）、`inp`（Event Timing interaction 聚合）。每项指标使用独立 `PerformanceObserver`（`buffered: false`，不消费宿主已有 entries），实例内多订阅者共享 observer（首个订阅者安装、最后一个取消时 `disconnect`）。事实只在收尾（页面隐藏、`pagehide`、取消或销毁）时发送最终候选；`page_load` 在订阅时若 Navigation Timing 已就绪则立即发送。不修改 `PerformanceObserver`/`performance`/原生 prototype，不影响其他库的 observer。`destroy()` 释放错误源、页面生命周期、请求观测与性能观测全部活动订阅。包只导出根入口。禁止导入 `src`、`internal` 或未声明子路径。
+`subscribePerformance(listener)` 观测 PRD 5.1.9 批准的四项页面性能事实：`page_load`（Navigation Timing）、`lcp`（Largest Contentful Paint）、`cls`（Layout Instability session window）、`inp`（Event Timing interaction 聚合）。每项指标使用独立 `PerformanceObserver`（`buffered: false`，不消费宿主已有 entries），实例内多订阅者共享 observer（首个订阅者安装、最后一个取消时 `disconnect`）。事实只在收尾（页面隐藏、`pagehide`、取消或销毁）时发送最终候选；`page_load` 在订阅时若 Navigation Timing 已就绪则立即发送。不修改 `PerformanceObserver`/`performance`/原生 prototype，不影响其他库的 observer。`destroy()` 释放错误源、页面生命周期、请求观测与性能观测全部活动订阅。
+
+`createBrowserBatchTransport({ ingestEndpoint, fetchImpl? })` 是交付链（`@aurora/sdk`）的浏览器 fetch 传输：发送 `POST {endpoint}/v1/batches`，使用交付链提供的 `X-Aurora-Client-Key`/`X-Aurora-Environment` Header，`best_effort` 模式启用 `keepalive`，HTTP/网络结果稳定映射为 `SdkTransportResult`，永不抛出；未配置 endpoint 时返回 `http_error status 0`（永久拒绝，不重试）。传输由交付链持有（唯一上报通道），插件不得自建传输。包只导出根入口。禁止导入 `src`、`internal` 或未声明子路径。
 
 ## 环境与降级
 
@@ -90,6 +93,7 @@ pnpm check:ci
 
 ## 权威来源
 
+- [SDK 可靠发送链（SDK-15/16）](../../docs/sdk/sdk-reliable-delivery-chain.md)
 - [Browser 正式规格](../../docs/sdk/browser-environment-foundation.md)
 - [错误源订阅规格](../../docs/sdk/browser-error-source.md)
 - [请求观测能力规格](../../docs/sdk/browser-request-source.md)

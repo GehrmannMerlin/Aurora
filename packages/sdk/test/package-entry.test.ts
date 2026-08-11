@@ -26,6 +26,12 @@ describe('built @aurora/sdk package entries', () => {
       'decideEventSample',
       'decideSdkSample',
       'classifyRequestEvent',
+      'createSdkDeliveryQueue',
+      'buildDeliveryBatch',
+      'createSdkDeliveryChain',
+      'classifySdkHttpStatus',
+      'classifySdkReceiptState',
+      'calculateSdkRetryDelay',
     ]) {
       expect(result.stdout).toContain(symbol);
     }

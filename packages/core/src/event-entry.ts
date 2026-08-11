@@ -1,5 +1,5 @@
 import { parseEventEnvelope } from '@aurora/event-schema';
-import type { EventSchemaIssue } from '@aurora/event-schema';
+import type { EventEnvelope, EventSchemaIssue } from '@aurora/event-schema';
 import type { CoreLifecycleState } from './lifecycle.js';
 import type { DiagnosticStore } from './diagnostics.js';
 import { createCoreEventEnvelope } from './event-creation.js';
@@ -10,6 +10,8 @@ export interface CoreEventAccepted {
   readonly code: 'accepted';
   readonly state: 'started';
   readonly diagnosticsAdded: 0;
+  /** The validated envelope Core created (present on real submissions; absent on host-side synthetic results). */
+  readonly event?: EventEnvelope;
 }
 
 export interface CoreInvalidEvent {
@@ -119,6 +121,7 @@ export function submitCoreEvent(
       code: 'accepted',
       state: 'started',
       diagnosticsAdded: 0,
+      event: parsed.data,
     });
   } catch {
     diagnostics.add({ code: 'internal_error', operation: 'submit_event' });

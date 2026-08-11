@@ -78,7 +78,7 @@ Core 提供两个公开提交入口：
 
 两个入口均为同步方法。只有 `started` 状态才读取草稿和调用 Provider；其他状态返回 `not_started` 或 `destroyed`。
 
-每次调用表示一个新事件创建；重复或并发调用各自调用 Provider 并产生各自结果。`accepted` 只表示 Core 已启动且事件通过校验；它不表示采样、排队、发送或持久化。Core 不修改或保存协议对象。
+每次调用表示一个新事件创建；重复或并发调用各自调用 Provider 并产生各自结果。`accepted` 只表示 Core 已启动且事件通过校验；它不表示采样、排队、发送或持久化。Core 不修改或保存协议对象。成功结果携带创建的信封：`CoreEventAccepted.event?: EventEnvelope`（G06），供可靠发送链复用同一信封与稳定 `eventId` 做批次构造与重试（PRD §6.1）；对既有消费者为加法且向后兼容。
 
 ### 事件草稿
 
