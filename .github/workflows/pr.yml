@@ -92,3 +92,37 @@ jobs:
       # license plumbing.
       - name: Package entry (console)
         run: pnpm --filter @aurora/console test:package
+
+  browser:
+    # OPS-02: PR keeps the core Chromium compatibility smoke only. The full
+    # browser/device/accessibility matrix runs in nightly/release.
+    name: Browser (Core Chromium Reference Smoke)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 11.17.0
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24.18.0
+          cache: pnpm
+
+      - name: Install (frozen lockfile)
+        run: pnpm install --frozen-lockfile
+
+      # Build workspace deps: the reference fixture serves @aurora/* dist.
+      - name: Build (workspace deps for reference smoke)
+        run: pnpm build
+
+      - name: Install Chromium (with deps)
+        run: pnpm --filter @aurora/sdk-reference exec playwright install --with-deps chromium
+
+      - name: SDK reference smoke (Chromium)
+        run: pnpm --filter @aurora/sdk-reference test:browser

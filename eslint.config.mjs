@@ -38,6 +38,7 @@ export default tseslint.config(
       'apps/platform-api/**/*.ts',
       'apps/platform-worker/**/*.ts',
       'apps/console/**/*.ts',
+      'examples/**/*.ts',
     ],
     languageOptions: {
       parserOptions: {
