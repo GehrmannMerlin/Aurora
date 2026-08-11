@@ -1,9 +1,38 @@
 import { parseIngestionRequestReceipt } from '@aurora/event-schema';
 import type { SdkBatchTransport, SdkTransportContext, SdkTransportResult } from '@aurora/sdk';
 
+/**
+ * Minimal structural response contract for the injected fetch-like function.
+ * Describes only the capabilities `createBrowserBatchTransport` actually uses so the
+ * public declaration stays free of DOM globals (`fetch`, `Response`, `RequestInit`, …)
+ * and remains consumable by no-DOM typecheck consumers.
+ */
+export interface BrowserFetchResponseLike {
+  readonly ok: boolean;
+  readonly status: number;
+  readonly headers: {
+    get(name: string): string | null;
+  };
+  text(): Promise<string>;
+}
+
+/** Minimal structural request options for the injected fetch-like function. */
+export interface BrowserFetchRequestInit {
+  readonly method?: string;
+  readonly headers?: Readonly<Record<string, string>>;
+  readonly body?: string;
+  readonly keepalive?: boolean;
+}
+
+/** Minimal structural fetch-like function, independent of DOM globals. */
+export type BrowserFetchLike = (
+  input: string,
+  init?: BrowserFetchRequestInit,
+) => Promise<BrowserFetchResponseLike>;
+
 export interface CreateBrowserBatchTransportOptions {
   readonly ingestEndpoint: string;
-  readonly fetchImpl?: typeof fetch;
+  readonly fetchImpl?: BrowserFetchLike;
 }
 
 function readRetryAfterMs(header: string | null): number | undefined {
@@ -23,7 +52,7 @@ export function createBrowserBatchTransport(
   options: CreateBrowserBatchTransportOptions,
 ): SdkBatchTransport {
   const fetchImpl =
-    options.fetchImpl ?? ((input: RequestInfo | URL, init?: RequestInit) => fetch(input, init));
+    options.fetchImpl ?? ((input: string, init?: BrowserFetchRequestInit) => fetch(input, init));
   const base = options.ingestEndpoint === '' ? '' : options.ingestEndpoint.replace(/\/+$/, '');
   const endpoint = base === '' ? '' : `${base}/v1/batches`;
 
@@ -32,7 +61,7 @@ export function createBrowserBatchTransport(
     context: SdkTransportContext,
   ): Promise<SdkTransportResult> {
     if (endpoint === '') return { kind: 'http_error', status: 0 };
-    let response: Response;
+    let response: BrowserFetchResponseLike;
     try {
       response = await fetchImpl(endpoint, {
         method: 'POST',
