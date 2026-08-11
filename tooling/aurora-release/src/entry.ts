@@ -23,9 +23,10 @@ import {
   validateForwardCompatibility,
 } from './migrations.js';
 import { assertSafeDeployment, planDeployment } from './deploy.js';
+import { assertNoDestructiveMigrationRollback, planRollback } from './rollback.js';
 
 interface CliOptions {
-  readonly command: 'plan' | 'validate-migrations';
+  readonly command: 'plan' | 'validate-migrations' | 'plan-rollback';
   readonly manifestPath: string | undefined;
   readonly previousPath: string | undefined;
   readonly services: readonly string[];
@@ -39,8 +40,10 @@ const DATABASE_URL_ENV_DEFAULT = 'DATABASE_URL';
 
 function parseArgs(argv: readonly string[]): CliOptions {
   const command = argv[0] as CliOptions['command'] | undefined;
-  if (command !== 'plan' && command !== 'validate-migrations') {
-    throw new Error('release_cli_invalid_command: expected plan or validate-migrations');
+  if (command !== 'plan' && command !== 'validate-migrations' && command !== 'plan-rollback') {
+    throw new Error(
+      'release_cli_invalid_command: expected plan, validate-migrations or plan-rollback',
+    );
   }
   let manifestPath: string | undefined;
   let previousPath: string | undefined;
@@ -123,6 +126,21 @@ export async function runCli(argv: readonly string[]): Promise<number> {
     process.stdout.write(
       `forward-compatible: ${String(migrations.length)} migrations across ${String(options.migrationDirs.length)} dirs\n`,
     );
+    return 0;
+  }
+
+  // plan-rollback
+  if (options.command === 'plan-rollback') {
+    const manifest = await loadManifest(options.manifestPath);
+    const previous = await loadManifest(options.previousPath);
+    if (manifest === undefined || previous === undefined) {
+      throw new Error(
+        'release_cli_manifest_required: plan-rollback needs --manifest and --previous',
+      );
+    }
+    const plan = planRollback(manifest, previous);
+    assertNoDestructiveMigrationRollback(plan);
+    process.stdout.write(`${JSON.stringify(plan, null, 2)}\n`);
     return 0;
   }
 

@@ -39,6 +39,23 @@ describe('CLI (dry-run)', () => {
     await expect(runCli(['deploy'])).rejects.toThrow('release_cli_invalid_command');
   });
 
+  it('renders a rollback plan from manifest + previous', async () => {
+    const code = await runCli([
+      'plan-rollback',
+      '--manifest',
+      currentPath,
+      '--previous',
+      previousPath,
+    ]);
+    expect(code).toBe(0);
+  });
+
+  it('requires --previous for plan-rollback', async () => {
+    await expect(runCli(['plan-rollback', '--manifest', currentPath])).rejects.toThrow(
+      'release_cli_manifest_required',
+    );
+  });
+
   it('requires --manifest for plan', async () => {
     await expect(runCli(['plan', '--targets', 'services=ingestion-api'])).rejects.toThrow(
       'release_cli_manifest_required',
