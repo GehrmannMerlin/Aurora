@@ -10,13 +10,13 @@ function createRecordingTransport() {
   return {
     sends,
     transport: {
-      send: async (request: unknown) => {
+      send: (request: unknown) => {
         sends.push(request);
-        return {
+        return Promise.resolve({
           kind: 'success',
           status: 202,
           receipt: { batchState: 'accepted', retryable: false, perEventResults: [] },
-        } as const;
+        } as const);
       },
     },
   };
@@ -52,7 +52,9 @@ describe('React adapter host safety', () => {
     const serialized = JSON.stringify(sends);
     expect(serialized).not.toContain('componentStack');
     expect(serialized).not.toContain('secret');
-    act(() => root.unmount());
+    act(() => {
+      root.unmount();
+    });
     container.remove();
   });
 
@@ -71,8 +73,10 @@ describe('React adapter host safety', () => {
     );
     await waitTick();
     expect(sends.length).toBe(0);
-    expect(container.textContent ?? '').toBe('');
-    act(() => root.unmount());
+    expect(container.textContent).toBe('');
+    act(() => {
+      root.unmount();
+    });
     // 随后合法错误仍被提交。
     const root2 = renderTree(
       React.createElement(plugin.AuroraErrorBoundary, null, React.createElement(Boom)),
@@ -80,7 +84,9 @@ describe('React adapter host safety', () => {
     );
     await waitTick();
     expect(sends.length).toBe(1);
-    act(() => root2.unmount());
+    act(() => {
+      root2.unmount();
+    });
     container.remove();
   });
 
@@ -97,7 +103,9 @@ describe('React adapter host safety', () => {
     expect(sends.length).toBe(0);
     await waitTick();
     expect(sends.length).toBe(1);
-    act(() => root.unmount());
+    act(() => {
+      root.unmount();
+    });
     container.remove();
   });
 });

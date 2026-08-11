@@ -7,13 +7,13 @@ function createRecordingTransport() {
   return {
     sends,
     transport: {
-      send: async (request: unknown) => {
+      send: (request: unknown) => {
         sends.push(request);
-        return {
+        return Promise.resolve({
           kind: 'success',
           status: 202,
           receipt: { batchState: 'accepted', retryable: false, perEventResults: [] },
-        } as const;
+        } as const);
       },
     },
   };
@@ -39,7 +39,7 @@ describe('Vue adapter host safety', () => {
     expect(wrapped).toBeTypeOf('function');
     const err = new Error('boom');
     const info = 'render function';
-    wrapped?.(err, null, info);
+    wrapped(err, null, info);
     expect(seen).toEqual([err, null, info]);
     plugin.uninstall(app);
   });
@@ -48,7 +48,9 @@ describe('Vue adapter host safety', () => {
     const app = makeApp();
     const plugin = createVueAuroraPlugin({ config: { clientKey: 'test-key' } });
     plugin.install(app);
-    const hostNew = (): void => {};
+    const hostNew = (): void => {
+      return;
+    };
     app.config.errorHandler = hostNew;
     plugin.uninstall(app);
     expect(app.config.errorHandler).toBe(hostNew);
@@ -62,7 +64,9 @@ describe('Vue adapter host safety', () => {
     await waitTick();
     const wrapped = app.config.errorHandler;
     // 一个必然被协议拒绝的草稿（超长 message）不得抛出。
-    expect(() => wrapped?.({ message: 'x'.repeat(5000) }, null, 'render function')).not.toThrow();
+    expect(() => {
+      wrapped?.({ message: 'x'.repeat(5000) }, null, 'render function');
+    }).not.toThrow();
     await waitTick();
     expect(sends.length).toBe(0);
     // 随后的合法事件仍然被提交。

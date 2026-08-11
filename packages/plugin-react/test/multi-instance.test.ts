@@ -12,13 +12,13 @@ function createRecordingTransport() {
   return {
     sends,
     transport: {
-      send: async (request: unknown) => {
+      send: (request: unknown) => {
         sends.push(request);
-        return {
+        return Promise.resolve({
           kind: 'success',
           status: 202,
           receipt: { batchState: 'accepted', retryable: false, perEventResults: [] },
-        } as const;
+        } as const);
       },
     },
   };

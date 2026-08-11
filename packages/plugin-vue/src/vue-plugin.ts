@@ -16,7 +16,7 @@ export interface VueRouteLocationLike {
 }
 
 export interface VueRouterLike {
-  readonly afterEach: (hook: (to: VueRouteLocationLike) => void) => { (): void };
+  readonly afterEach: (hook: (to: VueRouteLocationLike) => void) => () => void;
 }
 
 export function isVueRouterLike(value: unknown): value is VueRouterLike {
@@ -43,7 +43,7 @@ export function createVueAuroraPlugin(input: CreateAuroraSdkInput): VueAuroraPlu
   let boundApp: App | undefined;
   let originalHandler: VueErrorHandler | undefined;
   let wrappedHandler: VueErrorHandler | undefined;
-  let routeOff: { (): void } | undefined;
+  let routeOff: (() => void) | undefined;
   let destroyed = false;
   let coreStarted = false;
   // 有界 pre-start 闩锁：Vue 的 errorHandler 在 mount 的同步渲染中触发，早于
@@ -142,7 +142,9 @@ export function createVueAuroraPlugin(input: CreateAuroraSdkInput): VueAuroraPlu
       app.config.errorHandler = handler;
       boundApp = app;
       if (options?.router !== undefined && isVueRouterLike(options.router)) {
-        routeOff = options.router.afterEach((to) => recordRouteChange(to));
+        routeOff = options.router.afterEach((to) => {
+          recordRouteChange(to);
+        });
       }
       void sdk.start().then((result) => {
         if (result.ok) {

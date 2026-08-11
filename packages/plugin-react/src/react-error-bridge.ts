@@ -30,7 +30,7 @@ function readErrorDescriptor(
   const stack = readSafeString(record, 'stack');
   return {
     ...(name === undefined ? {} : { name }),
-    message: message === undefined ? UNKNOWN_ERROR_MESSAGE : message,
+    message: message ?? UNKNOWN_ERROR_MESSAGE,
     ...(stack === undefined ? {} : { stack }),
   };
 }

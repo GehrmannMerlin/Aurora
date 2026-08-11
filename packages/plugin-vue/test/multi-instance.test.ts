@@ -10,8 +10,12 @@ describe('Vue adapter multi-instance isolation', () => {
   it('keeps each plugin instance independent and does not leak state', () => {
     const appA = makeApp();
     const appB = makeApp();
-    const originalA: NonNullable<App['config']['errorHandler']> = (): void => {};
-    const originalB: NonNullable<App['config']['errorHandler']> = (): void => {};
+    const originalA: NonNullable<App['config']['errorHandler']> = (): void => {
+      return;
+    };
+    const originalB: NonNullable<App['config']['errorHandler']> = (): void => {
+      return;
+    };
     appA.config.errorHandler = originalA;
     appB.config.errorHandler = originalB;
 

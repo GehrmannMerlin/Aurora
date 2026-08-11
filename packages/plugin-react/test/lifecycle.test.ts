@@ -10,13 +10,13 @@ function createRecordingTransport() {
   return {
     sends,
     transport: {
-      send: async (request: unknown) => {
+      send: (request: unknown) => {
         sends.push(request);
-        return {
+        return Promise.resolve({
           kind: 'success',
           status: 202,
           receipt: { batchState: 'accepted', retryable: false, perEventResults: [] },
-        } as const;
+        } as const);
       },
     },
   };
@@ -48,7 +48,9 @@ describe('React adapter lifecycle', () => {
       container,
     );
     expect(container.textContent).toContain('ok');
-    act(() => root.unmount());
+    act(() => {
+      root.unmount();
+    });
     container.remove();
   });
 
@@ -66,7 +68,9 @@ describe('React adapter lifecycle', () => {
     const request = sends[0] as { events: readonly { readonly body?: { readonly category?: string; readonly error?: { message?: string } } }[] };
     expect(request.events[0]?.body?.category).toBe('javascript');
     expect(request.events[0]?.body?.error?.message).toBe('boom');
-    act(() => root.unmount());
+    act(() => {
+      root.unmount();
+    });
     container.remove();
   });
 
@@ -93,7 +97,9 @@ describe('React adapter lifecycle', () => {
       .filter((entry) => entry.kind === 'page_enter').length;
     expect(pageEnters).toBe(1);
     expect(container.textContent).toContain('strict-ok');
-    act(() => root.unmount());
+    act(() => {
+      root.unmount();
+    });
     container.remove();
   });
 
@@ -107,7 +113,9 @@ describe('React adapter lifecycle', () => {
       container,
     );
     await waitTick();
-    act(() => root.unmount());
+    act(() => {
+      root.unmount();
+    });
     const count = sends.length;
     await waitTick();
     expect(sends.length).toBe(count);

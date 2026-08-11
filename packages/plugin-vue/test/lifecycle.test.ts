@@ -5,12 +5,12 @@ import type { VueAuroraPlugin, VueRouterLike } from '../src/index.js';
 
 function createFakeTransport() {
   return {
-    send: async () =>
-      ({
+    send: () =>
+      Promise.resolve({
         kind: 'success',
         status: 202,
         receipt: { batchState: 'accepted', retryable: false, perEventResults: [] },
-      }) as const,
+      } as const),
   };
 }
 
@@ -22,7 +22,7 @@ function fakeRouter(): { router: VueRouterLike; emit: (to: { path: string; fullP
   let hook: ((to: { path: string; fullPath: string }) => void) | undefined;
   return {
     router: {
-      afterEach(handler: (to: { path: string; fullPath: string }) => void): { (): void } {
+      afterEach(handler: (to: { path: string; fullPath: string }) => void): () => void {
         hook = handler;
         return (): void => {
           hook = undefined;
@@ -40,7 +40,9 @@ const waitTick = (): Promise<void> => new Promise((resolve) => setTimeout(resolv
 describe('Vue adapter lifecycle', () => {
   it('install wraps app.config.errorHandler and preserves the original', () => {
     const app = makeApp();
-    const original = (): void => {};
+    const original = (): void => {
+      return;
+    };
     app.config.errorHandler = original;
     const plugin = createVueAuroraPlugin({
       config: { clientKey: 'test-key' },
@@ -67,7 +69,9 @@ describe('Vue adapter lifecycle', () => {
 
   it('uninstall restores the original errorHandler by identity', () => {
     const app = makeApp();
-    const original = (): void => {};
+    const original = (): void => {
+      return;
+    };
     app.config.errorHandler = original;
     const plugin = createVueAuroraPlugin({
       config: { clientKey: 'test-key' },
@@ -84,7 +88,9 @@ describe('Vue adapter lifecycle', () => {
       config: { clientKey: 'test-key' },
       transport: createFakeTransport(),
     });
-    expect(() => plugin.uninstall(app)).not.toThrow();
+    expect(() => {
+      plugin.uninstall(app);
+    }).not.toThrow();
   });
 
   it('destroy makes a subsequent install a no-op', async () => {
