@@ -65,7 +65,11 @@ describe('React adapter lifecycle', () => {
     );
     await waitTick();
     expect(sends.length).toBe(1);
-    const request = sends[0] as { events: readonly { readonly body?: { readonly category?: string; readonly error?: { message?: string } } }[] };
+    const request = sends[0] as {
+      events: readonly {
+        readonly body?: { readonly category?: string; readonly error?: { message?: string } };
+      }[];
+    };
     expect(request.events[0]?.body?.category).toBe('javascript');
     expect(request.events[0]?.body?.error?.message).toBe('boom');
     act(() => {

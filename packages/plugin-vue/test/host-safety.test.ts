@@ -86,7 +86,9 @@ describe('Vue adapter host safety', () => {
     expect(sends.length).toBe(0);
     await waitTick();
     expect(sends.length).toBe(1);
-    const request = sends[0] as { events: readonly { readonly body?: { readonly category?: string } }[] };
+    const request = sends[0] as {
+      events: readonly { readonly body?: { readonly category?: string } }[];
+    };
     expect(request.events[0]?.body?.category).toBe('javascript');
     plugin.uninstall(app);
   });
@@ -102,7 +104,9 @@ describe('Vue adapter host safety', () => {
     await waitTick();
     expect(sends.length).toBe(1);
     const request = sends[0] as {
-      events: readonly { readonly body: { readonly error?: unknown; readonly category?: string } }[];
+      events: readonly {
+        readonly body: { readonly error?: unknown; readonly category?: string };
+      }[];
     };
     const body = request.events[0]?.body;
     expect(body?.category).toBe('javascript');

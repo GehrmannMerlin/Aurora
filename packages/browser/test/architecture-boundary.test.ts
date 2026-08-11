@@ -20,11 +20,9 @@ describe('Browser architecture boundary', () => {
         '@aurora/sdk': 'workspace:*',
       },
     });
-    expect(Object.keys((manifest as { dependencies: Record<string, unknown> }).dependencies)).toEqual([
-      '@aurora/core',
-      '@aurora/event-schema',
-      '@aurora/sdk',
-    ]);
+    expect(
+      Object.keys((manifest as { dependencies: Record<string, unknown> }).dependencies),
+    ).toEqual(['@aurora/core', '@aurora/event-schema', '@aurora/sdk']);
   });
 
   it('keeps the browser environment foundation free of cross-package, protocol, private, body, or console source', async () => {

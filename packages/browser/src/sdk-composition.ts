@@ -44,7 +44,13 @@ export interface AuroraSdkHandle {
 }
 
 function rejectedDraftResult(): CoreEventDraftResult {
-  return Object.freeze({ ok: false, code: 'invalid_event', state: 'started', issues: [], diagnosticsAdded: 1 });
+  return Object.freeze({
+    ok: false,
+    code: 'invalid_event',
+    state: 'started',
+    issues: [],
+    diagnosticsAdded: 1,
+  });
 }
 
 function acceptedDraftResult(): CoreEventDraftResult {
@@ -122,8 +128,7 @@ export function createAuroraSdk(input: CreateAuroraSdkInput): AuroraSdkHandle {
       ? createSdkControlPlane(config)
       : createSdkControlPlane(config, { pageOrigin: input.pageOrigin });
   const transport =
-    input.transport ??
-    createBrowserBatchTransport({ ingestEndpoint: input.ingestEndpoint ?? '' });
+    input.transport ?? createBrowserBatchTransport({ ingestEndpoint: input.ingestEndpoint ?? '' });
   const delivery = createSdkDeliveryChain(
     { clientKey: config.clientKey, environment: config.environment },
     { transport, schedule: createHostScheduler() },

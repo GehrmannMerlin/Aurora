@@ -35,8 +35,14 @@ describe('React adapter multi-instance isolation', () => {
     document.body.append(containerA, containerB);
     const { transport: transportA, sends: sendsA } = createRecordingTransport();
     const { transport: transportB, sends: sendsB } = createRecordingTransport();
-    const pluginA = createReactAuroraPlugin({ config: { clientKey: 'key-a' }, transport: transportA });
-    const pluginB = createReactAuroraPlugin({ config: { clientKey: 'key-b' }, transport: transportB });
+    const pluginA = createReactAuroraPlugin({
+      config: { clientKey: 'key-a' },
+      transport: transportA,
+    });
+    const pluginB = createReactAuroraPlugin({
+      config: { clientKey: 'key-b' },
+      transport: transportB,
+    });
     expect(pluginA.sdk).not.toBe(pluginB.sdk);
     expect(pluginA.AuroraErrorBoundary).not.toBe(pluginB.AuroraErrorBoundary);
 
@@ -58,8 +64,14 @@ describe('React adapter multi-instance isolation', () => {
     document.body.append(containerA, containerB);
     const { transport: transportA, sends: sendsA } = createRecordingTransport();
     const { transport: transportB, sends: sendsB } = createRecordingTransport();
-    const pluginA = createReactAuroraPlugin({ config: { clientKey: 'key-a' }, transport: transportA });
-    const pluginB = createReactAuroraPlugin({ config: { clientKey: 'key-b' }, transport: transportB });
+    const pluginA = createReactAuroraPlugin({
+      config: { clientKey: 'key-a' },
+      transport: transportA,
+    });
+    const pluginB = createReactAuroraPlugin({
+      config: { clientKey: 'key-b' },
+      transport: transportB,
+    });
 
     await pluginA.destroy();
     act(() => {
