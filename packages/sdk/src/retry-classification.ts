@@ -5,7 +5,14 @@ export interface SdkRetryDecision {
   readonly retryAfterMs?: number;
 }
 
-const RETRYABLE_HTTP_STATUS = new Set([408, 429, 500, 502, 503, 504]);
+const RETRYABLE_HTTP_STATUS: Readonly<Record<number, boolean>> = Object.freeze({
+  408: true,
+  429: true,
+  500: true,
+  502: true,
+  503: true,
+  504: true,
+});
 
 function withRetryAfter(retryable: boolean, retryAfterMs?: number): SdkRetryDecision {
   if (!retryable || retryAfterMs === undefined || !Number.isSafeInteger(retryAfterMs) || retryAfterMs <= 0) {
@@ -20,7 +27,7 @@ function withRetryAfter(retryable: boolean, retryAfterMs?: number): SdkRetryDeci
  * retryable. HTTP 0 means "transport not configured" (permanent config issue).
  */
 export function classifySdkHttpStatus(status: number, retryAfterMs?: number): SdkRetryDecision {
-  return withRetryAfter(RETRYABLE_HTTP_STATUS.has(status), retryAfterMs);
+  return withRetryAfter(RETRYABLE_HTTP_STATUS[status] === true, retryAfterMs);
 }
 
 /**
