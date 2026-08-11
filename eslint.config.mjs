@@ -18,6 +18,8 @@ export default tseslint.config(
       'packages/plugin-error/**/*.ts',
       'packages/plugin-request/**/*.ts',
       'packages/plugin-performance/**/*.ts',
+      'packages/plugin-vue/**/*.ts',
+      'packages/plugin-react/**/*.ts',
       'packages/ingestion-credentials/**/*.ts',
       'packages/ingestion-inbox/**/*.ts',
       'packages/processing-store/**/*.ts',

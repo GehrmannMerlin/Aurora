@@ -29,6 +29,7 @@ const allowedLocalDependencyLayers: ReadonlyMap<string, ReadonlySet<string>> = n
   ['sdk-core', new Set<string>(['protocol'])],
   ['sdk-browser', new Set<string>(['sdk-core', 'protocol'])],
   ['sdk-plugin', new Set<string>(['sdk-core', 'sdk-browser', 'protocol'])],
+  ['sdk-framework', new Set<string>(['sdk-core', 'sdk-browser', 'protocol'])],
   ['data', new Set<string>(['protocol'])],
   ['service', new Set<string>(['protocol', 'data', 'tooling', 'contract'])],
   ['contract', new Set<string>(['protocol'])],

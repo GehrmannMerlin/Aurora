@@ -1,0 +1,50 @@
+{
+  "name": "@aurora/plugin-vue",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Aurora Vue 3 framework adapter (framework lifecycle wiring, Vue error bridge, route context)",
+  "sideEffects": false,
+  "engines": {
+    "node": ">=24.18.0 <25"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run --exclude test/package-entry.test.ts",
+    "test:coverage": "vitest run --coverage --exclude test/package-entry.test.ts",
+    "test:package": "pnpm build && vitest run test/package-entry.test.ts",
+    "test:browser": "pnpm build && playwright test --config playwright.config.ts"
+  },
+  "dependencies": {
+    "@aurora/browser": "workspace:*",
+    "@aurora/core": "workspace:*",
+    "@aurora/event-schema": "workspace:*"
+  },
+  "peerDependencies": {
+    "vue": "^3.4.0"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.62.1",
+    "@types/node": "24.13.3",
+    "@vue/test-utils": "2.4.11",
+    "@vitest/coverage-v8": "4.1.10",
+    "jsdom": "30.0.1",
+    "typescript": "6.0.3",
+    "vitest": "4.1.10",
+    "vue": "3.5.41"
+  },
+  "aurora": {
+    "layer": "sdk-framework"
+  }
+}
