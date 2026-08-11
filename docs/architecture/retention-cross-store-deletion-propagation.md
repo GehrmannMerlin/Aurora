@@ -26,7 +26,9 @@ review-cycle: release-or-security-change
 
 本文正式承载 SEC-02 叶子模块（retention / cross-store deletion propagation）。它消费已 approved 的 [账号注销与数据生命周期](../security/account-deletion-and-data-lifecycle.md) §6—11、[backup-and-recovery](../operations/backup-and-recovery.md) §5、核心 PRD §14/§16—17，并把 SEC-01 已创建的 `account_cleanup_handoffs` 意图（注释明确 "consumed by the future SEC-02 worker"）落为**消费该意图的跨存储清理编排**。
 
-**当前状态**：`status: approved`、`implementation-status: implemented-in-feature-branch`。清理状态机、跨存储清理 adapter 端口、PostgreSQL 清理 adapter（真实）、Redis/对象/备份 adapter（契约，对应基础设施由 ADR-032 defer）、清理 orchestrator worker、审计记录、备份淘汰与恢复后删除重放契约已实现并测试。
+**当前状态**：`status: approved`、`implementation-status: implemented-in-feature-branch`。清理状态机、跨存储清理 adapter 端口、PostgreSQL 清理 adapter（真实）、Redis/对象/备份 adapter（契约，对应基础设施由 ADR-032 defer）、清理 orchestrator worker、审计记录、备份淘汰与恢复后删除重放契约已实现并测试（24 单测 + 1 条 focused 真实 PostgreSQL 集成测试通过）。
+
+**OPS-07 bridge**：OPS-07 尚未合入 main（G16 PR 未 merge）→ 记录 `OPS07_DELETE_REPLAY_INTEGRATION_PENDING`（不 cherry-pick G16 分支；SEC-02 独立完成；OPS-07 合入后运行 focused delete-replay bridge test）。
 
 ## 2. 权威语义（不重开）
 
@@ -43,13 +45,13 @@ review-cycle: release-or-security-change
 
 `account_cleanup_handoffs`（SEC-01）持久化**不可逆删除意图**（`requiredLifecycle` jsonb：7 天在线清理 / 一年审计 / 35 天备份）。SEC-02 orchestrator 消费它，按固定顺序执行跨存储清理步骤：
 
-| 存储步骤 | 实现 | 说明 |
-|---|---|---|
-| `postgres` | **真实** | 删除/匿名化账号直接身份与成员关系（见 §3.2） |
-| `redis-sessions` | **契约** | Session 撤销（生产 Session Redis 由 ADR-032 defer；adapter 接口 + 契约测试） |
-| `object-storage` | **契约** | Source Map 等私密对象删除（生产对象存储由 ADR-032 defer） |
-| `audit` | **真实** | 清理完成/失败安全审计（一年最小匿名摘要） |
-| `backup-lifecycle` | **契约** | 35 天自然淘汰策略，不逐记录破坏共享不可变备份 |
+| 存储步骤           | 实现     | 说明                                                                         |
+| ------------------ | -------- | ---------------------------------------------------------------------------- |
+| `postgres`         | **真实** | 删除/匿名化账号直接身份与成员关系（见 §3.2）                                 |
+| `redis-sessions`   | **契约** | Session 撤销（生产 Session Redis 由 ADR-032 defer；adapter 接口 + 契约测试） |
+| `object-storage`   | **契约** | Source Map 等私密对象删除（生产对象存储由 ADR-032 defer）                    |
+| `audit`            | **真实** | 清理完成/失败安全审计（一年最小匿名摘要）                                    |
+| `backup-lifecycle` | **契约** | 35 天自然淘汰策略，不逐记录破坏共享不可变备份                                |
 
 ### 3.2 PostgreSQL 清理（真实）
 
