@@ -46,6 +46,7 @@ import { handleListSecurityAudit } from './routes/audit.js';
 import { handleListRequestEndpoints } from './routes/requests.js';
 import { handleGetDataStatus } from './routes/diagnostics.js';
 import { handleListPerformancePages } from './routes/performance.js';
+import { handleGetUsageSummary } from './routes/usage.js';
 import {
   handleBatchUpdateIssues,
   handleCreateIssueNote,
@@ -256,6 +257,12 @@ export function buildPlatformApi(deps: PlatformApiDependencies): FastifyInstance
 
   app.get('/api/platform/v1/organizations/:organizationId/audit', async (request, reply) => {
     await handleListSecurityAudit(request, reply, routeContext);
+  });
+
+  // DAT-21 B5 usage/quota/degradation projection (org-scoped query). Session +
+  // org-manager gating live in the handler; real processed data only.
+  app.get('/api/platform/v1/organizations/:organizationId/usage', async (request, reply) => {
+    await handleGetUsageSummary(request, reply, routeContext);
   });
 
   // DAT-16 C5 request monitoring query (first project-scoped route). Session +

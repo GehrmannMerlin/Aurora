@@ -8,7 +8,7 @@ import { BLOCKED_OPERATIONS, PLATFORM_OPERATIONS } from '../../src/registry/oper
 import { ROUTE_TARGET_IDS, type RouteTargetId } from '../../src/common/navigation.js';
 
 describe('operation registry and manifest', () => {
-  it('exposes the thirty-five stable operations', () => {
+  it('exposes the thirty-six stable operations', () => {
     expect(PLATFORM_OPERATIONS.map((o) => o.operationId)).toEqual([
       'identityGetSession',
       'navigationGetContext',
@@ -45,6 +45,7 @@ describe('operation registry and manifest', () => {
       'requestsListEndpoints',
       'diagnosticsGetDataStatus',
       'performanceListPages',
+      'usageGetSummary',
       'issuesUpdateState',
       'issuesUpdateAssignee',
       'issuesUpdatePriority',
@@ -122,7 +123,7 @@ describe('operation registry and manifest', () => {
   it('throws when a route target is marked stable without an emittable operation', () => {
     const bad: Readonly<Record<RouteTargetId, CoverageKind>> = {
       ...OPERATION_MANIFEST.routeTargetCoverage,
-      'organization.usage': 'stable',
+      'project.releases': 'stable',
     };
     expect(() => {
       validateManifest({ coverage: bad });
@@ -157,7 +158,7 @@ describe('operation registry and manifest', () => {
       'organization.project-create': 'stable',
       'organization.members': 'stable',
       'organization.settings': 'stable',
-      'organization.usage': 'blocked',
+      'organization.usage': 'stable',
       'organization.tokens': 'stable',
       'organization.audit': 'stable',
       'organization.trash': 'stable',

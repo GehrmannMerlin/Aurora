@@ -1032,6 +1032,25 @@ paths:
             properties:
               timeRange: *a8
             additionalProperties: false
+  /organizations/{organizationId}/usage:
+    get:
+      operationId: usageGetSummary
+      summary: Resolve the organization periodic resource usage and degradation stage
+        (PRD §15) from real processed data
+      tags:
+        - usage-and-policy
+      responses:
+        "200":
+          description: 200 response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/usageGetSummaryResponse"
+      parameters:
+        - name: organizationId
+          in: path
+          required: true
+          schema: *a2
   /organizations/{organizationId}/projects/{projectId}/issues/{issueId}/state:
     post:
       operationId: issuesUpdateState
@@ -3896,6 +3915,57 @@ components:
         - meta
         - allowedActions
         - navigationTargets
+    usageGetSummaryResponse:
+      type: object
+      properties:
+        data:
+          type: object
+          properties:
+            organizationId: *a2
+            periodStart: *a7
+            periodEnd: *a7
+            acceptedEvents:
+              type: number
+              minimum: 0
+            processedEvents:
+              type: number
+              minimum: 0
+            quotaAcceptedEvents:
+              type: number
+              minimum: 0
+            ratio:
+              type: number
+              minimum: 0
+            stage:
+              type: string
+              enum:
+                - normal
+                - near-limit
+                - degraded
+                - hard-limit
+            note:
+              type: string
+              minLength: 1
+              maxLength: 512
+          additionalProperties: false
+          required:
+            - organizationId
+            - periodStart
+            - periodEnd
+            - acceptedEvents
+            - processedEvents
+            - quotaAcceptedEvents
+            - ratio
+            - stage
+        meta: *a31
+        allowedActions: *a22
+        navigationTargets: *a11
+      additionalProperties: false
+      required:
+        - data
+        - meta
+        - allowedActions
+        - navigationTargets
     issuesUpdateStateResponse:
       type: object
       properties:
@@ -4394,4 +4464,5 @@ tags:
   - name: settings
   - name: tokens
   - name: trash
+  - name: usage-and-policy
   - name: workspace

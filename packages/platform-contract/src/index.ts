@@ -31,6 +31,7 @@ export * from './audit/security-audit.js';
 export * from './monitoring/request-metrics.js';
 export * from './monitoring/diagnostics.js';
 export * from './monitoring/performance.js';
+export * from './usage-and-policy/usage.js';
 export * from './issues-and-alerts/issue-commands.js';
 export * from './issues-and-alerts/issue-queries.js';
 export * from './registry/operations.js';

@@ -35,6 +35,7 @@
     "requestsListEndpoints",
     "diagnosticsGetDataStatus",
     "performanceListPages",
+    "usageGetSummary",
     "issuesUpdateState",
     "issuesUpdateAssignee",
     "issuesUpdatePriority",
@@ -46,7 +47,6 @@
     "issuesGetIssueDetail"
   ],
   "blocked": {
-    "usageGetSummary": "B5 usage module absent (G10/G11)",
     "onboardingGetProgress": "C1 onboarding model not formalized (G11)",
     "overviewGetProjectStatus": "C2 overview Query not formalized (G11)",
     "releasesListReleases": "C8 releases model not formalized (G12)",
@@ -76,7 +76,7 @@
     "organization.project-create": "stable",
     "organization.members": "stable",
     "organization.settings": "stable",
-    "organization.usage": "blocked",
+    "organization.usage": "stable",
     "organization.tokens": "stable",
     "organization.audit": "stable",
     "organization.trash": "stable",
@@ -6568,6 +6568,196 @@
                         }
                       }
                     ]
+                  }
+                }
+              },
+              "meta": {
+                "type": "object",
+                "required": [
+                  "requestId",
+                  "readAt"
+                ],
+                "properties": {
+                  "requestId": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 64
+                  },
+                  "readAt": {
+                    "type": "string",
+                    "format": "date-time"
+                  },
+                  "normalizedQuery": {
+                    "type": "object",
+                    "additionalProperties": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 512
+                    }
+                  }
+                }
+              },
+              "allowedActions": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "enum": [
+                    "create",
+                    "read",
+                    "update",
+                    "delete",
+                    "manage",
+                    "restore",
+                    "transfer",
+                    "revoke"
+                  ],
+                  "openEnum": false
+                }
+              },
+              "navigationTargets": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "routeId",
+                    "pathParams",
+                    "query"
+                  ],
+                  "properties": {
+                    "routeId": {
+                      "type": "string",
+                      "enum": [
+                        "auth.register",
+                        "auth.verify-email",
+                        "auth.verify-email-confirm",
+                        "auth.login",
+                        "auth.forgot-password",
+                        "auth.reset-password",
+                        "invitation.accept",
+                        "account.security",
+                        "account.deletion-cancel",
+                        "account.deletion-confirm",
+                        "workspace.home",
+                        "organization.project-create",
+                        "organization.members",
+                        "organization.settings",
+                        "organization.usage",
+                        "organization.tokens",
+                        "organization.audit",
+                        "organization.trash",
+                        "project.onboarding",
+                        "project.overview",
+                        "project.issues",
+                        "project.issue-detail",
+                        "project.requests",
+                        "project.performance",
+                        "project.data-status",
+                        "project.releases",
+                        "project.release-detail",
+                        "project.source-maps",
+                        "project.alerts",
+                        "project.alert-rule-create",
+                        "project.alert-rule-edit",
+                        "project.alert-instance-detail",
+                        "project.access",
+                        "project.client-keys",
+                        "project.settings",
+                        "project.lifecycle",
+                        "account.notifications",
+                        "platform.resource-policies"
+                      ],
+                      "openEnum": false
+                    },
+                    "pathParams": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 256
+                      }
+                    },
+                    "query": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 512
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "usageGetSummary": {
+        "responses": {
+          "200": {
+            "type": "object",
+            "required": [
+              "data",
+              "meta",
+              "allowedActions",
+              "navigationTargets"
+            ],
+            "properties": {
+              "data": {
+                "type": "object",
+                "required": [
+                  "organizationId",
+                  "periodStart",
+                  "periodEnd",
+                  "acceptedEvents",
+                  "processedEvents",
+                  "quotaAcceptedEvents",
+                  "ratio",
+                  "stage"
+                ],
+                "properties": {
+                  "organizationId": {
+                    "type": "string",
+                    "minLength": 3,
+                    "maxLength": 64
+                  },
+                  "periodStart": {
+                    "type": "string",
+                    "format": "date-time"
+                  },
+                  "periodEnd": {
+                    "type": "string",
+                    "format": "date-time"
+                  },
+                  "acceptedEvents": {
+                    "type": "number",
+                    "minimum": 0
+                  },
+                  "processedEvents": {
+                    "type": "number",
+                    "minimum": 0
+                  },
+                  "quotaAcceptedEvents": {
+                    "type": "number",
+                    "minimum": 0
+                  },
+                  "ratio": {
+                    "type": "number",
+                    "minimum": 0
+                  },
+                  "stage": {
+                    "type": "string",
+                    "enum": [
+                      "normal",
+                      "near-limit",
+                      "degraded",
+                      "hard-limit"
+                    ],
+                    "openEnum": false
+                  },
+                  "note": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 512
                   }
                 }
               },

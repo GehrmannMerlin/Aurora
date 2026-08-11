@@ -150,6 +150,11 @@ import {
   performanceListPagesResponse,
 } from '../monitoring/performance.js';
 import {
+  OPERATION_ID_GET_USAGE_SUMMARY,
+  usageGetSummaryPathParams,
+  usageGetSummaryResponse,
+} from '../usage-and-policy/usage.js';
+import {
   OPERATION_ID_GET_ISSUE_DETAIL,
   OPERATION_ID_LIST_ISSUES,
   issuesGetIssueDetailPathParams,
@@ -1008,6 +1013,31 @@ export const PLATFORM_OPERATIONS: readonly OperationDef[] = [
     tags: ['monitoring', 'performance'],
   },
   {
+    operationId: OPERATION_ID_GET_USAGE_SUMMARY,
+    domain: 'usage-and-policy',
+    authLevel: 'session',
+    method: 'GET',
+    path: '/api/platform/v1/organizations/:organizationId/usage',
+    summary:
+      'Resolve the organization periodic resource usage and degradation stage (PRD §15) from real processed data',
+    request: {
+      pathParams: usageGetSummaryPathParams,
+      csrf: false,
+      idempotency: false,
+    },
+    responses: { 200: usageGetSummaryResponse },
+    errorCodes: [
+      'structural_error',
+      'authentication',
+      'authorization',
+      'not_found',
+      'rate_limited',
+      'authority_unavailable',
+    ],
+    page: 'organization.usage',
+    tags: ['usage-and-policy'],
+  },
+  {
     operationId: OPERATION_ID_UPDATE_ISSUE_STATE,
     domain: 'issues-and-alerts',
     authLevel: 'session',
@@ -1256,11 +1286,6 @@ export interface BlockedOperation {
 }
 
 export const BLOCKED_OPERATIONS: readonly BlockedOperation[] = [
-  {
-    operationId: 'usageGetSummary',
-    domain: 'usage-and-policy',
-    reason: 'B5 usage module absent (G10/G11)',
-  },
   {
     operationId: 'onboardingGetProgress',
     domain: 'project-governance',
