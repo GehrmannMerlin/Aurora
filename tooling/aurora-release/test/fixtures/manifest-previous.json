@@ -1,0 +1,12 @@
+{
+  "commitSha": "dddddddddddddddddddddddddddddddddddddddd",
+  "builtFrom": "ci",
+  "artifacts": {
+    "ingestion-api": { "imageDigest": "sha256:eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee" },
+    "ingestion-worker": { "imageDigest": "sha256:ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff" },
+    "console": { "entryAssetHash": "f5e4d3c2" }
+  },
+  "migrationSet": ["1720000000001_init"],
+  "protocolVersions": ["event-envelope-v1"],
+  "createdAt": "2026-08-10T00:00:00Z"
+}

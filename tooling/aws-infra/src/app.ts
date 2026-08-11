@@ -32,7 +32,11 @@ export function buildAuroraApp(
 function buildEnvironment(scope: Construct, envName: EnvironmentName): AuroraEnvironmentStacks {
   const env: EnvironmentConfig = resolveEnvironmentConfig(envName);
   const network = new NetworkStack(scope, `Network-${envName}`, { env });
-  const compute = new ComputeStack(scope, `Compute-${envName}`, { env, vpc: network.vpc });
+  const compute = new ComputeStack(scope, `Compute-${envName}`, {
+    env,
+    vpc: network.vpc,
+    serviceSecurityGroup: network.serviceSecurityGroup,
+  });
   const data = new DataStack(scope, `Data-${envName}`, {
     env,
     vpc: network.vpc,

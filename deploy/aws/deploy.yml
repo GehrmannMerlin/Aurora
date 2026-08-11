@@ -1,0 +1,85 @@
+# OPS-05 AWS deployment pipeline (manual dispatch; no automatic run).
+#
+# Provising is NOT live yet: credentials and user-owned domains are pending
+# (PROVISIONING_EVIDENCE_PENDING). This workflow is the static pipeline that
+# will build/push the exact CI-passed SHA, render the OPS-05 deployment plan
+# (tooling/aurora-release, dry-run planner), and roll out ECS services via
+# digest-pinned task definitions with the ECS deployment circuit breaker.
+#
+# It intentionally triggers ONLY on workflow_dispatch so it never auto-runs on
+# main and cannot touch the Aliyun public preview (deploy/preview/).
+name: Aurora Deploy (AWS)
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: Target environment
+        required: true
+        type: choice
+        options:
+          - staging
+          - production
+      commit:
+        description: Exact commit SHA to deploy (must equal a CI-passed SHA)
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  deploy:
+    name: Deploy (${{ inputs.environment }})
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment }}
+    steps:
+      - name: Checkout exact commit
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.commit }}
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 11.17.0
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24.18.0
+          cache: pnpm
+
+      - name: Install (frozen lockfile)
+        run: pnpm install --frozen-lockfile
+
+      - name: Build release tooling
+        run: pnpm --filter @aurora/aurora-release build
+
+      - name: Configure AWS (OIDC short-lived identity)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-region: ${{ vars.AURORA_PRIMARY_REGION }}
+          role-to-assume: >-
+            arn:aws:iam::${{ secrets[format('AURORA_{0}_ACCOUNT', inputs.environment) }}:role/aurora-${{ inputs.environment }}-iam-ci
+
+      - name: Validate forward-compatible migrations
+        run: >-
+          node tooling/aurora-release/dist/entry.js validate-migrations
+          --migration-dirs packages/ingestion-inbox/migrations,packages/ingestion-credentials/migrations,packages/processing-store/migrations,packages/platform-identity/migrations,packages/platform-organization/migrations,packages/platform-project-governance/migrations,packages/platform-credentials/migrations,packages/platform-audit/migrations
+
+      - name: Render deployment plan (dry-run)
+        run: >-
+          node tooling/aurora-release/dist/entry.js plan
+          --manifest <release-manifest.json>
+          --previous <previous-manifest.json>
+          --targets services=ingestion-api,ingestion-worker;spa;migrate
+          --migration-dirs packages/ingestion-inbox/migrations,packages/processing-store/migrations
+
+      - name: Deploy ECS services (digest-pinned task definitions)
+        run: >-
+          aws ecs update-service --cluster aurora-${{ inputs.environment }}-ecs-cluster
+          --service aurora-${{ inputs.environment }}-service-ingestion-api
+          --task-definition aurora-${{ inputs.environment }}-task-ingestion-api:<revision>
+          --force-new-deployment

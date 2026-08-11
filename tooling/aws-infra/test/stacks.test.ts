@@ -86,7 +86,11 @@ function composedStacks(envName: 'staging' | 'production') {
     vpc: network.vpc,
     databaseSecurityGroup: network.databaseSecurityGroup,
   });
-  const compute = new ComputeStack(app, `Compute${envName}`, { env, vpc: network.vpc });
+  const compute = new ComputeStack(app, `Compute${envName}`, {
+    env,
+    vpc: network.vpc,
+    serviceSecurityGroup: network.serviceSecurityGroup,
+  });
   return { data, compute };
 }
 
@@ -123,29 +127,27 @@ describe('data stack', () => {
 });
 
 describe('compute stack', () => {
-  it('creates an ECS cluster and ECR repositories for the ingestion workloads', () => {
+  it('creates an ECS cluster, ECR repositories and task/execution roles for the ingestion workloads', () => {
     const { compute } = composedStacks('production');
     const template = Template.fromStack(compute);
     template.resourceCountIs('AWS::ECS::Cluster', 1);
     template.resourceCountIs('AWS::ECR::Repository', 2);
-    template.resourceCountIs('AWS::IAM::Role', 1); // task execution role
+    template.resourceCountIs('AWS::IAM::Role', 3); // task execution + ingestion-api + ingestion-worker task roles
   });
 
-  it('does not create ECS services (OPS-05)', () => {
+  it('creates the OPS-05 ECS services (deployment targets)', () => {
     const { compute } = composedStacks('production');
     const template = Template.fromStack(compute);
-    template.resourceCountIs('AWS::ECS::Service', 0);
+    template.resourceCountIs('AWS::ECS::Service', 2);
   });
 });
 
 describe('deferred boundaries', () => {
-  it('creates no ElastiCache, private S3 or ECS service resources (YAGNI)', () => {
-    const { data, compute } = composedStacks('production');
+  it('creates no ElastiCache or private S3 resources (YAGNI; ECS services are OPS-05 targets)', () => {
+    const { data } = composedStacks('production');
     const dataTemplate = Template.fromStack(data);
-    const computeTemplate = Template.fromStack(compute);
     dataTemplate.resourceCountIs('AWS::ElastiCache::CacheCluster', 0);
     dataTemplate.resourceCountIs('AWS::S3::Bucket', 0);
-    computeTemplate.resourceCountIs('AWS::ECS::Service', 0);
   });
 });
 
