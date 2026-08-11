@@ -221,7 +221,7 @@ describe('identity stack', () => {
 });
 
 describe('app composition', () => {
-  it('builds the five foundation stacks for both environments', () => {
+  it('builds the six foundation stacks for both environments', () => {
     const app = new App();
     const stacks = buildAuroraApp(app);
     expect(Object.keys(stacks)).toEqual(['staging', 'production']);
@@ -231,6 +231,7 @@ describe('app composition', () => {
       expect(stacks[env].data).toBeDefined();
       expect(stacks[env].identity).toBeDefined();
       expect(stacks[env].observability).toBeDefined();
+      expect(stacks[env].backup).toBeDefined();
     }
   });
 
@@ -238,8 +239,8 @@ describe('app composition', () => {
     const app = new App();
     const stacks = buildAuroraApp(app);
     for (const env of ['staging', 'production'] as const) {
-      const { network, compute, data, identity, observability } = stacks[env];
-      for (const stack of [network, compute, data, identity, observability]) {
+      const { network, compute, data, identity, observability, backup } = stacks[env];
+      for (const stack of [network, compute, data, identity, observability, backup]) {
         expect(stack.terminationProtection).toBe(env === 'production');
       }
     }

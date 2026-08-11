@@ -1,6 +1,7 @@
 import type { Construct } from 'constructs';
 import { resolveEnvironmentConfig } from './config.js';
 import type { EnvironmentConfig, EnvironmentName } from './config.js';
+import { BackupStack } from './stacks/backup-stack.js';
 import { ComputeStack } from './stacks/compute-stack.js';
 import { DataStack } from './stacks/data-stack.js';
 import { IdentityStack } from './stacks/identity-stack.js';
@@ -13,6 +14,7 @@ export interface AuroraEnvironmentStacks {
   readonly data: DataStack;
   readonly identity: IdentityStack;
   readonly observability: ObservabilityStack;
+  readonly backup: BackupStack;
 }
 
 /**
@@ -51,8 +53,9 @@ function buildEnvironment(scope: Construct, envName: EnvironmentName): AuroraEnv
     logGroups: compute.logGroups,
     database: data.database,
   });
-  for (const stack of [network, compute, data, identity, observability]) {
+  const backup = new BackupStack(scope, `Backup-${envName}`, { env });
+  for (const stack of [network, compute, data, identity, observability, backup]) {
     stack.terminationProtection = env.isProduction;
   }
-  return { network, compute, data, identity, observability };
+  return { network, compute, data, identity, observability, backup };
 }
