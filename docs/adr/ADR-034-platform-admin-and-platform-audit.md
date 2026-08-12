@@ -1,8 +1,8 @@
 ---
 title: ADR-034：平台管理员身份、授权与平台级审计
-status: proposed
+status: accepted
 implementation-status: not-started
-approval-status: awaiting-user-approval
+approval-status: approved
 owner: platform/security
 date: 2026-08-12
 last-reviewed: 2026-08-12
@@ -25,16 +25,16 @@ superseded-by: none
 
 ## 元数据
 
-- 状态：proposed
-- 决策状态：proposed
+- 状态：accepted
+- 决策状态：accepted
 - 实施状态：not-started
-- 审批状态：awaiting-user-approval
+- 审批状态：approved
 - 日期：2026-08-12
 - Owner：platform/security
 - 适用范围：管理平台 D2 平台资源策略的前置身份/授权/审计能力（`platform_admins` 表、平台命令鉴权、`platform_audit_events` 表）；`platform.resource-policies` Route Target
 - 关联 PRD：[核心业务 PRD](../../Auroa-PRD-业务逻辑汇总-v2.1-核心业务定稿版.md) 第 15.8 节
-- 关联产品/安全规格：[平台管理员与平台级审计](../../docs/security/platform-admin-and-platform-audit.md)（draft）
-- 关联策略规格：[平台资源策略数据模型](../../docs/architecture/platform-resource-policy-data-model.md)（draft）
+- 关联产品/安全规格：[平台管理员与平台级审计](../../docs/security/platform-admin-and-platform-audit.md)（approved）
+- 关联策略规格：[平台资源策略数据模型](../../docs/architecture/platform-resource-policy-data-model.md)（approved）
 - 关联 ADR：ADR-028/029/030（Session/CSRF/数据库工具链/物理参数，不修改）
 - 关联实现 PR：none
 - 替代 ADR：none
@@ -42,7 +42,7 @@ superseded-by: none
 
 ## 状态说明
 
-本 ADR 于 2026-08-12 创建为 `proposed`。创建依据：formalization-readiness §7 新 ADR 候选队列第 2 项明确 D2 平台管理员身份、授予/撤销与平台级审计为"product/security decision required"，且"未解决时阻塞 D2、授权/审计文档、安全 ADR"。用户已于 2026-08-12 整体批准 `G13_PLT10_APPROVAL_PACKAGE` 六项推荐（含平台管理员身份/授权/break-glass/平台审计四项）。本 ADR 把这些已批准决策正式化为长期安全决策，需独立非作者评审（security、backend 领域）后再由用户正式批准。**在用户批准（accepted）前，不得创建 Migration、实现代码，不得进入 writing-plans。**
+本 ADR 于 2026-08-12 创建为 `proposed`，2026-08-12 由用户对 `G13_PLT10_APPROVAL_PACKAGE` 六项推荐整体批准并直接批准本 ADR，转为 `accepted / not-started / approved`。`implementation-status` 保持 not-started，直到平台管理员/审计正式实施开始；accepted 只授权决策，不表示 Migration、代码、机器契约或实现证据已存在。
 
 ## 背景
 
@@ -86,7 +86,7 @@ Aurora 已接受 ADR-028/029/030（平台 Session、CSRF、密码、数据库工
 
 ## 评审记录
 
-- 2026-08-12：proposed 创建，待独立非作者评审（security、backend 领域）与用户正式批准。
+- 2026-08-12：proposed 创建；用户对 `G13_PLT10_APPROVAL_PACKAGE` 整体批准并经用户直接批准本 ADR，转 `accepted / not-started / approved`（未另派 reviewer subagent）。
 
 ## 附录：与 G13_PLT10_APPROVAL_PACKAGE 的对应
 

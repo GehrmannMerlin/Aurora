@@ -1,8 +1,8 @@
 ---
 title: ADR-035：平台资源策略数据模型（最小分层策略）
-status: proposed
+status: accepted
 implementation-status: not-started
-approval-status: awaiting-user-approval
+approval-status: approved
 owner: platform/data
 date: 2026-08-12
 last-reviewed: 2026-08-12
@@ -24,16 +24,16 @@ superseded-by: none
 
 ## 元数据
 
-- 状态：proposed
-- 决策状态：proposed
+- 状态：accepted
+- 决策状态：accepted
 - 实施状态：not-started
-- 审批状态：awaiting-user-approval
+- 审批状态：approved
 - 日期：2026-08-12
 - Owner：platform/data
 - 适用范围：D2 平台资源策略管理的数据模型（`platform_resource_policies`、`organization_policy_overrides`、`project_policy_limits` 三表 + 生效值/来源/传播查询）
 - 关联 PRD：[核心业务 PRD](../../Auroa-PRD-业务逻辑汇总-v2.1-核心业务定稿版.md) 第 15.8—15.10、16 节
-- 关联策略规格：[平台资源策略数据模型](../../docs/architecture/platform-resource-policy-data-model.md)（draft）
-- 关联身份/审计规格：[平台管理员与平台级审计](../../docs/security/platform-admin-and-platform-audit.md)（draft）
+- 关联策略规格：[平台资源策略数据模型](../../docs/architecture/platform-resource-policy-data-model.md)（approved）
+- 关联身份/审计规格：[平台管理员与平台级审计](../../docs/security/platform-admin-and-platform-audit.md)（approved）
 - 关联 ADR：ADR-034（平台管理员身份/审计）；ADR-029（数据库工具链）；ADR-019/020/021（处理存储，不修改）
 - 关联实现 PR：none
 - 替代 ADR：none
@@ -41,7 +41,7 @@ superseded-by: none
 
 ## 状态说明
 
-本 ADR 于 2026-08-12 创建为 `proposed`。创建依据：formalization-readiness §7 候选队列第 2 项与平台数据模型行（`docs/architecture/platform-data-model.md` planned/blocked）均要求 D2 资源策略的数据模型与"数据库 ADR"；用户已于 2026-08-12 批准 `G13_PLT10_APPROVAL_PACKAGE` 第 5—6 项（策略范围/默认值 + D2 机器契约边界）。资源策略物理存储是长期保留取舍依据的高迁移成本决策（沿用 ADR-033 Issue 数据模型的先例），故创建本独立 ADR。**在用户批准（accepted）前，不得创建 Migration、实现代码，不得进入 writing-plans。**
+本 ADR 于 2026-08-12 创建为 `proposed`，2026-08-12 由用户对 `G13_PLT10_APPROVAL_PACKAGE` 六项推荐整体批准并直接批准本 ADR，转为 `accepted / not-started / approved`。`implementation-status` 保持 not-started，直到资源策略正式实施开始；accepted 只授权决策，不表示 Migration、代码、机器契约或实现证据已存在。
 
 ## 背景
 
@@ -85,7 +85,7 @@ Aurora 已接受 ADR-033（Issue 数据模型）并实现 DAT-21 用量/额度/�
 
 ## 评审记录
 
-- 2026-08-12：proposed 创建，待独立非作者评审（backend/data 领域）与用户正式批准。
+- 2026-08-12：proposed 创建；用户对 `G13_PLT10_APPROVAL_PACKAGE` 整体批准并经用户直接批准本 ADR，转 `accepted / not-started / approved`（未另派 reviewer subagent）。
 
 ## 附录：与 G13_PLT10_APPROVAL_PACKAGE 的对应
 
