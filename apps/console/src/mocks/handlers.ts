@@ -653,6 +653,116 @@ function mockNotifications() {
   };
 }
 
+// PLT-10c (D2) platform resource-policy mock projections — capability probe,
+// target search, and the three effective-policy GETs. Test-mode MSW only (unit
+// + browser smoke); never production data and never completion evidence for the
+// real Platform API (D2 runs against platform-api + @aurora/platform-admin in
+// the real stack).
+
+const POLICY_READ_AT = '2026-08-12T00:00:00.000Z';
+
+/** PRD §15.8 five protective fields (platform default / organization override). */
+const MOCK_POLICY_FIELDS = {
+  defaultPeriodQuota: 100000,
+  warningRatio: 80,
+  hardLimit: 100,
+  degradationEnabled: true,
+  highValueRetentionDays: 90,
+} as const;
+
+const MOCK_POLICY_TARGETS = {
+  organizations: [
+    { organizationId: 'org_test_1', name: 'Acme' },
+    { organizationId: 'org_test_2', name: 'Globex' },
+  ],
+  projects: [
+    { projectId: 'prj_test_1', organizationId: 'org_test_1', name: 'Web shop' },
+    { projectId: 'prj_test_2', organizationId: 'org_test_1', name: 'Mobile app' },
+    { projectId: 'prj_test_3', organizationId: 'org_test_2', name: 'Inventory' },
+  ],
+} as const;
+
+/** Test-mode default is a platform admin so the D2 page is reachable in tests. */
+function mockPlatformAdminCapability() {
+  return { data: { hasCapability: true } };
+}
+
+/** Target search filtered by `q` (case-insensitive name prefix; ILIKE-ish). */
+function mockPolicyTargetSearch(q: string | null) {
+  const needle = (q ?? '').trim().toLowerCase();
+  const matches = (name: string) => needle === '' || name.toLowerCase().startsWith(needle);
+  return {
+    data: {
+      organizations: MOCK_POLICY_TARGETS.organizations.filter((org) => matches(org.name)),
+      projects: MOCK_POLICY_TARGETS.projects.filter((prj) => matches(prj.name)),
+      pagination: { totalCountStatus: 'available' },
+    },
+    meta: { requestId: 'req_test_policy_targets', readAt: POLICY_READ_AT, normalizedQuery: {} },
+    allowedActions: ['read', 'manage'],
+    navigationTargets: [],
+  };
+}
+
+/** Platform default / organization effective projection (five-field shape). */
+function mockPolicyDefaultProjection() {
+  return {
+    data: {
+      data: {
+        configured: { ...MOCK_POLICY_FIELDS },
+        source: 'platform_admin',
+        effective: { ...MOCK_POLICY_FIELDS },
+        version: 1,
+        updatedAt: '2026-08-12T00:00:00.000Z',
+        updatedBy: 'account_test_1',
+        propagation: { status: 'unknown', reason: 'no data-plane consumer yet' },
+      },
+    },
+    meta: { requestId: 'req_test_policy_default', readAt: POLICY_READ_AT, normalizedQuery: {} },
+    allowedActions: ['read', 'manage'],
+    navigationTargets: [],
+  };
+}
+
+/** Organization effective projection with its own override row (five-field shape). */
+function mockPolicyOrganizationProjection() {
+  return {
+    data: {
+      data: {
+        configured: { ...MOCK_POLICY_FIELDS },
+        source: 'platform_admin',
+        effective: { ...MOCK_POLICY_FIELDS },
+        version: 2,
+        updatedAt: '2026-08-12T00:00:00.000Z',
+        updatedBy: 'account_test_1',
+        propagation: { status: 'unknown', reason: 'no data-plane consumer yet' },
+      },
+    },
+    meta: { requestId: 'req_test_policy_org', readAt: POLICY_READ_AT, normalizedQuery: {} },
+    allowedActions: ['read', 'manage'],
+    navigationTargets: [],
+  };
+}
+
+/** Project effective projection: own resourceLimit override + inherited five fields. */
+function mockPolicyProjectProjection() {
+  return {
+    data: {
+      data: {
+        configured: { resourceLimit: 5000 },
+        source: 'inherited_from_organization',
+        effective: { ...MOCK_POLICY_FIELDS, resourceLimit: 5000 },
+        version: 1,
+        updatedAt: '2026-08-12T00:00:00.000Z',
+        updatedBy: 'account_test_1',
+        propagation: { status: 'unknown', reason: 'no data-plane consumer yet' },
+      },
+    },
+    meta: { requestId: 'req_test_policy_project', readAt: POLICY_READ_AT, normalizedQuery: {} },
+    allowedActions: ['read', 'manage'],
+    navigationTargets: [],
+  };
+}
+
 function mockProjectSettings() {
   return {
     data: {
@@ -1533,6 +1643,70 @@ export function createPlatformHandlers() {
       const notificationId = String(params.notificationId ?? 'notif_test_2');
       return HttpResponse.json(
         { data: { status: 'read', notificationId } } as JsonBodyType,
+        { status: 200 },
+      );
+    }),
+    http.get('/api/platform/v1/platform-admin/capability', async () => {
+      await maybeDelay();
+      return HttpResponse.json(mockPlatformAdminCapability() as JsonBodyType, { status: 200 });
+    }),
+    http.get('/api/platform/v1/platform-admin/policy/targets', async ({ request }) => {
+      await maybeDelay();
+      const q = new URL(request.url).searchParams.get('q');
+      return HttpResponse.json(mockPolicyTargetSearch(q) as JsonBodyType, { status: 200 });
+    }),
+    http.get('/api/platform/v1/platform-admin/policy/default', async () => {
+      await maybeDelay();
+      return HttpResponse.json(mockPolicyDefaultProjection() as JsonBodyType, { status: 200 });
+    }),
+    http.get(
+      '/api/platform/v1/platform-admin/policy/organizations/:organizationId/effective',
+      async () => {
+        await maybeDelay();
+        return HttpResponse.json(mockPolicyOrganizationProjection() as JsonBodyType, {
+          status: 200,
+        });
+      },
+    ),
+    http.get('/api/platform/v1/platform-admin/policy/projects/:projectId/effective', async () => {
+      await maybeDelay();
+      return HttpResponse.json(mockPolicyProjectProjection() as JsonBodyType, { status: 200 });
+    }),
+    http.post('/api/platform/v1/platform-admin/policy/default', async () => {
+      await maybeDelay();
+      return HttpResponse.json(
+        { data: { status: 'set', version: 2 } } as JsonBodyType,
+        { status: 200 },
+      );
+    }),
+    http.post('/api/platform/v1/platform-admin/policy/organizations/:organizationId', async () => {
+      await maybeDelay();
+      return HttpResponse.json(
+        { data: { status: 'set', version: 2 } } as JsonBodyType,
+        { status: 200 },
+      );
+    }),
+    http.post(
+      '/api/platform/v1/platform-admin/policy/organizations/:organizationId/reset',
+      async () => {
+        await maybeDelay();
+        return HttpResponse.json(
+          { data: { status: 'reset' } } as JsonBodyType,
+          { status: 200 },
+        );
+      },
+    ),
+    http.post('/api/platform/v1/platform-admin/policy/projects/:projectId/limit', async () => {
+      await maybeDelay();
+      return HttpResponse.json(
+        { data: { status: 'set', version: 2 } } as JsonBodyType,
+        { status: 200 },
+      );
+    }),
+    http.post('/api/platform/v1/platform-admin/policy/projects/:projectId/limit/clear', async () => {
+      await maybeDelay();
+      return HttpResponse.json(
+        { data: { status: 'cleared' } } as JsonBodyType,
         { status: 200 },
       );
     }),
