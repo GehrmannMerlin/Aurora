@@ -13,8 +13,9 @@ Migration 与后续 Repository 的稳定错误表面：
 spec 见 [platform-resource-policy-data-model](../../docs/architecture/platform-resource-policy-data-model.md) 与
 [ADR-035](../../docs/adr/ADR-035-platform-resource-policy-data-model.md)。
 
-本包是 PLT-10b Task 1 的结果：包结构、构建/类型检查/migrate 入口与三张表的 Migration 已真实存在；
-Repository / 生效纯函数 / 目标搜索在后续任务落档。
+本包是 PLT-10b Task 1—2 的结果：包结构、构建/类型检查/migrate 入口、三张表的 Migration、稳定错误表面、三张表的
+Repository（平台默认/组织覆盖/项目上限 CRUD + 乐观版本）与生效纯函数 `computeEffectivePolicy` 已真实存在；
+目标搜索在后续任务落档。
 
 ## 职责
 
@@ -44,12 +45,15 @@ Repository / 生效纯函数 / 目标搜索在后续任务落档。
 
 ## 对外接口
 
-Task 1 仅提供错误表面与可执行迁移：
+包根 `index.ts` 导出（Repository 能力已落档）：
 
-- `PlatformPolicyError` / `PlatformPolicyErrorKind`（稳定错误表面，不暴露 SQLSTATE）；
+- `PlatformPolicyError` / `PlatformPolicyErrorKind` / `toStableError` / `isPostgresCheckViolation`（稳定错误表面，不暴露 SQLSTATE）；
+- 类型：`PlatformPolicyFields` / `StoredPolicySource` / `PolicySource` / `PlatformDefaultPolicy` / `OrganizationOverride` / `ProjectLimit`；
+- 平台默认：`getPlatformDefaultPolicy` / `setPlatformDefaultPolicy` / `bootstrapPlatformDefaultIfAbsent`（ADR-035 建议默认值）；
+- 组织覆盖：`getOrganizationOverride` / `setOrganizationOverride` / `resetOrganizationOverride`；
+- 项目上限：`getProjectLimit` / `setProjectLimit` / `clearProjectLimit`；
+- 生效纯函数：`computeEffectivePolicy`（配置值/来源/生效值三者分离，无默认时返回 `null`）；
 - `pnpm migrate`：运行本包 Migration（需先应用 platform-identity / platform-project-governance migrations）。
-
-包根 `index.ts` 导出（Repository 能力）在 Task 2 落档。
 
 ## 命令
 

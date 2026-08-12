@@ -32,3 +32,14 @@ export function toStableError(error: unknown): PlatformPolicyError {
   }
   return new PlatformPolicyError('statement_failed', 'database statement failed');
 }
+
+/**
+ * True when the thrown value is a PostgreSQL `check_violation` (SQLSTATE
+ * 23514). The repository write paths use this to wrap the DB-enforced policy
+ * field checks (`warning_ratio < hard_limit`, `resource_limit > 0`) as a
+ * stable `invalid_input` error with a diagnostic message, instead of leaking
+ * the raw constraint.
+ */
+export function isPostgresCheckViolation(error: unknown): boolean {
+  return errorCode(error) === '23514';
+}
