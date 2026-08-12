@@ -197,17 +197,18 @@ test('a nav entry is reachable by keyboard (focus + Enter)', async ({ page }) =>
   await expect(page).toHaveURL(/\/organizations\/org_test_1\/projects\/prj_test_1\/overview$/);
   await expect(page.getByTestId('project-overview-view')).toBeVisible();
 });
-test('blocked G13 targets parse, protect and represent unavailable (no fake data)', async ({
+test('platform G13 resource-policy target renders the real D2 view (not an unavailable stub)', async ({
   page,
 }) => {
-  const targets: ReadonlyArray<{ path: string; testId: string }> = [
-    { path: '/platform/resource-policies', testId: 'unavailable-view' },
-  ];
-  for (const target of targets) {
-    await page.goto(`${server!.origin}${target.path}`);
-    await expect(page.getByTestId(target.testId), target.path).toBeVisible();
-    await expect(page.getByRole('table'), target.path).toHaveCount(0);
-  }
+  await primeApp(page);
+  await setSessionAuthenticated(page, true);
+  await page.goto(`${server!.origin}/platform/resource-policies`);
+  // PLT-10c makes platform.resource-policies a real D2 view; the test-mode
+  // capability probe resolves to a platform admin, so the real effective-policy
+  // table renders (never an unavailable stub and never fabricated data).
+  await expect(page.getByTestId('resource-policy-view')).toBeVisible();
+  await expect(page.getByTestId('rp-effective-policy')).toBeVisible();
+  await expect(page.getByRole('table')).toHaveCount(1);
 });
 
 test('auth routes render the real PLT-03 views (not unavailable stubs) when signed out', async ({

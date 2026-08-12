@@ -7,6 +7,7 @@
  * `unavailable`，绝不伪造数据。能力 forbidden 时不渲染任何策略投影。
  */
 import type {
+  PlatformPolicyFields,
   PlatformPolicyProjection,
   ProjectPolicyProjection,
 } from '../../monitoring/queries.js';
@@ -100,6 +101,42 @@ export function versionConflictView(state: {
   return state.conflict === null
     ? { active: false, message: '', currentVersion: state.version }
     : { active: true, message: state.conflict, currentVersion: state.version };
+}
+
+/** 编辑中的五个平台/组织保护字段草稿（与 PolicyFieldsCommandInput 相同形状）。 */
+export interface ResourcePolicyFieldDraft {
+  readonly defaultPeriodQuota: number;
+  readonly warningRatio: number;
+  readonly hardLimit: number;
+  readonly degradationEnabled: boolean;
+  readonly highValueRetentionDays: number;
+}
+
+/**
+ * 判断五个平台/组织字段的编辑是否需要二次确认：降低任一上限、启用降级保护、
+ * 或改变高价值数据保留期限（PRD §15.8 保护语义）。纯函数，供 D2 表单在保存前
+ * 决定是否弹确认框。
+ */
+export function fieldsRequireConfirm(
+  draft: ResourcePolicyFieldDraft,
+  current: PlatformPolicyFields,
+): boolean {
+  if (draft.defaultPeriodQuota < current.defaultPeriodQuota) return true;
+  if (draft.warningRatio < current.warningRatio) return true;
+  if (draft.hardLimit < current.hardLimit) return true;
+  if (draft.degradationEnabled && !current.degradationEnabled) return true;
+  if (draft.highValueRetentionDays !== current.highValueRetentionDays) return true;
+  return false;
+}
+
+/**
+ * 校验项目资源上限输入：返回正数（≥1）或 null。空白、0、负数、非数字一律拒绝。
+ * 纯函数，供 D2 项目表单保存前校验。
+ */
+export function validateProjectLimitInput(raw: string): number | null {
+  const parsed = Number(raw);
+  if (!Number.isFinite(parsed) || parsed < 1) return null;
+  return parsed;
 }
 
 export {

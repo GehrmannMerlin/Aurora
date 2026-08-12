@@ -41,9 +41,11 @@ import { formatUtc } from '../../monitoring/format.js';
 import { useSessionStore } from '../../stores/session.js';
 import {
   buildResourcePolicyView,
+  fieldsRequireConfirm,
   formatConfigValue,
   policySourceLabel,
   propagationLabel,
+  validateProjectLimitInput,
   versionConflictView,
   type PolicyTargetSelection,
   type ResourcePolicyCommandPhase,
@@ -291,16 +293,6 @@ async function runCommand(task: () => Promise<unknown>): Promise<void> {
 }
 
 /** Whether the edited five fields lower a cap, enable degradation, or change retention. */
-function fieldsRequireConfirm(projection: PlatformPolicyProjection): boolean {
-  const current = projection.configured;
-  if (formQuota.value < current.defaultPeriodQuota) return true;
-  if (formWarningRatio.value < current.warningRatio) return true;
-  if (formHardLimit.value < current.hardLimit) return true;
-  if (formDegradation.value && !current.degradationEnabled) return true;
-  if (formRetentionDays.value !== current.highValueRetentionDays) return true;
-  return false;
-}
-
 function targetOrgId(): string | null {
   if (target.value !== 'default' && target.value.type === 'organization') return target.value.id;
   return null;
@@ -310,7 +302,14 @@ function savePolicyFields(): void {
   if (commandPhase.value.kind === 'submitting') return;
   const projection = orgPolicy.value;
   if (projection === null) return;
-  if (fieldsRequireConfirm(projection)) {
+  const draft = {
+    defaultPeriodQuota: formQuota.value,
+    warningRatio: formWarningRatio.value,
+    hardLimit: formHardLimit.value,
+    degradationEnabled: formDegradation.value,
+    highValueRetentionDays: formRetentionDays.value,
+  };
+  if (fieldsRequireConfirm(draft, projection.configured)) {
     if (
       !window.confirm(
         '该修改会降低配额/上限、启用降级保护或改变保留期限，可能影响关联组织与项目。确定保存？',
@@ -354,8 +353,8 @@ function saveProjectLimit(): void {
   if (commandPhase.value.kind === 'submitting') return;
   if (target.value === 'default' || target.value.type !== 'project') return;
   const projectId = target.value.id;
-  const parsed = Number(formResourceLimit.value);
-  if (!Number.isFinite(parsed) || parsed < 1) {
+  const parsed = validateProjectLimitInput(formResourceLimit.value);
+  if (parsed === null) {
     commandPhase.value = { kind: 'error', message: '请输入有效的项目资源上限。' };
     return;
   }

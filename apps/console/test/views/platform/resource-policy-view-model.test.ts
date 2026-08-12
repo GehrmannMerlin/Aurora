@@ -1,10 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import {
   buildResourcePolicyView,
+  fieldsRequireConfirm,
   formatConfigValue,
   formatCount,
   policySourceLabel,
   propagationLabel,
+  validateProjectLimitInput,
   versionConflictView,
 } from '../../../src/views/platform/resource-policy-view-model.js';
 import type {
@@ -191,5 +193,58 @@ describe('versionConflictView', () => {
       message: '版本冲突',
       currentVersion: 4,
     });
+  });
+});
+
+describe('fieldsRequireConfirm', () => {
+  const current = { ...FIVE_FIELDS };
+
+  it('requires confirm when lowering any cap', () => {
+    expect(fieldsRequireConfirm({ ...FIVE_FIELDS, defaultPeriodQuota: 500_000 }, current)).toBe(
+      true,
+    );
+    expect(fieldsRequireConfirm({ ...FIVE_FIELDS, warningRatio: 70 }, current)).toBe(true);
+    expect(fieldsRequireConfirm({ ...FIVE_FIELDS, hardLimit: 80 }, current)).toBe(true);
+  });
+
+  it('requires confirm when enabling degradation', () => {
+    const degradationOff = { ...FIVE_FIELDS, degradationEnabled: false };
+    expect(fieldsRequireConfirm(FIVE_FIELDS, degradationOff)).toBe(true);
+  });
+
+  it('requires confirm when retention changes (decrease or increase)', () => {
+    expect(fieldsRequireConfirm({ ...FIVE_FIELDS, highValueRetentionDays: 30 }, current)).toBe(
+      true,
+    );
+    expect(fieldsRequireConfirm({ ...FIVE_FIELDS, highValueRetentionDays: 180 }, current)).toBe(
+      true,
+    );
+  });
+
+  it('does not require confirm for unchanged or no-risk edits', () => {
+    expect(fieldsRequireConfirm(FIVE_FIELDS, current)).toBe(false);
+    expect(fieldsRequireConfirm({ ...FIVE_FIELDS, defaultPeriodQuota: 2_000_000 }, current)).toBe(
+      false,
+    );
+    expect(fieldsRequireConfirm({ ...FIVE_FIELDS, degradationEnabled: false }, current)).toBe(
+      false,
+    );
+    expect(fieldsRequireConfirm({ ...FIVE_FIELDS, warningRatio: 90 }, current)).toBe(false);
+  });
+});
+
+describe('validateProjectLimitInput', () => {
+  it('accepts a positive number', () => {
+    expect(validateProjectLimitInput('5000')).toBe(5000);
+    expect(validateProjectLimitInput('1')).toBe(1);
+    expect(validateProjectLimitInput('12.5')).toBe(12.5);
+  });
+
+  it('rejects 0, negative, blank and non-numeric input', () => {
+    expect(validateProjectLimitInput('0')).toBeNull();
+    expect(validateProjectLimitInput('-5')).toBeNull();
+    expect(validateProjectLimitInput('')).toBeNull();
+    expect(validateProjectLimitInput('abc')).toBeNull();
+    expect(validateProjectLimitInput('1,000')).toBeNull();
   });
 });
