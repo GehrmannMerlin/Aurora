@@ -19,6 +19,11 @@ import {
   OPERATION_ID_LIST_PERFORMANCE_PAGES,
   OPERATION_ID_LIST_REQUEST_ENDPOINTS,
   OPERATION_ID_NOTIFICATIONS_LIST,
+  OPERATION_ID_PLATFORM_ADMIN_GET_CAPABILITY,
+  OPERATION_ID_POLICY_GET_DEFAULT,
+  OPERATION_ID_POLICY_GET_ORGANIZATION,
+  OPERATION_ID_POLICY_GET_PROJECT,
+  OPERATION_ID_POLICY_TARGET_SEARCH,
   OPERATION_ID_RELEASES_LIST,
   OPERATION_ID_SETTINGS_GET,
   OPERATION_ID_SETTINGS_LIST_ENVIRONMENTS,
@@ -775,4 +780,173 @@ export function fetchNotifications(
     scope: { type: 'account' },
     ...(options.signal !== undefined ? { signal: options.signal } : {}),
   }).then((response) => response.data);
+}
+
+// --- PLT-10c D2 Platform resource policies (account-scoped, platform-admin gated) --------------
+
+/**
+ * The five PRD §15.8 protective fields shared by the platform default and
+ * organization overrides. Mirrors the Plan B contract `policyFields`.
+ */
+export interface PlatformPolicyFields {
+  readonly defaultPeriodQuota: number;
+  readonly warningRatio: number;
+  readonly hardLimit: number;
+  readonly degradationEnabled: boolean;
+  readonly highValueRetentionDays: number;
+}
+
+/**
+ * First version has no data-plane consumer, so propagation is always `unknown`
+ * (the page must never claim the policy has already taken effect).
+ */
+export interface PolicyPropagation {
+  readonly status: 'unknown';
+  readonly reason: string;
+}
+
+/** Effective policy projection for org-scope targets (default / org effective). */
+export interface PlatformPolicyProjection {
+  readonly configured: PlatformPolicyFields;
+  readonly source: string;
+  readonly effective: PlatformPolicyFields;
+  readonly version: number;
+  readonly updatedAt?: string;
+  readonly updatedBy?: string;
+  readonly propagation: PolicyPropagation;
+}
+
+/**
+ * Project effective-policy projection: the project's own `resourceLimit` override
+ * (`configured`) plus the full computed effective policy. `resourceLimit` is
+ * optional in both — a project with no limit row reports none (ADR-035).
+ */
+export interface ProjectPolicyProjection {
+  readonly configured: { readonly resourceLimit?: number };
+  readonly source: string;
+  readonly effective: PlatformPolicyFields & { readonly resourceLimit?: number };
+  readonly version: number;
+  readonly updatedAt?: string;
+  readonly updatedBy?: string;
+  readonly propagation: PolicyPropagation;
+}
+
+export interface PolicyTargetOrganization {
+  readonly organizationId: string;
+  readonly name: string;
+}
+
+export interface PolicyTargetProject {
+  readonly projectId: string;
+  readonly organizationId: string;
+  readonly name: string;
+}
+
+export interface PolicyTargetSearchResult {
+  readonly organizations: readonly PolicyTargetOrganization[];
+  readonly projects: readonly PolicyTargetProject[];
+  readonly pagination: {
+    readonly cursor?: string;
+    readonly nextCursor?: string;
+    readonly totalCount?: number;
+    readonly totalCountStatus: string;
+  };
+}
+
+export interface PlatformAdminCapability {
+  readonly hasCapability: boolean;
+}
+
+/** Plain `{ data: T }` envelope for non-queryResponse operations (capability). */
+interface PlainDataResponse<T> {
+  readonly data: T;
+}
+
+/**
+ * Resolve whether the current account holds platform admin capability (D2).
+ * Session + platform-admin gated; the server resolves capability from the
+ * session account, so the scope is `account`.
+ */
+export function fetchPlatformAdminCapability(
+  options: FetchOptions = {},
+): Promise<PlatformAdminCapability> {
+  return executeQuery<PlainDataResponse<PlatformAdminCapability>>({
+    operationId: OPERATION_ID_PLATFORM_ADMIN_GET_CAPABILITY,
+    input: {},
+    scope: { type: 'account' },
+    ...(options.signal !== undefined ? { signal: options.signal } : {}),
+  }).then((response) => response.data);
+}
+
+export interface PolicyTargetSearchInput {
+  readonly q?: string;
+  readonly limit?: number;
+}
+
+/**
+ * Search policy targets (organizations and projects) by name for the D2 target
+ * picker. Server-authorised: only organization-kind orgs and active/archived
+ * projects are returned; never loads a full directory.
+ */
+export function fetchPolicyTargetSearch(
+  query: PolicyTargetSearchInput,
+  options: FetchOptions = {},
+): Promise<PolicyTargetSearchResult> {
+  const queryParams: Record<string, unknown> = {};
+  if (query.q !== undefined) queryParams.q = query.q;
+  if (query.limit !== undefined) queryParams.limit = query.limit;
+  const input: PlatformRequestInput =
+    Object.keys(queryParams).length === 0 ? {} : { query: queryParams };
+  return executeQuery<QueryResponse<PolicyTargetSearchResult>>({
+    operationId: OPERATION_ID_POLICY_TARGET_SEARCH,
+    input,
+    scope: { type: 'account' },
+    ...(options.signal !== undefined ? { signal: options.signal } : {}),
+  }).then((response) => response.data);
+}
+
+/**
+ * The three effective-policy GETs return a `queryResponse` whose `data` field is
+ * itself `{ data: projection }` (Plan B contract wraps the projection), so these
+ * wrappers unwrap `response.data.data` to hand views the projection directly.
+ */
+export function fetchPolicyGetDefault(
+  options: FetchOptions = {},
+): Promise<PlatformPolicyProjection> {
+  return executeQuery<QueryResponse<{ data: PlatformPolicyProjection }>>({
+    operationId: OPERATION_ID_POLICY_GET_DEFAULT,
+    input: {},
+    scope: { type: 'account' },
+    ...(options.signal !== undefined ? { signal: options.signal } : {}),
+  }).then((response) => response.data.data);
+}
+
+export function fetchPolicyGetOrganizationEffective(
+  organizationId: string,
+  options: FetchOptions = {},
+): Promise<PlatformPolicyProjection> {
+  const input: PlatformRequestInput = {
+    pathParams: { organizationId },
+  };
+  return executeQuery<QueryResponse<{ data: PlatformPolicyProjection }>>({
+    operationId: OPERATION_ID_POLICY_GET_ORGANIZATION,
+    input,
+    scope: { type: 'account' },
+    ...(options.signal !== undefined ? { signal: options.signal } : {}),
+  }).then((response) => response.data.data);
+}
+
+export function fetchPolicyGetProjectEffective(
+  projectId: string,
+  options: FetchOptions = {},
+): Promise<ProjectPolicyProjection> {
+  const input: PlatformRequestInput = {
+    pathParams: { projectId },
+  };
+  return executeQuery<QueryResponse<{ data: ProjectPolicyProjection }>>({
+    operationId: OPERATION_ID_POLICY_GET_PROJECT,
+    input,
+    scope: { type: 'account' },
+    ...(options.signal !== undefined ? { signal: options.signal } : {}),
+  }).then((response) => response.data.data);
 }

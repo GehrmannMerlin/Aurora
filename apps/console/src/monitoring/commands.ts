@@ -25,6 +25,11 @@ import {
   OPERATION_ID_LIFECYCLE_RESTORE,
   OPERATION_ID_MERGE_ISSUES,
   OPERATION_ID_NOTIFICATIONS_MARK_READ,
+  OPERATION_ID_POLICY_CLEAR_PROJECT_LIMIT,
+  OPERATION_ID_POLICY_RESET_ORGANIZATION,
+  OPERATION_ID_POLICY_SET_DEFAULT,
+  OPERATION_ID_POLICY_SET_ORGANIZATION,
+  OPERATION_ID_POLICY_SET_PROJECT_LIMIT,
   OPERATION_ID_SETTINGS_CREATE_ENVIRONMENT,
   OPERATION_ID_SETTINGS_UPDATE,
   OPERATION_ID_SOURCE_MAPS_REPARSE,
@@ -35,7 +40,7 @@ import {
   OPERATION_ID_UPDATE_ISSUE_STATE,
 } from '@aurora/platform-contract';
 import { executeQuery } from '../api/query.js';
-import { createIdempotencyKey } from '../api/client.js';
+import { createIdempotencyKey, type PlatformRequestInput } from '../api/client.js';
 import type { ScopeKey } from '../api/scope.js';
 import type { ProjectScope } from './queries.js';
 
@@ -259,7 +264,12 @@ export function replaceSourceMap(
   return runCommand<ReplaceSourceMapResult>(
     OPERATION_ID_SOURCE_MAPS_REPLACE,
     scope,
-    { organizationId: scope.organizationId, projectId: scope.projectId, releaseId, sourceMapFileId },
+    {
+      organizationId: scope.organizationId,
+      projectId: scope.projectId,
+      releaseId,
+      sourceMapFileId,
+    },
     { content: params.content, digest: params.digest, version: params.version },
     options,
   );
@@ -523,7 +533,10 @@ export function updateProjectSettings(
   params: { readonly name: string; readonly websiteUrl?: string; readonly resourceVersion: string },
   options: IssueCommandOptions,
 ): Promise<UpdateProjectSettingsResult> {
-  const body: Record<string, unknown> = { name: params.name, resourceVersion: params.resourceVersion };
+  const body: Record<string, unknown> = {
+    name: params.name,
+    resourceVersion: params.resourceVersion,
+  };
   if (params.websiteUrl !== undefined) body.websiteUrl = params.websiteUrl;
   return runCommand<UpdateProjectSettingsResult>(
     OPERATION_ID_SETTINGS_UPDATE,
@@ -631,4 +644,134 @@ export function markNotificationRead(
     csrf: options.csrf,
     ...(options.signal !== undefined ? { signal: options.signal } : {}),
   }).then((response) => response.data);
+}
+
+// --- PLT-10c D2 Platform resource-policy commands (account-scoped, admin-gated) ----------------
+
+/**
+ * The five PRD §15.8 protective fields submitted for default/org policy saves.
+ * Mirrors the Plan B contract `policySetDefaultBody` / `policySetOrganizationBody`.
+ */
+export interface PolicyFieldsCommandInput {
+  readonly defaultPeriodQuota: number;
+  readonly warningRatio: number;
+  readonly hardLimit: number;
+  readonly degradationEnabled: boolean;
+  readonly highValueRetentionDays: number;
+}
+
+export interface PolicySetResult {
+  readonly status: 'set';
+  readonly version: number;
+}
+
+export interface PolicyResetResult {
+  readonly status: 'reset';
+}
+
+export interface PolicyClearResult {
+  readonly status: 'cleared';
+}
+
+/** Account-scoped command helper: CSRF + fresh idempotency key, scope `account`. */
+async function runAccountCommand<T>(
+  operationId: string,
+  input: PlatformRequestInput,
+  options: IssueCommandOptions,
+): Promise<T> {
+  const body = {
+    ...(input.body as Readonly<Record<string, unknown>> | undefined),
+    idempotencyKey: options.idempotencyKey ?? createIdempotencyKey(),
+  };
+  const data = await executeQuery<{ readonly data: T }>({
+    operationId,
+    input: { ...input, body },
+    scope: { type: 'account' },
+    csrf: options.csrf,
+    ...(options.signal !== undefined ? { signal: options.signal } : {}),
+  });
+  return data.data;
+}
+
+/**
+ * Save the platform default resource policy (optimistic version; the backend
+ * re-authorizes as platform admin and writes a `policy_set_default` audit event).
+ */
+export function setPolicyDefault(
+  params: PolicyFieldsCommandInput & { readonly version: number },
+  options: IssueCommandOptions,
+): Promise<PolicySetResult> {
+  return runAccountCommand<PolicySetResult>(
+    OPERATION_ID_POLICY_SET_DEFAULT,
+    { body: params },
+    options,
+  );
+}
+
+/**
+ * Save (replace) an organization resource-policy override (optimistic version;
+ * `version: 0` inserts a new override row).
+ */
+export function setPolicyOrganization(
+  organizationId: string,
+  params: PolicyFieldsCommandInput & { readonly version: number },
+  options: IssueCommandOptions,
+): Promise<PolicySetResult> {
+  return runAccountCommand<PolicySetResult>(
+    OPERATION_ID_POLICY_SET_ORGANIZATION,
+    { pathParams: { organizationId }, body: params },
+    options,
+  );
+}
+
+/**
+ * Reset an organization override back to the platform default. Destructive, so
+ * the body always carries `confirm: true`; the backend requires it (closed 422
+ * otherwise).
+ */
+export function resetPolicyOrganization(
+  organizationId: string,
+  params: { readonly version: number },
+  options: IssueCommandOptions,
+): Promise<PolicyResetResult> {
+  return runAccountCommand<PolicyResetResult>(
+    OPERATION_ID_POLICY_RESET_ORGANIZATION,
+    { pathParams: { organizationId }, body: { version: params.version, confirm: true } },
+    options,
+  );
+}
+
+/**
+ * Set a project resource-limit override (optimistic version; `version: 0` with
+ * no limit row inserts version 1).
+ */
+export function setPolicyProjectLimit(
+  projectId: string,
+  params: { readonly resourceLimit: number; readonly version: number },
+  options: IssueCommandOptions,
+): Promise<PolicySetResult> {
+  return runAccountCommand<PolicySetResult>(
+    OPERATION_ID_POLICY_SET_PROJECT_LIMIT,
+    {
+      pathParams: { projectId },
+      body: { resourceLimit: params.resourceLimit, version: params.version },
+    },
+    options,
+  );
+}
+
+/**
+ * Clear a project resource-limit override. Destructive, so the body always
+ * carries `confirm: true`; the backend requires it (closed 422 otherwise).
+ */
+export function clearPolicyProjectLimit(
+  projectId: string,
+  params: { readonly version: number },
+  options: IssueCommandOptions,
+): Promise<PolicyClearResult> {
+  return runAccountCommand<PolicyClearResult>(
+    OPERATION_ID_POLICY_CLEAR_PROJECT_LIMIT,
+    { pathParams: { projectId }, body: { version: params.version, confirm: true } },
+    options,
+  );
 }
