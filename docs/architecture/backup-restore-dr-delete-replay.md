@@ -57,7 +57,7 @@ review-cycle: recovery-policy-or-quarterly-dr
 
 ## 7. 前置债务（OPS07_PREREQUISITE_DEBT）
 
-- **SEC-02（跨存储删除传播：PostgreSQL/Redis/对象/审计/备份）未实现**（G04 remaining leaf，not-started）。`validateDeletionReplay` 返回 `prerequisiteDebt: ['sec-02-cross-store-deletion-pending']`。
+- **SEC-02（跨存储删除传播：PostgreSQL/Redis/对象/审计/备份）已于 2026-08-12 在 `feature/g04-gap-close` 完成**（`apps/platform-worker/src/retention/`，PR #22 OPEN，未合入 origin/main → `SEC02_MAIN_INTEGRATION_PENDING`）。`validateDeletionReplay` 仍返回 `prerequisiteDebt: ['sec-02-cross-store-deletion-pending']`（本分支未消费 SEC-02 契约，不改实现、不伪造）。
 - 因此：**OPS-07 implementation = completed-to-available-boundary；delete-replay acceptance = prerequisite-pending**。不得写 OPS-07 completed，不得为完成 G16 临时伪造 SEC-02 / 假 deletion API / 用 mock 代替跨存储删除真实性。本模块只冻结删除重放**契约模型**，跨存储删除真实验证在 SEC-02 落位后于 staging/release 进行。
 - 其他证据状态：`PROVISIONING_EVIDENCE_PENDING`（无 AWS 凭据，未 provisioning）、`RPO_RTO_EVIDENCE_PENDING`（真实 DR 演练）、`requires-backup-account`（跨区域副本拓扑）。
 
