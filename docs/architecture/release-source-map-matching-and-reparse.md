@@ -41,11 +41,11 @@ review-cycle: product-or-api-change
 
 **`@aurora/platform-releases`（新平台 data 包）** Migration `1787000000000_releases-and-source-maps.ts`：
 
-| 表 | 职责 |
-|---|---|
-| `releases` | 发布身份，`(project_id, version)` 唯一；v1 由获授权 Source Map 上传幂等创建（`source` 恒 `source_map_upload`） |
-| `source_map_files` | 严格键 `(release_id, normalized build_path)` 唯一；元数据（object_key/digest/build_id/version/replaced_at）；同摘要幂等、异摘要 `replace_conflict` 需显式替换 |
-| `source_map_reparse_tasks` | 有界重解析任务，每 `(release_id, source_map_file_id)` 至多一个活动任务（部分唯一索引）；queued/processing/completed/failed |
+| 表                         | 职责                                                                                                                                                          |
+| -------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `releases`                 | 发布身份，`(project_id, version)` 唯一；v1 由获授权 Source Map 上传幂等创建（`source` 恒 `source_map_upload`）                                                |
+| `source_map_files`         | 严格键 `(release_id, normalized build_path)` 唯一；元数据（object_key/digest/build_id/version/replaced_at）；同摘要幂等、异摘要 `replace_conflict` 需显式替换 |
+| `source_map_reparse_tasks` | 有界重解析任务，每 `(release_id, source_map_file_id)` 至多一个活动任务（部分唯一索引）；queued/processing/completed/failed                                    |
 
 **`@aurora/processing-store`** Migration `1722500000011_error-occurrence-symbolizations.ts`：
 
@@ -70,13 +70,13 @@ review-cycle: product-or-api-change
 
 ## 7. 公开契约（5 个稳定操作）
 
-| operationId | 说明 |
-|---|---|
-| `releasesListReleases` | C8 发布列表（source、firstSeenAt、sourceMapFileCount） |
-| `sourceMapsListFiles` | C9 当前有效文件列表（含重解析状态投影） |
-| `sourceMapsUpload` | 上传（releaseVersion/buildPath/content/digest/buildId） |
-| `sourceMapsReplace` | 显式替换（versioned） |
-| `sourceMapsReparse` | 显式有界重解析触发 |
+| operationId            | 说明                                                    |
+| ---------------------- | ------------------------------------------------------- |
+| `releasesListReleases` | C8 发布列表（source、firstSeenAt、sourceMapFileCount）  |
+| `sourceMapsListFiles`  | C9 当前有效文件列表（含重解析状态投影）                 |
+| `sourceMapsUpload`     | 上传（releaseVersion/buildPath/content/digest/buildId） |
+| `sourceMapsReplace`    | 显式替换（versioned）                                   |
+| `sourceMapsReparse`    | 显式有界重解析触发                                      |
 
 ## 8. 实施边界与记录
 

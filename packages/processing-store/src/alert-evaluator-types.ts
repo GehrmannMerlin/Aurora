@@ -185,11 +185,7 @@ export type AlertInstanceAction =
  * send notifications (G13/D1 deferred).
  */
 export type AlertNotificationDecision =
-  | 'first_trigger'
-  | 'retrigger'
-  | 'recovered'
-  | 'suppressed'
-  | 'none';
+  'first_trigger' | 'retrigger' | 'recovered' | 'suppressed' | 'none';
 
 export interface EvaluateAlertRoundInput {
   readonly rule: AlertRuleConfig;

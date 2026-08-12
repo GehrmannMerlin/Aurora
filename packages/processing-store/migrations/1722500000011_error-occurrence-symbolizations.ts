@@ -11,7 +11,12 @@ export const shorthands = undefined;
 export const up = (pgm: MigrationBuilder): void => {
   pgm.createTable('error_occurrence_symbolizations', {
     id: { type: 'bigserial', primaryKey: true },
-    occurrence_id: { type: 'bigint', notNull: true, unique: true, references: 'error_event_occurrences' },
+    occurrence_id: {
+      type: 'bigint',
+      notNull: true,
+      unique: true,
+      references: 'error_event_occurrences',
+    },
     project_id: { type: 'uuid', notNull: true },
     release_id: { type: 'bigint', notNull: true },
     source_map_file_id: { type: 'bigint', notNull: true },
@@ -25,12 +30,20 @@ export const up = (pgm: MigrationBuilder): void => {
     created_at: { type: 'timestamptz', notNull: true, default: pgm.func('now()') },
     updated_at: { type: 'timestamptz', notNull: true, default: pgm.func('now()') },
   });
-  pgm.addConstraint('error_occurrence_symbolizations', 'ck_error_occurrence_symbolizations_status', {
-    check: "status IN ('symbolized', 'not_found', 'parse_failed')",
-  });
-  pgm.addConstraint('error_occurrence_symbolizations', 'ck_error_occurrence_symbolizations_map_version', {
-    check: 'map_version >= 1',
-  });
+  pgm.addConstraint(
+    'error_occurrence_symbolizations',
+    'ck_error_occurrence_symbolizations_status',
+    {
+      check: "status IN ('symbolized', 'not_found', 'parse_failed')",
+    },
+  );
+  pgm.addConstraint(
+    'error_occurrence_symbolizations',
+    'ck_error_occurrence_symbolizations_map_version',
+    {
+      check: 'map_version >= 1',
+    },
+  );
   pgm.createIndex('error_occurrence_symbolizations', ['project_id', 'status']);
 };
 

@@ -55,7 +55,8 @@ export const up = (pgm: MigrationBuilder): void => {
     check: 'recovery_duration_minutes >= 0',
   });
   pgm.addConstraint('alert_rules', 'ck_alert_rules_thresholds', {
-    check: 'trigger_threshold >= 0 AND recovery_threshold >= 0 AND recovery_threshold < trigger_threshold',
+    check:
+      'trigger_threshold >= 0 AND recovery_threshold >= 0 AND recovery_threshold < trigger_threshold',
   });
   pgm.addConstraint('alert_rules', 'ck_alert_rules_min_sample', {
     check: 'min_sample_count IS NULL OR min_sample_count > 0',
@@ -73,7 +74,8 @@ export const up = (pgm: MigrationBuilder): void => {
     check: "jsonb_typeof(recipient_account_ids) = 'array'",
   });
   pgm.addConstraint('alert_rules', 'ck_alert_rules_evaluation_state', {
-    check: "evaluation_state IN ('normal','pending_trigger','triggered','pending_recovery','evaluation_paused')",
+    check:
+      "evaluation_state IN ('normal','pending_trigger','triggered','pending_recovery','evaluation_paused')",
   });
   pgm.createIndex('alert_rules', ['project_id', 'updated_at']);
 

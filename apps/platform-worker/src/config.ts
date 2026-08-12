@@ -68,9 +68,8 @@ export function loadPlatformWorkerConfig(env: NodeJS.ProcessEnv): PlatformWorker
     cleanupMaxAttempts: optionalPositiveInt(env, 'CLEANUP_MAX_ATTEMPTS', 5),
     alertsEnabled: (env.ALERTS_EVALUATION_ENABLED ?? 'true').trim().toLowerCase() !== 'false',
     alertMaxRules: optionalPositiveInt(env, 'ALERT_MAX_RULES', 100),
-    sourceMapsReparseEnabled: (env.SOURCE_MAPS_REPARSE_ENABLED ?? 'true')
-      .trim()
-      .toLowerCase() !== 'false',
+    sourceMapsReparseEnabled:
+      (env.SOURCE_MAPS_REPARSE_ENABLED ?? 'true').trim().toLowerCase() !== 'false',
     sourceMapsReparseMaxOccurrences: optionalPositiveInt(
       env,
       'SOURCE_MAPS_REPARSE_MAX_OCCURRENCES',

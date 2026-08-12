@@ -50,7 +50,7 @@ export const up = (pgm: MigrationBuilder): void => {
     check: "status IN ('active', 'replaced')",
   });
   pgm.addConstraint('source_map_files', 'ck_source_map_files_digest', {
-    check: 'digest ~ \'^[0-9a-f]{64}$\'',
+    check: "digest ~ '^[0-9a-f]{64}$'",
   });
   pgm.createIndex('source_map_files', ['project_id', 'release_id']);
 

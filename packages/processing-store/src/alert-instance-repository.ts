@@ -1,8 +1,5 @@
 import type { Pool, PoolClient } from 'pg';
-import type {
-  ActiveAlertInstance,
-  EvaluateAlertRoundResult,
-} from './alert-evaluator-types.js';
+import type { ActiveAlertInstance, EvaluateAlertRoundResult } from './alert-evaluator-types.js';
 import { buildAlertRuleSnapshot, type AlertRuleRow } from './alert-types.js';
 import type {
   AlertEvidenceRow,
@@ -166,9 +163,12 @@ export async function persistAlertEvaluation(
       // Capture the active instance BEFORE the state update: after a `recover`
       // the row is terminal and the active-instance lookup returns null.
       const activeBefore = await getActiveAlertInstance(client, { ruleId: rule.id });
-      const recoveredAt = action.action === 'recover' ? new Date(action.recoveredAt).toISOString() : null;
+      const recoveredAt =
+        action.action === 'recover' ? new Date(action.recoveredAt).toISOString() : null;
       const recoverySince =
-        action.action === 'update' && action.recoverySince !== undefined && action.recoverySince !== null
+        action.action === 'update' &&
+        action.recoverySince !== undefined &&
+        action.recoverySince !== null
           ? new Date(action.recoverySince).toISOString()
           : null;
       const pausedFrom = action.action === 'update' ? (action.pausedFrom ?? null) : null;
@@ -264,7 +264,10 @@ const TRANSITIONS_SQL = `
 `;
 
 export interface AlertInstanceDetail {
-  readonly instance: AlertInstanceRow & { readonly ruleName: string | null; readonly metric: string };
+  readonly instance: AlertInstanceRow & {
+    readonly ruleName: string | null;
+    readonly metric: string;
+  };
   readonly evidence: AlertEvidenceRow | null;
   readonly transitions: readonly AlertTransitionRow[];
 }

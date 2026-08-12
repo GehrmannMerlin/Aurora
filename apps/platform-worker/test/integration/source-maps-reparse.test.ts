@@ -38,11 +38,7 @@ const MAP_CONTENT = JSON.stringify({
   mappings: 'AAAAA',
 });
 
-async function seedOccurrence(
-  pool: Pool,
-  projectId: string,
-  stack: string,
-): Promise<string> {
+async function seedOccurrence(pool: Pool, projectId: string, stack: string): Promise<string> {
   const result = await persistErrorEventOccurrence(pool, {
     projectId,
     eventEnvelope: {
@@ -187,7 +183,10 @@ describeDb('DAT-18 source-map reparse round (real PostgreSQL 17)', () => {
   it('replace (new map version) re-processes stale symbolizations', async () => {
     // Separate project: reparse candidates are project-scoped (events carry no
     // release yet), so test 2 must not re-process test 1's occurrences.
-    const release = await upsertRelease(pool, { projectId: OTHER_PROJECT, version: 'shop-web@1.5.0' });
+    const release = await upsertRelease(pool, {
+      projectId: OTHER_PROJECT,
+      version: 'shop-web@1.5.0',
+    });
     const objectKey = sourceMapObjectKey(OTHER_PROJECT, randomUUID());
     await objectStorage.putObject({ key: objectKey, content: MAP_CONTENT });
     const file = await createSourceMapFile(pool, {
@@ -208,7 +207,12 @@ describeDb('DAT-18 source-map reparse round (real PostgreSQL 17)', () => {
       releaseId: release.releaseId,
       sourceMapFileId: file.sourceMapFileId,
     });
-    let round = await runSourceMapReparseRound({ pool, objectStorage, maxTasks: 10, maxOccurrences: 100 });
+    let round = await runSourceMapReparseRound({
+      pool,
+      objectStorage,
+      maxTasks: 10,
+      maxOccurrences: 100,
+    });
     expect(round.symbolizedOccurrences).toBe(1);
 
     // Replace bumps the map version; the new task re-processes the occurrence.
@@ -227,7 +231,12 @@ describeDb('DAT-18 source-map reparse round (real PostgreSQL 17)', () => {
       releaseId: release.releaseId,
       sourceMapFileId: file.sourceMapFileId,
     });
-    round = await runSourceMapReparseRound({ pool, objectStorage, maxTasks: 10, maxOccurrences: 100 });
+    round = await runSourceMapReparseRound({
+      pool,
+      objectStorage,
+      maxTasks: 10,
+      maxOccurrences: 100,
+    });
     expect(round.symbolizedOccurrences).toBe(1);
     const fresh = await pool.query<{ map_version: number }>(
       'SELECT map_version FROM error_occurrence_symbolizations WHERE project_id = $1',

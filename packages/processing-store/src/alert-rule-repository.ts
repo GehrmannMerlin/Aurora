@@ -109,7 +109,9 @@ function normalizeRuleInput(
     return { ok: false, code: 'invalid_cooldown' };
   }
   const recoveryDurationMinutes =
-    input.recoveryDurationMinutes === undefined ? triggerDurationMinutes : input.recoveryDurationMinutes;
+    input.recoveryDurationMinutes === undefined
+      ? triggerDurationMinutes
+      : input.recoveryDurationMinutes;
   if (!(ALERT_TRIGGER_DURATIONS_MINUTES as readonly number[]).includes(recoveryDurationMinutes)) {
     return { ok: false, code: 'invalid_recovery_duration' };
   }
@@ -246,9 +248,7 @@ export async function updateAlertRule(
         'SELECT id FROM alert_rules WHERE id = $1 AND project_id = $2',
         [input.ruleId, rule.projectId],
       );
-      return exists.rows.length === 0
-        ? { status: 'not_found' }
-        : { status: 'version_conflict' };
+      return exists.rows.length === 0 ? { status: 'not_found' } : { status: 'version_conflict' };
     }
     return {
       status: 'updated',

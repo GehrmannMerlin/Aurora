@@ -131,7 +131,11 @@ export async function runSourceMapReparseRound(
 
       let matched = 0;
       for (const candidate of candidates) {
-        const symbolization = symbolizeCandidate(parsed.map, file.buildPath, candidate.normalizedBody);
+        const symbolization = symbolizeCandidate(
+          parsed.map,
+          file.buildPath,
+          candidate.normalizedBody,
+        );
         if (symbolization === null) continue;
         await persistSymbolization(input.pool, {
           occurrenceId: candidate.occurrenceId,
@@ -141,10 +145,18 @@ export async function runSourceMapReparseRound(
           mapVersion: file.version,
           originalPath: file.buildPath,
           status: symbolization.status,
-          ...(symbolization.resolvedFile === undefined ? {} : { resolvedFile: symbolization.resolvedFile }),
-          ...(symbolization.resolvedLine === undefined ? {} : { resolvedLine: symbolization.resolvedLine }),
-          ...(symbolization.resolvedColumn === undefined ? {} : { resolvedColumn: symbolization.resolvedColumn }),
-          ...(symbolization.functionName === undefined ? {} : { functionName: symbolization.functionName }),
+          ...(symbolization.resolvedFile === undefined
+            ? {}
+            : { resolvedFile: symbolization.resolvedFile }),
+          ...(symbolization.resolvedLine === undefined
+            ? {}
+            : { resolvedLine: symbolization.resolvedLine }),
+          ...(symbolization.resolvedColumn === undefined
+            ? {}
+            : { resolvedColumn: symbolization.resolvedColumn }),
+          ...(symbolization.functionName === undefined
+            ? {}
+            : { functionName: symbolization.functionName }),
         });
         if (symbolization.status === 'symbolized') matched += 1;
       }

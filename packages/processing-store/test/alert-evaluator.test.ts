@@ -1,8 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import {
-  evaluateAlertRule,
-  classifyAlertObservation,
-} from '../src/alert-evaluator.js';
+import { evaluateAlertRule, classifyAlertObservation } from '../src/alert-evaluator.js';
 import type {
   AlertObservation,
   AlertRuleConfig,
@@ -41,7 +38,9 @@ function ratioRule(overrides: Partial<AlertRuleConfig> = {}): AlertRuleConfig {
   };
 }
 
-function dataObservation(overrides: Partial<Extract<AlertObservation, { kind: 'data' }>> = {}): Extract<AlertObservation, { kind: 'data' }> {
+function dataObservation(
+  overrides: Partial<Extract<AlertObservation, { kind: 'data' }>> = {},
+): Extract<AlertObservation, { kind: 'data' }> {
   return {
     kind: 'data',
     value: 0,
@@ -62,7 +61,12 @@ function missingObservation(pauseReason = 'no_data_in_window'): AlertObservation
 function evaluate(
   rule: AlertRuleConfig,
   observation: AlertObservation,
-  ruleEval: AlertRuleEvaluation = { state: 'normal', since: null, lastEvaluatedAt: NOW - 5 * MINUTE, pauseReason: null },
+  ruleEval: AlertRuleEvaluation = {
+    state: 'normal',
+    since: null,
+    lastEvaluatedAt: NOW - 5 * MINUTE,
+    pauseReason: null,
+  },
   instance: ActiveAlertInstance | null = null,
   lastNotifiedAt: number | null = null,
   now = NOW,
@@ -115,31 +119,56 @@ describe('evaluateAlertRule — trigger path', () => {
   });
 
   it('cancels pending_trigger when the metric falls between thresholds (PRD §11.2.4)', () => {
-    const pending: AlertRuleEvaluation = { state: 'pending_trigger', since: NOW - 1 * MINUTE, lastEvaluatedAt: NOW - 1 * MINUTE, pauseReason: null };
+    const pending: AlertRuleEvaluation = {
+      state: 'pending_trigger',
+      since: NOW - 1 * MINUTE,
+      lastEvaluatedAt: NOW - 1 * MINUTE,
+      pauseReason: null,
+    };
     const r = evaluate(countRule(), dataObservation({ value: 80 }), pending);
     expect(r.ruleEval.state).toBe('normal');
     expect(r.ruleEval.since).toBeNull();
   });
 
   it('creates an instance only after the trigger duration is continuously met', () => {
-    const pending: AlertRuleEvaluation = { state: 'pending_trigger', since: NOW - 2 * MINUTE - 1, lastEvaluatedAt: NOW - 1, pauseReason: null };
+    const pending: AlertRuleEvaluation = {
+      state: 'pending_trigger',
+      since: NOW - 2 * MINUTE - 1,
+      lastEvaluatedAt: NOW - 1,
+      pauseReason: null,
+    };
     const r = evaluate(countRule(), dataObservation({ value: 150 }), pending);
     expect(r.ruleEval.state).toBe('triggered');
     expect(r.instanceAction).toEqual({ action: 'create', state: 'triggered', triggeredAt: NOW });
-    expect(r.transition).toEqual({ from: 'none', to: 'triggered', reason: 'trigger_threshold_sustained', occurredAt: NOW });
+    expect(r.transition).toEqual({
+      from: 'none',
+      to: 'triggered',
+      reason: 'trigger_threshold_sustained',
+      occurredAt: NOW,
+    });
     expect(r.notification).toBe('first_trigger');
     expect(r.notifyNow).toBe(true);
   });
 
   it('does not create an instance before the duration completes', () => {
-    const pending: AlertRuleEvaluation = { state: 'pending_trigger', since: NOW - 1 * MINUTE, lastEvaluatedAt: NOW - 1, pauseReason: null };
+    const pending: AlertRuleEvaluation = {
+      state: 'pending_trigger',
+      since: NOW - 1 * MINUTE,
+      lastEvaluatedAt: NOW - 1,
+      pauseReason: null,
+    };
     const r = evaluate(countRule(), dataObservation({ value: 150 }), pending);
     expect(r.ruleEval.state).toBe('pending_trigger');
     expect(r.instanceAction.action).toBe('none');
   });
 
   it('suppresses the repeat-trigger notification inside the cooldown window (PRD §11.2.6)', () => {
-    const pending: AlertRuleEvaluation = { state: 'pending_trigger', since: NOW - 3 * MINUTE, lastEvaluatedAt: NOW - 1, pauseReason: null };
+    const pending: AlertRuleEvaluation = {
+      state: 'pending_trigger',
+      since: NOW - 3 * MINUTE,
+      lastEvaluatedAt: NOW - 1,
+      pauseReason: null,
+    };
     const r = evaluate(
       countRule(),
       dataObservation({ value: 150 }),
@@ -154,7 +183,12 @@ describe('evaluateAlertRule — trigger path', () => {
   });
 
   it('notifies a retrigger after the cooldown window has elapsed', () => {
-    const pending: AlertRuleEvaluation = { state: 'pending_trigger', since: NOW - 3 * MINUTE, lastEvaluatedAt: NOW - 1, pauseReason: null };
+    const pending: AlertRuleEvaluation = {
+      state: 'pending_trigger',
+      since: NOW - 3 * MINUTE,
+      lastEvaluatedAt: NOW - 1,
+      pauseReason: null,
+    };
     const r = evaluate(
       countRule(),
       dataObservation({ value: 150 }),
@@ -168,20 +202,50 @@ describe('evaluateAlertRule — trigger path', () => {
 });
 
 describe('evaluateAlertRule — recovery path', () => {
-  const triggeredEval: AlertRuleEvaluation = { state: 'triggered', since: NOW - 30 * MINUTE, lastEvaluatedAt: NOW - 1, pauseReason: null };
-  const activeInstance: ActiveAlertInstance = { state: 'triggered', triggeredAt: NOW - 30 * MINUTE, recoverySince: null, pausedFrom: null };
+  const triggeredEval: AlertRuleEvaluation = {
+    state: 'triggered',
+    since: NOW - 30 * MINUTE,
+    lastEvaluatedAt: NOW - 1,
+    pauseReason: null,
+  };
+  const activeInstance: ActiveAlertInstance = {
+    state: 'triggered',
+    triggeredAt: NOW - 30 * MINUTE,
+    recoverySince: null,
+    pausedFrom: null,
+  };
 
   it('enters pending_recovery when the metric drops below the recovery threshold', () => {
     const r = evaluate(countRule(), dataObservation({ value: 50 }), triggeredEval, activeInstance);
     expect(r.ruleEval.state).toBe('pending_recovery');
-    expect(r.instanceAction).toEqual({ action: 'update', state: 'pending_recovery', recoverySince: NOW, pausedFrom: null });
+    expect(r.instanceAction).toEqual({
+      action: 'update',
+      state: 'pending_recovery',
+      recoverySince: NOW,
+      pausedFrom: null,
+    });
     expect(r.transition?.reason).toBe('recovery_threshold_met');
   });
 
   it('recovers after the recovery duration is continuously met', () => {
-    const pendingRecoveryInstance: ActiveAlertInstance = { state: 'pending_recovery', triggeredAt: NOW - 30 * MINUTE, recoverySince: NOW - 2 * MINUTE - 1, pausedFrom: null };
-    const pendingRecoveryEval: AlertRuleEvaluation = { state: 'pending_recovery', since: NOW - 2 * MINUTE, lastEvaluatedAt: NOW - 1, pauseReason: null };
-    const r = evaluate(countRule(), dataObservation({ value: 50 }), pendingRecoveryEval, pendingRecoveryInstance);
+    const pendingRecoveryInstance: ActiveAlertInstance = {
+      state: 'pending_recovery',
+      triggeredAt: NOW - 30 * MINUTE,
+      recoverySince: NOW - 2 * MINUTE - 1,
+      pausedFrom: null,
+    };
+    const pendingRecoveryEval: AlertRuleEvaluation = {
+      state: 'pending_recovery',
+      since: NOW - 2 * MINUTE,
+      lastEvaluatedAt: NOW - 1,
+      pauseReason: null,
+    };
+    const r = evaluate(
+      countRule(),
+      dataObservation({ value: 50 }),
+      pendingRecoveryEval,
+      pendingRecoveryInstance,
+    );
     expect(r.ruleEval.state).toBe('normal');
     expect(r.instanceAction).toEqual({ action: 'recover', recoveredAt: NOW });
     expect(r.notification).toBe('recovered');
@@ -189,9 +253,24 @@ describe('evaluateAlertRule — recovery path', () => {
   });
 
   it('keeps pending_recovery until the recovery duration elapses', () => {
-    const pendingRecoveryInstance: ActiveAlertInstance = { state: 'pending_recovery', triggeredAt: NOW - 30 * MINUTE, recoverySince: NOW - 1 * MINUTE, pausedFrom: null };
-    const pendingRecoveryEval: AlertRuleEvaluation = { state: 'pending_recovery', since: NOW - 1 * MINUTE, lastEvaluatedAt: NOW - 1, pauseReason: null };
-    const r = evaluate(countRule(), dataObservation({ value: 50 }), pendingRecoveryEval, pendingRecoveryInstance);
+    const pendingRecoveryInstance: ActiveAlertInstance = {
+      state: 'pending_recovery',
+      triggeredAt: NOW - 30 * MINUTE,
+      recoverySince: NOW - 1 * MINUTE,
+      pausedFrom: null,
+    };
+    const pendingRecoveryEval: AlertRuleEvaluation = {
+      state: 'pending_recovery',
+      since: NOW - 1 * MINUTE,
+      lastEvaluatedAt: NOW - 1,
+      pauseReason: null,
+    };
+    const r = evaluate(
+      countRule(),
+      dataObservation({ value: 50 }),
+      pendingRecoveryEval,
+      pendingRecoveryInstance,
+    );
     expect(r.ruleEval.state).toBe('pending_recovery');
     expect(r.instanceAction.action).toBe('update');
     expect(r.notification).toBe('none');
@@ -200,24 +279,59 @@ describe('evaluateAlertRule — recovery path', () => {
   it('keeps 持续异常 (triggered) when the value sits between thresholds (PRD §11.2.5)', () => {
     const r = evaluate(countRule(), dataObservation({ value: 80 }), triggeredEval, activeInstance);
     expect(r.ruleEval.state).toBe('triggered');
-    expect(r.instanceAction).toEqual({ action: 'update', state: 'triggered', recoverySince: null, pausedFrom: null });
+    expect(r.instanceAction).toEqual({
+      action: 'update',
+      state: 'triggered',
+      recoverySince: null,
+      pausedFrom: null,
+    });
   });
 
   it('returns to triggered when recovery condition is no longer met', () => {
-    const pendingRecoveryInstance: ActiveAlertInstance = { state: 'pending_recovery', triggeredAt: NOW - 30 * MINUTE, recoverySince: NOW - 1 * MINUTE, pausedFrom: null };
-    const pendingRecoveryEval: AlertRuleEvaluation = { state: 'pending_recovery', since: NOW - 1 * MINUTE, lastEvaluatedAt: NOW - 1, pauseReason: null };
-    const r = evaluate(countRule(), dataObservation({ value: 80 }), pendingRecoveryEval, pendingRecoveryInstance);
+    const pendingRecoveryInstance: ActiveAlertInstance = {
+      state: 'pending_recovery',
+      triggeredAt: NOW - 30 * MINUTE,
+      recoverySince: NOW - 1 * MINUTE,
+      pausedFrom: null,
+    };
+    const pendingRecoveryEval: AlertRuleEvaluation = {
+      state: 'pending_recovery',
+      since: NOW - 1 * MINUTE,
+      lastEvaluatedAt: NOW - 1,
+      pauseReason: null,
+    };
+    const r = evaluate(
+      countRule(),
+      dataObservation({ value: 80 }),
+      pendingRecoveryEval,
+      pendingRecoveryInstance,
+    );
     expect(r.ruleEval.state).toBe('triggered');
     expect(r.transition?.reason).toBe('recovery_threshold_no_longer_met');
   });
 });
 
 describe('evaluateAlertRule — missing data never recovers (PRD §11.2.10)', () => {
-  const triggeredEval: AlertRuleEvaluation = { state: 'triggered', since: NOW - 30 * MINUTE, lastEvaluatedAt: NOW - 1, pauseReason: null };
-  const activeInstance: ActiveAlertInstance = { state: 'triggered', triggeredAt: NOW - 30 * MINUTE, recoverySince: null, pausedFrom: null };
+  const triggeredEval: AlertRuleEvaluation = {
+    state: 'triggered',
+    since: NOW - 30 * MINUTE,
+    lastEvaluatedAt: NOW - 1,
+    pauseReason: null,
+  };
+  const activeInstance: ActiveAlertInstance = {
+    state: 'triggered',
+    triggeredAt: NOW - 30 * MINUTE,
+    recoverySince: null,
+    pausedFrom: null,
+  };
 
   it('pauses a triggered instance on missing data instead of recovering', () => {
-    const r = evaluate(countRule(), missingObservation('no_data_in_window'), triggeredEval, activeInstance);
+    const r = evaluate(
+      countRule(),
+      missingObservation('no_data_in_window'),
+      triggeredEval,
+      activeInstance,
+    );
     expect(r.ruleEval.state).toBe('evaluation_paused');
     expect(r.ruleEval.pauseReason).toBe('no_data_in_window');
     expect(r.instanceAction).toEqual({
@@ -232,7 +346,12 @@ describe('evaluateAlertRule — missing data never recovers (PRD §11.2.10)', ()
   });
 
   it('pauses a pending_trigger rule on missing data (wait is suspended, not cancelled)', () => {
-    const pending: AlertRuleEvaluation = { state: 'pending_trigger', since: NOW - 1 * MINUTE, lastEvaluatedAt: NOW - 1, pauseReason: null };
+    const pending: AlertRuleEvaluation = {
+      state: 'pending_trigger',
+      since: NOW - 1 * MINUTE,
+      lastEvaluatedAt: NOW - 1,
+      pauseReason: null,
+    };
     const r = evaluate(countRule(), missingObservation('data_receiving_anomaly'), pending);
     expect(r.ruleEval.state).toBe('evaluation_paused');
     expect(r.ruleEval.since).toBeNull(); // continuity broken
@@ -247,16 +366,36 @@ describe('evaluateAlertRule — missing data never recovers (PRD §11.2.10)', ()
   });
 
   it('resumes a paused triggered instance as triggered on fresh data (continuity reset)', () => {
-    const pausedEval: AlertRuleEvaluation = { state: 'evaluation_paused', since: null, lastEvaluatedAt: NOW - 1, pauseReason: 'no_data_in_window' };
-    const pausedInstance: ActiveAlertInstance = { state: 'evaluation_paused', triggeredAt: NOW - 30 * MINUTE, recoverySince: null, pausedFrom: 'triggered' };
+    const pausedEval: AlertRuleEvaluation = {
+      state: 'evaluation_paused',
+      since: null,
+      lastEvaluatedAt: NOW - 1,
+      pauseReason: 'no_data_in_window',
+    };
+    const pausedInstance: ActiveAlertInstance = {
+      state: 'evaluation_paused',
+      triggeredAt: NOW - 30 * MINUTE,
+      recoverySince: null,
+      pausedFrom: 'triggered',
+    };
     const r = evaluate(countRule(), dataObservation({ value: 150 }), pausedEval, pausedInstance);
     expect(r.ruleEval.state).toBe('triggered');
-    expect(r.instanceAction).toEqual({ action: 'update', state: 'triggered', recoverySince: null, pausedFrom: null });
+    expect(r.instanceAction).toEqual({
+      action: 'update',
+      state: 'triggered',
+      recoverySince: null,
+      pausedFrom: null,
+    });
     expect(r.transition?.reason).toBe('data_resumed');
   });
 
   it('resets trigger continuity after a pause (fresh pending_trigger, not a sustained one)', () => {
-    const pausedEval: AlertRuleEvaluation = { state: 'evaluation_paused', since: null, lastEvaluatedAt: NOW - 1, pauseReason: 'no_data_in_window' };
+    const pausedEval: AlertRuleEvaluation = {
+      state: 'evaluation_paused',
+      since: null,
+      lastEvaluatedAt: NOW - 1,
+      pauseReason: 'no_data_in_window',
+    };
     const r = evaluate(countRule(), dataObservation({ value: 150 }), pausedEval, null);
     expect(r.ruleEval.state).toBe('pending_trigger');
     expect(r.ruleEval.since).toBe(NOW);
@@ -291,7 +430,14 @@ describe('evaluateAlertRule — evidence integrity', () => {
   });
 
   it('uses the injected clock and never touches the wall clock', () => {
-    const r = evaluate(countRule(), dataObservation({ value: 10 }), undefined, null, null, NOW + 1234);
+    const r = evaluate(
+      countRule(),
+      dataObservation({ value: 10 }),
+      undefined,
+      null,
+      null,
+      NOW + 1234,
+    );
     expect(r.evidence.evaluatedAt).toBe(NOW + 1234);
     expect(r.ruleEval.lastEvaluatedAt).toBe(NOW + 1234);
   });

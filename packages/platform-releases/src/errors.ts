@@ -4,9 +4,7 @@
  * surfaced to callers; only one of the stable kinds below is exposed.
  */
 export type PlatformReleasesErrorKind =
-  | 'invalid_input'
-  | 'database_unavailable'
-  | 'statement_failed';
+  'invalid_input' | 'database_unavailable' | 'statement_failed';
 
 export class PlatformReleasesError extends Error {
   readonly kind: PlatformReleasesErrorKind;

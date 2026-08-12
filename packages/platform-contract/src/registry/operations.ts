@@ -1348,8 +1348,7 @@ export const PLATFORM_OPERATIONS: readonly OperationDef[] = [
     authLevel: 'session',
     method: 'GET',
     path: '/api/platform/v1/organizations/:organizationId/projects/:projectId/alerts',
-    summary:
-      'List alert rules with their current evaluation projection and alert instances (C10)',
+    summary: 'List alert rules with their current evaluation projection and alert instances (C10)',
     request: {
       pathParams: alertsListRulesAndInstancesPathParams,
       query: alertsListRulesAndInstancesQuery,

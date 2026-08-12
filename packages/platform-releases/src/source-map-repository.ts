@@ -250,7 +250,11 @@ export async function getSourceMapFileById(
  */
 export async function createReparseTask(
   pool: Pool | PoolClient,
-  input: { readonly projectId: string; readonly releaseId: string; readonly sourceMapFileId: string },
+  input: {
+    readonly projectId: string;
+    readonly releaseId: string;
+    readonly sourceMapFileId: string;
+  },
 ): Promise<{ readonly status: 'queued' | 'already_pending' }> {
   try {
     const inserted = await pool.query<{ id: string }>(

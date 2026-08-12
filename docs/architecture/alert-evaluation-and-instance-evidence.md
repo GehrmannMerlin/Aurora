@@ -41,12 +41,12 @@ review-cycle: product-or-api-change
 
 Migration `1722500000010_alert-rules-and-instances.ts`：
 
-| 表 | 职责 |
-|---|---|
-| `alert_rules` | 项目内规则配置 + 当前评估投影（`evaluation_state`/`evaluation_since`/`last_evaluated_at`/`evaluation_pause_reason`/`last_observed_value`/`last_notified_at`）+ 乐观 `version` |
-| `alert_instances` | 每次触发周期：`state`（triggered/pending_recovery/recovered/evaluation_paused）、关键时间、`paused_from`/`pause_reason`、`rule_snapshot`（实例创建时规则安全快照，与当前规则分离）；部分唯一索引保证每规则至多一个活动实例 |
-| `alert_instance_evidence` | 当前判断证据（1:1，状态变化时替换）：观测值、比例分子/分母、样本与最小样本、水位、完整性、暂停原因、applied_filters |
-| `alert_instance_transitions` | 有序业务状态轨迹：from/to/reason/occurred_at |
+| 表                           | 职责                                                                                                                                                                                                                       |
+| ---------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `alert_rules`                | 项目内规则配置 + 当前评估投影（`evaluation_state`/`evaluation_since`/`last_evaluated_at`/`evaluation_pause_reason`/`last_observed_value`/`last_notified_at`）+ 乐观 `version`                                              |
+| `alert_instances`            | 每次触发周期：`state`（triggered/pending_recovery/recovered/evaluation_paused）、关键时间、`paused_from`/`pause_reason`、`rule_snapshot`（实例创建时规则安全快照，与当前规则分离）；部分唯一索引保证每规则至多一个活动实例 |
+| `alert_instance_evidence`    | 当前判断证据（1:1，状态变化时替换）：观测值、比例分子/分母、样本与最小样本、水位、完整性、暂停原因、applied_filters                                                                                                        |
+| `alert_instance_transitions` | 有序业务状态轨迹：from/to/reason/occurred_at                                                                                                                                                                               |
 
 固定选项（PRD §11.2.3/§11.2.4/§11.2.6）以 DB CHECK 强制：window ∈ {1,5,10,30,60} 分钟；trigger duration ∈ {0,1,2,5,10} 分钟（0=立即）；cooldown ∈ {5,10,30,60} 分钟；比例指标必须有 `min_sample_count`；`recovery_threshold < trigger_threshold`。
 
@@ -75,13 +75,13 @@ Migration `1722500000010_alert-rules-and-instances.ts`：
 - `apps/platform-worker` 轮询循环调用；配置 `ALERTS_EVALUATION_ENABLED`（默认 true）、`ALERT_MAX_RULES`（默认 100）。
 - `apps/platform-api` 5 个稳定操作：
 
-| operationId | 说明 |
-|---|---|
-| `alertsGetCapability` | C11 能力契约 + 固定选项 + 过滤维度可用性 + 真实成员接收候选 |
-| `alertsListRulesAndInstances` | C10 规则（含当前评估投影）+ 实例（有界 200） |
-| `alertsCreateRule` | C11 创建（项目管理员 + CSRF + 幂等 + 审计） |
-| `alertsUpdateRule` | C11 编辑（乐观 version + CSRF + 幂等 + 审计） |
-| `alertsGetInstanceDetail` | C12 实例 + 规则快照 + 证据 + 轨迹（只读） |
+| operationId                   | 说明                                                        |
+| ----------------------------- | ----------------------------------------------------------- |
+| `alertsGetCapability`         | C11 能力契约 + 固定选项 + 过滤维度可用性 + 真实成员接收候选 |
+| `alertsListRulesAndInstances` | C10 规则（含当前评估投影）+ 实例（有界 200）                |
+| `alertsCreateRule`            | C11 创建（项目管理员 + CSRF + 幂等 + 审计）                 |
+| `alertsUpdateRule`            | C11 编辑（乐观 version + CSRF + 幂等 + 审计）               |
+| `alertsGetInstanceDetail`     | C12 实例 + 规则快照 + 证据 + 轨迹（只读）                   |
 
 - 创建/更新校验（PRD §11.2.8）：固定选项、恢复阈值方向、比例指标最小样本、至少一个接收成员、**过滤器因无有效数据范围被拒**（`field_validation`）。
 - 权限：读取=项目查看；管理=org manager 或 `project_admin`（`requireProjectAlertManageAccess` + 事务内重读）。

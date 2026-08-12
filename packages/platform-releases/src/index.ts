@@ -1,7 +1,4 @@
-export {
-  PlatformReleasesError,
-  type PlatformReleasesErrorKind,
-} from './errors.js';
+export { PlatformReleasesError, type PlatformReleasesErrorKind } from './errors.js';
 export { withTransaction } from './repositories/transaction.js';
 export { normalizeBuildPath } from './build-path.js';
 export {

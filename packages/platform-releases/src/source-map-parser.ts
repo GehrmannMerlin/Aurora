@@ -13,7 +13,10 @@ export interface SourceMapV3 {
 
 export type SourceMapParseResult =
   | { readonly ok: true; readonly map: SourceMapV3 }
-  | { readonly ok: false; readonly code: 'invalid_json' | 'unsupported_version' | 'missing_mappings' };
+  | {
+      readonly ok: false;
+      readonly code: 'invalid_json' | 'unsupported_version' | 'missing_mappings';
+    };
 
 const BASE64_LOOKUP: Readonly<Record<string, number>> = Object.freeze(
   (() => {

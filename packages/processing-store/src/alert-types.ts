@@ -1,8 +1,4 @@
-import type {
-  AlertFilterValues,
-  AlertMetric,
-  AlertRuleConfig,
-} from './alert-evaluator-types.js';
+import type { AlertFilterValues, AlertMetric, AlertRuleConfig } from './alert-evaluator-types.js';
 import { isRatioMetric } from './alert-evaluator.js';
 
 /** Persistent alert rule row (columns of `alert_rules`). */

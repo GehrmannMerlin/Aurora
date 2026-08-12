@@ -18,11 +18,7 @@ export function isRatioMetric(metric: AlertMetric): boolean {
 }
 
 export type AlertObservationClass =
-  | 'breached'
-  | 'recovery_zone'
-  | 'between'
-  | 'insufficient_samples'
-  | 'missing';
+  'breached' | 'recovery_zone' | 'between' | 'insufficient_samples' | 'missing';
 
 /**
  * Classify a trustworthy observation against the rule thresholds (PRD §11.2.4 /
@@ -65,8 +61,7 @@ function buildEvidence(
     observedValue: observation.kind === 'data' ? observation.value : null,
     numerator: observation.kind === 'data' ? (observation.numerator ?? null) : null,
     denominator: observation.kind === 'data' ? (observation.denominator ?? null) : null,
-    sampleCount:
-      observation.kind === 'data' ? (observation.sampleCount ?? null) : null,
+    sampleCount: observation.kind === 'data' ? (observation.sampleCount ?? null) : null,
     minSampleRequirement: rule.minSampleCount,
     watermark: observation.kind === 'data' ? observation.watermark : null,
     completeness,
@@ -137,9 +132,7 @@ function pausedResult(
  * non-advancing pause: missing/insufficient data never recovers and never
  * cancels an existing trigger; continuity anchors reset after a gap.
  */
-export function evaluateAlertRule(
-  input: EvaluateAlertRoundInput,
-): EvaluateAlertRoundResult {
+export function evaluateAlertRule(input: EvaluateAlertRoundInput): EvaluateAlertRoundResult {
   const { rule, observation, ruleEval, instance, lastNotifiedAt, now } = input;
   const cls = classifyAlertObservation(rule, observation);
 
@@ -165,7 +158,12 @@ export function evaluateAlertRule(
         const { notification, notifyNow } = notif(true, false);
         return {
           ruleEval: { state: 'triggered', since: now, lastEvaluatedAt: now, pauseReason: null },
-          transition: { from: 'none', to: 'triggered', reason: 'trigger_threshold_sustained', occurredAt: now },
+          transition: {
+            from: 'none',
+            to: 'triggered',
+            reason: 'trigger_threshold_sustained',
+            occurredAt: now,
+          },
           instanceAction: { action: 'create', state: 'triggered', triggeredAt: now },
           evidence,
           notification,
@@ -189,8 +187,18 @@ export function evaluateAlertRule(
         // Paused triggered instance resumes as triggered (持续异常), not a fresh trigger.
         return {
           ruleEval: { state: 'triggered', since: now, lastEvaluatedAt: now, pauseReason: null },
-          transition: { from: 'evaluation_paused', to: 'triggered', reason: 'data_resumed', occurredAt: now },
-          instanceAction: { action: 'update', state: 'triggered', recoverySince: null, pausedFrom: null },
+          transition: {
+            from: 'evaluation_paused',
+            to: 'triggered',
+            reason: 'data_resumed',
+            occurredAt: now,
+          },
+          instanceAction: {
+            action: 'update',
+            state: 'triggered',
+            recoverySince: null,
+            pausedFrom: null,
+          },
           evidence,
           notification: 'none',
           notifyNow: false,
@@ -213,7 +221,12 @@ export function evaluateAlertRule(
       ruleEval: { state: 'triggered', since: now, lastEvaluatedAt: now, pauseReason: null },
       transition:
         ruleEval.state === 'pending_recovery'
-          ? { from: 'pending_recovery', to: 'triggered', reason: 'trigger_threshold_rebreached', occurredAt: now }
+          ? {
+              from: 'pending_recovery',
+              to: 'triggered',
+              reason: 'trigger_threshold_rebreached',
+              occurredAt: now,
+            }
           : null,
       instanceAction:
         instance !== null
@@ -229,8 +242,18 @@ export function evaluateAlertRule(
   if (cls === 'recovery_zone') {
     if (ruleEval.state === 'triggered') {
       return {
-        ruleEval: { state: 'pending_recovery', since: now, lastEvaluatedAt: now, pauseReason: null },
-        transition: { from: 'triggered', to: 'pending_recovery', reason: 'recovery_threshold_met', occurredAt: now },
+        ruleEval: {
+          state: 'pending_recovery',
+          since: now,
+          lastEvaluatedAt: now,
+          pauseReason: null,
+        },
+        transition: {
+          from: 'triggered',
+          to: 'pending_recovery',
+          reason: 'recovery_threshold_met',
+          occurredAt: now,
+        },
         instanceAction:
           instance !== null
             ? { action: 'update', state: 'pending_recovery', recoverySince: now, pausedFrom: null }
@@ -247,7 +270,12 @@ export function evaluateAlertRule(
         const { notification, notifyNow } = notif(false, true);
         return {
           ruleEval: { state: 'normal', since: null, lastEvaluatedAt: now, pauseReason: null },
-          transition: { from: 'pending_recovery', to: 'recovered', reason: 'recovery_duration_satisfied', occurredAt: now },
+          transition: {
+            from: 'pending_recovery',
+            to: 'recovered',
+            reason: 'recovery_duration_satisfied',
+            occurredAt: now,
+          },
           instanceAction: { action: 'recover', recoveredAt: now },
           evidence,
           notification,
@@ -256,7 +284,12 @@ export function evaluateAlertRule(
         };
       }
       return {
-        ruleEval: { state: 'pending_recovery', since: ruleEval.since, lastEvaluatedAt: now, pauseReason: null },
+        ruleEval: {
+          state: 'pending_recovery',
+          since: ruleEval.since,
+          lastEvaluatedAt: now,
+          pauseReason: null,
+        },
         transition: null,
         instanceAction:
           instance !== null
@@ -271,9 +304,24 @@ export function evaluateAlertRule(
     if (ruleEval.state === 'evaluation_paused') {
       if (instance !== null) {
         return {
-          ruleEval: { state: 'pending_recovery', since: now, lastEvaluatedAt: now, pauseReason: null },
-          transition: { from: 'evaluation_paused', to: 'pending_recovery', reason: 'data_resumed', occurredAt: now },
-          instanceAction: { action: 'update', state: 'pending_recovery', recoverySince: now, pausedFrom: null },
+          ruleEval: {
+            state: 'pending_recovery',
+            since: now,
+            lastEvaluatedAt: now,
+            pauseReason: null,
+          },
+          transition: {
+            from: 'evaluation_paused',
+            to: 'pending_recovery',
+            reason: 'data_resumed',
+            occurredAt: now,
+          },
+          instanceAction: {
+            action: 'update',
+            state: 'pending_recovery',
+            recoverySince: now,
+            pausedFrom: null,
+          },
           evidence,
           notification: 'none',
           notifyNow: false,
@@ -317,7 +365,12 @@ export function evaluateAlertRule(
   if (ruleEval.state === 'pending_recovery') {
     return {
       ruleEval: { state: 'triggered', since: now, lastEvaluatedAt: now, pauseReason: null },
-      transition: { from: 'pending_recovery', to: 'triggered', reason: 'recovery_threshold_no_longer_met', occurredAt: now },
+      transition: {
+        from: 'pending_recovery',
+        to: 'triggered',
+        reason: 'recovery_threshold_no_longer_met',
+        occurredAt: now,
+      },
       instanceAction:
         instance !== null
           ? { action: 'update', state: 'triggered', recoverySince: null, pausedFrom: null }
@@ -332,8 +385,18 @@ export function evaluateAlertRule(
     if (instance !== null) {
       return {
         ruleEval: { state: 'triggered', since: now, lastEvaluatedAt: now, pauseReason: null },
-        transition: { from: 'evaluation_paused', to: 'triggered', reason: 'data_resumed', occurredAt: now },
-        instanceAction: { action: 'update', state: 'triggered', recoverySince: null, pausedFrom: null },
+        transition: {
+          from: 'evaluation_paused',
+          to: 'triggered',
+          reason: 'data_resumed',
+          occurredAt: now,
+        },
+        instanceAction: {
+          action: 'update',
+          state: 'triggered',
+          recoverySince: null,
+          pausedFrom: null,
+        },
         evidence,
         notification: 'none',
         notifyNow: false,
@@ -353,7 +416,12 @@ export function evaluateAlertRule(
   // normal / triggered — keep.
   const { notification, notifyNow } = notif(false, false);
   return {
-    ruleEval: { state: ruleEval.state, since: ruleEval.state === 'triggered' ? ruleEval.since : null, lastEvaluatedAt: now, pauseReason: null },
+    ruleEval: {
+      state: ruleEval.state,
+      since: ruleEval.state === 'triggered' ? ruleEval.since : null,
+      lastEvaluatedAt: now,
+      pauseReason: null,
+    },
     transition: null,
     instanceAction:
       instance !== null

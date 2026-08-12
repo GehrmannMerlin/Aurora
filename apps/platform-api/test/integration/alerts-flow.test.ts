@@ -193,13 +193,24 @@ describeDb('DAT-19 alert evaluation flow (real PostgreSQL 17 + Redis)', () => {
     expect(capData.recipients.map((r) => r.accountId)).toContain(owner.accountId);
 
     // Create rule.
-    const create = await postAlert(app, owner, owner.organizationId, projectId, '/rules', alertRuleBody(owner));
+    const create = await postAlert(
+      app,
+      owner,
+      owner.organizationId,
+      projectId,
+      '/rules',
+      alertRuleBody(owner),
+    );
     expect(create.status).toBe(200);
     const ruleId = ((create.body.data as { ruleId?: string }).ruleId ?? '').toString();
 
     // High failure rate in the window → first round pending_trigger, second round triggered.
     await seedRequestBucket(pool, projectId, FIXED_NOW.getTime() - 3 * MINUTE, 60, 100);
-    let round = await runAlertEvaluationRound({ pool, now: new Date(FIXED_NOW.getTime()), maxRules: 100 });
+    let round = await runAlertEvaluationRound({
+      pool,
+      now: new Date(FIXED_NOW.getTime()),
+      maxRules: 100,
+    });
     expect(round.failedRules).toBe(0);
     round = await runAlertEvaluationRound({
       pool,
@@ -211,8 +222,18 @@ describeDb('DAT-19 alert evaluation flow (real PostgreSQL 17 + Redis)', () => {
     const list = await getAlerts(app, owner, owner.organizationId, projectId, '');
     expect(list.status).toBe(200);
     const listData = list.body.data as {
-      rules: { status: string; data?: { items: readonly { ruleId: string; evaluation: { state: string } }[] } };
-      instances: { status: string; data?: { items: readonly { instanceId: string; state: string }[]; count: number; totalCountStatus: string } };
+      rules: {
+        status: string;
+        data?: { items: readonly { ruleId: string; evaluation: { state: string } }[] };
+      };
+      instances: {
+        status: string;
+        data?: {
+          items: readonly { instanceId: string; state: string }[];
+          count: number;
+          totalCountStatus: string;
+        };
+      };
     };
     expect(listData.rules.status).toBe('available');
     const ruleSummary = listData.rules.data?.items.find((r) => r.ruleId === ruleId);
@@ -222,11 +243,23 @@ describeDb('DAT-19 alert evaluation flow (real PostgreSQL 17 + Redis)', () => {
     const instanceId = listData.instances.data?.items[0]?.instanceId ?? '';
 
     // Instance detail carries the evidence that drove the trigger.
-    const detail = await getAlerts(app, owner, owner.organizationId, projectId, `/instances/${instanceId}`);
+    const detail = await getAlerts(
+      app,
+      owner,
+      owner.organizationId,
+      projectId,
+      `/instances/${instanceId}`,
+    );
     expect(detail.status).toBe(200);
     const detailData = detail.body.data as {
       instance: { state: string; directReason: string };
-      evidence: { observedValue: number; numerator: number; denominator: number; minSampleRequirement: number; completeness: string };
+      evidence: {
+        observedValue: number;
+        numerator: number;
+        denominator: number;
+        minSampleRequirement: number;
+        completeness: string;
+      };
       transitions: readonly { from: string; to: string; reason: string }[];
       ruleSnapshot: { metric: string };
     };
@@ -255,7 +288,13 @@ describeDb('DAT-19 alert evaluation flow (real PostgreSQL 17 + Redis)', () => {
     });
     expect(round.recoveredInstances).toBe(1);
 
-    const recovered = await getAlerts(app, owner, owner.organizationId, projectId, `/instances/${instanceId}`);
+    const recovered = await getAlerts(
+      app,
+      owner,
+      owner.organizationId,
+      projectId,
+      `/instances/${instanceId}`,
+    );
     const recoveredData = recovered.body.data as {
       instance: { state: string; recoveredAt?: string };
       transitions: readonly { to: string }[];
@@ -278,17 +317,38 @@ describeDb('DAT-19 alert evaluation flow (real PostgreSQL 17 + Redis)', () => {
     });
 
     // Developer (not project_admin) cannot create an alert rule.
-    const forbidden = await postAlert(app, developer, owner.organizationId, projectId, '/rules', alertRuleBody(owner));
+    const forbidden = await postAlert(
+      app,
+      developer,
+      owner.organizationId,
+      projectId,
+      '/rules',
+      alertRuleBody(owner),
+    );
     expect(forbidden.status).toBe(403);
 
     // A rule declaring a filter has no valid data range (PRD §11.2.8) → 422.
     const filtered = alertRuleBody(owner);
     (filtered.filters as Record<string, unknown>).environment = ['production'];
-    const invalid = await postAlert(app, owner, owner.organizationId, projectId, '/rules', filtered);
+    const invalid = await postAlert(
+      app,
+      owner,
+      owner.organizationId,
+      projectId,
+      '/rules',
+      filtered,
+    );
     expect(invalid.status).toBe(422);
 
     // Valid create writes an audit row.
-    const created = await postAlert(app, owner, owner.organizationId, projectId, '/rules', alertRuleBody(owner));
+    const created = await postAlert(
+      app,
+      owner,
+      owner.organizationId,
+      projectId,
+      '/rules',
+      alertRuleBody(owner),
+    );
     expect(created.status).toBe(200);
     const audit = await pool.query<{ action: string }>(
       `SELECT action FROM security_audit_events WHERE organization_id = $1 AND action = 'alert.rule_created'`,
@@ -298,7 +358,13 @@ describeDb('DAT-19 alert evaluation flow (real PostgreSQL 17 + Redis)', () => {
 
     // Cross-project / unknown instance id is a closed 404 (no existence leak).
     const otherProject = await createProjectFor(pool, owner);
-    const missing = await getAlerts(app, owner, owner.organizationId, otherProject, '/instances/999999');
+    const missing = await getAlerts(
+      app,
+      owner,
+      owner.organizationId,
+      otherProject,
+      '/instances/999999',
+    );
     expect(missing.status).toBe(404);
   });
 });

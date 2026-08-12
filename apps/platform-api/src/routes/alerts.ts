@@ -211,8 +211,7 @@ function toRuleSummary(rule: AlertRuleRow): Record<string, unknown> {
     evaluation: {
       state: rule.evaluationState,
       observedValue: undef(rule.lastObservedValue),
-      sinceAt:
-        rule.evaluationSince === null ? undefined : rule.evaluationSince.toISOString(),
+      sinceAt: rule.evaluationSince === null ? undefined : rule.evaluationSince.toISOString(),
       lastEvaluatedAt:
         rule.lastEvaluatedAt === null ? undefined : rule.lastEvaluatedAt.toISOString(),
       pauseReason: undef(rule.evaluationPauseReason),
@@ -543,7 +542,11 @@ export async function handleUpdateAlertRule(
           throw new ServiceError(404, 'not_found', 'The alert rule was not found.');
         }
         if (result.status === 'version_conflict') {
-          throw new ServiceError(409, 'version_conflict', 'The alert rule was updated by another member.');
+          throw new ServiceError(
+            409,
+            'version_conflict',
+            'The alert rule was updated by another member.',
+          );
         }
         if (result.status !== 'updated') {
           throw new ServiceError(503, 'authority_unavailable', 'Alert rule store unavailable.');
@@ -613,8 +616,8 @@ export async function handleGetAlertInstanceDetail(
   const lastTransition = detail.transitions[detail.transitions.length - 1];
   const directReason =
     detail.instance.state === 'evaluation_paused'
-      ? detail.instance.pauseReason ?? 'evaluation_paused'
-      : lastTransition?.reason ?? 'triggered';
+      ? (detail.instance.pauseReason ?? 'evaluation_paused')
+      : (lastTransition?.reason ?? 'triggered');
 
   const body = {
     data: {
@@ -627,7 +630,9 @@ export async function handleGetAlertInstanceDetail(
         directReason,
         triggeredAt: detail.instance.triggeredAt.toISOString(),
         recoveredAt:
-          detail.instance.recoveredAt === null ? undefined : detail.instance.recoveredAt.toISOString(),
+          detail.instance.recoveredAt === null
+            ? undefined
+            : detail.instance.recoveredAt.toISOString(),
         pauseReason: undef(detail.instance.pauseReason),
       },
       ruleSnapshot: detail.instance.ruleSnapshot,

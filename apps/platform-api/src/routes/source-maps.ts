@@ -169,18 +169,21 @@ export async function handleListReleases(
   }
 
   const body = {
-    data: releases.length === 0 ? { status: 'empty' as const, reason: 'no releases yet' } : {
-      status: 'available' as const,
-      data: {
-        items: releases.map((r) => ({
-          releaseId: r.id,
-          version: r.version,
-          source: r.source as 'source_map_upload',
-          firstSeenAt: r.firstSeenAt.toISOString(),
-          sourceMapFileCount: r.sourceMapFileCount,
-        })),
-      },
-    },
+    data:
+      releases.length === 0
+        ? { status: 'empty' as const, reason: 'no releases yet' }
+        : {
+            status: 'available' as const,
+            data: {
+              items: releases.map((r) => ({
+                releaseId: r.id,
+                version: r.version,
+                source: r.source as 'source_map_upload',
+                firstSeenAt: r.firstSeenAt.toISOString(),
+                sourceMapFileCount: r.sourceMapFileCount,
+              })),
+            },
+          },
     meta: { requestId, readAt: deps.now().toISOString(), normalizedQuery: {} },
     allowedActions: ['read'],
     navigationTargets: projectNavigation('project.releases', auth.organizationId, auth.projectId),
@@ -229,13 +232,20 @@ export async function handleListSourceMapFiles(
   }
 
   const body = {
-    data: files.length === 0 ? { status: 'empty' as const, reason: 'no source map files for this release' } : {
-      status: 'available' as const,
-      data: { items: files.map(toFileSummary) },
-    },
+    data:
+      files.length === 0
+        ? { status: 'empty' as const, reason: 'no source map files for this release' }
+        : {
+            status: 'available' as const,
+            data: { items: files.map(toFileSummary) },
+          },
     meta: { requestId, readAt: deps.now().toISOString(), normalizedQuery: {} },
     allowedActions: ['read'],
-    navigationTargets: projectNavigation('project.source-maps', auth.organizationId, auth.projectId),
+    navigationTargets: projectNavigation(
+      'project.source-maps',
+      auth.organizationId,
+      auth.projectId,
+    ),
   };
 
   const serialized = serializeOutput(LIST_FILES_OP, 200, body);
@@ -411,7 +421,10 @@ export async function handleReplaceSourceMap(
     );
     return;
   }
-  const params = request.params as SourceMapProjectParams & { releaseId?: string; sourceMapFileId?: string };
+  const params = request.params as SourceMapProjectParams & {
+    releaseId?: string;
+    sourceMapFileId?: string;
+  };
   const auth = await authorizeSourceMapView(request, reply, deps, requestId);
   if (auth === null) return;
   if (!requireNumericId(params.releaseId, reply, requestId)) return;
@@ -479,7 +492,11 @@ export async function handleReplaceSourceMap(
         });
         if (result.status === 'version_conflict') {
           await deps.sourceMapObjectStorage.deleteObject(objectKey).catch(() => undefined);
-          throw new ServiceError(409, 'version_conflict', 'The source map was replaced by another member.');
+          throw new ServiceError(
+            409,
+            'version_conflict',
+            'The source map was replaced by another member.',
+          );
         }
         if (result.status === 'not_found') {
           await deps.sourceMapObjectStorage.deleteObject(objectKey).catch(() => undefined);
