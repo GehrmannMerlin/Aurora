@@ -150,6 +150,26 @@ describeDb('platform-admin admins repository (real PostgreSQL 17)', () => {
     expect(await isPlatformAdmin(db(), { accountId: alice })).toBe(true);
   });
 
+  it('never drops to zero admins under concurrent revoke (last-admin race)', async () => {
+    const alice = await createAccount();
+    const bob = await createAccount();
+    const carol = await createAccount();
+    await clearMyAdmins();
+    await grantPlatformAdmin(db(), { accountId: alice, grantedBy: carol });
+    await grantPlatformAdmin(db(), { accountId: bob, grantedBy: carol });
+
+    // Two concurrent revokes of the two remaining admins: the FOR UPDATE row
+    // lock serializes them so exactly one reports last_admin and one row always
+    // survives (the platform admin invariant count >= 1).
+    const [resultA, resultB] = await Promise.all([
+      revokePlatformAdmin(db(), { accountId: alice, revokedBy: carol }),
+      revokePlatformAdmin(db(), { accountId: bob, revokedBy: carol }),
+    ]);
+
+    expect(await countPlatformAdmins(db())).toBe(1);
+    expect([resultA.status, resultB.status].sort()).toEqual(['last_admin', 'revoked']);
+  });
+
   it('lists and counts platform admins', async () => {
     const alice = await createAccount();
     const bob = await createAccount();

@@ -96,7 +96,9 @@ export async function grantPlatformAdmin(
 
 /**
  * Revoke the platform admin capability. Never removes the last remaining
- * platform admin: inside a transaction, when the target is the only row it
+ * platform admin: inside a transaction the `FOR UPDATE` select locks every
+ * admin row, serializing concurrent revokes so the second transaction
+ * re-reads the post-commit state. When the target is the only admin it
  * returns `last_admin` and rolls back (no delete, no audit). An account that
  * does not hold the capability returns `not_admin` (`account_not_found` is
  * merged into `not_admin` per the contract).
@@ -116,16 +118,17 @@ export async function revokePlatformAdmin(
     client = await pool.connect();
     await client.query('BEGIN');
 
-    const countResult = await client.query<{ cnt: string }>(
-      'SELECT count(*)::bigint AS cnt FROM platform_admins',
+    // Lock every admin row so concurrent revokes serialize: the second
+    // transaction blocks on the FOR UPDATE rows until the first commits, then
+    // re-reads the post-commit state and correctly returns last_admin.
+    const locked = await client.query<{ account_id: string }>(
+      'SELECT account_id FROM platform_admins FOR UPDATE',
     );
-    const count = Number(countResult.rows[0]?.cnt ?? 0);
+    const adminIds = locked.rows.map((row) => row.account_id);
+    const count = adminIds.length;
 
     if (count === 1) {
-      const only = await client.query<{ account_id: string }>(
-        'SELECT account_id FROM platform_admins',
-      );
-      const onlyAccountId = only.rows[0]?.account_id;
+      const onlyAccountId = adminIds[0];
       await client.query('ROLLBACK');
       if (onlyAccountId === accountId) return { status: 'last_admin' };
       // The single admin is someone else, so the target is not an admin.
@@ -145,7 +148,6 @@ export async function revokePlatformAdmin(
     return { status: 'revoked' };
   } catch (error) {
     await client?.query('ROLLBACK').catch(() => undefined);
-    if (error instanceof PlatformAdminError && error.kind === 'invalid_input') throw error;
     return { status: 'temporarily_unavailable' };
   } finally {
     client?.release();
