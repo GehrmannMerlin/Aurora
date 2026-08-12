@@ -177,3 +177,21 @@ export type {
   IssueActivityEntry,
   IssueNoteProjection,
 } from './issue-query-types.js';
+
+export {
+  NOTIFICATION_TYPES,
+  type NotificationTarget,
+  type NotificationRow,
+  type NotificationType,
+} from './notification-types.js';
+export {
+  markNotificationRead,
+  persistNotification,
+  queryNotifications,
+  queryUnreadCount,
+  type MarkNotificationReadResult,
+  type NotificationListInput,
+  type NotificationPage,
+  type PersistNotificationInput,
+  type PersistNotificationResult,
+} from './notification-repository.js';
