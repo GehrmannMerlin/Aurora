@@ -49,6 +49,13 @@ describeDb('platform-admin audit repository (real PostgreSQL 17)', () => {
     assertIsTestDatabase(testDatabaseUrl());
     pool = new Pool({ connectionString: testDatabaseUrl() });
     await runMigrationsUp();
+    // Hermetic start: this package shares one test database with every other
+    // suite (apps/platform-api flow suites, other data packages). Leftover
+    // platform_audit_events rows from a prior suite would break the global
+    // keyset pagination/ordering assertions, so truncate both platform tables
+    // at start. Same start-of-suite truncate pattern as apps/platform-api
+    // test/integration/helpers.ts truncateIdentityTables.
+    await pool.query('TRUNCATE platform_admins, platform_audit_events CASCADE');
   });
 
   afterAll(async () => {
