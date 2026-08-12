@@ -9,9 +9,14 @@
  * never hides buttons based on an assumed role (DAT-14 spec §4).
  */
 import {
+  OPERATION_ID_ALERTS_CREATE_RULE,
+  OPERATION_ID_ALERTS_UPDATE_RULE,
   OPERATION_ID_CREATE_ISSUE_NOTE,
   OPERATION_ID_DELETE_ISSUE_NOTE,
   OPERATION_ID_MERGE_ISSUES,
+  OPERATION_ID_SOURCE_MAPS_REPARSE,
+  OPERATION_ID_SOURCE_MAPS_REPLACE,
+  OPERATION_ID_SOURCE_MAPS_UPLOAD,
   OPERATION_ID_UPDATE_ISSUE_ASSIGNEE,
   OPERATION_ID_UPDATE_ISSUE_PRIORITY,
   OPERATION_ID_UPDATE_ISSUE_STATE,
@@ -182,6 +187,165 @@ export function mergeIssues(
     scope,
     { organizationId: scope.organizationId, projectId: scope.projectId, issueId },
     { primaryIssueId: params.primaryIssueId, version: params.version },
+    options,
+  );
+}
+
+// --- DAT-18 Source Map commands (C9) -----------------------------------------------------------
+
+export interface UploadSourceMapResult {
+  readonly status: string;
+  readonly releaseId: string;
+  readonly sourceMapFileId?: string;
+  readonly currentDigest?: string;
+  readonly version?: number;
+}
+
+/** Upload a Source Map for a release build path (idempotent digest; replace needs explicit confirm). */
+export function uploadSourceMap(
+  scope: ProjectScope,
+  params: {
+    readonly releaseVersion: string;
+    readonly buildPath: string;
+    readonly content: string;
+    readonly digest: string;
+    readonly buildId?: string;
+  },
+  options: IssueCommandOptions,
+): Promise<UploadSourceMapResult> {
+  const body: Record<string, unknown> = {
+    releaseVersion: params.releaseVersion,
+    buildPath: params.buildPath,
+    content: params.content,
+    digest: params.digest,
+  };
+  if (params.buildId !== undefined) body.buildId = params.buildId;
+  return runCommand<UploadSourceMapResult>(
+    OPERATION_ID_SOURCE_MAPS_UPLOAD,
+    scope,
+    { organizationId: scope.organizationId, projectId: scope.projectId },
+    body,
+    options,
+  );
+}
+
+export interface ReplaceSourceMapResult {
+  readonly status: string;
+  readonly sourceMapFileId: string;
+  readonly version: number;
+}
+
+/** Explicitly replace a Source Map after a digest conflict (versioned, audited). */
+export function replaceSourceMap(
+  scope: ProjectScope,
+  releaseId: string,
+  sourceMapFileId: string,
+  params: { readonly content: string; readonly digest: string; readonly version: number },
+  options: IssueCommandOptions,
+): Promise<ReplaceSourceMapResult> {
+  return runCommand<ReplaceSourceMapResult>(
+    OPERATION_ID_SOURCE_MAPS_REPLACE,
+    scope,
+    { organizationId: scope.organizationId, projectId: scope.projectId, releaseId, sourceMapFileId },
+    { content: params.content, digest: params.digest, version: params.version },
+    options,
+  );
+}
+
+export interface ReparseReleaseResult {
+  readonly status: string;
+  readonly releaseId: string;
+  readonly taskCount: number;
+}
+
+/** Queue a bounded reparse for a release (retry/refresh symbolication). */
+export function reparseRelease(
+  scope: ProjectScope,
+  releaseId: string,
+  options: IssueCommandOptions,
+): Promise<ReparseReleaseResult> {
+  return runCommand<ReparseReleaseResult>(
+    OPERATION_ID_SOURCE_MAPS_REPARSE,
+    scope,
+    { organizationId: scope.organizationId, projectId: scope.projectId, releaseId },
+    {},
+    options,
+  );
+}
+
+// --- DAT-19 Alert rule commands (C11) ------------------------------------------------------------
+
+export interface AlertFilters {
+  readonly environment: readonly string[];
+  readonly release: readonly string[];
+  readonly pageOrEndpoint: readonly string[];
+  readonly errorSeverity: readonly string[];
+}
+
+export interface AlertRuleInput {
+  readonly name?: string;
+  readonly metric: string;
+  readonly filters: AlertFilters;
+  readonly windowMinutes: number;
+  readonly triggerThreshold: number;
+  readonly triggerDurationMinutes: number;
+  readonly recoveryThreshold: number;
+  readonly recoveryDurationMinutes?: number;
+  readonly minSampleCount?: number;
+  readonly cooldownMinutes: number;
+  readonly recipientAccountIds: readonly string[];
+}
+
+export interface AlertRuleCommandResult {
+  readonly status: string;
+  readonly ruleId: string;
+  readonly version?: number;
+}
+
+function toAlertBody(input: AlertRuleInput): Record<string, unknown> {
+  const body: Record<string, unknown> = {
+    metric: input.metric,
+    filters: input.filters,
+    windowMinutes: input.windowMinutes,
+    triggerThreshold: input.triggerThreshold,
+    triggerDurationMinutes: input.triggerDurationMinutes,
+    recoveryThreshold: input.recoveryThreshold,
+    cooldownMinutes: input.cooldownMinutes,
+    recipientAccountIds: input.recipientAccountIds,
+  };
+  if (input.name !== undefined) body.name = input.name;
+  if (input.recoveryDurationMinutes !== undefined)
+    body.recoveryDurationMinutes = input.recoveryDurationMinutes;
+  if (input.minSampleCount !== undefined) body.minSampleCount = input.minSampleCount;
+  return body;
+}
+
+export function createAlertRule(
+  scope: ProjectScope,
+  input: AlertRuleInput,
+  options: IssueCommandOptions,
+): Promise<AlertRuleCommandResult> {
+  return runCommand<AlertRuleCommandResult>(
+    OPERATION_ID_ALERTS_CREATE_RULE,
+    scope,
+    { organizationId: scope.organizationId, projectId: scope.projectId },
+    toAlertBody(input),
+    options,
+  );
+}
+
+export function updateAlertRule(
+  scope: ProjectScope,
+  ruleId: string,
+  input: AlertRuleInput,
+  params: { readonly version: number },
+  options: IssueCommandOptions,
+): Promise<AlertRuleCommandResult> {
+  return runCommand<AlertRuleCommandResult>(
+    OPERATION_ID_ALERTS_UPDATE_RULE,
+    scope,
+    { organizationId: scope.organizationId, projectId: scope.projectId, ruleId },
+    { ...toAlertBody(input), version: params.version },
     options,
   );
 }

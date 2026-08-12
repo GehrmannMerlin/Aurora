@@ -352,6 +352,195 @@ function mockPerformancePages() {
   };
 }
 
+// PLT-07 (C8—C12) mock projections — DAT-18 releases/source-maps and DAT-19
+// alerts. Test-mode MSW only (unit + browser smoke); never production data and
+// never completion evidence for the real Platform API.
+
+function mockReleases() {
+  return {
+    data: {
+      status: 'available',
+      data: {
+        items: [
+          {
+            releaseId: 'release_test_1',
+            version: 'shop-web@1.4.3',
+            source: 'source_map_upload',
+            firstSeenAt: '2026-08-10T08:00:00.000Z',
+            sourceMapFileCount: 1,
+          },
+          {
+            releaseId: 'release_test_2',
+            version: 'shop-web@1.4.2',
+            source: 'source_map_upload',
+            firstSeenAt: '2026-08-09T08:00:00.000Z',
+            sourceMapFileCount: 0,
+          },
+        ],
+      },
+    },
+    meta: { requestId: 'req_test_releases', readAt: MONITORING_READ_AT, normalizedQuery: {} },
+    allowedActions: ['read'],
+    navigationTargets: [],
+  };
+}
+
+function mockSourceMapFiles() {
+  return {
+    data: {
+      status: 'available',
+      data: {
+        items: [
+          {
+            sourceMapFileId: 'sm_test_1',
+            buildPath: '/assets/app.js',
+            digestPrefix: 'a1b2c3d4',
+            status: 'active',
+            reparse: {
+              state: 'completed',
+              processedCount: 2,
+              totalCount: 2,
+              updatedAt: '2026-08-10T08:10:00.000Z',
+            },
+            uploadedAt: '2026-08-10T08:00:00.000Z',
+            version: 1,
+          },
+        ],
+      },
+    },
+    meta: { requestId: 'req_test_source_maps', readAt: MONITORING_READ_AT, normalizedQuery: {} },
+    allowedActions: ['read'],
+    navigationTargets: [],
+  };
+}
+
+function mockAlerts() {
+  return {
+    data: {
+      rules: {
+        status: 'available',
+        data: {
+          items: [
+            {
+              ruleId: 'rule_test_1',
+              name: '错误数量过高',
+              metric: 'error_count',
+              windowMinutes: 5,
+              triggerThreshold: 100,
+              recoveryThreshold: 60,
+              recipientAccountIds: ['account_test_1'],
+              evaluation: {
+                state: 'normal',
+                observedValue: 12,
+                sinceAt: '2026-08-10T08:00:00.000Z',
+                lastEvaluatedAt: '2026-08-10T08:59:00.000Z',
+              },
+              version: 1,
+            },
+          ],
+        },
+      },
+      instances: {
+        status: 'available',
+        data: {
+          items: [
+            {
+              instanceId: 'instance_test_1',
+              ruleId: 'rule_test_1',
+              ruleName: '错误数量过高',
+              metric: 'error_count',
+              state: 'triggered',
+              triggeredAt: '2026-08-10T08:30:00.000Z',
+            },
+          ],
+          count: 1,
+          totalCountStatus: 'bounded',
+        },
+      },
+    },
+    meta: { requestId: 'req_test_alerts', readAt: MONITORING_READ_AT, normalizedQuery: {} },
+    allowedActions: ['read'],
+    navigationTargets: [],
+  };
+}
+
+function mockAlertCapability() {
+  return {
+    data: {
+      metrics: [
+        { metric: 'error_count', displayName: 'Error count', unit: 'count', direction: 'higher_is_worse', isRatio: false, minSamplesRequired: false, filterDimensions: ['environment', 'release', 'page_or_endpoint', 'error_severity'] },
+        { metric: 'new_issue_count', displayName: 'New issue count', unit: 'count', direction: 'higher_is_worse', isRatio: false, minSamplesRequired: false, filterDimensions: ['environment', 'release', 'page_or_endpoint', 'error_severity'] },
+        { metric: 'issue_reappearance_count', displayName: 'Issue reappearance count', unit: 'count', direction: 'higher_is_worse', isRatio: false, minSamplesRequired: false, filterDimensions: ['environment', 'release', 'page_or_endpoint', 'error_severity'] },
+        { metric: 'request_failure_rate', displayName: 'Request failure rate', unit: 'percentage', direction: 'higher_is_worse', isRatio: true, minSamplesRequired: true, filterDimensions: ['environment', 'release', 'page_or_endpoint'] },
+        { metric: 'slow_request_count', displayName: 'Slow request count', unit: 'count', direction: 'higher_is_worse', isRatio: false, minSamplesRequired: false, filterDimensions: ['environment', 'release', 'page_or_endpoint'] },
+        { metric: 'lcp_ratio', displayName: 'LCP exceeded ratio', unit: 'percentage', direction: 'higher_is_worse', isRatio: true, minSamplesRequired: true, filterDimensions: ['environment', 'release', 'page_or_endpoint'] },
+        { metric: 'inp_ratio', displayName: 'INP exceeded ratio', unit: 'percentage', direction: 'higher_is_worse', isRatio: true, minSamplesRequired: true, filterDimensions: ['environment', 'release', 'page_or_endpoint'] },
+        { metric: 'cls_ratio', displayName: 'CLS exceeded ratio', unit: 'percentage', direction: 'higher_is_worse', isRatio: true, minSamplesRequired: true, filterDimensions: ['environment', 'release', 'page_or_endpoint'] },
+      ],
+      windowsMinutes: [1, 5, 10, 30, 60],
+      triggerDurationsMinutes: [0, 1, 2, 5, 10],
+      cooldownsMinutes: [5, 10, 30, 60],
+      filterDimensions: [
+        { id: 'environment', available: false, reason: 'no event-side data source yet' },
+        { id: 'release', available: false, reason: 'no event-side data source yet' },
+        { id: 'page_or_endpoint', available: false, reason: 'no event-side data source yet' },
+        { id: 'error_severity', available: false, reason: 'no event-side data source yet' },
+      ],
+      recipients: [{ accountId: 'account_test_1', maskedEmail: 'a***@example.com' }],
+    },
+    meta: { requestId: 'req_test_alert_capability', readAt: MONITORING_READ_AT, normalizedQuery: {} },
+    allowedActions: ['read'],
+    navigationTargets: [],
+  };
+}
+
+function mockAlertInstanceDetail(instanceId: string) {
+  return {
+    data: {
+      instance: {
+        instanceId,
+        ruleId: 'rule_test_1',
+        ruleName: '错误数量过高',
+        metric: 'error_count',
+        state: 'triggered',
+        directReason: 'triggered',
+        triggeredAt: '2026-08-10T08:30:00.000Z',
+      },
+      ruleSnapshot: {
+        name: '错误数量过高',
+        metric: 'error_count',
+        filters: { environment: [], release: [], pageOrEndpoint: [], errorSeverity: [] },
+        windowMinutes: 5,
+        triggerThreshold: 100,
+        triggerDurationMinutes: 2,
+        recoveryThreshold: 60,
+        recoveryDurationMinutes: 2,
+        minSampleCount: 0,
+        cooldownMinutes: 10,
+      },
+      evidence: {
+        evaluatedAt: '2026-08-10T08:30:00.000Z',
+        windowStartAt: '2026-08-10T08:25:00.000Z',
+        windowEndAt: '2026-08-10T08:30:00.000Z',
+        observedValue: 120,
+        numerator: 120,
+        denominator: 1,
+        sampleCount: 120,
+        minSampleRequirement: 0,
+        watermarkAt: '2026-08-10T08:30:00.000Z',
+        completeness: 'complete',
+        appliedFilters: { environment: [], release: [], pageOrEndpoint: [], errorSeverity: [] },
+      },
+      transitions: [
+        { from: 'pending_trigger', to: 'triggered', reason: 'triggered', occurredAt: '2026-08-10T08:30:00.000Z' },
+      ],
+    },
+    meta: { requestId: 'req_test_alert_instance', readAt: MONITORING_READ_AT, normalizedQuery: {} },
+    allowedActions: ['read'],
+    navigationTargets: [],
+  };
+}
+
 export const handlerControls = {
   delayMs: 0,
   sessionRequests: 0,
@@ -389,6 +578,16 @@ export const handlerControls = {
   getIssueDetailRequests: 0,
   listRequestEndpointsRequests: 0,
   listPerformancePagesRequests: 0,
+  listReleasesRequests: 0,
+  listSourceMapFilesRequests: 0,
+  uploadSourceMapRequests: 0,
+  replaceSourceMapRequests: 0,
+  reparseSourceMapRequests: 0,
+  listAlertsRequests: 0,
+  getAlertCapabilityRequests: 0,
+  getAlertInstanceDetailRequests: 0,
+  createAlertRuleRequests: 0,
+  updateAlertRuleRequests: 0,
   /** Toggle for the session projection: true = authenticated, false = 401. */
   sessionAuthenticated: readStoredSessionAuthenticated(),
   /** Toggle for the A5 deletion preflight projection: ready = no blocker. */
@@ -855,6 +1054,111 @@ export function createPlatformHandlers() {
         handlerControls.listPerformancePagesRequests += 1;
         await maybeDelay();
         return HttpResponse.json(mockPerformancePages() as JsonBodyType, { status: 200 });
+      },
+    ),
+    http.get(
+      '/api/platform/v1/organizations/:organizationId/projects/:projectId/releases',
+      async () => {
+        handlerControls.listReleasesRequests += 1;
+        await maybeDelay();
+        return HttpResponse.json(mockReleases() as JsonBodyType, { status: 200 });
+      },
+    ),
+    http.get(
+      '/api/platform/v1/organizations/:organizationId/projects/:projectId/releases/:releaseId/source-maps',
+      async () => {
+        handlerControls.listSourceMapFilesRequests += 1;
+        await maybeDelay();
+        return HttpResponse.json(mockSourceMapFiles() as JsonBodyType, { status: 200 });
+      },
+    ),
+    http.post(
+      '/api/platform/v1/organizations/:organizationId/projects/:projectId/source-maps',
+      async () => {
+        handlerControls.uploadSourceMapRequests += 1;
+        await maybeDelay();
+        return HttpResponse.json(
+          {
+            data: {
+              status: 'uploaded',
+              releaseId: 'release_test_1',
+              sourceMapFileId: 'sm_test_1',
+              version: 1,
+            },
+          } as JsonBodyType,
+          { status: 200 },
+        );
+      },
+    ),
+    http.post(
+      '/api/platform/v1/organizations/:organizationId/projects/:projectId/releases/:releaseId/source-maps/:sourceMapFileId/replace',
+      async () => {
+        handlerControls.replaceSourceMapRequests += 1;
+        await maybeDelay();
+        return HttpResponse.json(
+          { data: { status: 'replaced', sourceMapFileId: 'sm_test_1', version: 2 } } as JsonBodyType,
+          { status: 200 },
+        );
+      },
+    ),
+    http.post(
+      '/api/platform/v1/organizations/:organizationId/projects/:projectId/releases/:releaseId/reparse',
+      async () => {
+        handlerControls.reparseSourceMapRequests += 1;
+        await maybeDelay();
+        return HttpResponse.json(
+          { data: { status: 'queued', releaseId: 'release_test_1', taskCount: 1 } } as JsonBodyType,
+          { status: 200 },
+        );
+      },
+    ),
+    http.get(
+      '/api/platform/v1/organizations/:organizationId/projects/:projectId/alerts/capability',
+      async () => {
+        handlerControls.getAlertCapabilityRequests += 1;
+        await maybeDelay();
+        return HttpResponse.json(mockAlertCapability() as JsonBodyType, { status: 200 });
+      },
+    ),
+    http.get(
+      '/api/platform/v1/organizations/:organizationId/projects/:projectId/alerts',
+      async () => {
+        handlerControls.listAlertsRequests += 1;
+        await maybeDelay();
+        return HttpResponse.json(mockAlerts() as JsonBodyType, { status: 200 });
+      },
+    ),
+    http.get(
+      '/api/platform/v1/organizations/:organizationId/projects/:projectId/alerts/instances/:instanceId',
+      async ({ params }) => {
+        handlerControls.getAlertInstanceDetailRequests += 1;
+        await maybeDelay();
+        return HttpResponse.json(
+          mockAlertInstanceDetail(String(params.instanceId)) as JsonBodyType,
+          { status: 200 },
+        );
+      },
+    ),
+    http.post(
+      '/api/platform/v1/organizations/:organizationId/projects/:projectId/alerts/rules',
+      async () => {
+        handlerControls.createAlertRuleRequests += 1;
+        await maybeDelay();
+        return HttpResponse.json(
+          { data: { status: 'succeeded', ruleId: 'rule_test_1' } } as JsonBodyType,
+          { status: 200 },
+        );
+      },
+    ),
+    http.post(
+      '/api/platform/v1/organizations/:organizationId/projects/:projectId/alerts/rules/:ruleId',
+      async () => {
+        handlerControls.updateAlertRuleRequests += 1;
+        await maybeDelay();
+        return HttpResponse.json(
+          { data: { status: 'succeeded', ruleId: 'rule_test_1', version: 2 } } as JsonBodyType,
+          { status: 200 },
+        );
       },
     ),
     http.post('/__mock/scope', async ({ request }) => {

@@ -13,6 +13,11 @@ import {
   OPERATION_ID_LIST_ISSUES,
   OPERATION_ID_LIST_PERFORMANCE_PAGES,
   OPERATION_ID_LIST_REQUEST_ENDPOINTS,
+  OPERATION_ID_RELEASES_LIST,
+  OPERATION_ID_SOURCE_MAPS_LIST,
+  OPERATION_ID_ALERTS_GET_CAPABILITY,
+  OPERATION_ID_ALERTS_GET_INSTANCE,
+  OPERATION_ID_ALERTS_LIST,
 } from '@aurora/platform-contract';
 import { executeQuery } from '../api/query.js';
 import type { PlatformRequestInput } from '../api/client.js';
@@ -317,6 +322,257 @@ export function fetchPerformancePages(
   if (options.timeRange !== undefined) input.query = { timeRange: options.timeRange };
   return executeQuery<QueryResponse<PerformancePagesData>>({
     operationId: OPERATION_ID_LIST_PERFORMANCE_PAGES,
+    input,
+    scope: projectScope(scope),
+    ...(options.signal !== undefined ? { signal: options.signal } : {}),
+  }).then((response) => response.data);
+}
+
+// --- DAT-18 Releases (C8) / Source Map files (C9) ---------------------------------------------
+
+/**
+ * A release identity is created by an authorized source-map upload (DAT-18 spec:
+ * upload upserts the release by version). The deployment record dimension is NOT
+ * part of the v1 contract, so C8 shows releases but never fabricates deployments.
+ */
+export interface ReleaseSummary {
+  readonly releaseId: string;
+  readonly version: string;
+  readonly source: string;
+  readonly firstSeenAt: string;
+  readonly sourceMapFileCount: number;
+}
+
+/** `releasesListReleases.data` is itself the section (DAT-18 handler unwraps items). */
+export type ReleaseListSection = SectionResult<{ readonly items: readonly ReleaseSummary[] }>;
+
+export function fetchReleases(
+  scope: ProjectScope,
+  options: FetchOptions = {},
+): Promise<ReleaseListSection> {
+  const input: PlatformRequestInput = {
+    pathParams: { organizationId: scope.organizationId, projectId: scope.projectId },
+  };
+  return executeQuery<QueryResponse<ReleaseListSection>>({
+    operationId: OPERATION_ID_RELEASES_LIST,
+    input,
+    scope: projectScope(scope),
+    ...(options.signal !== undefined ? { signal: options.signal } : {}),
+  }).then((response) => response.data);
+}
+
+/** C9 current-effective Source Map file list for a release (strict project+release+path). */
+export interface SourceMapFileSummary {
+  readonly sourceMapFileId: string;
+  readonly buildPath: string;
+  readonly digestPrefix: string;
+  readonly status: string;
+  readonly reparse: {
+    readonly state: string;
+    readonly processedCount?: number;
+    readonly totalCount?: number;
+    readonly updatedAt?: string;
+  };
+  readonly uploadedAt: string;
+  readonly replacedAt?: string;
+  readonly version: number;
+}
+
+/** `sourceMapsListFiles.data` is itself the section (DAT-18 handler unwraps items). */
+export type SourceMapFilesSection = SectionResult<{
+  readonly items: readonly SourceMapFileSummary[];
+}>;
+
+export function fetchSourceMapFiles(
+  scope: ProjectScope,
+  releaseId: string,
+  options: FetchOptions = {},
+): Promise<SourceMapFilesSection> {
+  const input: PlatformRequestInput = {
+    pathParams: { organizationId: scope.organizationId, projectId: scope.projectId, releaseId },
+  };
+  return executeQuery<QueryResponse<SourceMapFilesSection>>({
+    operationId: OPERATION_ID_SOURCE_MAPS_LIST,
+    input,
+    scope: projectScope(scope),
+    ...(options.signal !== undefined ? { signal: options.signal } : {}),
+  }).then((response) => response.data);
+}
+
+// --- DAT-19 Alerts (C10/C11/C12) -----------------------------------------------------------------
+
+export interface AlertRuleSummary {
+  readonly ruleId: string;
+  readonly name?: string;
+  readonly metric: string;
+  readonly windowMinutes: number;
+  readonly triggerThreshold: number;
+  readonly recoveryThreshold: number;
+  readonly recipientAccountIds: readonly string[];
+  readonly evaluation: {
+    readonly state: string;
+    readonly observedValue?: number;
+    readonly sinceAt?: string;
+    readonly lastEvaluatedAt?: string;
+    readonly pauseReason?: string;
+  };
+  readonly version: number;
+}
+
+export interface AlertInstanceSummary {
+  readonly instanceId: string;
+  readonly ruleId: string;
+  readonly ruleName?: string;
+  readonly metric: string;
+  readonly state: string;
+  readonly triggeredAt: string;
+  readonly recoveredAt?: string;
+  readonly pauseReason?: string;
+}
+
+export interface AlertsData {
+  readonly rules: SectionResult<{ readonly items: readonly AlertRuleSummary[] }>;
+  readonly instances: SectionResult<{
+    readonly items: readonly AlertInstanceSummary[];
+    readonly count: number;
+    readonly totalCountStatus: string;
+  }>;
+}
+
+export function fetchAlertsList(
+  scope: ProjectScope,
+  options: FetchOptions = {},
+): Promise<AlertsData> {
+  const input: PlatformRequestInput = {
+    pathParams: { organizationId: scope.organizationId, projectId: scope.projectId },
+  };
+  return executeQuery<QueryResponse<AlertsData>>({
+    operationId: OPERATION_ID_ALERTS_LIST,
+    input,
+    scope: projectScope(scope),
+    ...(options.signal !== undefined ? { signal: options.signal } : {}),
+  }).then((response) => response.data);
+}
+
+export interface AlertMetricCapability {
+  readonly metric: string;
+  readonly displayName: string;
+  readonly unit: string;
+  readonly direction: string;
+  readonly isRatio: boolean;
+  readonly minSamplesRequired: boolean;
+  readonly filterDimensions: readonly string[];
+}
+
+export interface AlertFilterDimensionStatus {
+  readonly id: string;
+  readonly available: boolean;
+  readonly reason?: string;
+}
+
+export interface AlertRecipient {
+  readonly accountId: string;
+  readonly maskedEmail: string;
+}
+
+export interface AlertCapabilityData {
+  readonly metrics: readonly AlertMetricCapability[];
+  readonly windowsMinutes: readonly number[];
+  readonly triggerDurationsMinutes: readonly number[];
+  readonly cooldownsMinutes: readonly number[];
+  readonly filterDimensions: readonly AlertFilterDimensionStatus[];
+  readonly recipients: readonly AlertRecipient[];
+}
+
+export function fetchAlertsCapability(
+  scope: ProjectScope,
+  options: FetchOptions = {},
+): Promise<AlertCapabilityData> {
+  const input: PlatformRequestInput = {
+    pathParams: { organizationId: scope.organizationId, projectId: scope.projectId },
+  };
+  return executeQuery<QueryResponse<AlertCapabilityData>>({
+    operationId: OPERATION_ID_ALERTS_GET_CAPABILITY,
+    input,
+    scope: projectScope(scope),
+    ...(options.signal !== undefined ? { signal: options.signal } : {}),
+  }).then((response) => response.data);
+}
+
+export interface AlertInstanceEvidence {
+  readonly evaluatedAt: string;
+  readonly windowStartAt: string;
+  readonly windowEndAt: string;
+  readonly observedValue?: number;
+  readonly numerator?: number;
+  readonly denominator?: number;
+  readonly sampleCount?: number;
+  readonly minSampleRequirement?: number;
+  readonly watermarkAt?: string;
+  readonly completeness: string;
+  readonly pauseReason?: string;
+  readonly appliedFilters: {
+    readonly environment: readonly string[];
+    readonly release: readonly string[];
+    readonly pageOrEndpoint: readonly string[];
+    readonly errorSeverity: readonly string[];
+  };
+}
+
+export interface AlertInstanceTransition {
+  readonly from: string;
+  readonly to: string;
+  readonly reason: string;
+  readonly occurredAt: string;
+}
+
+export interface AlertInstanceDetailData {
+  readonly instance: {
+    readonly instanceId: string;
+    readonly ruleId: string;
+    readonly ruleName?: string;
+    readonly metric: string;
+    readonly state: string;
+    readonly directReason: string;
+    readonly triggeredAt: string;
+    readonly recoveredAt?: string;
+    readonly pauseReason?: string;
+  };
+  readonly ruleSnapshot: {
+    readonly name?: string;
+    readonly metric: string;
+    readonly filters: {
+      readonly environment: readonly string[];
+      readonly release: readonly string[];
+      readonly pageOrEndpoint: readonly string[];
+      readonly errorSeverity: readonly string[];
+    };
+    readonly windowMinutes: number;
+    readonly triggerThreshold: number;
+    readonly triggerDurationMinutes: number;
+    readonly recoveryThreshold: number;
+    readonly recoveryDurationMinutes: number;
+    readonly minSampleCount?: number;
+    readonly cooldownMinutes: number;
+  };
+  readonly evidence: AlertInstanceEvidence;
+  readonly transitions: readonly AlertInstanceTransition[];
+}
+
+export function fetchAlertInstanceDetail(
+  scope: ProjectScope,
+  instanceId: string,
+  options: FetchOptions = {},
+): Promise<AlertInstanceDetailData> {
+  const input: PlatformRequestInput = {
+    pathParams: {
+      organizationId: scope.organizationId,
+      projectId: scope.projectId,
+      instanceId,
+    },
+  };
+  return executeQuery<QueryResponse<AlertInstanceDetailData>>({
+    operationId: OPERATION_ID_ALERTS_GET_INSTANCE,
     input,
     scope: projectScope(scope),
     ...(options.signal !== undefined ? { signal: options.signal } : {}),

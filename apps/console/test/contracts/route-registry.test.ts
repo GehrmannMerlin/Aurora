@@ -104,6 +104,14 @@ describe('RouteTarget registry', () => {
       'project.issue-detail',
       'project.requests',
       'project.performance',
+      // PLT-07 replaces these unavailable stubs with real release/source-map/alert views.
+      'project.releases',
+      'project.release-detail',
+      'project.source-maps',
+      'project.alerts',
+      'project.alert-rule-create',
+      'project.alert-rule-edit',
+      'project.alert-instance-detail',
     ]);
     for (const entry of ROUTE_REGISTRY) {
       if (entry.routeId === 'workspace.home') continue;
@@ -120,5 +128,58 @@ describe('RouteTarget registry', () => {
 
   it('keeps the frozen id list verbatim', () => {
     expect(ROUTE_REGISTRY.map((entry) => entry.routeId)).toEqual(ROUTE_TARGET_IDS);
+  });
+
+  it('resolves the PLT-07 release/source-map/alert routes with real lazy views', async () => {
+    const cases: ReadonlyArray<{
+      routeId: RouteTargetId;
+      pathParams: Record<string, string>;
+      parent?: RouteTargetId;
+    }> = [
+      {
+        routeId: 'project.releases',
+        pathParams: { organizationId: 'org_1', projectId: 'prj_1' },
+      },
+      {
+        routeId: 'project.release-detail',
+        pathParams: { organizationId: 'org_1', projectId: 'prj_1', releaseId: 'release_1' },
+        parent: 'project.releases',
+      },
+      {
+        routeId: 'project.source-maps',
+        pathParams: { organizationId: 'org_1', projectId: 'prj_1', releaseId: 'release_1' },
+        parent: 'project.release-detail',
+      },
+      {
+        routeId: 'project.alerts',
+        pathParams: { organizationId: 'org_1', projectId: 'prj_1' },
+      },
+      {
+        routeId: 'project.alert-rule-create',
+        pathParams: { organizationId: 'org_1', projectId: 'prj_1' },
+        parent: 'project.alerts',
+      },
+      {
+        routeId: 'project.alert-rule-edit',
+        pathParams: { organizationId: 'org_1', projectId: 'prj_1', ruleId: 'rule_1' },
+        parent: 'project.alerts',
+      },
+      {
+        routeId: 'project.alert-instance-detail',
+        pathParams: { organizationId: 'org_1', projectId: 'prj_1', instanceId: 'instance_1' },
+        parent: 'project.alerts',
+      },
+    ];
+    for (const c of cases) {
+      const entry = ROUTE_BY_ID.get(c.routeId);
+      expect(entry, c.routeId).toBeDefined();
+      if (entry === undefined) continue;
+      expect(entry.unavailableReason, c.routeId).toBeNull();
+      if (c.parent !== undefined) expect(entry.parent, c.routeId).toBe(c.parent);
+      const resolved = resolveRouteTarget({ routeId: c.routeId, pathParams: c.pathParams, query: {} });
+      expect(resolved.path, c.routeId).toBeDefined();
+      const component = await entry.lazy();
+      expect(typeof component).not.toBe('undefined');
+    }
   });
 });
