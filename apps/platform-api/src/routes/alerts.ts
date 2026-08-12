@@ -69,7 +69,7 @@ function actorField(
 
 /** Optional schema fields reject `null`; map DB nulls to undefined. */
 function undef<T>(value: T | null): T | undefined {
-  return value === null ? undefined : value;
+  return value ?? undefined;
 }
 
 interface AlertProjectParams {
@@ -484,7 +484,7 @@ export async function handleUpdateAlertRule(
     return;
   }
   const body = parsed.data.body as AlertRuleCommandBody & { version: number };
-  const ruleId = params.ruleId as string;
+  const ruleId = params.ruleId;
 
   const digest = requestDigest(body);
   const probe = await lookupIdempotency(deps.pool, body.idempotencyKey, digest);
@@ -602,7 +602,7 @@ export async function handleGetAlertInstanceDetail(
   try {
     detail = await queryAlertInstanceDetail(deps.pool, {
       projectId: auth.projectId,
-      instanceId: params.instanceId as string,
+      instanceId: params.instanceId,
     });
   } catch (error) {
     if (await sendMappedError(reply, requestId, error)) return;

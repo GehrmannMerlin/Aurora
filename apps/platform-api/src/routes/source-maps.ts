@@ -224,7 +224,7 @@ export async function handleListSourceMapFiles(
   try {
     files = await listSourceMapFiles(deps.pool, {
       projectId: auth.projectId,
-      releaseId: params.releaseId as string,
+      releaseId: params.releaseId,
     });
   } catch (error) {
     if (await sendMappedError(reply, requestId, error)) return;
@@ -443,7 +443,7 @@ export async function handleReplaceSourceMap(
     return;
   }
   const body = parsed.data.body as ReplaceBody;
-  const sourceMapFileId = params.sourceMapFileId as string;
+  const sourceMapFileId = params.sourceMapFileId;
   const digest = requestDigest(body);
   const probe = await lookupIdempotency(deps.pool, body.idempotencyKey, digest);
   if (probe.outcome === 'replay') {
@@ -569,7 +569,7 @@ export async function handleReparseRelease(
     return;
   }
   const body = parsed.data.body as { idempotencyKey: string };
-  const releaseId = params.releaseId as string;
+  const releaseId = params.releaseId;
   const digest = requestDigest(body);
   const probe = await lookupIdempotency(deps.pool, body.idempotencyKey, digest);
   if (probe.outcome === 'replay') {

@@ -148,12 +148,8 @@ export function resolveSourcePosition(
         break;
       }
     }
-    if (
-      best === null ||
-      best.sourceIndex === null ||
-      best.originalLine === null ||
-      best.originalColumn === null
-    ) {
+    if (best === null) return null;
+    if (best.sourceIndex === null || best.originalLine === null || best.originalColumn === null) {
       return null;
     }
     const source = map.sources[best.sourceIndex];

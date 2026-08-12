@@ -60,15 +60,8 @@ describeDb('DAT-18 source-map reparse round (real PostgreSQL 17)', () => {
   beforeAll(async () => {
     assertIsTestDatabase(testDatabaseUrl());
     pool = createTestPool();
-    await pool.query(
-      `DROP TABLE IF EXISTS error_occurrence_symbolizations, source_map_reparse_tasks,
-        source_map_files, releases, error_event_occurrences, request_event_samples,
-        request_metric_event_applications, request_metric_buckets,
-        performance_event_samples, performance_metric_event_applications,
-        performance_metric_buckets, issue_notes, issue_activities, issue_samples,
-        issue_event_applications, issues, alert_instance_transitions,
-        alert_instance_evidence, alert_instances, alert_rules, pgmigrations CASCADE`,
-    );
+    // Run the migration dirs idempotently (only un-recorded migrations apply;
+    // never drop pgmigrations so other suites' migration records stay intact).
     await runner({
       databaseUrl: testDatabaseUrl(),
       dir: processingMigrations,
@@ -87,6 +80,12 @@ describeDb('DAT-18 source-map reparse round (real PostgreSQL 17)', () => {
       checkOrder: false,
       log: () => undefined,
     });
+    // Clean only the tables this suite owns (its fixed project ids), keeping
+    // other suites' data and migration records untouched.
+    await pool.query(
+      `TRUNCATE error_occurrence_symbolizations, source_map_reparse_tasks,
+        source_map_files, releases, error_event_occurrences CASCADE`,
+    );
     objectStorage = new InMemorySourceMapObjectStorage();
   });
 

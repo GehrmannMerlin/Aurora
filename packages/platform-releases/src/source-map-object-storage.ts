@@ -19,15 +19,17 @@ export function sourceMapObjectKey(projectId: string, objectId: string): string 
 export class InMemorySourceMapObjectStorage implements SourceMapObjectStoragePort {
   private readonly objects = new Map<string, string>();
 
-  async putObject(input: { readonly key: string; readonly content: string }): Promise<void> {
+  putObject(input: { readonly key: string; readonly content: string }): Promise<void> {
     this.objects.set(input.key, input.content);
+    return Promise.resolve();
   }
 
-  async getObject(key: string): Promise<string | null> {
-    return this.objects.get(key) ?? null;
+  getObject(key: string): Promise<string | null> {
+    return Promise.resolve(this.objects.get(key) ?? null);
   }
 
-  async deleteObject(key: string): Promise<void> {
+  deleteObject(key: string): Promise<void> {
     this.objects.delete(key);
+    return Promise.resolve();
   }
 }
