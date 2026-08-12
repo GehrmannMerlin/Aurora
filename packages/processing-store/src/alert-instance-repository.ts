@@ -118,12 +118,13 @@ function evidenceParams(instanceId: string, result: EvaluateAlertRoundResult): u
  * Persist one evaluation round atomically: update the rule evaluation
  * projection, then apply the instance action (create / update / recover) with
  * its evidence and transition. `recovered` is terminal; the active-instance
- * partial unique index prevents a second active instance per rule.
+ * partial unique index prevents a second active instance per rule. Returns the
+ * involved instance id (created / active) so PLT-09 can target a notification.
  */
 export async function persistAlertEvaluation(
   pool: Pool,
   input: { readonly rule: AlertRuleRow; readonly result: EvaluateAlertRoundResult },
-): Promise<void> {
+): Promise<{ readonly instanceId: string | null }> {
   const { rule, result } = input;
   const client: PoolClient = await pool.connect();
   try {
@@ -159,10 +160,15 @@ export async function persistAlertEvaluation(
           ]);
         }
       }
-    } else if (action.action === 'update' || action.action === 'recover') {
+      await client.query('COMMIT');
+      return instanceId === '' ? { instanceId: null } : { instanceId };
+    }
+    let involvedInstanceId: string | null = null;
+    if (action.action === 'update' || action.action === 'recover') {
       // Capture the active instance BEFORE the state update: after a `recover`
       // the row is terminal and the active-instance lookup returns null.
       const activeBefore = await getActiveAlertInstance(client, { ruleId: rule.id });
+      involvedInstanceId = activeBefore === null ? null : activeBefore.id;
       const recoveredAt =
         action.action === 'recover' ? new Date(action.recoveredAt).toISOString() : null;
       const recoverySince =
@@ -193,6 +199,7 @@ export async function persistAlertEvaluation(
       }
     }
     await client.query('COMMIT');
+    return { instanceId: involvedInstanceId };
   } catch {
     await client.query('ROLLBACK').catch(() => undefined);
     // The round records per-rule failure; never leak DB details.

@@ -66,6 +66,12 @@ describeDb('processing-store issue aggregate contribution (real PostgreSQL 17)',
     await pool.query('DROP TABLE IF EXISTS performance_metric_event_applications CASCADE');
     await pool.query('DROP TABLE IF EXISTS performance_metric_buckets CASCADE');
     await pool.query('DROP TABLE IF EXISTS performance_event_samples CASCADE');
+    await pool.query('DROP TABLE IF EXISTS alert_instance_transitions CASCADE');
+    await pool.query('DROP TABLE IF EXISTS alert_instance_evidence CASCADE');
+    await pool.query('DROP TABLE IF EXISTS alert_instances CASCADE');
+    await pool.query('DROP TABLE IF EXISTS alert_rules CASCADE');
+    await pool.query('DROP TABLE IF EXISTS error_occurrence_symbolizations CASCADE');
+    await pool.query('DROP TABLE IF EXISTS notifications CASCADE');
     await pool.query('DROP TABLE IF EXISTS pgmigrations CASCADE');
     await runner({
       databaseUrl: testDatabaseUrl(),
@@ -186,18 +192,23 @@ describeDb('processing-store issue aggregate contribution (real PostgreSQL 17)',
         WHERE project_id = $1 AND fingerprint = 'v1|javascript|TypeError|reopen-me'`,
       [PROJECT_A],
     );
-    const applied = await persistIssueContribution(
+    const reopened = await persistIssueContribution(
       pool,
       contribution('evt-issue-r2', '2026-08-10T04:00:00.000Z', 'reopen-me'),
     );
-    expect(applied).toEqual({ status: 'applied' });
-    const reopened = await queryRow<{ status: string; version: number }>(
+    // PLT-09: a `by_time` reopen is surfaced as a distinct `reopened` outcome.
+    expect(reopened.status).toBe('reopened');
+    if (reopened.status === 'reopened') {
+      expect(typeof reopened.issueId).toBe('string');
+      expect(reopened.issueId.length).toBeGreaterThan(0);
+    }
+    const issueRow = await queryRow<{ status: string; version: number }>(
       pool,
       `SELECT status, version FROM issues WHERE project_id = $1 AND fingerprint = 'v1|javascript|TypeError|reopen-me'`,
       [PROJECT_A],
     );
-    expect(reopened?.status).toBe('open');
-    expect(reopened?.version).toBe(2);
+    expect(issueRow?.status).toBe('open');
+    expect(issueRow?.version).toBe(2);
   });
 
   it('evicts kind-matched samples at capacity and never crosses latest/reappeared', async () => {

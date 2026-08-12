@@ -87,7 +87,13 @@ export interface BatchUpdateIssuesInput {
 }
 
 export type IssueLifecycleResult =
-  | { readonly status: 'succeeded'; readonly issueId: string; readonly noteId?: string }
+  | {
+      readonly status: 'succeeded';
+      readonly issueId: string;
+      readonly noteId?: string;
+      /** PLT-09: the assignee before the update (null when previously unassigned). */
+      readonly previousAssigneeAccountId?: string | null;
+    }
   | { readonly status: 'conflict' }
   | { readonly status: 'not_found' }
   | { readonly status: 'forbidden' }

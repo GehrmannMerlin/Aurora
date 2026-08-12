@@ -289,6 +289,10 @@ export async function persistIssueContribution(
       return { status: 'duplicate' };
     }
 
+    // Track whether this contribution reopened a resolved/ignored issue so the
+    // result can drive a PLT-09 reappearance notification (ADR-033 detail 12).
+    let reopened = false;
+
     if (created) {
       await storeSample(client, parsed, issueId, 'first', null);
     } else {
@@ -301,7 +305,10 @@ export async function persistIssueContribution(
           WHERE id = $1 AND project_id = $2 AND fingerprint = $3`,
         [issueId, parsed.projectId, parsed.fingerprint, parsed.occurredAtIso],
       );
-      const reopened = await maybeReopenIssue(client, issue, parsed.occurredAt);
+      // v1 only `by_time` reopen (ADR-033 decision detail 12). Surfaced as a
+      // distinct `reopened` result so PLT-09 can notify without a second issue
+      // processor (the outcome is still a successful application).
+      reopened = await maybeReopenIssue(client, issue, parsed.occurredAt);
       const eventSampleKind = reopened
         ? 'reappeared'
         : parsed.occurredAt.getTime() > issue.lastSeenAt.getTime()
@@ -321,7 +328,9 @@ export async function persistIssueContribution(
     }
 
     await client.query('COMMIT');
-    return created ? { status: 'inserted', issueId } : { status: 'applied' };
+    if (created) return { status: 'inserted', issueId };
+    if (reopened) return { status: 'reopened', issueId };
+    return { status: 'applied' };
   } catch {
     await client.query('ROLLBACK').catch(() => undefined);
     return { status: 'temporarily_unavailable' };

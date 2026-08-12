@@ -32,6 +32,7 @@ export interface PersistIssueContributionInput {
 export type PersistIssueContributionResult =
   | { readonly status: 'inserted'; readonly issueId: string }
   | { readonly status: 'applied' }
+  | { readonly status: 'reopened'; readonly issueId: string }
   | { readonly status: 'duplicate' }
   | { readonly status: 'invalid_input'; readonly code: string }
   | { readonly status: 'temporarily_unavailable' };

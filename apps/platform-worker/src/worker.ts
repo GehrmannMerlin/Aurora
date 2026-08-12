@@ -1,7 +1,7 @@
 import type { Pool } from 'pg';
 import { consumeOutboxEmails, type OutboxRepository } from '@aurora/platform-email';
 import type { EmailDeliveryPort } from '@aurora/platform-email';
-import { runAlertEvaluationRound } from '@aurora/processing-store';
+import { persistAlertRoundNotifications, runAlertEvaluationRound } from '@aurora/processing-store';
 import type { SourceMapObjectStoragePort } from '@aurora/platform-releases';
 import { runSourceMapReparseRound } from './source-maps/reparse-round.js';
 import { defaultSleeper, type SleeperPort } from './timers.js';
@@ -91,12 +91,19 @@ export function buildPlatformWorker(input: BuildPlatformWorkerInput): PlatformWo
     }
     if (input.alerts !== undefined) {
       // Product alert evaluation (PRD §11). Bounded per poll; a single rule
-      // failure never blocks the round or the rest of the worker.
-      await runAlertEvaluationRound({
+      // failure never blocks the round or the rest of the worker. PLT-09:
+      // append in-app notifications for triggered/recovered decisions after the
+      // round (append-only; the evaluation outcome is unchanged).
+      const round = await runAlertEvaluationRound({
         pool: input.pool,
         now: new Date(),
         maxRules: input.alerts.maxRules,
       });
+      if (round.notifications.length > 0) {
+        await persistAlertRoundNotifications(input.pool, {
+          notifications: round.notifications,
+        });
+      }
     }
     if (input.sourceMaps !== undefined) {
       // Source Map reparse (PRD §8.3.8). Bounded per poll; a single task

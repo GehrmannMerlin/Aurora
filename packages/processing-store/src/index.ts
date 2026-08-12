@@ -62,6 +62,7 @@ export {
   runAlertEvaluationRound,
   type AlertEvaluationRoundInput,
   type AlertEvaluationRoundResult,
+  type AlertRoundNotificationDecision,
 } from './alert-evaluation-round.js';
 export type {
   SymbolizationStatus,
@@ -195,3 +196,12 @@ export {
   type PersistNotificationInput,
   type PersistNotificationResult,
 } from './notification-repository.js';
+export {
+  createIssueNotificationSender,
+  persistAlertRoundNotifications,
+  resolveProjectNotificationContext,
+  type AlertRoundNotification,
+  type IssueNotificationSender,
+  type IssueNotificationSenderInput,
+  type ProjectNotificationContext,
+} from './notification-triggers.js';
