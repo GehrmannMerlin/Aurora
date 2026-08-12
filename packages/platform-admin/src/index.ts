@@ -2,13 +2,11 @@
  * @aurora/platform-admin — Aurora platform admin identity and platform-level
  * audit data layer (PLT-10a, ADR-034).
  *
- * This module is the package root. Task 2 exposes the platform admin
- * repository: explicit account-level capability (`platform_admins`), fully
- * decoupled from org/project roles, plus the controlled bootstrap entry that
- * writes the `admin_bootstrapped` audit inline.
- *
- * The platform audit read/write repository (Task 3) will be re-exported from
- * here in a later task; this task exports the admins surface only.
+ * This module is the package root. It exposes the platform admin repository
+ * (explicit account-level capability on `platform_admins`, fully decoupled from
+ * org/project roles, plus the controlled bootstrap entry) and the platform
+ * audit repository (`platform_audit_events`: insert inside the caller's
+ * transaction, keyset-paginated query).
  */
 export const PLATFORM_ADMIN_PACKAGE = '@aurora/platform-admin' as const;
 
@@ -29,3 +27,14 @@ export {
   type PlatformAdminSummary,
   type RevokePlatformAdminResult,
 } from './repositories/admins.js';
+
+export {
+  insertPlatformAuditEvent,
+  PLATFORM_AUDIT_ACTIONS,
+  queryPlatformAuditEvents,
+  type InsertPlatformAuditEventInput,
+  type PlatformAuditAction,
+  type PlatformAuditEvent,
+  type PlatformAuditEventsPage,
+  type QueryPlatformAuditEventsInput,
+} from './repositories/audit.js';
