@@ -308,7 +308,7 @@ Expected: FAIL（路由/handler 未实现）
 
 - [ ] **Step 4: 实现 5 handler + 注册**
 
-`platform-admin.ts` 镜像 `apps/platform-api/src/routes/notifications.ts`（GET 用 `parseInput`+`serializeOutput`；POST 用 `runIdempotentCommand` + 事务内 `insertPlatformAuditEvent`）。grant 成功 → `admin_granted` 审计；revoke 成功 → `admin_revoked` 审计（`last_admin` → `ServiceError(409,'state_machine_conflict',...)` 回滚不写审计）；capability/audit 读取在 `audit_read` 时也写审计（审计读取本身留痕）。`app.ts` 注册：
+`platform-admin.ts` 镜像 `apps/platform-api/src/routes/notifications.ts`（GET 用 `parseInput`+`serializeOutput`；POST 用 `runIdempotentCommand` + 事务内 `insertPlatformAuditEvent`）。grant 成功 → `admin_granted` 审计；revoke 成功 → `admin_revoked` 审计（`last_admin` → `ServiceError(409,'state_machine_conflict',...)` 回滚不写审计）；admins-list/audit-list 读取写 `audit_read`；capability 探针（任意 session 可调）不写审计以免管理员时间线被非管理员探针淹没。`app.ts` 注册：
 
 ```ts
 app.get('/api/platform/v1/platform-admin/capability', (req, rep) => handleGetPlatformAdminCapability(req, rep, routeContext));

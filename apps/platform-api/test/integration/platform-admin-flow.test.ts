@@ -267,4 +267,36 @@ describeDb('PLT-10a platform admin/audit flow (real PostgreSQL 17 + Redis)', () 
 
     await app.close();
   });
+
+  it('does not silently replay a grant when the same idempotency key is reused for a revoke', async () => {
+    const app = buildApp();
+    const alice = await registerVerifiedActor(app, pool, `alice-${randomUUID()}@example.com`);
+    const bob = await registerVerifiedActor(app, pool, `bob-${randomUUID()}@example.com`);
+
+    const bootstrap = await bootstrapPlatformAdmins(pool, {
+      accountIds: [bob.accountId],
+      bootstrapBy: alice.accountId,
+    });
+    expect(bootstrap.seeded).toBe(1);
+
+    // Grant alice with key K.
+    const sharedKey = `shared-${randomUUID()}`;
+    const granted = await postGrant(app, bob, alice.accountId, sharedKey);
+    expect(granted.status).toBe(200);
+    expect(granted.body.data).toEqual({ status: 'granted', accountId: alice.accountId });
+
+    // Reusing the SAME key K for a revoke of the same account must NOT silently
+    // replay the stored grant result (the digest now includes the operation, so
+    // grant(K,A) and revoke(K,A) are different requests): it must fail closed
+    // with an idempotency_conflict instead of returning the grant's 200.
+    const revoked = await postRevoke(app, bob, alice.accountId, sharedKey);
+    expect(revoked.status).toBe(409);
+    expect((revoked.body as { code?: string }).code).toBe('idempotency_conflict');
+
+    // The grant was not undone: alice is still a platform admin.
+    const aliceCap = await getCapability(app, alice);
+    expect((aliceCap.body.data as { hasCapability: boolean }).hasCapability).toBe(true);
+
+    await app.close();
+  });
 });

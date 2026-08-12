@@ -40,6 +40,15 @@ export async function runPlatformAdminBootstrap(
       accountIds: input.accountIds,
       bootstrapBy: input.bootstrapBy,
     });
+    // A zero seed leaves the platform admin set empty (every configured account
+    // id missing, terminated, or already an admin). Bounded warning with no
+    // account ids so the operator knows the set must be seeded manually before
+    // any platform admin is required.
+    if (seeded === 0) {
+      console.warn(
+        '[platform-admin-bootstrap] platform admin set is empty and bootstrap produced no admins; seed the set manually before any platform admin is required.',
+      );
+    }
     return { status: 'seeded', seeded };
   } catch {
     console.error(

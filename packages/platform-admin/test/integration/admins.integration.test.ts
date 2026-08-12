@@ -102,6 +102,21 @@ describeDb('platform-admin admins repository (real PostgreSQL 17)', () => {
     return row.account_id;
   }
 
+  /** Insert an account already in the terminal `terminated` state (A5). */
+  async function createTerminatedAccount(): Promise<string> {
+    const email = `plt10a-task2-term-${Date.now()}-${Math.random().toString(36).slice(2)}@example.test`;
+    const result = await db().query<{ account_id: string }>(
+      `INSERT INTO accounts (email, email_normalized, status)
+       VALUES ($1, $1, 'terminated')
+       RETURNING account_id`,
+      [email.trim().toLowerCase()],
+    );
+    const row = result.rows[0];
+    if (row === undefined) throw new Error('account insert returned no row');
+    createdAccountIds.push(row.account_id);
+    return row.account_id;
+  }
+
   /** Remove only the admin rows this suite created (shared DB; never drop). */
   async function clearMyAdmins(): Promise<void> {
     await db().query(
@@ -128,6 +143,18 @@ describeDb('platform-admin admins repository (real PostgreSQL 17)', () => {
     expect(await grantPlatformAdmin(db(), { accountId: missing, grantedBy: bob })).toEqual({
       status: 'account_not_found',
     });
+  });
+
+  it('refuses to grant to a terminated account (status = terminated)', async () => {
+    const bob = await createAccount();
+    const terminated = await createTerminatedAccount();
+
+    // The spec requires the target to "exist and not be terminated"; `accounts`
+    // keeps terminated rows, so a terminated account is closed as account_not_found.
+    expect(await grantPlatformAdmin(db(), { accountId: terminated, grantedBy: bob })).toEqual({
+      status: 'account_not_found',
+    });
+    expect(await isPlatformAdmin(db(), { accountId: terminated })).toBe(false);
   });
 
   it('revokes platform admin and reports not_admin for a non-admin', async () => {

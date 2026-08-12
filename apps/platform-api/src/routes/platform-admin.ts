@@ -236,10 +236,15 @@ export async function handleGrantPlatformAdmin(
   if (session === null) return;
   const body = parsed.data.body as { idempotencyKey: string };
 
-  // The digest must cover the path `accountId` as well as the body: two
-  // different-target requests reusing the same idempotency key would otherwise
-  // produce the same digest and silently replay the first grant.
-  const digest = requestDigest({ ...body, accountId });
+  // The digest must cover the operation AND the path `accountId` as well as the
+  // body: two different-target requests (or a grant vs. a revoke of the same
+  // target) reusing the same idempotency key would otherwise produce the same
+  // digest and silently replay the first stored result.
+  const digest = requestDigest({
+    operation: OPERATION_ID_PLATFORM_ADMIN_GRANT,
+    ...body,
+    accountId,
+  });
   const probe = await lookupIdempotency(deps.pool, body.idempotencyKey, digest);
   if (probe.outcome === 'replay') {
     await sendSerialized(GRANT_OPERATION, reply, requestId, probe.resultData);
@@ -348,8 +353,14 @@ export async function handleRevokePlatformAdmin(
   if (session === null) return;
   const body = parsed.data.body as { idempotencyKey: string };
 
-  // The digest must cover the path `accountId` as well as the body (see grant).
-  const digest = requestDigest({ ...body, accountId });
+  // The digest must cover the operation AND the path `accountId` as well as the
+  // body (see grant): a grant and a revoke of the same target reusing the same
+  // idempotency key must NOT silently replay each other's stored result.
+  const digest = requestDigest({
+    operation: OPERATION_ID_PLATFORM_ADMIN_REVOKE,
+    ...body,
+    accountId,
+  });
   const probe = await lookupIdempotency(deps.pool, body.idempotencyKey, digest);
   if (probe.outcome === 'replay') {
     await sendSerialized(REVOKE_OPERATION, reply, requestId, probe.resultData);

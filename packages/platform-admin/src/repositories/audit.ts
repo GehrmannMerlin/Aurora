@@ -125,6 +125,9 @@ export async function queryPlatformAuditEvents(
     const params: unknown[] = [];
     let cursorClause = '';
     if (input.cursor !== undefined) {
+      // A malformed cursor (bad base64url / JSON / shape) surfaces below as a DB
+      // statement failure → `statement_failed` → 503 (fail-closed, no leak),
+      // consistent with the notification-repository pattern.
       const cursor = JSON.parse(Buffer.from(input.cursor, 'base64url').toString('utf8')) as {
         occurredAt: string;
         eventId: string;
@@ -146,6 +149,11 @@ export async function queryPlatformAuditEvents(
     let nextCursor: string | undefined;
     const last = items.length > 0 ? items[items.length - 1] : undefined;
     if (hasMore && last !== undefined) {
+      // Keyset cursor limitation: `occurredAt` is millisecond precision
+      // (`Date.toISOString`), so two events sharing a millisecond at different
+      // microseconds can be skipped/duplicated at a page boundary (mirrors the
+      // notification-repository pattern). The `event_id` tiebreak only handles
+      // exact-time ties (same timestamp value).
       nextCursor = Buffer.from(
         JSON.stringify({ occurredAt: last.occurredAt, eventId: last.eventId }),
       ).toString('base64url');

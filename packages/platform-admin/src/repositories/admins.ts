@@ -76,7 +76,14 @@ export async function grantPlatformAdmin(
     const accountId = requireAccountId('account id', input.accountId);
     const grantedBy = requireAccountId('granted by', input.grantedBy);
 
-    const account = await pool.query('SELECT 1 FROM accounts WHERE account_id = $1', [accountId]);
+    // The spec requires the target to "exist and not be terminated"; `accounts`
+    // keeps terminated rows (status `'terminated'`), so the existence check must
+    // exclude them explicitly. A hard-deleted account is already impossible (FK),
+    // so this single status guard covers the closed `account_not_found` result.
+    const account = await pool.query(
+      "SELECT 1 FROM accounts WHERE account_id = $1 AND status <> 'terminated'",
+      [accountId],
+    );
     if (account.rows.length === 0) return { status: 'account_not_found' };
 
     const inserted = await pool.query<{ account_id: string }>(
