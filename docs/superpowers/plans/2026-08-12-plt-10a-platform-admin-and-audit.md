@@ -177,7 +177,7 @@ Expected: FAIL（模块不存在）
 
 - [ ] **Step 3: 实现 `admins.ts`**
 
-原始 SQL；`isPlatformAdmin` = `SELECT 1 FROM platform_admins WHERE account_id=$1`；`grantPlatformAdmin` 先查 `accounts` 存在 → `INSERT ... ON CONFLICT (account_id) DO NOTHING` → conflict 则 `already_admin`；`revokePlatformAdmin` 在**事务内**先 `SELECT count(*) FROM platform_admins`，若当前为最后一个管理员（`count=1` 且该行即目标）→ `last_admin` 回滚，否则 DELETE；`bootstrapPlatformAdmins` 逐 accountId 校验账号存在后 INSERT（`ON CONFLICT DO NOTHING`）并累计 seeded，最后**内联**写一条 `admin_bootstrapped` 审计（`INSERT INTO platform_audit_events (actor_account_id, action, target, result) VALUES ($1,'admin_bootstrapped','{}','succeeded')`；不依赖 Task 3 的 audit Repository——Task 3 只负责正式化 audit 读写能力）。
+原始 SQL；`isPlatformAdmin` = `SELECT 1 FROM platform_admins WHERE account_id=$1`；`grantPlatformAdmin` 先查 `accounts` 存在 → `INSERT ... ON CONFLICT (account_id) DO NOTHING` → conflict 则 `already_admin`；`revokePlatformAdmin` 在**事务内**用 `SELECT account_id FROM platform_admins FOR UPDATE` **锁住全部平台管理员行**并在应用侧计数（消除并发 revoke 的 TOCTOU：并发事务因行锁串行化，重读后正确判定），若唯一行即目标 → `last_admin` 回滚，否则 DELETE；`bootstrapPlatformAdmins` 逐 accountId 校验账号存在后 INSERT（`ON CONFLICT DO NOTHING`）并累计 seeded，最后**内联**写一条 `admin_bootstrapped` 审计（`INSERT INTO platform_audit_events (actor_account_id, action, target, result) VALUES ($1,'admin_bootstrapped','{}','succeeded')`；不依赖 Task 3 的 audit Repository——Task 3 只负责正式化 audit 读写能力）。
 
 - [ ] **Step 4: 运行通过**
 
