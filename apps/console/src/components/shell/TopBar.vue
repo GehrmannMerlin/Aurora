@@ -10,7 +10,7 @@ import ScopeSwitcher from './ScopeSwitcher.vue';
 const session = useSessionStore();
 const navigation = useNavigationStore();
 const { status: sessionStatus } = storeToRefs(session);
-const { organizations, currentOrganizationId } = storeToRefs(navigation);
+const { organizations, currentOrganizationId, unreadCount } = storeToRefs(navigation);
 
 const authenticated = computed(() => sessionStatus.value === 'authenticated');
 const orgLabel = computed(() => {
@@ -19,6 +19,13 @@ const orgLabel = computed(() => {
     (candidate) => candidate.organizationId === currentOrganizationId.value,
   );
   return org?.name ?? '未选择';
+});
+
+/** PLT-09 D1 unread badge: only an authoritative available count > 0 is shown. */
+const unreadBadge = computed(() => {
+  if (unreadCount.value.status !== 'available') return null;
+  if (unreadCount.value.value === undefined || unreadCount.value.value <= 0) return null;
+  return String(unreadCount.value.value);
 });
 
 function hrefFor(routeId: string): string {
@@ -36,7 +43,16 @@ function hrefFor(routeId: string): string {
       <AppLink :to="hrefFor('workspace.home')" label="工作空间" />
       <ScopeSwitcher />
       <span class="au-scope-chip">{{ orgLabel }}</span>
-      <AppLink :to="hrefFor('account.notifications')" label="通知" />
+      <AppLink :to="hrefFor('account.notifications')" aria-label="通知">
+        通知
+        <span
+          v-if="unreadBadge !== null"
+          class="au-unread-badge"
+          data-testid="topbar-unread-badge"
+          aria-hidden="true"
+          >{{ unreadBadge }}</span
+        >
+      </AppLink>
       <AppLink :to="hrefFor('account.security')" label="账号安全" />
     </nav>
   </header>
@@ -68,5 +84,20 @@ function hrefFor(routeId: string): string {
 }
 .au-scope-chip {
   color: var(--color-topbar-fg);
+}
+.au-unread-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.25rem;
+  height: 1.25rem;
+  margin-left: var(--space-2);
+  padding: 0 var(--space-1);
+  border-radius: 999px;
+  background-color: var(--color-badge-bg, var(--color-sidebar-active-indicator));
+  color: var(--color-badge-fg, var(--color-topbar-bg));
+  font-size: 0.75rem;
+  font-weight: 600;
+  line-height: 1;
 }
 </style>

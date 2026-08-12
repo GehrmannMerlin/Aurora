@@ -88,6 +88,8 @@ describe('RouteTarget registry', () => {
       'account.security',
       'account.deletion-cancel',
       'account.deletion-confirm',
+      // PLT-09 replaces the account.notifications stub with the real D1 view.
+      'account.notifications',
       'organization.usage',
       'organization.project-create',
       'organization.members',

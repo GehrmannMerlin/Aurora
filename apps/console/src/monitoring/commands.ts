@@ -24,6 +24,7 @@ import {
   OPERATION_ID_LIFECYCLE_MOVE_TO_TRASH,
   OPERATION_ID_LIFECYCLE_RESTORE,
   OPERATION_ID_MERGE_ISSUES,
+  OPERATION_ID_NOTIFICATIONS_MARK_READ,
   OPERATION_ID_SETTINGS_CREATE_ENVIRONMENT,
   OPERATION_ID_SETTINGS_UPDATE,
   OPERATION_ID_SOURCE_MAPS_REPARSE,
@@ -605,4 +606,29 @@ export function moveProjectToTrash(
     { resourceVersion: params.resourceVersion },
     options,
   );
+}
+
+// --- PLT-09 D1 Notifications (account-scoped) ----------------------------------------------------
+
+export interface MarkNotificationReadResult {
+  readonly status: string;
+  readonly notificationId: string;
+}
+
+/** Account-scoped mark-read command (D1). CSRF + fresh idempotency key. */
+export function markNotificationRead(
+  notificationId: string,
+  options: IssueCommandOptions,
+): Promise<MarkNotificationReadResult> {
+  const input = {
+    pathParams: { notificationId },
+    body: { idempotencyKey: options.idempotencyKey ?? createIdempotencyKey() },
+  };
+  return executeQuery<{ readonly data: MarkNotificationReadResult }>({
+    operationId: OPERATION_ID_NOTIFICATIONS_MARK_READ,
+    input,
+    scope: { type: 'account' },
+    csrf: options.csrf,
+    ...(options.signal !== undefined ? { signal: options.signal } : {}),
+  }).then((response) => response.data);
 }

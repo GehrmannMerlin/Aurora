@@ -599,6 +599,60 @@ function mockClientKeys() {
   };
 }
 
+/** PLT-09 D1 mock notifications list + unread count (account-scoped, test fixture only). */
+function mockNotifications() {
+  return {
+    data: {
+      notifications: {
+        status: 'available',
+        items: [
+          {
+            notificationId: 'notif_test_1',
+            type: 'new_issue',
+            title: '新问题出现',
+            summary: 'TypeError: boom',
+            organizationId: 'org_test_1',
+            projectId: 'prj_test_1',
+            occurredAt: '2026-08-12T08:00:00.000Z',
+            readAt: '2026-08-12T08:05:00.000Z',
+            target: {
+              routeId: 'project.issue-detail',
+              pathParams: {
+                organizationId: 'org_test_1',
+                projectId: 'prj_test_1',
+                issueId: '7',
+              },
+              query: {},
+            },
+          },
+          {
+            notificationId: 'notif_test_2',
+            type: 'alert_triggered',
+            title: '错误数量过高 已触发',
+            organizationId: 'org_test_1',
+            projectId: 'prj_test_1',
+            occurredAt: '2026-08-12T09:00:00.000Z',
+            target: {
+              routeId: 'project.alert-instance-detail',
+              pathParams: {
+                organizationId: 'org_test_1',
+                projectId: 'prj_test_1',
+                instanceId: '3',
+              },
+              query: {},
+            },
+          },
+        ],
+        pagination: { totalCount: 2, totalCountStatus: 'available' },
+      },
+      unreadCount: { value: 1, status: 'available' },
+    },
+    meta: { requestId: 'req_test_notifications', readAt: MONITORING_READ_AT, normalizedQuery: {} },
+    allowedActions: ['read'],
+    navigationTargets: [],
+  };
+}
+
 function mockProjectSettings() {
   return {
     data: {
@@ -1469,6 +1523,18 @@ export function createPlatformHandlers() {
           : { type: body.type, id: body.id ?? 'prj_test_1' },
       );
       return new HttpResponse(null, { status: 204 });
+    }),
+    http.get('/api/platform/v1/notifications', async () => {
+      await maybeDelay();
+      return HttpResponse.json(mockNotifications() as JsonBodyType, { status: 200 });
+    }),
+    http.post('/api/platform/v1/notifications/:notificationId/read', async ({ params }) => {
+      await maybeDelay();
+      const notificationId = String(params.notificationId ?? 'notif_test_2');
+      return HttpResponse.json(
+        { data: { status: 'read', notificationId } } as JsonBodyType,
+        { status: 200 },
+      );
     }),
     http.post('/__mock/session', async ({ request }) => {
       const body = (await request.json()) as { authenticated?: boolean };

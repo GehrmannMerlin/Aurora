@@ -18,6 +18,7 @@ import {
   OPERATION_ID_LIST_ISSUES,
   OPERATION_ID_LIST_PERFORMANCE_PAGES,
   OPERATION_ID_LIST_REQUEST_ENDPOINTS,
+  OPERATION_ID_NOTIFICATIONS_LIST,
   OPERATION_ID_RELEASES_LIST,
   OPERATION_ID_SETTINGS_GET,
   OPERATION_ID_SETTINGS_LIST_ENVIRONMENTS,
@@ -705,6 +706,73 @@ export function fetchProjectEnvironments(
     operationId: OPERATION_ID_SETTINGS_LIST_ENVIRONMENTS,
     input,
     scope: projectScope(scope),
+    ...(options.signal !== undefined ? { signal: options.signal } : {}),
+  }).then((response) => response.data);
+}
+
+// --- PLT-09 D1 Notifications (account-scoped) ----------------------------------------------------
+
+/** A constrained navigation target (never an arbitrary URL). */
+export interface NotificationTarget {
+  readonly routeId: string;
+  readonly pathParams: Readonly<Record<string, string>>;
+  readonly query: Readonly<Record<string, string>>;
+}
+
+export interface NotificationItem {
+  readonly notificationId: string;
+  readonly type: string;
+  readonly title: string;
+  readonly summary?: string;
+  readonly organizationId?: string;
+  readonly projectId?: string;
+  readonly occurredAt: string;
+  readonly readAt?: string;
+  readonly target: NotificationTarget;
+}
+
+export interface NotificationsListData {
+  /** Flat section status from the contract (available/empty/unavailable). */
+  readonly status: string;
+  readonly reason?: string;
+  readonly items: readonly NotificationItem[];
+  readonly pagination: {
+    readonly cursor?: string;
+    readonly nextCursor?: string;
+    readonly totalCount?: number;
+    readonly totalCountStatus: string;
+  };
+}
+
+export interface NotificationsData {
+  readonly notifications: NotificationsListData;
+  readonly unreadCount: {
+    readonly value?: number;
+    readonly status: 'available' | 'unavailable';
+  };
+}
+
+export interface NotificationsQueryInput {
+  readonly readState?: 'all' | 'unread';
+  readonly cursor?: string;
+  readonly limit?: number;
+}
+
+/** Account-level notifications list + unread count (D1). Scope is `account`. */
+export function fetchNotifications(
+  query: NotificationsQueryInput,
+  options: FetchOptions = {},
+): Promise<NotificationsData> {
+  const queryParams: Record<string, unknown> = {};
+  if (query.readState !== undefined) queryParams.readState = query.readState;
+  if (query.cursor !== undefined) queryParams.cursor = query.cursor;
+  if (query.limit !== undefined) queryParams.limit = query.limit;
+  const input: PlatformRequestInput =
+    Object.keys(queryParams).length === 0 ? {} : { query: queryParams };
+  return executeQuery<QueryResponse<NotificationsData>>({
+    operationId: OPERATION_ID_NOTIFICATIONS_LIST,
+    input,
+    scope: { type: 'account' },
     ...(options.signal !== undefined ? { signal: options.signal } : {}),
   }).then((response) => response.data);
 }

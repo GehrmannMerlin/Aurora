@@ -71,6 +71,8 @@ const invitationAcceptView = (): Promise<Component> =>
   import('../views/auth/InvitationAcceptView.vue');
 const accountSecurityView = (): Promise<Component> =>
   import('../views/account/AccountSecurityView.vue');
+const accountNotificationsView = (): Promise<Component> =>
+  import('../views/account/NotificationsView.vue');
 const deletionCancelView = (): Promise<Component> =>
   import('../views/account/DeletionCancelView.vue');
 const deletionConfirmView = (): Promise<Component> =>
@@ -488,9 +490,9 @@ export const ROUTE_REGISTRY: readonly RouteEntry[] = [
     label: '通知',
     paramsSchema: emptyParams,
     querySchema: anyQuery,
-    lazy: unavailable,
+    lazy: accountNotificationsView,
     menu: true,
-    unavailableReason: 'capability-not-provided',
+    unavailableReason: null,
   },
   {
     routeId: 'platform.resource-policies',
