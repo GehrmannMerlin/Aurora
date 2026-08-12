@@ -103,20 +103,33 @@ export async function grantPlatformAdmin(
  * does not hold the capability returns `not_admin` (`account_not_found` is
  * merged into `not_admin` per the contract).
  *
+ * Accepts a `Pool` (self-managed transaction, standalone use) OR a `PoolClient`
+ * (caller-owned transaction: the platform-api handler runs revoke + audit +
+ * idempotency record atomically in ONE transaction). When a PoolClient is given,
+ * this function performs only the locked re-read + DELETE on the caller's
+ * connection WITHOUT self-managed BEGIN/COMMIT/ROLLBACK, so a `last_admin`
+ * return leaves the caller's transaction intact for the caller to roll back.
+ *
  * `revokedBy` is part of the command interface for the handler-layer audit
  * write (Task 5); this repository revokes by account only.
  */
 export async function revokePlatformAdmin(
-  pool: Pool,
+  pool: Pool | PoolClient,
   input: { readonly accountId: string; readonly revokedBy: string },
 ): Promise<RevokePlatformAdminResult> {
   const accountId = requireAccountId('account id', input.accountId);
   requireAccountId('revoked by', input.revokedBy);
 
+  // A Pool owns a self-managed connection + transaction; a PoolClient is the
+  // caller's already-open transaction connection. Discriminate by `release`
+  // (PoolClient has it; Pool does not) — NOT by `connect`, because pg's
+  // PoolClient extends Client and therefore ALSO has a connect() method, so a
+  // connect-based check would wrongly treat the caller's client as a Pool.
+  const ownsTransaction = typeof (pool as PoolClient).release !== 'function';
   let client: PoolClient | undefined;
   try {
-    client = await pool.connect();
-    await client.query('BEGIN');
+    client = ownsTransaction ? await (pool as Pool).connect() : (pool as PoolClient);
+    if (ownsTransaction) await client.query('BEGIN');
 
     // Lock every admin row so concurrent revokes serialize: the second
     // transaction blocks on the FOR UPDATE rows until the first commits, then
@@ -129,7 +142,7 @@ export async function revokePlatformAdmin(
 
     if (count === 1) {
       const onlyAccountId = adminIds[0];
-      await client.query('ROLLBACK');
+      if (ownsTransaction) await client.query('ROLLBACK');
       if (onlyAccountId === accountId) return { status: 'last_admin' };
       // The single admin is someone else, so the target is not an admin.
       return { status: 'not_admin' };
@@ -140,17 +153,17 @@ export async function revokePlatformAdmin(
       [accountId],
     );
     if (deleted.rows.length === 0) {
-      await client.query('ROLLBACK');
+      if (ownsTransaction) await client.query('ROLLBACK');
       return { status: 'not_admin' };
     }
 
-    await client.query('COMMIT');
+    if (ownsTransaction) await client.query('COMMIT');
     return { status: 'revoked' };
   } catch (error) {
-    await client?.query('ROLLBACK').catch(() => undefined);
+    if (ownsTransaction) await client?.query('ROLLBACK').catch(() => undefined);
     return { status: 'temporarily_unavailable' };
   } finally {
-    client?.release();
+    if (ownsTransaction) client?.release();
   }
 }
 

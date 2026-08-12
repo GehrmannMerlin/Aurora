@@ -236,7 +236,10 @@ export async function handleGrantPlatformAdmin(
   if (session === null) return;
   const body = parsed.data.body as { idempotencyKey: string };
 
-  const digest = requestDigest(body);
+  // The digest must cover the path `accountId` as well as the body: two
+  // different-target requests reusing the same idempotency key would otherwise
+  // produce the same digest and silently replay the first grant.
+  const digest = requestDigest({ ...body, accountId });
   const probe = await lookupIdempotency(deps.pool, body.idempotencyKey, digest);
   if (probe.outcome === 'replay') {
     await sendSerialized(GRANT_OPERATION, reply, requestId, probe.resultData);
@@ -345,7 +348,8 @@ export async function handleRevokePlatformAdmin(
   if (session === null) return;
   const body = parsed.data.body as { idempotencyKey: string };
 
-  const digest = requestDigest(body);
+  // The digest must cover the path `accountId` as well as the body (see grant).
+  const digest = requestDigest({ ...body, accountId });
   const probe = await lookupIdempotency(deps.pool, body.idempotencyKey, digest);
   if (probe.outcome === 'replay') {
     await sendSerialized(REVOKE_OPERATION, reply, requestId, probe.resultData);
@@ -369,7 +373,7 @@ export async function handleRevokePlatformAdmin(
       operation: OPERATION_ID_PLATFORM_ADMIN_REVOKE,
       digest,
       execute: async (client) => {
-        const result = await revokePlatformAdmin(deps.pool, {
+        const result = await revokePlatformAdmin(client, {
           accountId,
           revokedBy: session.accountId,
         });
