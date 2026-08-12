@@ -40,6 +40,7 @@ export * from './issues-and-alerts/issue-commands.js';
 export * from './issues-and-alerts/issue-queries.js';
 export * from './issues-and-alerts/alerts.js';
 export * from './notifications/notifications.js';
+export * from './platform-admin/platform-admin.js';
 export * from './releases/releases.js';
 export * from './registry/operations.js';
 export * from './registry/manifest.js';

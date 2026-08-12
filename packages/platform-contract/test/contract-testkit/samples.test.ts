@@ -23,6 +23,13 @@ import {
   notificationsListAndUnreadResponse,
   notificationsMarkReadResponse,
 } from '../../src/notifications/notifications.js';
+import {
+  platformAdminGetCapabilityResponse,
+  platformAdminGrantResponse,
+  platformAdminListResponse,
+  platformAdminRevokeResponse,
+  platformAuditListEventsResponse,
+} from '../../src/platform-admin/platform-admin.js';
 import { auroraProblem } from '../../src/common/problem-details.js';
 import {
   validSessionSamples,
@@ -49,6 +56,11 @@ import {
   validListSecurityAuditSamples,
   validListNotificationsSamples,
   validMarkNotificationReadSamples,
+  validPlatformAdminGetCapabilitySamples,
+  validPlatformAdminListSamples,
+  validPlatformAdminGrantSamples,
+  validPlatformAdminRevokeSamples,
+  validPlatformAuditListEventsSamples,
 } from '../../src/contract-testkit/index.js';
 
 describe('contract testkit', () => {
@@ -96,6 +108,16 @@ describe('contract testkit', () => {
       expect(notificationsListAndUnreadResponse.zod.safeParse(s).success).toBe(true);
     for (const s of validMarkNotificationReadSamples)
       expect(notificationsMarkReadResponse.zod.safeParse(s).success).toBe(true);
+    for (const s of validPlatformAdminGetCapabilitySamples)
+      expect(platformAdminGetCapabilityResponse.zod.safeParse(s).success).toBe(true);
+    for (const s of validPlatformAdminListSamples)
+      expect(platformAdminListResponse.zod.safeParse(s).success).toBe(true);
+    for (const s of validPlatformAdminGrantSamples)
+      expect(platformAdminGrantResponse.zod.safeParse(s).success).toBe(true);
+    for (const s of validPlatformAdminRevokeSamples)
+      expect(platformAdminRevokeResponse.zod.safeParse(s).success).toBe(true);
+    for (const s of validPlatformAuditListEventsSamples)
+      expect(platformAuditListEventsResponse.zod.safeParse(s).success).toBe(true);
   });
 
   it('invalid samples fail their schemas', () => {
@@ -129,6 +151,11 @@ describe('contract testkit', () => {
       ...validListSecurityAuditSamples,
       ...validListNotificationsSamples,
       ...validMarkNotificationReadSamples,
+      ...validPlatformAdminGetCapabilitySamples,
+      ...validPlatformAdminListSamples,
+      ...validPlatformAdminGrantSamples,
+      ...validPlatformAdminRevokeSamples,
+      ...validPlatformAuditListEventsSamples,
     ]);
     expect(all).not.toMatch(/aurora_ingest_|Bearer |secret|password|sessionId/i);
     // The list tokens response is metadata-only: never a plaintext or digest.

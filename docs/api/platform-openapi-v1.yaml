@@ -2559,6 +2559,127 @@ paths:
               additionalProperties: false
               required:
                 - idempotencyKey
+  /platform-admin/capability:
+    get:
+      operationId: platformAdminGetCapability
+      summary: Resolve whether the current account holds platform admin capability (D2)
+      tags:
+        - usage-and-policy
+        - platform-admin
+      responses:
+        "200":
+          description: 200 response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/platformAdminGetCapabilityResponse"
+  /platform-admin/admins:
+    get:
+      operationId: platformAdminList
+      summary: List platform admin identities with grant provenance (admin only)
+      tags:
+        - usage-and-policy
+        - platform-admin
+      responses:
+        "200":
+          description: 200 response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/platformAdminListResponse"
+  /platform-admin/admins/{accountId}/grant:
+    post:
+      operationId: platformAdminGrant
+      summary: Grant platform admin capability to an account (idempotent, audited)
+      tags:
+        - usage-and-policy
+        - platform-admin
+      responses:
+        "200":
+          description: 200 response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/platformAdminGrantResponse"
+      parameters:
+        - name: accountId
+          in: path
+          required: true
+          schema: *a4
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                idempotencyKey:
+                  type: string
+                  minLength: 8
+                  maxLength: 128
+              additionalProperties: false
+              required:
+                - idempotencyKey
+  /platform-admin/admins/{accountId}/revoke:
+    post:
+      operationId: platformAdminRevoke
+      summary: Revoke platform admin capability from an account (idempotent, audited)
+      tags:
+        - usage-and-policy
+        - platform-admin
+      responses:
+        "200":
+          description: 200 response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/platformAdminRevokeResponse"
+      parameters:
+        - name: accountId
+          in: path
+          required: true
+          schema: *a4
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                idempotencyKey:
+                  type: string
+                  minLength: 8
+                  maxLength: 128
+              additionalProperties: false
+              required:
+                - idempotencyKey
+  /platform-admin/audit:
+    get:
+      operationId: platformAuditListEvents
+      summary: List platform-level audit events (1-year retention, admin only)
+      tags:
+        - usage-and-policy
+        - platform-admin
+      responses:
+        "200":
+          description: 200 response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/platformAuditListEventsResponse"
+      parameters:
+        - name: query
+          in: query
+          schema:
+            type: object
+            properties:
+              cursor:
+                type: string
+                minLength: 1
+                maxLength: 512
+              limit:
+                type: number
+                minimum: 1
+                maximum: 50
+            additionalProperties: false
 components:
   schemas:
     identityGetSessionResponse:
@@ -3448,7 +3569,7 @@ components:
           items:
             type: object
             properties:
-              eventId:
+              eventId: &a58
                 type: string
                 minLength: 3
                 maxLength: 64
@@ -7411,6 +7532,173 @@ components:
       additionalProperties: false
       required:
         - data
+    platformAdminGetCapabilityResponse:
+      type: object
+      properties:
+        data:
+          type: object
+          properties:
+            hasCapability:
+              type: boolean
+          additionalProperties: false
+          required:
+            - hasCapability
+      additionalProperties: false
+      required:
+        - data
+    platformAdminListResponse:
+      type: object
+      properties:
+        data:
+          type: object
+          properties:
+            admins:
+              type: object
+              properties:
+                status:
+                  type: string
+                  minLength: 1
+                  maxLength: 16
+                reason:
+                  type: string
+                  minLength: 1
+                  maxLength: 128
+                items:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      accountId: *a4
+                      grantedBy: *a4
+                      grantedAt: *a7
+                    additionalProperties: false
+                    required:
+                      - accountId
+                      - grantedBy
+                      - grantedAt
+                pagination: *a23
+              additionalProperties: false
+              required:
+                - status
+                - items
+                - pagination
+          additionalProperties: false
+          required:
+            - admins
+        meta: *a35
+        allowedActions: *a26
+        navigationTargets: *a15
+      additionalProperties: false
+      required:
+        - data
+        - meta
+        - allowedActions
+        - navigationTargets
+    platformAdminGrantResponse:
+      type: object
+      properties:
+        data:
+          type: object
+          properties:
+            status:
+              type: string
+              minLength: 1
+              maxLength: 32
+            accountId: *a4
+          additionalProperties: false
+          required:
+            - status
+            - accountId
+      additionalProperties: false
+      required:
+        - data
+    platformAdminRevokeResponse:
+      type: object
+      properties:
+        data:
+          type: object
+          properties:
+            status:
+              type: string
+              minLength: 1
+              maxLength: 32
+            accountId: *a4
+          additionalProperties: false
+          required:
+            - status
+            - accountId
+      additionalProperties: false
+      required:
+        - data
+    platformAuditListEventsResponse:
+      type: object
+      properties:
+        data:
+          type: object
+          properties:
+            events:
+              type: object
+              properties:
+                status:
+                  type: string
+                  minLength: 1
+                  maxLength: 16
+                reason:
+                  type: string
+                  minLength: 1
+                  maxLength: 128
+                items:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      eventId: *a58
+                      action:
+                        type: string
+                        minLength: 1
+                        maxLength: 48
+                      actorAccountId: *a4
+                      target:
+                        type: object
+                        additionalProperties:
+                          type: string
+                          minLength: 1
+                          maxLength: 4096
+                      result:
+                        type: string
+                        minLength: 1
+                        maxLength: 16
+                      occurredAt: *a7
+                      requestId:
+                        type: string
+                        minLength: 1
+                        maxLength: 64
+                    additionalProperties: false
+                    required:
+                      - eventId
+                      - action
+                      - actorAccountId
+                      - target
+                      - result
+                      - occurredAt
+                pagination: *a23
+              additionalProperties: false
+              required:
+                - status
+                - items
+                - pagination
+          additionalProperties: false
+          required:
+            - events
+        meta: *a35
+        allowedActions: *a26
+        navigationTargets: *a15
+      additionalProperties: false
+      required:
+        - data
+        - meta
+        - allowedActions
+        - navigationTargets
 tags:
   - name: access
   - name: alerts
@@ -7429,6 +7717,7 @@ tags:
   - name: notifications
   - name: organization
   - name: performance
+  - name: platform-admin
   - name: project-governance
   - name: releases
   - name: requests

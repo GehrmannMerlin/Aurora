@@ -83,6 +83,11 @@ describe('operation registry and manifest', () => {
       'lifecycleMoveToTrash',
       'notificationsListAndUnread',
       'notificationsMarkRead',
+      'platformAdminGetCapability',
+      'platformAdminList',
+      'platformAdminGrant',
+      'platformAdminRevoke',
+      'platformAuditListEvents',
     ]);
   });
 

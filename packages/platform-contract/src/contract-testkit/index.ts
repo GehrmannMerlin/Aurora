@@ -24,4 +24,9 @@ export {
   validListSecurityAuditSamples,
   validListNotificationsSamples,
   validMarkNotificationReadSamples,
+  validPlatformAdminGetCapabilitySamples,
+  validPlatformAdminListSamples,
+  validPlatformAdminGrantSamples,
+  validPlatformAdminRevokeSamples,
+  validPlatformAuditListEventsSamples,
 } from './samples.js';

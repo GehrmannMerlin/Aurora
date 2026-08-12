@@ -42,7 +42,10 @@ function buildRouteTargetCoverage(): Record<RouteTargetId, CoverageKind> {
     CoverageKind
   >;
   for (const op of PLATFORM_OPERATIONS) {
-    if (op.page) coverage[op.page] = 'stable';
+    // D2 gate: platform.resource-policies is the PlatformAdmin page; PlatformAdmin authority is
+    // not approved for the Console (G13), so the page stays 'unavailable' even though the
+    // platform-admin machine operations emit it. Console D2 UI is a later plan.
+    if (op.page && op.page !== 'platform.resource-policies') coverage[op.page] = 'stable';
   }
   for (const op of BLOCKED_OPERATIONS) {
     const page = pageForOperation(op.operationId);

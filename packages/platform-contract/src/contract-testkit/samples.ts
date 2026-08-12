@@ -328,3 +328,62 @@ export const validMarkNotificationReadSamples: readonly unknown[] = [
     data: { status: 'read', notificationId: 'notif_test_1' },
   },
 ];
+
+export const validPlatformAdminGetCapabilitySamples: readonly unknown[] = [
+  { data: { hasCapability: true } },
+  { data: { hasCapability: false } },
+];
+
+export const validPlatformAdminListSamples: readonly unknown[] = [
+  {
+    data: {
+      admins: {
+        status: 'available',
+        items: [
+          {
+            accountId: 'acct_test_1',
+            grantedBy: 'acct_test_2',
+            grantedAt: '2026-08-12T01:00:00.000Z',
+          },
+        ],
+        pagination: { nextCursor: 'cGFnZS0y', totalCount: 1, totalCountStatus: 'available' },
+      },
+    },
+    meta: { requestId: 'req_test_1', readAt: '2026-08-12T01:05:00.000Z' },
+    allowedActions: ['read'],
+    navigationTargets: [{ routeId: 'platform.resource-policies', pathParams: {}, query: {} }],
+  },
+];
+
+export const validPlatformAdminGrantSamples: readonly unknown[] = [
+  { data: { status: 'granted', accountId: 'acct_test_3' } },
+];
+
+export const validPlatformAdminRevokeSamples: readonly unknown[] = [
+  { data: { status: 'revoked', accountId: 'acct_test_3' } },
+];
+
+export const validPlatformAuditListEventsSamples: readonly unknown[] = [
+  {
+    data: {
+      events: {
+        status: 'available',
+        items: [
+          {
+            eventId: 'aud_test_2',
+            action: 'admin_granted',
+            actorAccountId: 'acct_test_2',
+            target: { accountId: 'acct_test_3' },
+            result: 'succeeded',
+            occurredAt: '2026-08-12T01:00:00.000Z',
+            requestId: 'req_test_1',
+          },
+        ],
+        pagination: { nextCursor: 'cGFnZS0y', totalCount: 1, totalCountStatus: 'available' },
+      },
+    },
+    meta: { requestId: 'req_test_1', readAt: '2026-08-12T01:05:00.000Z' },
+    allowedActions: ['read'],
+    navigationTargets: [],
+  },
+];
