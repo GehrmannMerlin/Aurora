@@ -61,6 +61,7 @@ const selectedTargetKey = ref('default');
 const projectionSection = ref<SectionResult<
   PlatformPolicyProjection | ProjectPolicyProjection
 > | null>(null);
+const projectionLoading = ref(false);
 const commandPhase = ref<ResourcePolicyCommandPhase>({ kind: 'idle' });
 const version = ref(0);
 const conflict = ref<string | null>(null);
@@ -74,6 +75,8 @@ const searchResults = ref<{
   readonly projects: readonly PolicyTargetProject[];
 }>({ organizations: [], projects: [] });
 let searchTimer: ReturnType<typeof setTimeout> | undefined;
+/** Monotonic per-component projection-fetch counter: only the latest fetch may write state or clear loading. */
+let projectionRequestSeq = 0;
 
 const formQuota = ref(0);
 const formWarningRatio = ref(0);
@@ -95,6 +98,7 @@ const state = computed(() =>
     capability: capability.value,
     target: target.value,
     projectionSection: projectionSection.value,
+    projectionLoading: projectionLoading.value,
     commandPhase: commandPhase.value,
     version: version.value,
     conflict: conflict.value,
@@ -194,8 +198,13 @@ function seedForm(projection: PlatformPolicyProjection | ProjectPolicyProjection
 
 async function loadProjection(opts: { preserveConflict?: boolean } = {}): Promise<void> {
   const requestedTarget = target.value;
+  const seq = ++projectionRequestSeq;
   if (!opts.preserveConflict) conflict.value = null;
+  // Clear a stale command error/confirmation from a previous target so it never
+  // lingers while the user is now viewing (or reloading) a different target.
+  commandPhase.value = { kind: 'idle' };
   projectionSection.value = null;
+  projectionLoading.value = true;
   try {
     let data: PlatformPolicyProjection | ProjectPolicyProjection;
     if (requestedTarget === 'default') {
@@ -205,13 +214,13 @@ async function loadProjection(opts: { preserveConflict?: boolean } = {}): Promis
     } else {
       data = await fetchPolicyGetProjectEffective(requestedTarget.id);
     }
-    if (target.value !== requestedTarget) return; // stale response
+    if (seq !== projectionRequestSeq) return; // stale response
     version.value = data.version;
     currentProjection.value = data;
     projectionSection.value = { status: 'available', data };
     seedForm(data);
   } catch (caught) {
-    if (target.value !== requestedTarget) return; // stale response
+    if (seq !== projectionRequestSeq) return; // stale response
     version.value = 0;
     currentProjection.value = null;
     if (caught instanceof ApiError && caught.code === 'authorization') {
@@ -221,6 +230,8 @@ async function loadProjection(opts: { preserveConflict?: boolean } = {}): Promis
     } else {
       projectionSection.value = { status: 'unavailable', reason: describeRequestError(caught) };
     }
+  } finally {
+    if (seq === projectionRequestSeq) projectionLoading.value = false;
   }
 }
 

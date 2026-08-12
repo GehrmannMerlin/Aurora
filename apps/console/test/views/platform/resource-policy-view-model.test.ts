@@ -47,6 +47,7 @@ describe('buildResourcePolicyView', () => {
       capability: 'checking',
       target: 'default',
       projectionSection: null,
+      projectionLoading: false,
       commandPhase: idle,
       version: 1,
       conflict: null,
@@ -60,6 +61,7 @@ describe('buildResourcePolicyView', () => {
       capability: 'forbidden',
       target: 'default',
       projectionSection: { status: 'available', data: defaultProjection },
+      projectionLoading: false,
       commandPhase: idle,
       version: 1,
       conflict: null,
@@ -73,6 +75,7 @@ describe('buildResourcePolicyView', () => {
       capability: 'ready',
       target: 'default',
       projectionSection: { status: 'available', data: defaultProjection },
+      projectionLoading: false,
       commandPhase: idle,
       version: 1,
       conflict: null,
@@ -81,11 +84,26 @@ describe('buildResourcePolicyView', () => {
     expect(view.projection).toEqual({ kind: 'available', data: defaultProjection });
   });
 
+  it('ready capability with an in-flight projection renders loading (never unavailable)', () => {
+    const view = buildResourcePolicyView({
+      capability: 'ready',
+      target: 'default',
+      projectionSection: null,
+      projectionLoading: true,
+      commandPhase: idle,
+      version: 0,
+      conflict: null,
+    });
+    expect(view.capability).toBe('ready');
+    expect(view.projection).toEqual({ kind: 'loading' });
+  });
+
   it('ready capability maps empty and unavailable sections honestly', () => {
     const empty = buildResourcePolicyView({
       capability: 'ready',
       target: 'default',
       projectionSection: { status: 'empty', reason: '尚未配置' },
+      projectionLoading: false,
       commandPhase: idle,
       version: 1,
       conflict: null,
@@ -96,6 +114,7 @@ describe('buildResourcePolicyView', () => {
       capability: 'ready',
       target: 'default',
       projectionSection: { status: 'unavailable', reason: '策略服务不可用' },
+      projectionLoading: false,
       commandPhase: idle,
       version: 1,
       conflict: null,
@@ -103,11 +122,12 @@ describe('buildResourcePolicyView', () => {
     expect(unavailable.projection).toEqual({ kind: 'unavailable', reason: '策略服务不可用' });
   });
 
-  it('ready capability surfaces a missing projection as unavailable (never fabricated)', () => {
+  it('ready capability surfaces a missing projection as unavailable only when not in flight', () => {
     const view = buildResourcePolicyView({
       capability: 'ready',
       target: 'default',
       projectionSection: null,
+      projectionLoading: false,
       commandPhase: idle,
       version: 1,
       conflict: null,
@@ -120,6 +140,7 @@ describe('buildResourcePolicyView', () => {
       capability: 'ready',
       target: { type: 'project', id: 'prj_1', name: '示例项目' },
       projectionSection: { status: 'available', data: projectProjection },
+      projectionLoading: false,
       commandPhase: { kind: 'error', message: '保存失败' },
       version: 3,
       conflict: '版本冲突',

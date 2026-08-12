@@ -160,7 +160,7 @@ maintenance: operational-snapshot
 
 前端技术、后端领域/技术栈、总体机器契约结构和测试/部署/发布设计均已批准并分别进入正式架构、测试、发布与运维文档；精确版本、命令和配置是 `implementation-detail`，机器契约制品第一增量已实现（Platform OpenAPI v1、`@aurora/platform-contract`、漂移门禁），其余精确领域 Schema 与平台数据模型仍 `deferred`/absent，容量/兼容/性能证据是 `requires-benchmark`，长期技术选择是 `requires-accepted-adr`。
 
-A5-001—A5-011 已批准，长期规则见[账号注销与数据生命周期](docs/security/account-deletion-and-data-lifecycle.md)。D2 平台管理员身份/平台级审计、邮件/运营责任和 A5 之外的保留规则仍留在统一阻塞清单；按用户指令本轮不展开新的专题讨论。
+A5-001—A5-011 已批准，长期规则见[账号注销与数据生命周期](docs/security/account-deletion-and-data-lifecycle.md)。D2 平台管理员身份/平台级审计与平台资源策略管理已 implemented-in-feature-branch（见 §3 G13 PLT-10a/PLT-10b/PLT-10c）；邮件/运营责任和 A5 之外的保留规则仍留在统一阻塞清单；按用户指令本轮不展开新的专题讨论。
 
 有限决策清单的全部单项一旦获得用户明确批准，即按整体批准同步，不再重复请求完整方案批准；只有权威冲突或不可逆安全、隐私、数据丢失风险可以重新阻断。
 

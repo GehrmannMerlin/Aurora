@@ -2,9 +2,9 @@
  * D2 平台资源策略 view-model（PLT-10c）。
  *
  * 纯函数：把能力门禁（checking/forbidden/ready）、目标选择（default/org/project）、
- * 服务端生效策略投影与命令阶段组合成页面渲染所需的封闭状态。投影一律经
- * `sectionToView` 映射（available/empty/unavailable/forbidden），缺失时如实
- * `unavailable`，绝不伪造数据。能力 forbidden 时不渲染任何策略投影。
+ * 服务端生效策略投影、投影在途状态与命令阶段组合成页面渲染所需的封闭状态。投影一律经
+ * `sectionToView` 映射（available/empty/unavailable/forbidden），投影在途时显示
+ * `loading`，缺失时如实 `unavailable`，绝不伪造数据。能力 forbidden 时不渲染任何策略投影。
  */
 import type {
   PlatformPolicyFields,
@@ -40,6 +40,8 @@ export interface ResourcePolicySource {
   readonly projectionSection: SectionResult<
     PlatformPolicyProjection | ProjectPolicyProjection
   > | null;
+  /** True while an effective-policy fetch is in flight (including target switches). */
+  readonly projectionLoading: boolean;
   readonly commandPhase: ResourcePolicyCommandPhase;
   readonly version: number;
   readonly conflict: string | null;
@@ -70,8 +72,9 @@ export function buildResourcePolicyView(source: ResourcePolicySource): ResourceP
       conflict: source.conflict,
     };
   }
-  const projection =
-    source.projectionSection === null
+  const projection = source.projectionLoading
+    ? ({ kind: 'loading' } as const)
+    : source.projectionSection === null
       ? ({ kind: 'unavailable', reason: '生效策略不可用' } as const)
       : sectionToView(source.projectionSection);
   return {
