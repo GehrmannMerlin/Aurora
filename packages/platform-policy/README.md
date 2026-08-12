@@ -13,9 +13,10 @@ Migration 与后续 Repository 的稳定错误表面：
 spec 见 [platform-resource-policy-data-model](../../docs/architecture/platform-resource-policy-data-model.md) 与
 [ADR-035](../../docs/adr/ADR-035-platform-resource-policy-data-model.md)。
 
-本包是 PLT-10b Task 1—2 的结果：包结构、构建/类型检查/migrate 入口、三张表的 Migration、稳定错误表面、三张表的
-Repository（平台默认/组织覆盖/项目上限 CRUD + 乐观版本）与生效纯函数 `computeEffectivePolicy` 已真实存在；
-目标搜索在后续任务落档。
+本包是 PLT-10b Task 1—3 的结果：包结构、构建/类型检查/migrate 入口、三张表的 Migration、稳定错误表面、三张表的
+Repository（平台默认/组织覆盖/项目上限 CRUD + 乐观版本）、生效纯函数 `computeEffectivePolicy` 与目标搜索
+`searchPolicyTargets`（D2 目标选择器只读前缀搜索，org/project 名称 ILIKE 前缀 + `%`/`_` 转义 + kind/status 过滤 +
+每类有界 limit 默认 25 上限 50）已真实存在。
 
 ## 职责
 
@@ -52,6 +53,7 @@ Repository（平台默认/组织覆盖/项目上限 CRUD + 乐观版本）与生
 - 平台默认：`getPlatformDefaultPolicy` / `setPlatformDefaultPolicy` / `bootstrapPlatformDefaultIfAbsent`（ADR-035 建议默认值）；
 - 组织覆盖：`getOrganizationOverride` / `setOrganizationOverride` / `resetOrganizationOverride`；
 - 项目上限：`getProjectLimit` / `setProjectLimit` / `clearProjectLimit`；
+- 目标搜索：`searchPolicyTargets`（`{ organizations; projects }`，名称 ILIKE 前缀、`%`/`_` 字面、kind/status 过滤、每类 limit 默认 25 上限 50、按名称升序）;
 - 生效纯函数：`computeEffectivePolicy`（配置值/来源/生效值三者分离，无默认时返回 `null`）；
 - `pnpm migrate`：运行本包 Migration（需先应用 platform-identity / platform-project-governance migrations）。
 

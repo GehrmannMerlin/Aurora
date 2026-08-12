@@ -64,3 +64,11 @@ export {
   type SetProjectLimitInput,
   type SetProjectLimitResult,
 } from './repositories/project-limit.js';
+
+export {
+  searchPolicyTargets,
+  type PolicyTargetOrganization,
+  type PolicyTargetProject,
+  type PolicyTargetSearchInput,
+  type PolicyTargetSearchResult,
+} from './repositories/target-search.js';
