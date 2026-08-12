@@ -148,6 +148,42 @@ describe('loadPlatformApiConfig', () => {
       }),
     ).toThrow(/PORT/);
   });
+  it('parses PLATFORM_ADMIN_BOOTSTRAP_ACCOUNT_IDS into platformAdminBootstrapAccountIds', () => {
+    const config = loadPlatformApiConfig({
+      DATABASE_URL: 'postgresql://localhost/db',
+      REDIS_URL: 'redis://localhost:6379',
+      PLATFORM_ADMIN_BOOTSTRAP_ACCOUNT_IDS:
+        '11111111-1111-4111-8111-111111111111, 22222222-2222-4222-8222-222222222222',
+    });
+    expect(config.platformAdminBootstrapAccountIds).toEqual([
+      '11111111-1111-4111-8111-111111111111',
+      '22222222-2222-4222-8222-222222222222',
+    ]);
+  });
+  it('defaults platformAdminBootstrapAccountIds to an empty list', () => {
+    const config = loadPlatformApiConfig({
+      DATABASE_URL: 'postgresql://localhost/db',
+      REDIS_URL: 'redis://localhost:6379',
+    });
+    expect(config.platformAdminBootstrapAccountIds).toEqual([]);
+  });
+  it('skips non-UUID PLATFORM_ADMIN_BOOTSTRAP_ACCOUNT_IDS entries with a warning', () => {
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+    try {
+      const config = loadPlatformApiConfig({
+        DATABASE_URL: 'postgresql://localhost/db',
+        REDIS_URL: 'redis://localhost:6379',
+        PLATFORM_ADMIN_BOOTSTRAP_ACCOUNT_IDS:
+          'not-a-uuid,11111111-1111-4111-8111-111111111111,,  ',
+      });
+      expect(config.platformAdminBootstrapAccountIds).toEqual([
+        '11111111-1111-4111-8111-111111111111',
+      ]);
+      expect(warnSpy).toHaveBeenCalledOnce();
+    } finally {
+      warnSpy.mockRestore();
+    }
+  });
 });
 
 describe('lookupIdempotency', () => {
