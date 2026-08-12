@@ -2,17 +2,22 @@ import type { Pool, PoolClient } from 'pg';
 import {
   PlatformPolicyError,
   isPostgresCheckViolation,
+  isPostgresUniqueViolation,
   toStableError,
 } from '../errors.js';
+import { requireActorAccountId, requireExpectedVersion, requirePolicyFields } from '../guards.js';
 import type { PlatformDefaultPolicy, PlatformPolicyFields, StoredPolicySource } from '../policy-types.js';
 
 /**
  * @aurora/platform-policy — platform default policy repository (PLT-10b,
- * ADR-035). `platform_resource_policies` is intended to hold at most ONE row
- * (the platform default); the single-row invariant is enforced by this
- * repository layer, not by a schema constraint. Each write bumps `version`
- * (optimistic concurrency). The controlled bootstrap guarantees a default row
- * exists so `policyGetDefault` always has a value.
+ * ADR-035). `platform_resource_policies` holds AT MOST ONE row (the platform
+ * default); the single-row invariant is enforced by the DB-level partial unique
+ * index `platform_resource_policies_singleton` (migration 1), so a concurrent
+ * second INSERT fails with SQLSTATE 23505. The bootstrap maps that to the
+ * idempotent `already_exists` result; the set path maps it to the fail-closed
+ * `temporarily_unavailable` result. Each write bumps `version` (optimistic
+ * concurrency). The controlled bootstrap guarantees a default row exists so
+ * `policyGetDefault` always has a value.
  */
 
 export type SetPlatformDefaultPolicyResult =
@@ -72,47 +77,6 @@ function toPlatformDefaultPolicy(row: PlatformResourcePolicyRow): PlatformDefaul
   };
 }
 
-function requireActorAccountId(value: string): string {
-  const trimmed = value.trim();
-  if (trimmed.length === 0) {
-    throw new PlatformPolicyError('invalid_input', 'actor account id is required');
-  }
-  return trimmed;
-}
-
-function requireExpectedVersion(value: number): number {
-  if (!Number.isInteger(value) || value < 0) {
-    throw new PlatformPolicyError(
-      'invalid_input',
-      'expected version must be a non-negative integer',
-    );
-  }
-  return value;
-}
-
-function requirePolicyFields(input: PlatformPolicyFields): Required<PlatformPolicyFields> {
-  for (const [label, value] of Object.entries({
-    defaultPeriodQuota: input.defaultPeriodQuota,
-    warningRatio: input.warningRatio,
-    hardLimit: input.hardLimit,
-    highValueRetentionDays: input.highValueRetentionDays,
-  })) {
-    if (typeof value !== 'number' || !Number.isFinite(value)) {
-      throw new PlatformPolicyError('invalid_input', `${label} must be a finite number`);
-    }
-  }
-  if (typeof input.degradationEnabled !== 'boolean') {
-    throw new PlatformPolicyError('invalid_input', 'degradationEnabled must be a boolean');
-  }
-  return {
-    defaultPeriodQuota: input.defaultPeriodQuota,
-    warningRatio: input.warningRatio,
-    hardLimit: input.hardLimit,
-    degradationEnabled: input.degradationEnabled,
-    highValueRetentionDays: input.highValueRetentionDays,
-  };
-}
-
 /** Read the current platform default row, or `null` when none is configured. */
 export async function getPlatformDefaultPolicy(
   pool: Pool | PoolClient,
@@ -161,6 +125,10 @@ export async function bootstrapPlatformDefaultIfAbsent(
     return inserted.rows.length > 0 ? { status: 'created' } : { status: 'already_exists' };
   } catch (error) {
     if (error instanceof PlatformPolicyError && error.kind === 'invalid_input') throw error;
+    // A concurrent bootstrap on an empty table loses the DB-level singleton
+    // index race with SQLSTATE 23505; the row now exists, so this is the
+    // idempotent already_exists outcome (not a failure).
+    if (isPostgresUniqueViolation(error)) return { status: 'already_exists' };
     throw toStableError(error);
   }
 }
@@ -235,6 +203,9 @@ export async function setPlatformDefaultPolicy(
     if (isPostgresCheckViolation(error)) {
       throw new PlatformPolicyError('invalid_input', 'invalid_ratio_order');
     }
+    // A concurrent set on an empty table loses the DB-level singleton index race
+    // with SQLSTATE 23505 → fail-closed 503 (never return a fabricated row).
+    if (isPostgresUniqueViolation(error)) return { status: 'temporarily_unavailable' };
     return { status: 'temporarily_unavailable' };
   }
 }

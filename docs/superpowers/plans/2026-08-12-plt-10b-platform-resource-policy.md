@@ -39,6 +39,7 @@ design-stage: approved
 - 建议默认值（产品确认点，ADR-035 决策 6）：`defaultPeriodQuota` 100 万事件/月、`warningRatio` 80%、`hardLimit` 100%、`degradationEnabled` true、`highValueRetentionDays` 90 天；`resourceLimit` 无默认（项目覆盖可选项）。
 - 服务端权威校验：单位、比例关系（`0 < warningRatio < hardLimit <= 100`）、上限组合、项目上限与组织策略关系；非法组合 → `field_validation` 稳定错误。
 - 平台命令同事务写审计（`insertPlatformAuditEvent`，action `policy_set_default`/`policy_set_organization`/`policy_reset_organization`/`policy_set_project_limit`/`policy_clear_project_limit`）。
+- 策略 GET 读操作写 `audit_read` 平台审计事件（`policyGetDefault`/`policyGetOrganizationEffective`/`policyGetProjectEffective` 三个读；镜像 Plan A 的 admin-list 读审计），**目标搜索 GET 例外**（轻量搜索会淹没平台审计时间线，故不审计）。
 - 不实现组织自助、申请扩容、套餐、收费、购买、账单、欠费、商业升级、批量策略、动态成本优化或按功能售卖额度（PRD §15.10）。
 - `platform.resource-policies` route-target coverage 保持 `unavailable`（Console D2 属 Plan C）；Plan A 的 manifest.ts D2-gate 豁免已覆盖本批操作。
 - 不修改 ADR-034/035 决策；不修改 `@aurora/platform-admin` 的既有接口（requirePlatformAdmin/insertPlatformAuditEvent 沿用）。
@@ -309,7 +310,7 @@ Expected: FAIL（路由未实现）
 
 - [ ] **Step 3: 实现 9 handler + 注册**
 
-镜像 `apps/platform-api/src/routes/platform-admin.ts`（`parseInput`+`serializeOutput` / `runIdempotentCommand` + 事务内 `insertPlatformAuditEvent`）。GET 用 `requirePlatformAdmin`；POST 命令在幂等事务内写审计（action 按命令映射）；`version_conflict` → `ServiceError(409,'version_conflict',...)`；非法配置 → `ServiceError(422,'field_validation',...)`。`app.ts` 注册 9 路由；`package.json` 加 `"@aurora/platform-policy": "workspace:*"`。
+镜像 `apps/platform-api/src/routes/platform-admin.ts`（`parseInput`+`serializeOutput` / `runIdempotentCommand` + 事务内 `insertPlatformAuditEvent`）。GET 用 `requirePlatformAdmin`；三个生效策略 GET 写 `audit_read`（存在性检查先于审计写，phantom-org/project 404 不产生审计事件），**目标搜索 GET 不审计（flood-avoidance）**；POST 命令在幂等事务内写审计（action 按命令映射）；`version_conflict` → `ServiceError(409,'version_conflict',...)`；非法配置 → `ServiceError(422,'field_validation',...)`。org/project 生效 GET 在读取平台默认前先执行受控 bootstrap（`bootstrapPlatformDefaultIfAbsent`，幂等），保证空环境深链可用。`app.ts` 注册 9 路由；`package.json` 加 `"@aurora/platform-policy": "workspace:*"`。
 
 - [ ] **Step 4: 运行集成测试 + typecheck**
 

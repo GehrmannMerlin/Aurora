@@ -180,6 +180,28 @@ describeDb('platform-policy repositories (real PostgreSQL 17)', () => {
     expect(policy?.updatedAt).toBeTruthy();
   });
 
+  it('resolves a concurrent bootstrap race on the empty singleton table', async () => {
+    const alice = await createAccount();
+    await clearDefaultRow();
+
+    // Two bootstraps run concurrently against an empty table: the DB-level
+    // singleton partial unique index means only one may insert; the loser must
+    // be resolved by the repository as the idempotent already_exists (not throw).
+    const results = await Promise.allSettled([
+      bootstrapPlatformDefaultIfAbsent(db(), { actorAccountId: alice }),
+      bootstrapPlatformDefaultIfAbsent(db(), { actorAccountId: alice }),
+    ]);
+    const statuses = results.map((result) =>
+      result.status === 'fulfilled' ? result.value.status : `rejected:${String(result.reason)}`,
+    );
+    expect(statuses.sort()).toEqual(['already_exists', 'created']);
+
+    const count = await db().query<{ n: number }>(
+      'SELECT count(*)::int AS n FROM platform_resource_policies',
+    );
+    expect(count.rows[0]?.n).toBe(1);
+  });
+
   it('sets the platform default via INSERT when no row exists', async () => {
     const alice = await createAccount();
     await clearDefaultRow();

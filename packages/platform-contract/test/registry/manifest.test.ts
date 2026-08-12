@@ -104,7 +104,6 @@ describe('operation registry and manifest', () => {
     expect(BLOCKED_OPERATIONS.map((op) => op.operationId)).toEqual([
       'onboardingGetProgress',
       'overviewGetProjectStatus',
-      'policySetPlatformDefault',
     ]);
     for (const op of BLOCKED_OPERATIONS) {
       expect(op.reason.length).toBeGreaterThan(10);

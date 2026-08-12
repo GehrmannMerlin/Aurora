@@ -16,6 +16,7 @@ export const PLATFORM_POLICY_VERSION = '0.0.0' as const;
 export {
   PlatformPolicyError,
   isPostgresCheckViolation,
+  isPostgresUniqueViolation,
   toStableError,
   type PlatformPolicyErrorKind,
 } from './errors.js';

@@ -90,8 +90,7 @@
   ],
   "blocked": {
     "onboardingGetProgress": "C1 onboarding model not formalized (G11)",
-    "overviewGetProjectStatus": "C2 overview Query not formalized (G11)",
-    "policySetPlatformDefault": "D2 PlatformAdmin authority not approved (G13)"
+    "overviewGetProjectStatus": "C2 overview Query not formalized (G11)"
   },
   "routeTargetCoverage": {
     "auth.register": "stable",

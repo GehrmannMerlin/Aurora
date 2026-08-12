@@ -4,6 +4,7 @@ import {
   isPostgresCheckViolation,
   toStableError,
 } from '../errors.js';
+import { requireActorAccountId, requireExpectedVersion, requireResourceLimit } from '../guards.js';
 import type { ProjectLimit, StoredPolicySource } from '../policy-types.js';
 
 /**
@@ -52,31 +53,6 @@ function toProjectLimit(row: ProjectPolicyLimitRow): ProjectLimit {
     updatedAt: row.updated_at.toISOString(),
     ...(row.updated_by === null ? {} : { updatedBy: row.updated_by }),
   };
-}
-
-function requireActorAccountId(value: string): string {
-  const trimmed = value.trim();
-  if (trimmed.length === 0) {
-    throw new PlatformPolicyError('invalid_input', 'actor account id is required');
-  }
-  return trimmed;
-}
-
-function requireExpectedVersion(value: number): number {
-  if (!Number.isInteger(value) || value < 0) {
-    throw new PlatformPolicyError(
-      'invalid_input',
-      'expected version must be a non-negative integer',
-    );
-  }
-  return value;
-}
-
-function requireResourceLimit(value: number): number {
-  if (typeof value !== 'number' || !Number.isFinite(value)) {
-    throw new PlatformPolicyError('invalid_input', 'resource limit must be a finite number');
-  }
-  return value;
 }
 
 /** Read the project's resource limit row, or `null` when it inherits. */

@@ -4,6 +4,7 @@ import {
   isPostgresCheckViolation,
   toStableError,
 } from '../errors.js';
+import { requireActorAccountId, requireExpectedVersion, requirePolicyFields } from '../guards.js';
 import type { OrganizationOverride, PlatformPolicyFields, StoredPolicySource } from '../policy-types.js';
 
 /**
@@ -62,47 +63,6 @@ function toOrganizationOverride(row: OrganizationOverrideRow): OrganizationOverr
     version: row.version,
     updatedAt: row.updated_at.toISOString(),
     ...(row.updated_by === null ? {} : { updatedBy: row.updated_by }),
-  };
-}
-
-function requireActorAccountId(value: string): string {
-  const trimmed = value.trim();
-  if (trimmed.length === 0) {
-    throw new PlatformPolicyError('invalid_input', 'actor account id is required');
-  }
-  return trimmed;
-}
-
-function requireExpectedVersion(value: number): number {
-  if (!Number.isInteger(value) || value < 0) {
-    throw new PlatformPolicyError(
-      'invalid_input',
-      'expected version must be a non-negative integer',
-    );
-  }
-  return value;
-}
-
-function requirePolicyFields(input: PlatformPolicyFields): Required<PlatformPolicyFields> {
-  for (const [label, value] of Object.entries({
-    defaultPeriodQuota: input.defaultPeriodQuota,
-    warningRatio: input.warningRatio,
-    hardLimit: input.hardLimit,
-    highValueRetentionDays: input.highValueRetentionDays,
-  })) {
-    if (typeof value !== 'number' || !Number.isFinite(value)) {
-      throw new PlatformPolicyError('invalid_input', `${label} must be a finite number`);
-    }
-  }
-  if (typeof input.degradationEnabled !== 'boolean') {
-    throw new PlatformPolicyError('invalid_input', 'degradationEnabled must be a boolean');
-  }
-  return {
-    defaultPeriodQuota: input.defaultPeriodQuota,
-    warningRatio: input.warningRatio,
-    hardLimit: input.hardLimit,
-    degradationEnabled: input.degradationEnabled,
-    highValueRetentionDays: input.highValueRetentionDays,
   };
 }
 

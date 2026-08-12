@@ -328,6 +328,34 @@ describeDb('PLT-10b platform resource-policy flow (real PostgreSQL 17 + Redis)',
     await app.close();
   });
 
+  it('org/project effective GETs bootstrap the platform default on a fresh database', async () => {
+    const app = buildApp();
+    const alice = await registerVerifiedActor(app, pool, `alice-${randomUUID()}@example.com`);
+    const bob = await registerVerifiedActor(app, pool, `bob-${randomUUID()}@example.com`);
+    await bootstrapPlatformAdmins(pool, { accountIds: [bob.accountId], bootstrapBy: alice.accountId });
+
+    // Fresh database (beforeEach truncated the policy tables): deep-linking
+    // straight to the org effective path must bootstrap the platform default and
+    // return 200 (not a fresh-environment 503).
+    const orgRes = await getOrgEffective(app, bob, bob.organizationId);
+    expect(orgRes.status).toBe(200);
+    expect(projection(orgRes.body).source).toBe('inherited_from_platform');
+    expect(projection(orgRes.body).version).toBe(0);
+    expect(projection(orgRes.body).effective).toEqual(FIVE_FIELDS);
+
+    const { projectId } = await createProject(app, bob, `plt10b-boot-${randomUUID()}`);
+    const projRes = await getProjectEffective(app, bob, projectId);
+    expect(projRes.status).toBe(200);
+    const projData = (projRes.body.data as {
+      data: { source: string; effective: PolicyFields; version: number };
+    }).data;
+    expect(projData.source).toBe('inherited_from_platform');
+    expect(projData.version).toBe(0);
+    expect(projData.effective).toEqual(FIVE_FIELDS);
+
+    await app.close();
+  });
+
   it('policySetDefault sets + audits; a stale version is a closed 409 version_conflict', async () => {
     const app = buildApp();
     const alice = await registerVerifiedActor(app, pool, `alice-${randomUUID()}@example.com`);

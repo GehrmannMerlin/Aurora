@@ -9,11 +9,12 @@ import { PlatformPolicyError, toStableError } from '../errors.js';
  *
  * Name matching is a case-insensitive ILIKE prefix (`name ILIKE $1 || '%'`)
  * with `%`/`_`/`\` escaped so user input is matched literally. Results are
- * bounded per target kind (default 25, capped at 50) and sorted by name ASC for
- * determinism. An empty (or whitespace-only) query applies no name filter and
- * returns the first `limit` targets of each kind. DB failures are wrapped as the
- * stable `PlatformPolicyError` surface; invalid limit input throws
- * `invalid_input` synchronously.
+ * bounded per target kind (default 25, capped at 50) and sorted by name ASC with
+ * an id tiebreaker (`organization_id`/`project_id`) so the order is a total
+ * order (deterministic even with duplicate names). An empty (or whitespace-only)
+ * query applies no name filter and returns the first `limit` targets of each
+ * kind. DB failures are wrapped as the stable `PlatformPolicyError` surface;
+ * invalid limit input throws `invalid_input` synchronously.
  */
 
 export interface PolicyTargetSearchInput {
@@ -85,7 +86,7 @@ export async function searchPolicyTargets(
          FROM organizations
         WHERE kind = 'organization'
           ${hasFilter ? `AND name ILIKE $1 || '%' ESCAPE '\\'` : ''}
-        ORDER BY name ASC
+        ORDER BY name ASC, organization_id ASC
         LIMIT ${hasFilter ? '$2' : '$1'}`,
       hasFilter ? [pattern, limit] : [limit],
     );
@@ -95,7 +96,7 @@ export async function searchPolicyTargets(
          FROM projects
         WHERE status IN ('active', 'archived')
           ${hasFilter ? `AND name ILIKE $1 || '%' ESCAPE '\\'` : ''}
-        ORDER BY name ASC
+        ORDER BY name ASC, project_id ASC
         LIMIT ${hasFilter ? '$2' : '$1'}`,
       hasFilter ? [pattern, limit] : [limit],
     );

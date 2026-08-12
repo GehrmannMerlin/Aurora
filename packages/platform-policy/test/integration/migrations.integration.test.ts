@@ -123,6 +123,9 @@ describeDb('platform-policy migrations (real PostgreSQL 17)', () => {
         'DELETE FROM organization_policy_overrides WHERE organization_id = ANY($1)',
         [createdOrganizationIds],
       );
+      await pool.query('DELETE FROM platform_resource_policies WHERE updated_by = ANY($1)', [
+        createdAccountIds,
+      ]);
       await pool.query('DELETE FROM projects WHERE project_id = ANY($1)', [createdProjectIds]);
       await pool.query('DELETE FROM organizations WHERE organization_id = ANY($1)', [
         createdOrganizationIds,
@@ -184,6 +187,31 @@ describeDb('platform-policy migrations (real PostgreSQL 17)', () => {
          VALUES (1000000, 90, 50, true, 90, 'system_default')`,
       ),
     ).rejects.toMatchObject({ code: '23514' });
+  });
+
+  it('enforces the platform_resource_policies single-row singleton index', async () => {
+    const accountId = await createAccount();
+    await db().query(
+      `INSERT INTO platform_resource_policies
+         (default_period_quota, warning_ratio, hard_limit, degradation_enabled, high_value_retention_days, policy_source, updated_by)
+       VALUES (1000000, 80, 100, true, 90, 'system_default', $1)`,
+      [accountId],
+    );
+    // A second INSERT (the concurrent empty-table race) must fail SQLSTATE
+    // 23505 on the partial unique index `platform_resource_policies_singleton`,
+    // leaving exactly one row behind.
+    await expect(
+      db().query(
+        `INSERT INTO platform_resource_policies
+           (default_period_quota, warning_ratio, hard_limit, degradation_enabled, high_value_retention_days, policy_source, updated_by)
+         VALUES (1000000, 80, 100, true, 90, 'system_default', $1)`,
+        [accountId],
+      ),
+    ).rejects.toMatchObject({ code: '23505' });
+    const count = await db().query<{ n: number }>(
+      'SELECT count(*)::int AS n FROM platform_resource_policies',
+    );
+    expect(count.rows[0]?.n).toBe(1);
   });
 
   it('enforces a unique organization_policy_overrides.organization_id', async () => {

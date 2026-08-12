@@ -2334,9 +2334,4 @@ export const BLOCKED_OPERATIONS: readonly BlockedOperation[] = [
     domain: 'issues-and-alerts',
     reason: 'C2 overview Query not formalized (G11)',
   },
-  {
-    operationId: 'policySetPlatformDefault',
-    domain: 'usage-and-policy',
-    reason: 'D2 PlatformAdmin authority not approved (G13)',
-  },
 ];

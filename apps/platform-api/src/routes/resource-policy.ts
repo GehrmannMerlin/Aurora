@@ -362,10 +362,13 @@ export async function handlePolicyGetDefault(
 
 /**
  * GET /api/platform/v1/platform-admin/policy/organizations/:organizationId/effective
- * — organization effective resource policy (admin only). `configured`/`effective`
- * come from the pure `computeEffectivePolicy`; `source` and `version`/`updated*`
- * are decorated at the handler: an override present → `platform_admin`, none →
- * `inherited_from_platform` (with version 0 = no override row).
+ * — organization effective resource policy (admin only). Runs the controlled
+ * bootstrap first so the platform default always has a value (idempotent),
+ * then `configured`/`effective` come from the pure `computeEffectivePolicy`;
+ * `source` and `version`/`updated*` are decorated at the handler: an override
+ * present → `platform_admin`, none → `inherited_from_platform` (with version
+ * 0 = no override row). A phantom organization is a closed 404 before the
+ * audit write, so a 404 never creates an `audit_read` event.
  */
 export async function handlePolicyGetOrganizationEffective(
   request: FastifyRequest,
@@ -405,13 +408,18 @@ export async function handlePolicyGetOrganizationEffective(
   let defaultPolicy: PlatformDefaultPolicy | null;
   let orgOverride;
   try {
-    await writeAuditRead(deps, session.accountId, requestId, 'organization_resource_policy');
     // A truly nonexistent organization is a closed 404 (not a 200
-    // inherited_from_platform projection for a phantom target).
+    // inherited_from_platform projection for a phantom target). The existence
+    // check runs BEFORE the audit write so a phantom-org 404 never creates an
+    // audit_read event.
     if (!(await organizationExists(deps.pool, organizationId))) {
       await sendProblem(reply, requestId, 404, 'not_found', 'The organization was not found.');
       return;
     }
+    await writeAuditRead(deps, session.accountId, requestId, 'organization_resource_policy');
+    // Controlled bootstrap first so a fresh environment deep-link to this path
+    // is available (idempotent), exactly like policyGetDefault.
+    await bootstrapPlatformDefaultIfAbsent(deps.pool, { actorAccountId: session.accountId });
     defaultPolicy = await getPlatformDefaultPolicy(deps.pool);
     orgOverride = await getOrganizationOverride(deps.pool, { organizationId });
   } catch (error) {
@@ -475,12 +483,13 @@ export async function handlePolicyGetOrganizationEffective(
 
 /**
  * GET /api/platform/v1/platform-admin/policy/projects/:projectId/effective —
- * project effective resource policy (admin only). `configured` shows only the
- * project's own `resourceLimit`; `effective` carries the five inherited
- * protective fields plus the effective `resourceLimit`. Source decoration:
- * project limit present → `platform_admin`; else org override present →
- * `inherited_from_organization`; else `inherited_from_platform`. A missing
- * project is a closed 404.
+ * project effective resource policy (admin only). Runs the controlled bootstrap
+ * first so the platform default always has a value (idempotent), then
+ * `configured` shows only the project's own `resourceLimit`; `effective` carries
+ * the five inherited protective fields plus the effective `resourceLimit`.
+ * Source decoration: project limit present → `platform_admin`; else org override
+ * present → `inherited_from_organization`; else `inherited_from_platform`. A
+ * missing project is a closed 404 checked before the audit write.
  */
 export async function handlePolicyGetProjectEffective(
   request: FastifyRequest,
@@ -522,12 +531,17 @@ export async function handlePolicyGetProjectEffective(
   let orgOverride;
   let projectLimit;
   try {
-    await writeAuditRead(deps, session.accountId, requestId, 'project_resource_policy');
+    // Existence check first so a phantom-project 404 never creates an
+    // audit_read event (mirrors the org effective path).
     organizationId = await resolveProjectOrganizationId(deps, projectId);
     if (organizationId === null) {
       await sendProblem(reply, requestId, 404, 'not_found', 'Project not found.');
       return;
     }
+    await writeAuditRead(deps, session.accountId, requestId, 'project_resource_policy');
+    // Controlled bootstrap first so a fresh environment deep-link to this path
+    // is available (idempotent), exactly like policyGetDefault.
+    await bootstrapPlatformDefaultIfAbsent(deps.pool, { actorAccountId: session.accountId });
     defaultPolicy = await getPlatformDefaultPolicy(deps.pool);
     orgOverride = await getOrganizationOverride(deps.pool, { organizationId });
     projectLimit = await getProjectLimit(deps.pool, { projectId });
