@@ -62,6 +62,10 @@ ADR-001—ADR-006 从已批准架构规范中的 ARCH-001—ARCH-006 提取，AD
 | [ADR-031](ADR-031-platform-email-delivery.md)                                         | 管理平台邮件发送责任、端口与供应商                    | accepted | not-started | G10 邮箱验证/密码重置/邀请                    |
 | [ADR-032](ADR-032-platform-outbox-tasks-cache-objects.md)                             | 管理平台 Outbox、任务、缓存与对象存储基础设施         | accepted | not-started | G10 异步边界（邮件/删除交接）                 |
 | [ADR-033](ADR-033-issue-aggregate-data-model.md)                                      | Issue 聚合与有界代表样本数据模型                     | accepted | not-started | G03 Issue 主链（DAT-13 数据模型）             |
+| [ADR-034](ADR-034-platform-admin-and-platform-audit.md)                              | 平台管理员身份、授权与平台级审计                    | proposed | not-started | G13 PLT-10（D2 前置身份/审计）                 |
+| [ADR-035](ADR-035-platform-resource-policy-data-model.md)                           | 平台资源策略数据模型（最小分层策略）               | proposed | not-started | G13 PLT-10（D2 策略数据模型）                  |
+
+> 状态说明：ADR-034/035 于 2026-08-12 由 G13 PLT-10 正式化创建为 `proposed / not-started / awaiting-user-approval`。用户已于 2026-08-12 整体批准 `G13_PLT10_APPROVAL_PACKAGE` 六项推荐（即两份 ADR 记录的产品/安全决策）；ADR 仍需独立非作者评审后由用户正式批准转 `accepted / not-started / approved`，`implementation-status` 保持 not-started。
 
 > 状态说明：ADR-029—032 于 2026-08-08 由 G10（PLT-03/PLT-04/SEC-01）实施门禁创建为 `proposed / not-started / awaiting-review`；2026-08-09 完成独立评审（security/backend-ops/architecture 三路，ADR-030 初审 REJECT 后修复为最终 ACCEPT 版本）并由用户明确正式批准（`accepted / not-started / approved`）。ADR-032 附带用户 YAGNI 实施约束：只有当前 approved 叶子规格确实需要、存在真实 consumer、且 ADR 明确要求该资源时才实际 provision Redis/cache/object storage/background infrastructure；不得因 ADR 定义了未来基础设施边界就提前创建没有 consumer 的付费资源。批准仅覆盖各 ADR 已记录并经过评审修订的决策内容；`implementation-status` 保持 `not-started`，对应代码实施开始前不得标记 implemented。
 >
