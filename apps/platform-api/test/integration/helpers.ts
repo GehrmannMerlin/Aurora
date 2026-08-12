@@ -20,6 +20,9 @@ const auditMigrationsDir = fileURLToPath(
 const platformAdminMigrationsDir = fileURLToPath(
   new URL('../../../../packages/platform-admin/migrations', import.meta.url),
 );
+const platformPolicyMigrationsDir = fileURLToPath(
+  new URL('../../../../packages/platform-policy/migrations', import.meta.url),
+);
 const processingStoreMigrationsDir = fileURLToPath(
   new URL('../../../../packages/processing-store/migrations', import.meta.url),
 );
@@ -94,6 +97,9 @@ export async function runAllMigrations(): Promise<void> {
   await runMigrations(credentialsMigrationsDir);
   await runMigrations(auditMigrationsDir);
   await runMigrations(platformAdminMigrationsDir);
+  // PLT-10b resource-policy data layer (platform default / org override /
+  // project limit tables) so the D2 handlers can read/write the policy rows.
+  await runMigrations(platformPolicyMigrationsDir);
   await runMigrations(processingStoreMigrationsDir);
   // DAT-20 ingestion diagnosis: the handler reads event_inbox (ingestion-inbox)
   // and ingestion_client_credentials (ingestion-credentials), so those table

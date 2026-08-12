@@ -33,6 +33,7 @@
     "@aurora/platform-email": "workspace:*",
     "@aurora/platform-identity": "workspace:*",
     "@aurora/platform-organization": "workspace:*",
+    "@aurora/platform-policy": "workspace:*",
     "@aurora/platform-project-governance": "workspace:*",
     "@aurora/platform-releases": "workspace:*",
     "@aurora/platform-session": "workspace:*",

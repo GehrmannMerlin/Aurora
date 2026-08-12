@@ -192,6 +192,9 @@ importers:
       '@aurora/platform-organization':
         specifier: workspace:*
         version: link:../../packages/platform-organization
+      '@aurora/platform-policy':
+        specifier: workspace:*
+        version: link:../../packages/platform-policy
       '@aurora/platform-project-governance':
         specifier: workspace:*
         version: link:../../packages/platform-project-governance

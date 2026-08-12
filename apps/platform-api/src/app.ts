@@ -120,6 +120,17 @@ import {
   handleListPlatformAuditEvents,
   handleRevokePlatformAdmin,
 } from './routes/platform-admin.js';
+import {
+  handlePolicyClearProjectLimit,
+  handlePolicyGetDefault,
+  handlePolicyGetOrganizationEffective,
+  handlePolicyGetProjectEffective,
+  handlePolicyResetOrganization,
+  handlePolicySetDefault,
+  handlePolicySetOrganization,
+  handlePolicySetProjectLimit,
+  handlePolicyTargetSearch,
+} from './routes/resource-policy.js';
 import { SESSION_COOKIE_NAME } from './session-cookie.js';
 import { InMemoryRateLimiter } from './rate-limit.js';
 import { sendProblem } from './error-mapper.js';
@@ -682,6 +693,66 @@ export function buildPlatformApi(deps: PlatformApiDependencies): FastifyInstance
   app.get('/api/platform/v1/platform-admin/audit', async (request, reply) => {
     await handleListPlatformAuditEvents(request, reply, routeContext);
   });
+
+  // PLT-10b D2 platform resource-policy routes (ADR-035). All nine operations
+  // are gated by `requirePlatformAdmin` (fresh `platform_admins` re-read; a
+  // non-admin gets a closed 403 with no policy/directory data leaked). The three
+  // effective-policy GET queries write an `audit_read` platform audit event; the
+  // five POST commands are CSRF + idempotent and write their `policy_*` audit
+  // INSIDE the idempotency transaction.
+  app.get('/api/platform/v1/platform-admin/policy/targets', async (request, reply) => {
+    await handlePolicyTargetSearch(request, reply, routeContext);
+  });
+
+  app.get('/api/platform/v1/platform-admin/policy/default', async (request, reply) => {
+    await handlePolicyGetDefault(request, reply, routeContext);
+  });
+
+  app.post('/api/platform/v1/platform-admin/policy/default', async (request, reply) => {
+    await handlePolicySetDefault(request, reply, routeContext);
+  });
+
+  app.get(
+    '/api/platform/v1/platform-admin/policy/organizations/:organizationId/effective',
+    async (request, reply) => {
+      await handlePolicyGetOrganizationEffective(request, reply, routeContext);
+    },
+  );
+
+  app.post(
+    '/api/platform/v1/platform-admin/policy/organizations/:organizationId',
+    async (request, reply) => {
+      await handlePolicySetOrganization(request, reply, routeContext);
+    },
+  );
+
+  app.post(
+    '/api/platform/v1/platform-admin/policy/organizations/:organizationId/reset',
+    async (request, reply) => {
+      await handlePolicyResetOrganization(request, reply, routeContext);
+    },
+  );
+
+  app.get(
+    '/api/platform/v1/platform-admin/policy/projects/:projectId/effective',
+    async (request, reply) => {
+      await handlePolicyGetProjectEffective(request, reply, routeContext);
+    },
+  );
+
+  app.post(
+    '/api/platform/v1/platform-admin/policy/projects/:projectId/limit',
+    async (request, reply) => {
+      await handlePolicySetProjectLimit(request, reply, routeContext);
+    },
+  );
+
+  app.post(
+    '/api/platform/v1/platform-admin/policy/projects/:projectId/limit/clear',
+    async (request, reply) => {
+      await handlePolicyClearProjectLimit(request, reply, routeContext);
+    },
+  );
 
   app.setNotFoundHandler(async (request, reply) => {
     const requestId = request.platformRequestId || defaultRequestIdProvider();
