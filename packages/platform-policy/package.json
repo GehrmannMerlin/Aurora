@@ -1,0 +1,43 @@
+{
+  "name": "@aurora/platform-policy",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Aurora D2 platform resource policy data layer: minimal three-tier storage (platform default / organization override / project resource limit) with per-tier versioning for protective platform resource policy (ADR-035)",
+  "engines": {
+    "node": ">=24.18.0 <25"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run --exclude test/integration/** --exclude test/package-entry.test.ts",
+    "test:integration": "vitest run test/integration --no-file-parallelism",
+    "test:coverage": "vitest run --coverage --no-file-parallelism --exclude test/package-entry.test.ts",
+    "test:package": "pnpm build && vitest run test/package-entry.test.ts",
+    "migrate": "tsx src/run-migrations.ts"
+  },
+  "dependencies": {
+    "pg": "8.22.0"
+  },
+  "devDependencies": {
+    "@types/node": "24.13.3",
+    "@types/pg": "8.20.0",
+    "@vitest/coverage-v8": "4.1.10",
+    "node-pg-migrate": "9.0.0",
+    "tsx": "4.23.1",
+    "typescript": "6.0.3",
+    "vitest": "4.1.10"
+  },
+  "aurora": {
+    "layer": "data"
+  }
+}
