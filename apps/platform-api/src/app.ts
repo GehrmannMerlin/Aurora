@@ -71,6 +71,30 @@ import {
   handleReplaceSourceMap,
   handleUploadSourceMap,
 } from './routes/source-maps.js';
+import {
+  handleChangeProjectRole,
+  handleGrantProjectMembership,
+  handleListEffectiveMembers,
+  handleRemoveProjectMembership,
+} from './routes/access.js';
+import {
+  handleCreateClientKey,
+  handleDisableClientKey,
+  handleEnableClientKey,
+  handleListClientKeys,
+  handleRevokeClientKey,
+} from './routes/client-keys.js';
+import {
+  handleCreateProjectEnvironment,
+  handleGetProjectSettings,
+  handleListProjectEnvironments,
+  handleUpdateProjectSettings,
+} from './routes/project-settings.js';
+import {
+  handleArchiveProject,
+  handleMoveProjectToTrash,
+  handleRestoreProjectFromArchive,
+} from './routes/lifecycle.js';
 import { handleListTrash, handleRestoreProject } from './routes/trash.js';
 import {
   handleInvitationLink,
@@ -443,6 +467,118 @@ export function buildPlatformApi(deps: PlatformApiDependencies): FastifyInstance
     '/api/platform/v1/organizations/:organizationId/projects/:projectId/releases/:releaseId/reparse',
     async (request, reply) => {
       await handleReparseRelease(request, reply, routeContext);
+    },
+  );
+
+  // PLT-08 C13 project access (4). Effective per-person projection for reads;
+  // org manager or project_admin for grant/change/remove (CSRF + idempotency +
+  // audit). Org-inherited access is read-only on this surface.
+  app.get(
+    '/api/platform/v1/organizations/:organizationId/projects/:projectId/access',
+    async (request, reply) => {
+      await handleListEffectiveMembers(request, reply, routeContext);
+    },
+  );
+  app.post(
+    '/api/platform/v1/organizations/:organizationId/projects/:projectId/access/members',
+    async (request, reply) => {
+      await handleGrantProjectMembership(request, reply, routeContext);
+    },
+  );
+  app.post(
+    '/api/platform/v1/organizations/:organizationId/projects/:projectId/access/members/:accountId/role',
+    async (request, reply) => {
+      await handleChangeProjectRole(request, reply, routeContext);
+    },
+  );
+  app.post(
+    '/api/platform/v1/organizations/:organizationId/projects/:projectId/access/members/:accountId/remove',
+    async (request, reply) => {
+      await handleRemoveProjectMembership(request, reply, routeContext);
+    },
+  );
+
+  // PLT-08 C14 client keys (5). Metadata-only list; org manager or project_admin
+  // for create (one-time clientKey) / disable / enable / revoke (CSRF +
+  // idempotency + audit). The clientKey secret is delivered exactly once.
+  app.get(
+    '/api/platform/v1/organizations/:organizationId/projects/:projectId/client-keys',
+    async (request, reply) => {
+      await handleListClientKeys(request, reply, routeContext);
+    },
+  );
+  app.post(
+    '/api/platform/v1/organizations/:organizationId/projects/:projectId/client-keys',
+    async (request, reply) => {
+      await handleCreateClientKey(request, reply, routeContext);
+    },
+  );
+  app.post(
+    '/api/platform/v1/organizations/:organizationId/projects/:projectId/client-keys/:keyId/disable',
+    async (request, reply) => {
+      await handleDisableClientKey(request, reply, routeContext);
+    },
+  );
+  app.post(
+    '/api/platform/v1/organizations/:organizationId/projects/:projectId/client-keys/:keyId/enable',
+    async (request, reply) => {
+      await handleEnableClientKey(request, reply, routeContext);
+    },
+  );
+  app.post(
+    '/api/platform/v1/organizations/:organizationId/projects/:projectId/client-keys/:keyId/revoke',
+    async (request, reply) => {
+      await handleRevokeClientKey(request, reply, routeContext);
+    },
+  );
+
+  // PLT-08 C15 project settings + environments (4). Project view auth for
+  // reads; org manager or project_admin for update / create-environment.
+  // Settings update is versioned (optimistic concurrency).
+  app.get(
+    '/api/platform/v1/organizations/:organizationId/projects/:projectId/settings',
+    async (request, reply) => {
+      await handleGetProjectSettings(request, reply, routeContext);
+    },
+  );
+  app.patch(
+    '/api/platform/v1/organizations/:organizationId/projects/:projectId/settings',
+    async (request, reply) => {
+      await handleUpdateProjectSettings(request, reply, routeContext);
+    },
+  );
+  app.get(
+    '/api/platform/v1/organizations/:organizationId/projects/:projectId/settings/environments',
+    async (request, reply) => {
+      await handleListProjectEnvironments(request, reply, routeContext);
+    },
+  );
+  app.post(
+    '/api/platform/v1/organizations/:organizationId/projects/:projectId/settings/environments',
+    async (request, reply) => {
+      await handleCreateProjectEnvironment(request, reply, routeContext);
+    },
+  );
+
+  // PLT-08 C16 project lifecycle (3). Archive / restore-from-archive allow org
+  // manager or project_admin; move-to-trash is org manager ONLY (name+version
+  // confirmed). Each is an independent high-risk command with its own audit.
+  app.post(
+    '/api/platform/v1/organizations/:organizationId/projects/:projectId/lifecycle/archive',
+    async (request, reply) => {
+      await handleArchiveProject(request, reply, routeContext);
+    },
+  );
+  app.post(
+    '/api/platform/v1/organizations/:organizationId/projects/:projectId/lifecycle/restore',
+    async (request, reply) => {
+      await handleRestoreProjectFromArchive(request, reply, routeContext);
+    },
+  );
+  app.post(
+    '/api/platform/v1/organizations/:organizationId/projects/:projectId/lifecycle/move-to-trash',
+    async (request, reply) => {
+      await handleMoveProjectToTrash(request, reply, routeContext);
     },
   );
 

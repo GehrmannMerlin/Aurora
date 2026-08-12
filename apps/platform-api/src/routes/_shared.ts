@@ -245,6 +245,66 @@ export async function requireProjectHandleAccess(
 }
 
 /**
+ * Require project-scoped administrative capability (C13/C14/C15/C16): an org
+ * manager (owner/admin) or a `project_members` row with role `project_admin`
+ * may administer project access, client keys, settings and lifecycle.
+ * `developer`/`read_only` and non-members get a closed 403. Cross-org / absent
+ * project -> closed 404 (no existence leak). Mirrors the alert-manage gate.
+ */
+export async function requireProjectAdminAccess(
+  accountId: string,
+  organizationId: string,
+  projectId: string,
+  deps: PlatformApiRouteDependencies,
+  reply: FastifyReply,
+  requestId: string,
+): Promise<boolean> {
+  let result;
+  try {
+    result = await getProjectAccessRole(deps.pool, { organizationId, projectId, accountId });
+  } catch (error) {
+    if (await sendMappedError(reply, requestId, error)) return false;
+    throw error;
+  }
+  if (result.outcome === 'not_found') {
+    await sendProblem(reply, requestId, 404, 'not_found', 'Project not found.');
+    return false;
+  }
+  if (result.outcome === 'forbidden' || result.role !== 'project_admin') {
+    await sendProblem(
+      reply,
+      requestId,
+      403,
+      'authorization',
+      'You do not have permission to administer this project.',
+    );
+    return false;
+  }
+  return true;
+}
+
+/**
+ * Fresh project-admin role re-read on the command transaction (TOCTOU closure,
+ * same pattern as `requireProjectAlertManageOnTransaction`). Throws a
+ * ServiceError so the whole command transaction rolls back.
+ */
+export async function requireProjectAdminAccessOnTransaction(
+  client: PoolClient,
+  accountId: string,
+  organizationId: string,
+  projectId: string,
+): Promise<void> {
+  const result = await getProjectAccessRole(client, { organizationId, projectId, accountId });
+  if (result.outcome !== 'allowed' || result.role !== 'project_admin') {
+    throw new ServiceError(
+      403,
+      'authorization',
+      'You do not have permission to administer this project.',
+    );
+  }
+}
+
+/**
  * Fresh project handle-role re-read on the command transaction (DAT-14 spec §4:
  * org manager or project_admin/developer may handle; read_only/forbidden 403).
  * Closes the TOCTOU window between the handler's outer `requireProjectHandleAccess`
