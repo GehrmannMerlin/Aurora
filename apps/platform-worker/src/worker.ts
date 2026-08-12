@@ -1,6 +1,7 @@
 import type { Pool } from 'pg';
 import { consumeOutboxEmails, type OutboxRepository } from '@aurora/platform-email';
 import type { EmailDeliveryPort } from '@aurora/platform-email';
+import { runAlertEvaluationRound } from '@aurora/processing-store';
 import { defaultSleeper, type SleeperPort } from './timers.js';
 import type { CleanupAdapter } from './retention/cleanup-adapters.js';
 import { runCleanupRound } from './retention/cleanup-orchestrator.js';
@@ -10,6 +11,11 @@ export type PlatformWorkerStatus = 'created' | 'running' | 'stopping' | 'stopped
 export interface CleanupWorkerSettings {
   readonly adapters: readonly CleanupAdapter[];
   readonly maxAttempts: number;
+}
+
+/** DAT-19 alert evaluation worker section (bounded rules per poll). */
+export interface AlertWorkerSettings {
+  readonly maxRules: number;
 }
 
 export interface PlatformWorker {
@@ -27,6 +33,8 @@ export interface BuildPlatformWorkerInput {
   readonly maxAttempts: number;
   /** Optional SEC-02 cross-store cleanup loop (retention worker). */
   readonly cleanup?: CleanupWorkerSettings;
+  /** Optional DAT-19 product-alert evaluation loop. */
+  readonly alerts?: AlertWorkerSettings;
   /** Injectable sleeper for tests; production uses the real setTimeout sleeper. */
   readonly sleeper?: SleeperPort;
 }
@@ -68,6 +76,15 @@ export function buildPlatformWorker(input: BuildPlatformWorkerInput): PlatformWo
         pool: input.pool,
         adapters: input.cleanup.adapters,
         maxAttempts: input.cleanup.maxAttempts,
+      });
+    }
+    if (input.alerts !== undefined) {
+      // Product alert evaluation (PRD §11). Bounded per poll; a single rule
+      // failure never blocks the round or the rest of the worker.
+      await runAlertEvaluationRound({
+        pool: input.pool,
+        now: new Date(),
+        maxRules: input.alerts.maxRules,
       });
     }
   };

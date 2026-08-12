@@ -205,6 +205,9 @@ importers:
         specifier: 8.22.0
         version: 8.22.0
     devDependencies:
+      '@aurora/event-schema':
+        specifier: workspace:*
+        version: link:../../packages/event-schema
       '@types/node':
         specifier: 24.13.3
         version: 24.13.3
@@ -232,6 +235,9 @@ importers:
       '@aurora/platform-identity':
         specifier: workspace:*
         version: link:../../packages/platform-identity
+      '@aurora/processing-store':
+        specifier: workspace:*
+        version: link:../../packages/processing-store
       pg:
         specifier: 8.22.0
         version: 8.22.0

@@ -8,7 +8,7 @@ import { BLOCKED_OPERATIONS, PLATFORM_OPERATIONS } from '../../src/registry/oper
 import { ROUTE_TARGET_IDS, type RouteTargetId } from '../../src/common/navigation.js';
 
 describe('operation registry and manifest', () => {
-  it('exposes the thirty-six stable operations', () => {
+  it('exposes the stable operations in registry order', () => {
     expect(PLATFORM_OPERATIONS.map((o) => o.operationId)).toEqual([
       'identityGetSession',
       'navigationGetContext',
@@ -55,11 +55,16 @@ describe('operation registry and manifest', () => {
       'issuesBatchUpdate',
       'issuesListIssues',
       'issuesGetIssueDetail',
+      'alertsGetCapability',
+      'alertsListRulesAndInstances',
+      'alertsCreateRule',
+      'alertsUpdateRule',
+      'alertsGetInstanceDetail',
     ]);
   });
 
   it('registers blocked downstream operations without schemas', () => {
-    expect(BLOCKED_OPERATIONS.length).toBeGreaterThan(12);
+    expect(BLOCKED_OPERATIONS.length).toBeGreaterThan(8);
     for (const op of BLOCKED_OPERATIONS) {
       expect(op.reason.length).toBeGreaterThan(10);
       expect('responses' in op).toBe(false);
@@ -172,10 +177,10 @@ describe('operation registry and manifest', () => {
       'project.releases': 'blocked',
       'project.release-detail': 'unavailable',
       'project.source-maps': 'blocked',
-      'project.alerts': 'blocked',
-      'project.alert-rule-create': 'blocked',
-      'project.alert-rule-edit': 'unavailable',
-      'project.alert-instance-detail': 'blocked',
+      'project.alerts': 'stable',
+      'project.alert-rule-create': 'stable',
+      'project.alert-rule-edit': 'stable',
+      'project.alert-instance-detail': 'stable',
       'project.access': 'blocked',
       'project.client-keys': 'blocked',
       'project.settings': 'blocked',

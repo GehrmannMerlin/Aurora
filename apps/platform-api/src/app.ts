@@ -57,6 +57,13 @@ import {
   handleUpdateIssueState,
 } from './routes/issues.js';
 import { handleGetIssueDetail, handleListIssues } from './routes/issues-query.js';
+import {
+  handleCreateAlertRule,
+  handleGetAlertInstanceDetail,
+  handleGetAlertsCapability,
+  handleListRulesAndInstances,
+  handleUpdateAlertRule,
+} from './routes/alerts.js';
 import { handleListTrash, handleRestoreProject } from './routes/trash.js';
 import {
   handleInvitationLink,
@@ -349,6 +356,40 @@ export function buildPlatformApi(deps: PlatformApiDependencies): FastifyInstance
     '/api/platform/v1/organizations/:organizationId/projects/:projectId/issues/batch',
     async (request, reply) => {
       await handleBatchUpdateIssues(request, reply, routeContext);
+    },
+  );
+
+  // DAT-19 Alert rules/instances (5). Product alerts only (PRD §11); OPS-06
+  // operational alerting is a separate concern. Project view auth for reads;
+  // project-admin auth for rule create/update (CSRF + idempotency + audit).
+  app.get(
+    '/api/platform/v1/organizations/:organizationId/projects/:projectId/alerts/capability',
+    async (request, reply) => {
+      await handleGetAlertsCapability(request, reply, routeContext);
+    },
+  );
+  app.get(
+    '/api/platform/v1/organizations/:organizationId/projects/:projectId/alerts',
+    async (request, reply) => {
+      await handleListRulesAndInstances(request, reply, routeContext);
+    },
+  );
+  app.post(
+    '/api/platform/v1/organizations/:organizationId/projects/:projectId/alerts/rules',
+    async (request, reply) => {
+      await handleCreateAlertRule(request, reply, routeContext);
+    },
+  );
+  app.post(
+    '/api/platform/v1/organizations/:organizationId/projects/:projectId/alerts/rules/:ruleId',
+    async (request, reply) => {
+      await handleUpdateAlertRule(request, reply, routeContext);
+    },
+  );
+  app.get(
+    '/api/platform/v1/organizations/:organizationId/projects/:projectId/alerts/instances/:instanceId',
+    async (request, reply) => {
+      await handleGetAlertInstanceDetail(request, reply, routeContext);
     },
   );
 

@@ -17,6 +17,10 @@ export interface PlatformWorkerConfig {
   readonly outboxMaxAttempts: number;
   /** SEC-02 cleanup attempt budget before a handoff is dead-lettered. */
   readonly cleanupMaxAttempts: number;
+  /** DAT-19 alert evaluation: enable the per-poll evaluation round. */
+  readonly alertsEnabled: boolean;
+  /** DAT-19 alert evaluation: maximum rules evaluated per round. */
+  readonly alertMaxRules: number;
   /** Graceful shutdown timeout in milliseconds (operational knob). */
   readonly gracefulShutdownTimeoutMs: number;
 }
@@ -56,6 +60,8 @@ export function loadPlatformWorkerConfig(env: NodeJS.ProcessEnv): PlatformWorker
     outboxBatchLimit,
     outboxMaxAttempts: optionalPositiveInt(env, 'OUTBOX_MAX_ATTEMPTS', 5),
     cleanupMaxAttempts: optionalPositiveInt(env, 'CLEANUP_MAX_ATTEMPTS', 5),
+    alertsEnabled: (env.ALERTS_EVALUATION_ENABLED ?? 'true').trim().toLowerCase() !== 'false',
+    alertMaxRules: optionalPositiveInt(env, 'ALERT_MAX_RULES', 100),
     gracefulShutdownTimeoutMs: optionalPositiveInt(env, 'GRACEFUL_SHUTDOWN_TIMEOUT_MS', 5000),
   };
   return Object.freeze(config);

@@ -46,6 +46,10 @@ export interface BuildPlatformWorkerCompositionInput {
   readonly maxAttempts: number;
   readonly cleanupMaxAttempts: number;
   readonly cleanupAdapters: readonly CleanupAdapter[];
+  /** DAT-19 product-alert evaluation: enable the per-poll round. */
+  readonly alertsEnabled: boolean;
+  /** DAT-19 product-alert evaluation: max rules per round. */
+  readonly alertMaxRules: number;
 }
 
 /**
@@ -66,5 +70,6 @@ export function buildPlatformWorkerComposition(
       adapters: input.cleanupAdapters,
       maxAttempts: input.cleanupMaxAttempts,
     },
+    ...(input.alertsEnabled ? { alerts: { maxRules: input.alertMaxRules } } : {}),
   });
 }

@@ -34,5 +34,6 @@ export * from './monitoring/performance.js';
 export * from './usage-and-policy/usage.js';
 export * from './issues-and-alerts/issue-commands.js';
 export * from './issues-and-alerts/issue-queries.js';
+export * from './issues-and-alerts/alerts.js';
 export * from './registry/operations.js';
 export * from './registry/manifest.js';

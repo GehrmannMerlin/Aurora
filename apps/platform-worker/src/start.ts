@@ -47,6 +47,8 @@ export async function startPlatformWorker(
         new BackupLifecycleCleanupAdapter(),
         new AuditCleanupAdapter(pool),
       ],
+      alertsEnabled: options.config.alertsEnabled,
+      alertMaxRules: options.config.alertMaxRules,
     });
     await worker.start();
 

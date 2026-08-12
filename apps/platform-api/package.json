@@ -44,7 +44,8 @@
     "@vitest/coverage-v8": "4.1.10",
     "node-pg-migrate": "9.0.0",
     "typescript": "6.0.3",
-    "vitest": "4.1.10"
+    "vitest": "4.1.10",
+    "@aurora/event-schema": "workspace:*"
   },
   "aurora": {
     "layer": "service"

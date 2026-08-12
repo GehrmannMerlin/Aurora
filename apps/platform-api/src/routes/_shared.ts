@@ -268,6 +268,65 @@ export async function requireProjectHandleAccessOnTransaction(
 }
 
 /**
+ * Require project-scoped alert management capability (PRD §13.1: 项目管理员
+ * 管理告警). An org manager (owner/admin) or a `project_members` row with role
+ * `project_admin` may manage alert rules; `developer`/`read_only` and
+ * non-members get a closed 403. Cross-org / absent project -> closed 404.
+ */
+export async function requireProjectAlertManageAccess(
+  accountId: string,
+  organizationId: string,
+  projectId: string,
+  deps: PlatformApiRouteDependencies,
+  reply: FastifyReply,
+  requestId: string,
+): Promise<boolean> {
+  let result;
+  try {
+    result = await getProjectAccessRole(deps.pool, { organizationId, projectId, accountId });
+  } catch (error) {
+    if (await sendMappedError(reply, requestId, error)) return false;
+    throw error;
+  }
+  if (result.outcome === 'not_found') {
+    await sendProblem(reply, requestId, 404, 'not_found', 'Project not found.');
+    return false;
+  }
+  if (result.outcome === 'forbidden' || result.role !== 'project_admin') {
+    await sendProblem(
+      reply,
+      requestId,
+      403,
+      'authorization',
+      'You do not have permission to manage alert rules in this project.',
+    );
+    return false;
+  }
+  return true;
+}
+
+/**
+ * Fresh project alert-manage role re-read on the command transaction (same
+ * TOCTOU closure as `requireProjectHandleAccessOnTransaction`). Throws a
+ * ServiceError so the whole command transaction rolls back.
+ */
+export async function requireProjectAlertManageOnTransaction(
+  client: PoolClient,
+  accountId: string,
+  organizationId: string,
+  projectId: string,
+): Promise<void> {
+  const result = await getProjectAccessRole(client, { organizationId, projectId, accountId });
+  if (result.outcome !== 'allowed' || result.role !== 'project_admin') {
+    throw new ServiceError(
+      403,
+      'authorization',
+      'You do not have permission to manage alert rules in this project.',
+    );
+  }
+}
+
+/**
  * Re-read the actor's organization membership on the command's transaction and
  * reject with a closed 403 unless they are still an org manager (spec §13 fresh
  * re-reads). Closes the TOCTOU window between the handler's outer

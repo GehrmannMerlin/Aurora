@@ -26,6 +26,7 @@
   "dependencies": {
     "@aurora/platform-email": "workspace:*",
     "@aurora/platform-identity": "workspace:*",
+    "@aurora/processing-store": "workspace:*",
     "pg": "8.22.0"
   },
   "devDependencies": {
