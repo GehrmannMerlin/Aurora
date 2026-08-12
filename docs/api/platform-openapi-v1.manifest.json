@@ -77,7 +77,16 @@
     "platformAdminList",
     "platformAdminGrant",
     "platformAdminRevoke",
-    "platformAuditListEvents"
+    "platformAuditListEvents",
+    "policyTargetSearch",
+    "policyGetDefault",
+    "policyGetOrganizationEffective",
+    "policyGetProjectEffective",
+    "policySetDefault",
+    "policySetOrganization",
+    "policyResetOrganization",
+    "policySetProjectLimit",
+    "policyClearProjectLimit"
   ],
   "blocked": {
     "onboardingGetProgress": "C1 onboarding model not formalized (G11)",
@@ -13836,6 +13845,1129 @@
                         "maxLength": 512
                       }
                     }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "policyTargetSearch": {
+        "responses": {
+          "200": {
+            "type": "object",
+            "required": [
+              "data",
+              "meta",
+              "allowedActions",
+              "navigationTargets"
+            ],
+            "properties": {
+              "data": {
+                "type": "object",
+                "required": [
+                  "organizations",
+                  "projects",
+                  "pagination"
+                ],
+                "properties": {
+                  "organizations": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "required": [
+                        "organizationId",
+                        "name"
+                      ],
+                      "properties": {
+                        "organizationId": {
+                          "type": "string",
+                          "minLength": 3,
+                          "maxLength": 64
+                        },
+                        "name": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 128
+                        }
+                      }
+                    }
+                  },
+                  "projects": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "required": [
+                        "projectId",
+                        "organizationId",
+                        "name"
+                      ],
+                      "properties": {
+                        "projectId": {
+                          "type": "string",
+                          "minLength": 3,
+                          "maxLength": 64
+                        },
+                        "organizationId": {
+                          "type": "string",
+                          "minLength": 3,
+                          "maxLength": 64
+                        },
+                        "name": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 128
+                        }
+                      }
+                    }
+                  },
+                  "pagination": {
+                    "type": "object",
+                    "required": [
+                      "totalCountStatus"
+                    ],
+                    "properties": {
+                      "cursor": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 4096
+                      },
+                      "nextCursor": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 4096
+                      },
+                      "totalCount": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "totalCountStatus": {
+                        "type": "string",
+                        "enum": [
+                          "available",
+                          "unavailable"
+                        ],
+                        "openEnum": false
+                      }
+                    }
+                  }
+                }
+              },
+              "meta": {
+                "type": "object",
+                "required": [
+                  "requestId",
+                  "readAt"
+                ],
+                "properties": {
+                  "requestId": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 64
+                  },
+                  "readAt": {
+                    "type": "string",
+                    "format": "date-time"
+                  },
+                  "normalizedQuery": {
+                    "type": "object",
+                    "additionalProperties": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 512
+                    }
+                  }
+                }
+              },
+              "allowedActions": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "enum": [
+                    "create",
+                    "read",
+                    "update",
+                    "delete",
+                    "manage",
+                    "restore",
+                    "transfer",
+                    "revoke"
+                  ],
+                  "openEnum": false
+                }
+              },
+              "navigationTargets": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "routeId",
+                    "pathParams",
+                    "query"
+                  ],
+                  "properties": {
+                    "routeId": {
+                      "type": "string",
+                      "enum": [
+                        "auth.register",
+                        "auth.verify-email",
+                        "auth.verify-email-confirm",
+                        "auth.login",
+                        "auth.forgot-password",
+                        "auth.reset-password",
+                        "invitation.accept",
+                        "account.security",
+                        "account.deletion-cancel",
+                        "account.deletion-confirm",
+                        "workspace.home",
+                        "organization.project-create",
+                        "organization.members",
+                        "organization.settings",
+                        "organization.usage",
+                        "organization.tokens",
+                        "organization.audit",
+                        "organization.trash",
+                        "project.onboarding",
+                        "project.overview",
+                        "project.issues",
+                        "project.issue-detail",
+                        "project.requests",
+                        "project.performance",
+                        "project.data-status",
+                        "project.releases",
+                        "project.release-detail",
+                        "project.source-maps",
+                        "project.alerts",
+                        "project.alert-rule-create",
+                        "project.alert-rule-edit",
+                        "project.alert-instance-detail",
+                        "project.access",
+                        "project.client-keys",
+                        "project.settings",
+                        "project.lifecycle",
+                        "account.notifications",
+                        "platform.resource-policies"
+                      ],
+                      "openEnum": false
+                    },
+                    "pathParams": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 256
+                      }
+                    },
+                    "query": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 512
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "policyGetDefault": {
+        "responses": {
+          "200": {
+            "type": "object",
+            "required": [
+              "data",
+              "meta",
+              "allowedActions",
+              "navigationTargets"
+            ],
+            "properties": {
+              "data": {
+                "type": "object",
+                "required": [
+                  "data"
+                ],
+                "properties": {
+                  "data": {
+                    "type": "object",
+                    "required": [
+                      "configured",
+                      "source",
+                      "effective",
+                      "version",
+                      "propagation"
+                    ],
+                    "properties": {
+                      "configured": {
+                        "type": "object",
+                        "required": [
+                          "defaultPeriodQuota",
+                          "warningRatio",
+                          "hardLimit",
+                          "degradationEnabled",
+                          "highValueRetentionDays"
+                        ],
+                        "properties": {
+                          "defaultPeriodQuota": {
+                            "type": "number",
+                            "minimum": 1
+                          },
+                          "warningRatio": {
+                            "type": "number",
+                            "minimum": 1,
+                            "maximum": 100
+                          },
+                          "hardLimit": {
+                            "type": "number",
+                            "minimum": 1,
+                            "maximum": 100
+                          },
+                          "degradationEnabled": {
+                            "type": "boolean"
+                          },
+                          "highValueRetentionDays": {
+                            "type": "number",
+                            "minimum": 1
+                          }
+                        }
+                      },
+                      "source": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 40
+                      },
+                      "effective": {
+                        "type": "object",
+                        "required": [
+                          "defaultPeriodQuota",
+                          "warningRatio",
+                          "hardLimit",
+                          "degradationEnabled",
+                          "highValueRetentionDays"
+                        ],
+                        "properties": {
+                          "defaultPeriodQuota": {
+                            "type": "number",
+                            "minimum": 1
+                          },
+                          "warningRatio": {
+                            "type": "number",
+                            "minimum": 1,
+                            "maximum": 100
+                          },
+                          "hardLimit": {
+                            "type": "number",
+                            "minimum": 1,
+                            "maximum": 100
+                          },
+                          "degradationEnabled": {
+                            "type": "boolean"
+                          },
+                          "highValueRetentionDays": {
+                            "type": "number",
+                            "minimum": 1
+                          }
+                        }
+                      },
+                      "version": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "updatedAt": {
+                        "type": "string",
+                        "format": "date-time"
+                      },
+                      "updatedBy": {
+                        "type": "string",
+                        "minLength": 3,
+                        "maxLength": 64
+                      },
+                      "propagation": {
+                        "type": "object",
+                        "required": [
+                          "status",
+                          "reason"
+                        ],
+                        "properties": {
+                          "status": {
+                            "type": "string",
+                            "enum": [
+                              "unknown"
+                            ],
+                            "openEnum": false
+                          },
+                          "reason": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 128
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              "meta": {
+                "type": "object",
+                "required": [
+                  "requestId",
+                  "readAt"
+                ],
+                "properties": {
+                  "requestId": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 64
+                  },
+                  "readAt": {
+                    "type": "string",
+                    "format": "date-time"
+                  },
+                  "normalizedQuery": {
+                    "type": "object",
+                    "additionalProperties": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 512
+                    }
+                  }
+                }
+              },
+              "allowedActions": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "enum": [
+                    "create",
+                    "read",
+                    "update",
+                    "delete",
+                    "manage",
+                    "restore",
+                    "transfer",
+                    "revoke"
+                  ],
+                  "openEnum": false
+                }
+              },
+              "navigationTargets": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "routeId",
+                    "pathParams",
+                    "query"
+                  ],
+                  "properties": {
+                    "routeId": {
+                      "type": "string",
+                      "enum": [
+                        "auth.register",
+                        "auth.verify-email",
+                        "auth.verify-email-confirm",
+                        "auth.login",
+                        "auth.forgot-password",
+                        "auth.reset-password",
+                        "invitation.accept",
+                        "account.security",
+                        "account.deletion-cancel",
+                        "account.deletion-confirm",
+                        "workspace.home",
+                        "organization.project-create",
+                        "organization.members",
+                        "organization.settings",
+                        "organization.usage",
+                        "organization.tokens",
+                        "organization.audit",
+                        "organization.trash",
+                        "project.onboarding",
+                        "project.overview",
+                        "project.issues",
+                        "project.issue-detail",
+                        "project.requests",
+                        "project.performance",
+                        "project.data-status",
+                        "project.releases",
+                        "project.release-detail",
+                        "project.source-maps",
+                        "project.alerts",
+                        "project.alert-rule-create",
+                        "project.alert-rule-edit",
+                        "project.alert-instance-detail",
+                        "project.access",
+                        "project.client-keys",
+                        "project.settings",
+                        "project.lifecycle",
+                        "account.notifications",
+                        "platform.resource-policies"
+                      ],
+                      "openEnum": false
+                    },
+                    "pathParams": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 256
+                      }
+                    },
+                    "query": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 512
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "policyGetOrganizationEffective": {
+        "responses": {
+          "200": {
+            "type": "object",
+            "required": [
+              "data",
+              "meta",
+              "allowedActions",
+              "navigationTargets"
+            ],
+            "properties": {
+              "data": {
+                "type": "object",
+                "required": [
+                  "data"
+                ],
+                "properties": {
+                  "data": {
+                    "type": "object",
+                    "required": [
+                      "configured",
+                      "source",
+                      "effective",
+                      "version",
+                      "propagation"
+                    ],
+                    "properties": {
+                      "configured": {
+                        "type": "object",
+                        "required": [
+                          "defaultPeriodQuota",
+                          "warningRatio",
+                          "hardLimit",
+                          "degradationEnabled",
+                          "highValueRetentionDays"
+                        ],
+                        "properties": {
+                          "defaultPeriodQuota": {
+                            "type": "number",
+                            "minimum": 1
+                          },
+                          "warningRatio": {
+                            "type": "number",
+                            "minimum": 1,
+                            "maximum": 100
+                          },
+                          "hardLimit": {
+                            "type": "number",
+                            "minimum": 1,
+                            "maximum": 100
+                          },
+                          "degradationEnabled": {
+                            "type": "boolean"
+                          },
+                          "highValueRetentionDays": {
+                            "type": "number",
+                            "minimum": 1
+                          }
+                        }
+                      },
+                      "source": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 40
+                      },
+                      "effective": {
+                        "type": "object",
+                        "required": [
+                          "defaultPeriodQuota",
+                          "warningRatio",
+                          "hardLimit",
+                          "degradationEnabled",
+                          "highValueRetentionDays"
+                        ],
+                        "properties": {
+                          "defaultPeriodQuota": {
+                            "type": "number",
+                            "minimum": 1
+                          },
+                          "warningRatio": {
+                            "type": "number",
+                            "minimum": 1,
+                            "maximum": 100
+                          },
+                          "hardLimit": {
+                            "type": "number",
+                            "minimum": 1,
+                            "maximum": 100
+                          },
+                          "degradationEnabled": {
+                            "type": "boolean"
+                          },
+                          "highValueRetentionDays": {
+                            "type": "number",
+                            "minimum": 1
+                          }
+                        }
+                      },
+                      "version": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "updatedAt": {
+                        "type": "string",
+                        "format": "date-time"
+                      },
+                      "updatedBy": {
+                        "type": "string",
+                        "minLength": 3,
+                        "maxLength": 64
+                      },
+                      "propagation": {
+                        "type": "object",
+                        "required": [
+                          "status",
+                          "reason"
+                        ],
+                        "properties": {
+                          "status": {
+                            "type": "string",
+                            "enum": [
+                              "unknown"
+                            ],
+                            "openEnum": false
+                          },
+                          "reason": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 128
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              "meta": {
+                "type": "object",
+                "required": [
+                  "requestId",
+                  "readAt"
+                ],
+                "properties": {
+                  "requestId": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 64
+                  },
+                  "readAt": {
+                    "type": "string",
+                    "format": "date-time"
+                  },
+                  "normalizedQuery": {
+                    "type": "object",
+                    "additionalProperties": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 512
+                    }
+                  }
+                }
+              },
+              "allowedActions": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "enum": [
+                    "create",
+                    "read",
+                    "update",
+                    "delete",
+                    "manage",
+                    "restore",
+                    "transfer",
+                    "revoke"
+                  ],
+                  "openEnum": false
+                }
+              },
+              "navigationTargets": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "routeId",
+                    "pathParams",
+                    "query"
+                  ],
+                  "properties": {
+                    "routeId": {
+                      "type": "string",
+                      "enum": [
+                        "auth.register",
+                        "auth.verify-email",
+                        "auth.verify-email-confirm",
+                        "auth.login",
+                        "auth.forgot-password",
+                        "auth.reset-password",
+                        "invitation.accept",
+                        "account.security",
+                        "account.deletion-cancel",
+                        "account.deletion-confirm",
+                        "workspace.home",
+                        "organization.project-create",
+                        "organization.members",
+                        "organization.settings",
+                        "organization.usage",
+                        "organization.tokens",
+                        "organization.audit",
+                        "organization.trash",
+                        "project.onboarding",
+                        "project.overview",
+                        "project.issues",
+                        "project.issue-detail",
+                        "project.requests",
+                        "project.performance",
+                        "project.data-status",
+                        "project.releases",
+                        "project.release-detail",
+                        "project.source-maps",
+                        "project.alerts",
+                        "project.alert-rule-create",
+                        "project.alert-rule-edit",
+                        "project.alert-instance-detail",
+                        "project.access",
+                        "project.client-keys",
+                        "project.settings",
+                        "project.lifecycle",
+                        "account.notifications",
+                        "platform.resource-policies"
+                      ],
+                      "openEnum": false
+                    },
+                    "pathParams": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 256
+                      }
+                    },
+                    "query": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 512
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "policyGetProjectEffective": {
+        "responses": {
+          "200": {
+            "type": "object",
+            "required": [
+              "data",
+              "meta",
+              "allowedActions",
+              "navigationTargets"
+            ],
+            "properties": {
+              "data": {
+                "type": "object",
+                "required": [
+                  "data"
+                ],
+                "properties": {
+                  "data": {
+                    "type": "object",
+                    "required": [
+                      "configured",
+                      "source",
+                      "effective",
+                      "version",
+                      "propagation"
+                    ],
+                    "properties": {
+                      "configured": {
+                        "type": "object",
+                        "required": [
+                          "resourceLimit"
+                        ],
+                        "properties": {
+                          "resourceLimit": {
+                            "type": "number",
+                            "minimum": 1
+                          }
+                        }
+                      },
+                      "source": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 40
+                      },
+                      "effective": {
+                        "type": "object",
+                        "required": [
+                          "defaultPeriodQuota",
+                          "warningRatio",
+                          "hardLimit",
+                          "degradationEnabled",
+                          "highValueRetentionDays",
+                          "resourceLimit"
+                        ],
+                        "properties": {
+                          "defaultPeriodQuota": {
+                            "type": "number",
+                            "minimum": 1
+                          },
+                          "warningRatio": {
+                            "type": "number",
+                            "minimum": 1,
+                            "maximum": 100
+                          },
+                          "hardLimit": {
+                            "type": "number",
+                            "minimum": 1,
+                            "maximum": 100
+                          },
+                          "degradationEnabled": {
+                            "type": "boolean"
+                          },
+                          "highValueRetentionDays": {
+                            "type": "number",
+                            "minimum": 1
+                          },
+                          "resourceLimit": {
+                            "type": "number",
+                            "minimum": 1
+                          }
+                        }
+                      },
+                      "version": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "updatedAt": {
+                        "type": "string",
+                        "format": "date-time"
+                      },
+                      "updatedBy": {
+                        "type": "string",
+                        "minLength": 3,
+                        "maxLength": 64
+                      },
+                      "propagation": {
+                        "type": "object",
+                        "required": [
+                          "status",
+                          "reason"
+                        ],
+                        "properties": {
+                          "status": {
+                            "type": "string",
+                            "enum": [
+                              "unknown"
+                            ],
+                            "openEnum": false
+                          },
+                          "reason": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 128
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              "meta": {
+                "type": "object",
+                "required": [
+                  "requestId",
+                  "readAt"
+                ],
+                "properties": {
+                  "requestId": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 64
+                  },
+                  "readAt": {
+                    "type": "string",
+                    "format": "date-time"
+                  },
+                  "normalizedQuery": {
+                    "type": "object",
+                    "additionalProperties": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 512
+                    }
+                  }
+                }
+              },
+              "allowedActions": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "enum": [
+                    "create",
+                    "read",
+                    "update",
+                    "delete",
+                    "manage",
+                    "restore",
+                    "transfer",
+                    "revoke"
+                  ],
+                  "openEnum": false
+                }
+              },
+              "navigationTargets": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "routeId",
+                    "pathParams",
+                    "query"
+                  ],
+                  "properties": {
+                    "routeId": {
+                      "type": "string",
+                      "enum": [
+                        "auth.register",
+                        "auth.verify-email",
+                        "auth.verify-email-confirm",
+                        "auth.login",
+                        "auth.forgot-password",
+                        "auth.reset-password",
+                        "invitation.accept",
+                        "account.security",
+                        "account.deletion-cancel",
+                        "account.deletion-confirm",
+                        "workspace.home",
+                        "organization.project-create",
+                        "organization.members",
+                        "organization.settings",
+                        "organization.usage",
+                        "organization.tokens",
+                        "organization.audit",
+                        "organization.trash",
+                        "project.onboarding",
+                        "project.overview",
+                        "project.issues",
+                        "project.issue-detail",
+                        "project.requests",
+                        "project.performance",
+                        "project.data-status",
+                        "project.releases",
+                        "project.release-detail",
+                        "project.source-maps",
+                        "project.alerts",
+                        "project.alert-rule-create",
+                        "project.alert-rule-edit",
+                        "project.alert-instance-detail",
+                        "project.access",
+                        "project.client-keys",
+                        "project.settings",
+                        "project.lifecycle",
+                        "account.notifications",
+                        "platform.resource-policies"
+                      ],
+                      "openEnum": false
+                    },
+                    "pathParams": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 256
+                      }
+                    },
+                    "query": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 512
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "policySetDefault": {
+        "responses": {
+          "200": {
+            "type": "object",
+            "required": [
+              "data"
+            ],
+            "properties": {
+              "data": {
+                "type": "object",
+                "required": [
+                  "status",
+                  "version"
+                ],
+                "properties": {
+                  "status": {
+                    "type": "string",
+                    "enum": [
+                      "set"
+                    ],
+                    "openEnum": false
+                  },
+                  "version": {
+                    "type": "number",
+                    "minimum": 0
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "policySetOrganization": {
+        "responses": {
+          "200": {
+            "type": "object",
+            "required": [
+              "data"
+            ],
+            "properties": {
+              "data": {
+                "type": "object",
+                "required": [
+                  "status",
+                  "version"
+                ],
+                "properties": {
+                  "status": {
+                    "type": "string",
+                    "enum": [
+                      "set"
+                    ],
+                    "openEnum": false
+                  },
+                  "version": {
+                    "type": "number",
+                    "minimum": 0
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "policyResetOrganization": {
+        "responses": {
+          "200": {
+            "type": "object",
+            "required": [
+              "data"
+            ],
+            "properties": {
+              "data": {
+                "type": "object",
+                "required": [
+                  "status"
+                ],
+                "properties": {
+                  "status": {
+                    "type": "string",
+                    "enum": [
+                      "reset"
+                    ],
+                    "openEnum": false
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "policySetProjectLimit": {
+        "responses": {
+          "200": {
+            "type": "object",
+            "required": [
+              "data"
+            ],
+            "properties": {
+              "data": {
+                "type": "object",
+                "required": [
+                  "status",
+                  "version"
+                ],
+                "properties": {
+                  "status": {
+                    "type": "string",
+                    "enum": [
+                      "set"
+                    ],
+                    "openEnum": false
+                  },
+                  "version": {
+                    "type": "number",
+                    "minimum": 0
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "policyClearProjectLimit": {
+        "responses": {
+          "200": {
+            "type": "object",
+            "required": [
+              "data"
+            ],
+            "properties": {
+              "data": {
+                "type": "object",
+                "required": [
+                  "status"
+                ],
+                "properties": {
+                  "status": {
+                    "type": "string",
+                    "enum": [
+                      "cleared"
+                    ],
+                    "openEnum": false
                   }
                 }
               }

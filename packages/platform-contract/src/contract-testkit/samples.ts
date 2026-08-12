@@ -387,3 +387,128 @@ export const validPlatformAuditListEventsSamples: readonly unknown[] = [
     navigationTargets: [],
   },
 ];
+
+// ---------------------------------------------------------------------------
+// D2 platform resource policy (PLT-10b) samples
+// ---------------------------------------------------------------------------
+
+const validDefaultPolicyProjection = {
+  configured: {
+    defaultPeriodQuota: 1000000,
+    warningRatio: 80,
+    hardLimit: 100,
+    degradationEnabled: true,
+    highValueRetentionDays: 90,
+  },
+  source: 'system_default',
+  effective: {
+    defaultPeriodQuota: 1000000,
+    warningRatio: 80,
+    hardLimit: 100,
+    degradationEnabled: true,
+    highValueRetentionDays: 90,
+  },
+  version: 1,
+  updatedAt: '2026-08-12T01:00:00.000Z',
+  updatedBy: 'acct_test_1',
+  propagation: { status: 'unknown', reason: 'no data-plane consumer yet' },
+};
+
+const validOrgOverrideProjection = {
+  configured: {
+    defaultPeriodQuota: 500000,
+    warningRatio: 85,
+    hardLimit: 100,
+    degradationEnabled: true,
+    highValueRetentionDays: 60,
+  },
+  source: 'platform_admin',
+  effective: {
+    defaultPeriodQuota: 500000,
+    warningRatio: 85,
+    hardLimit: 100,
+    degradationEnabled: true,
+    highValueRetentionDays: 60,
+  },
+  version: 3,
+  updatedAt: '2026-08-12T01:00:00.000Z',
+  updatedBy: 'acct_test_1',
+  propagation: { status: 'unknown', reason: 'no data-plane consumer yet' },
+};
+
+const validProjectPolicyProjection = {
+  configured: { resourceLimit: 50000 },
+  source: 'platform_admin',
+  effective: {
+    defaultPeriodQuota: 500000,
+    warningRatio: 85,
+    hardLimit: 100,
+    degradationEnabled: true,
+    highValueRetentionDays: 60,
+    resourceLimit: 50000,
+  },
+  version: 2,
+  updatedAt: '2026-08-12T01:00:00.000Z',
+  updatedBy: 'acct_test_1',
+  propagation: { status: 'unknown', reason: 'no data-plane consumer yet' },
+};
+
+export const validPolicyTargetSearchSamples: readonly unknown[] = [
+  {
+    data: {
+      organizations: [{ organizationId: 'org_test_1', name: 'Acme' }],
+      projects: [{ projectId: 'prj_test_1', organizationId: 'org_test_1', name: 'Web' }],
+      pagination: { totalCount: 2, totalCountStatus: 'available' },
+    },
+    meta: { requestId: 'req_test_1', readAt: '2026-08-12T01:05:00.000Z' },
+    allowedActions: ['read'],
+    navigationTargets: [],
+  },
+];
+
+export const validPolicyGetDefaultSamples: readonly unknown[] = [
+  {
+    data: { data: validDefaultPolicyProjection },
+    meta: { requestId: 'req_test_1', readAt: '2026-08-12T01:05:00.000Z' },
+    allowedActions: ['read'],
+    navigationTargets: [{ routeId: 'platform.resource-policies', pathParams: {}, query: {} }],
+  },
+];
+
+export const validPolicyGetOrganizationEffectiveSamples: readonly unknown[] = [
+  {
+    data: { data: validOrgOverrideProjection },
+    meta: { requestId: 'req_test_1', readAt: '2026-08-12T01:05:00.000Z' },
+    allowedActions: ['read'],
+    navigationTargets: [{ routeId: 'platform.resource-policies', pathParams: {}, query: {} }],
+  },
+];
+
+export const validPolicyGetProjectEffectiveSamples: readonly unknown[] = [
+  {
+    data: { data: validProjectPolicyProjection },
+    meta: { requestId: 'req_test_1', readAt: '2026-08-12T01:05:00.000Z' },
+    allowedActions: ['read'],
+    navigationTargets: [],
+  },
+];
+
+export const validPolicySetDefaultSamples: readonly unknown[] = [
+  { data: { status: 'set', version: 4 } },
+];
+
+export const validPolicySetOrganizationSamples: readonly unknown[] = [
+  { data: { status: 'set', version: 3 } },
+];
+
+export const validPolicyResetOrganizationSamples: readonly unknown[] = [
+  { data: { status: 'reset' } },
+];
+
+export const validPolicySetProjectLimitSamples: readonly unknown[] = [
+  { data: { status: 'set', version: 2 } },
+];
+
+export const validPolicyClearProjectLimitSamples: readonly unknown[] = [
+  { data: { status: 'cleared' } },
+];

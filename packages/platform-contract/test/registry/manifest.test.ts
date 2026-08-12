@@ -88,6 +88,15 @@ describe('operation registry and manifest', () => {
       'platformAdminGrant',
       'platformAdminRevoke',
       'platformAuditListEvents',
+      'policyTargetSearch',
+      'policyGetDefault',
+      'policyGetOrganizationEffective',
+      'policyGetProjectEffective',
+      'policySetDefault',
+      'policySetOrganization',
+      'policyResetOrganization',
+      'policySetProjectLimit',
+      'policyClearProjectLimit',
     ]);
   });
 
