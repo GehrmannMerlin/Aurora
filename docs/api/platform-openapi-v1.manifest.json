@@ -14614,9 +14614,6 @@
                     "properties": {
                       "configured": {
                         "type": "object",
-                        "required": [
-                          "resourceLimit"
-                        ],
                         "properties": {
                           "resourceLimit": {
                             "type": "number",
@@ -14636,8 +14633,7 @@
                           "warningRatio",
                           "hardLimit",
                           "degradationEnabled",
-                          "highValueRetentionDays",
-                          "resourceLimit"
+                          "highValueRetentionDays"
                         ],
                         "properties": {
                           "defaultPeriodQuota": {

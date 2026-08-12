@@ -1,4 +1,5 @@
 import type { FastifyReply, FastifyRequest } from 'fastify';
+import type { Pool, PoolClient } from 'pg';
 import {
   bootstrapPlatformDefaultIfAbsent,
   clearProjectLimit,
@@ -180,6 +181,23 @@ async function resolveProjectOrganizationId(
     [projectId],
   );
   return result.rows[0]?.organization_id ?? null;
+}
+
+/** True when the organization row exists (used on the caller's pool or command transaction). */
+async function organizationExists(
+  pool: Pool | PoolClient,
+  organizationId: string,
+): Promise<boolean> {
+  const result = await pool.query('SELECT 1 FROM organizations WHERE organization_id = $1', [
+    organizationId,
+  ]);
+  return result.rows.length > 0;
+}
+
+/** True when the project row exists (used on the caller's pool or command transaction). */
+async function projectExists(pool: Pool | PoolClient, projectId: string): Promise<boolean> {
+  const result = await pool.query('SELECT 1 FROM projects WHERE project_id = $1', [projectId]);
+  return result.rows.length > 0;
 }
 
 /**
@@ -388,6 +406,12 @@ export async function handlePolicyGetOrganizationEffective(
   let orgOverride;
   try {
     await writeAuditRead(deps, session.accountId, requestId, 'organization_resource_policy');
+    // A truly nonexistent organization is a closed 404 (not a 200
+    // inherited_from_platform projection for a phantom target).
+    if (!(await organizationExists(deps.pool, organizationId))) {
+      await sendProblem(reply, requestId, 404, 'not_found', 'The organization was not found.');
+      return;
+    }
     defaultPolicy = await getPlatformDefaultPolicy(deps.pool);
     orgOverride = await getOrganizationOverride(deps.pool, { organizationId });
   } catch (error) {
@@ -539,20 +563,19 @@ export async function handlePolicyGetProjectEffective(
       : orgOverride !== null
         ? 'inherited_from_organization'
         : 'inherited_from_platform';
-  // The contract project projection requires a positive `resourceLimit`. A
-  // project without its own limit inherits the org effective resource ceiling,
-  // so the effective limit is reported as the org's `defaultPeriodQuota` (the
-  // only org-level ceiling the ADR-035 model carries); the inherited `source`
-  // and `version: 0` make the no-own-config state unambiguous.
-  const resourceLimit =
-    projectLimit?.resourceLimit ?? (orgOverride ?? defaultPolicy).defaultPeriodQuota;
+  // A project with no limit row has NO explicit project resource limit (the
+  // ADR-035 model has no inherited project resourceLimit to report), so the
+  // projection omits `resourceLimit` entirely; the inherited `source` and
+  // `version: 0` mark the no-own-config state.
+  const resourceLimitFields =
+    projectLimit === null ? {} : { resourceLimit: projectLimit.resourceLimit };
 
   const body = {
     data: {
       data: {
-        configured: { resourceLimit },
+        configured: resourceLimitFields,
         source,
-        effective: { ...policyFields(computed.effective), resourceLimit },
+        effective: { ...policyFields(computed.effective), ...resourceLimitFields },
         version: projectLimit?.version ?? 0,
         ...(projectLimit?.updatedAt === undefined ? {} : { updatedAt: projectLimit.updatedAt }),
         ...(projectLimit?.updatedBy === undefined ? {} : { updatedBy: projectLimit.updatedBy }),
@@ -886,6 +909,11 @@ export async function handlePolicyResetOrganization(
       digest,
       execute: async (client) => {
         try {
+          // A truly nonexistent organization is a closed 404 (idempotent success
+          // is reserved for an existing organization with no override row).
+          if (!(await organizationExists(client, organizationId))) {
+            throw new ServiceError(404, 'not_found', 'The organization was not found.');
+          }
           const result = await resetOrganizationOverride(client, {
             organizationId,
             expectedVersion: body.version,
@@ -1136,6 +1164,11 @@ export async function handlePolicyClearProjectLimit(
       digest,
       execute: async (client) => {
         try {
+          // A truly nonexistent project is a closed 404 (idempotent success is
+          // reserved for an existing project with no limit row).
+          if (!(await projectExists(client, projectId))) {
+            throw new ServiceError(404, 'not_found', 'The project was not found.');
+          }
           const result = await clearProjectLimit(client, {
             projectId,
             expectedVersion: body.version,

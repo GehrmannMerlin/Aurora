@@ -459,6 +459,12 @@ describeDb('PLT-10b platform resource-policy flow (real PostgreSQL 17 + Redis)',
     expect(malformed.status).toBe(400);
     expect((malformed.body as ProblemBody).code).toBe('structural_error');
 
+    // Nonexistent organization on the effective GET → closed 404 (not a 200
+    // inherited_from_platform projection for a phantom target).
+    const missingOrgRead = await getOrgEffective(app, bob, randomUUID());
+    expect(missingOrgRead.status).toBe(404);
+    expect((missingOrgRead.body as ProblemBody).code).toBe('not_found');
+
     await app.close();
   });
 
@@ -479,6 +485,31 @@ describeDb('PLT-10b platform resource-policy flow (real PostgreSQL 17 + Redis)',
       idempotencyKey: randomUUID(),
     });
     const { projectId } = await createProject(app, bob, `plt10b-flow-${randomUUID()}`);
+
+    // Before the project limit: no explicit resourceLimit is reported (the
+    // org override is present, so source is inherited_from_organization and the
+    // five protective fields come from the override).
+    const before = await getProjectEffective(app, bob, projectId);
+    expect(before.status).toBe(200);
+    const beforeData = (before.body.data as {
+      data: {
+        configured: Record<string, unknown>;
+        source: string;
+        effective: Record<string, unknown>;
+        version: number;
+      };
+    }).data;
+    expect(beforeData.source).toBe('inherited_from_organization');
+    expect(beforeData.version).toBe(0);
+    expect(beforeData.configured).not.toHaveProperty('resourceLimit');
+    expect(beforeData.effective).not.toHaveProperty('resourceLimit');
+    expect(beforeData.effective).toMatchObject({
+      defaultPeriodQuota: 500_000,
+      warningRatio: 85,
+      hardLimit: 100,
+      degradationEnabled: true,
+      highValueRetentionDays: 60,
+    });
 
     const set = await postSetProjectLimit(app, bob, projectId, {
       resourceLimit: 50_000,
@@ -587,9 +618,36 @@ describeDb('PLT-10b platform resource-policy flow (real PostgreSQL 17 + Redis)',
 
     const projectAfter = await getProjectEffective(app, bob, projectId);
     expect(projectAfter.status).toBe(200);
-    const data = (projectAfter.body.data as { data: { source: string; version: number } }).data;
-    expect(data.source).toBe('inherited_from_platform');
-    expect(data.version).toBe(0);
+    const projectData = (projectAfter.body.data as {
+      data: {
+        configured: Record<string, unknown>;
+        source: string;
+        effective: Record<string, unknown>;
+        version: number;
+      };
+    }).data;
+    expect(projectData.source).toBe('inherited_from_platform');
+    expect(projectData.version).toBe(0);
+    // After clear, NO project resourceLimit is reported in configured/effective.
+    expect(projectData.configured).not.toHaveProperty('resourceLimit');
+    expect(projectData.effective).not.toHaveProperty('resourceLimit');
+
+    // A truly nonexistent target is a closed 404 (confirm is still validated).
+    const missingReset = await postResetOrganization(app, bob, randomUUID(), {
+      version: 0,
+      confirm: true,
+      idempotencyKey: randomUUID(),
+    });
+    expect(missingReset.status).toBe(404);
+    expect((missingReset.body as ProblemBody).code).toBe('not_found');
+
+    const missingClear = await postClearProjectLimit(app, bob, randomUUID(), {
+      version: 0,
+      confirm: true,
+      idempotencyKey: randomUUID(),
+    });
+    expect(missingClear.status).toBe(404);
+    expect((missingClear.body as ProblemBody).code).toBe('not_found');
 
     await app.close();
   });

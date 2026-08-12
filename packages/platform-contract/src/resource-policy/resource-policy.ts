@@ -28,7 +28,13 @@ const policyFieldsDef = obj(policyFields);
 /** Project-level override: only the resource limit is configurable at project scope (ADR-035). */
 const projectLimitField = { resourceLimit: num(1) } as const;
 
-const projectLimitFieldDef = obj(projectLimitField);
+/**
+ * Project effective-policy `configured` projection. `resourceLimit` is OPTIONAL:
+ * a project with no limit row has no explicit project configuration, so
+ * `configured` is an empty object and `effective` omits `resourceLimit` (the
+ * ADR-035 model has no inherited project resourceLimit to report).
+ */
+const projectLimitFieldDef = obj({ resourceLimit: optional(num(1)) });
 
 /** First version has no data-plane consumer, so propagation is always `unknown` (never claims生效). */
 const propagation = obj({
@@ -53,14 +59,15 @@ const policyProjection = obj({
 /**
  * Effective policy projection for a project target: the project's own resource-limit
  * override (`configured`) plus the full computed effective policy that inherits the
- * org/platform five-field policy and overlays `resourceLimit`.
+ * org/platform five-field policy and overlays `resourceLimit`. `resourceLimit` is
+ * optional in both (no limit row → no project-specific limit to report).
  */
 const projectPolicyProjection = obj({
   configured: projectLimitFieldDef,
   source: str(1, 40),
   effective: obj({
     ...policyFields,
-    resourceLimit: num(1),
+    resourceLimit: optional(num(1)),
   }),
   version: num(0),
   updatedAt: optional(utcTimestamp),

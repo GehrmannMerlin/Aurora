@@ -2930,7 +2930,7 @@ paths:
             schema:
               type: object
               properties:
-                resourceLimit: &a66
+                resourceLimit:
                   type: number
                   minimum: 1
                 version:
@@ -8089,7 +8089,7 @@ components:
                   minimum: 0
                 updatedAt: *a7
                 updatedBy: *a4
-                propagation: &a67
+                propagation: &a66
                   type: object
                   properties:
                     status:
@@ -8154,10 +8154,10 @@ components:
                 configured:
                   type: object
                   properties:
-                    resourceLimit: *a66
+                    resourceLimit:
+                      type: number
+                      minimum: 1
                   additionalProperties: false
-                  required:
-                    - resourceLimit
                 source:
                   type: string
                   minLength: 1
@@ -8180,13 +8180,12 @@ components:
                     - hardLimit
                     - degradationEnabled
                     - highValueRetentionDays
-                    - resourceLimit
                 version:
                   type: number
                   minimum: 0
                 updatedAt: *a7
                 updatedBy: *a4
-                propagation: *a67
+                propagation: *a66
               additionalProperties: false
               required:
                 - configured
