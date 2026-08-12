@@ -146,7 +146,7 @@ maintenance: operational-snapshot
 **G13 通知与资源策略（2026-08-12，分支 `feature/g13-notifications-resource-policy`，基于 G12 head `d33372c` 之上）**：
 
 - **PLT-09 D1 站内通知中心（completed）**：`@aurora/processing-store` 通知数据模型 + Repository（`(account_id, business_key, type)` 唯一去重、persist/query/unread/markRead、keyset 分页、账号隔离、幂等已读）；三个真实触发源接入（告警触发/恢复经 round 通知决策 + `persistAlertRoundNotifications`；新问题/重开经 `persistIssueContribution` `reopened` 状态 + `createIssueNotificationSender` + error processor `notifyIssue` 端口；分配经 assignee handler 幂等事务内写通知；org/接收者解析在 processing-store，不引入新包）；机器契约 `notificationsListAndUnread`/`notificationsMarkRead` + navigation `unreadCount` + platform-api 2 handler（账号隔离、cross-account 404）；Console D1 `account.notifications` 真实页面（URL `?read=all|unread` 权威、keyset 加载更多、单条已读、授权 Route Target、loading/empty/error/forbidden、TopBar 未读角标未知不伪造 0、MSW 仅测试 fixture）；targeted 集成/单测 + 真实 Chromium smoke + reachability 门禁全绿。**已关闭叶子**：completed 68→69 / remaining 10→9（release-pending，未部署、未合入 main；PR #22 未 merge）。
-- **PLT-10 D2 平台资源策略管理（BLOCKED_PRODUCT_DECISION）**：Platform Admin 身份/授权/撤销、break-glass、平台级审计与资源策略缺少 approved 产品/安全规则；本轮复查无新增 approved 规范/accepted ADR，保持 blocked；`G13_PLT10_APPROVAL_PACKAGE` 已列需用户决定项，不阻塞 PLT-09。
+- **PLT-10 D2 平台资源策略管理（BLOCKED_PRODUCT_DECISION）**：Platform Admin 身份/授权/撤销、break-glass、平台级审计与资源策略缺少 approved 产品/安全规则；本轮复查无新增 approved 规范/accepted ADR；`G13_PLT10_APPROVAL_PACKAGE`（平台管理员身份模型、授权与撤销、break-glass、平台级审计、资源策略范围、D2 页面规则六项）**已于 2026-08-12 获用户批准作为 PLT-10 决策范围**，六项实际决策仍待定，PLT-10 保持 blocked；不阻塞 PLT-09。
 - **G13 = PLT-09 implementation-completed；PLT-10 blocked**；`G13_G12_MAIN_INTEGRATION_PENDING`（G12 PR #22 未 merge）；`G13_REMOTE_CI` 依 push 后查询一次记录。
 
 ## 4. 正式化与详细设计入口
