@@ -70,12 +70,13 @@
     "settingsCreateEnvironment",
     "lifecycleArchiveProject",
     "lifecycleRestoreProject",
-    "lifecycleMoveToTrash"
+    "lifecycleMoveToTrash",
+    "notificationsListAndUnread",
+    "notificationsMarkRead"
   ],
   "blocked": {
     "onboardingGetProgress": "C1 onboarding model not formalized (G11)",
     "overviewGetProjectStatus": "C2 overview Query not formalized (G11)",
-    "notificationsListAndUnread": "D1 notifications backend not formalized (G13)",
     "policySetPlatformDefault": "D2 PlatformAdmin authority not approved (G13)"
   },
   "routeTargetCoverage": {
@@ -115,7 +116,7 @@
     "project.client-keys": "stable",
     "project.settings": "stable",
     "project.lifecycle": "stable",
-    "account.notifications": "blocked",
+    "account.notifications": "stable",
     "platform.resource-policies": "unavailable"
   },
   "capabilities": [
@@ -338,7 +339,8 @@
               "organizations",
               "currentScope",
               "defaultTarget",
-              "safeExitTarget"
+              "safeExitTarget",
+              "unreadCount"
             ],
             "properties": {
               "account": {
@@ -805,6 +807,26 @@
                       "minLength": 1,
                       "maxLength": 512
                     }
+                  }
+                }
+              },
+              "unreadCount": {
+                "type": "object",
+                "required": [
+                  "status"
+                ],
+                "properties": {
+                  "value": {
+                    "type": "number",
+                    "minimum": 0
+                  },
+                  "status": {
+                    "type": "string",
+                    "enum": [
+                      "available",
+                      "unavailable"
+                    ],
+                    "openEnum": false
                   }
                 }
               }
@@ -12894,6 +12916,378 @@
                   "recoverableUntil": {
                     "type": "string",
                     "format": "date-time"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "notificationsListAndUnread": {
+        "responses": {
+          "200": {
+            "type": "object",
+            "required": [
+              "data",
+              "meta",
+              "allowedActions",
+              "navigationTargets"
+            ],
+            "properties": {
+              "data": {
+                "type": "object",
+                "required": [
+                  "notifications",
+                  "unreadCount"
+                ],
+                "properties": {
+                  "notifications": {
+                    "type": "object",
+                    "required": [
+                      "status",
+                      "items",
+                      "pagination"
+                    ],
+                    "properties": {
+                      "status": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 16
+                      },
+                      "reason": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 128
+                      },
+                      "items": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "required": [
+                            "notificationId",
+                            "type",
+                            "title",
+                            "occurredAt",
+                            "target"
+                          ],
+                          "properties": {
+                            "notificationId": {
+                              "type": "string",
+                              "minLength": 3,
+                              "maxLength": 64
+                            },
+                            "type": {
+                              "type": "string",
+                              "enum": [
+                                "alert_triggered",
+                                "alert_recovered",
+                                "new_issue",
+                                "issue_reappeared",
+                                "issue_assigned_to_me"
+                              ],
+                              "openEnum": false
+                            },
+                            "title": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 256
+                            },
+                            "summary": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 1024
+                            },
+                            "organizationId": {
+                              "type": "string",
+                              "minLength": 3,
+                              "maxLength": 64
+                            },
+                            "projectId": {
+                              "type": "string",
+                              "minLength": 3,
+                              "maxLength": 64
+                            },
+                            "occurredAt": {
+                              "type": "string",
+                              "format": "date-time"
+                            },
+                            "readAt": {
+                              "type": "string",
+                              "format": "date-time"
+                            },
+                            "target": {
+                              "type": "object",
+                              "required": [
+                                "routeId",
+                                "pathParams",
+                                "query"
+                              ],
+                              "properties": {
+                                "routeId": {
+                                  "type": "string",
+                                  "enum": [
+                                    "auth.register",
+                                    "auth.verify-email",
+                                    "auth.verify-email-confirm",
+                                    "auth.login",
+                                    "auth.forgot-password",
+                                    "auth.reset-password",
+                                    "invitation.accept",
+                                    "account.security",
+                                    "account.deletion-cancel",
+                                    "account.deletion-confirm",
+                                    "workspace.home",
+                                    "organization.project-create",
+                                    "organization.members",
+                                    "organization.settings",
+                                    "organization.usage",
+                                    "organization.tokens",
+                                    "organization.audit",
+                                    "organization.trash",
+                                    "project.onboarding",
+                                    "project.overview",
+                                    "project.issues",
+                                    "project.issue-detail",
+                                    "project.requests",
+                                    "project.performance",
+                                    "project.data-status",
+                                    "project.releases",
+                                    "project.release-detail",
+                                    "project.source-maps",
+                                    "project.alerts",
+                                    "project.alert-rule-create",
+                                    "project.alert-rule-edit",
+                                    "project.alert-instance-detail",
+                                    "project.access",
+                                    "project.client-keys",
+                                    "project.settings",
+                                    "project.lifecycle",
+                                    "account.notifications",
+                                    "platform.resource-policies"
+                                  ],
+                                  "openEnum": false
+                                },
+                                "pathParams": {
+                                  "type": "object",
+                                  "additionalProperties": {
+                                    "type": "string",
+                                    "minLength": 1,
+                                    "maxLength": 256
+                                  }
+                                },
+                                "query": {
+                                  "type": "object",
+                                  "additionalProperties": {
+                                    "type": "string",
+                                    "minLength": 1,
+                                    "maxLength": 512
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      },
+                      "pagination": {
+                        "type": "object",
+                        "required": [
+                          "totalCountStatus"
+                        ],
+                        "properties": {
+                          "cursor": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 4096
+                          },
+                          "nextCursor": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 4096
+                          },
+                          "totalCount": {
+                            "type": "number",
+                            "minimum": 0
+                          },
+                          "totalCountStatus": {
+                            "type": "string",
+                            "enum": [
+                              "available",
+                              "unavailable"
+                            ],
+                            "openEnum": false
+                          }
+                        }
+                      }
+                    }
+                  },
+                  "unreadCount": {
+                    "type": "object",
+                    "required": [
+                      "status"
+                    ],
+                    "properties": {
+                      "value": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "status": {
+                        "type": "string",
+                        "enum": [
+                          "available",
+                          "unavailable"
+                        ],
+                        "openEnum": false
+                      }
+                    }
+                  }
+                }
+              },
+              "meta": {
+                "type": "object",
+                "required": [
+                  "requestId",
+                  "readAt"
+                ],
+                "properties": {
+                  "requestId": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 64
+                  },
+                  "readAt": {
+                    "type": "string",
+                    "format": "date-time"
+                  },
+                  "normalizedQuery": {
+                    "type": "object",
+                    "additionalProperties": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 512
+                    }
+                  }
+                }
+              },
+              "allowedActions": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "enum": [
+                    "create",
+                    "read",
+                    "update",
+                    "delete",
+                    "manage",
+                    "restore",
+                    "transfer",
+                    "revoke"
+                  ],
+                  "openEnum": false
+                }
+              },
+              "navigationTargets": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "routeId",
+                    "pathParams",
+                    "query"
+                  ],
+                  "properties": {
+                    "routeId": {
+                      "type": "string",
+                      "enum": [
+                        "auth.register",
+                        "auth.verify-email",
+                        "auth.verify-email-confirm",
+                        "auth.login",
+                        "auth.forgot-password",
+                        "auth.reset-password",
+                        "invitation.accept",
+                        "account.security",
+                        "account.deletion-cancel",
+                        "account.deletion-confirm",
+                        "workspace.home",
+                        "organization.project-create",
+                        "organization.members",
+                        "organization.settings",
+                        "organization.usage",
+                        "organization.tokens",
+                        "organization.audit",
+                        "organization.trash",
+                        "project.onboarding",
+                        "project.overview",
+                        "project.issues",
+                        "project.issue-detail",
+                        "project.requests",
+                        "project.performance",
+                        "project.data-status",
+                        "project.releases",
+                        "project.release-detail",
+                        "project.source-maps",
+                        "project.alerts",
+                        "project.alert-rule-create",
+                        "project.alert-rule-edit",
+                        "project.alert-instance-detail",
+                        "project.access",
+                        "project.client-keys",
+                        "project.settings",
+                        "project.lifecycle",
+                        "account.notifications",
+                        "platform.resource-policies"
+                      ],
+                      "openEnum": false
+                    },
+                    "pathParams": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 256
+                      }
+                    },
+                    "query": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 512
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "notificationsMarkRead": {
+        "responses": {
+          "200": {
+            "type": "object",
+            "required": [
+              "data"
+            ],
+            "properties": {
+              "data": {
+                "type": "object",
+                "required": [
+                  "status",
+                  "notificationId"
+                ],
+                "properties": {
+                  "status": {
+                    "type": "string",
+                    "enum": [
+                      "read"
+                    ],
+                    "openEnum": false
+                  },
+                  "notificationId": {
+                    "type": "string",
+                    "minLength": 3,
+                    "maxLength": 64
                   }
                 }
               }

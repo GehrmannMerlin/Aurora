@@ -234,6 +234,15 @@ import {
   sourceMapsUploadResponse,
 } from '../releases/releases.js';
 import {
+  OPERATION_ID_NOTIFICATIONS_LIST,
+  OPERATION_ID_NOTIFICATIONS_MARK_READ,
+  notificationsListAndUnreadQuery,
+  notificationsListAndUnreadResponse,
+  notificationsMarkReadBody,
+  notificationsMarkReadPathParams,
+  notificationsMarkReadResponse,
+} from '../notifications/notifications.js';
+import {
   OPERATION_ID_ACCESS_CHANGE_ROLE,
   OPERATION_ID_ACCESS_GRANT,
   OPERATION_ID_ACCESS_LIST,
@@ -1859,6 +1868,56 @@ export const PLATFORM_OPERATIONS: readonly OperationDef[] = [
     page: 'project.lifecycle',
     tags: ['project-governance', 'lifecycle'],
   },
+  {
+    operationId: OPERATION_ID_NOTIFICATIONS_LIST,
+    domain: 'issues-and-alerts',
+    authLevel: 'session',
+    method: 'GET',
+    path: '/api/platform/v1/notifications',
+    summary:
+      'List the current account notifications (keyset pagination, read-state filter) with the account-level unread count (D1)',
+    request: {
+      query: notificationsListAndUnreadQuery,
+      csrf: false,
+      idempotency: false,
+    },
+    responses: { 200: notificationsListAndUnreadResponse },
+    errorCodes: [
+      'structural_error',
+      'authentication',
+      'authorization',
+      'rate_limited',
+      'authority_unavailable',
+    ],
+    page: 'account.notifications',
+    tags: ['issues-and-alerts', 'notifications'],
+  },
+  {
+    operationId: OPERATION_ID_NOTIFICATIONS_MARK_READ,
+    domain: 'issues-and-alerts',
+    authLevel: 'session',
+    method: 'POST',
+    path: '/api/platform/v1/notifications/:notificationId/read',
+    summary: 'Mark one account notification as read (idempotent, account-scoped)',
+    request: {
+      pathParams: notificationsMarkReadPathParams,
+      body: notificationsMarkReadBody,
+      csrf: true,
+      idempotency: true,
+    },
+    responses: { 200: notificationsMarkReadResponse },
+    errorCodes: [
+      'structural_error',
+      'authentication',
+      'authorization',
+      'not_found',
+      'idempotency_conflict',
+      'rate_limited',
+      'authority_unavailable',
+    ],
+    page: 'account.notifications',
+    tags: ['issues-and-alerts', 'notifications'],
+  },
 ];
 
 export interface BlockedOperation {
@@ -1877,11 +1936,6 @@ export const BLOCKED_OPERATIONS: readonly BlockedOperation[] = [
     operationId: 'overviewGetProjectStatus',
     domain: 'issues-and-alerts',
     reason: 'C2 overview Query not formalized (G11)',
-  },
-  {
-    operationId: 'notificationsListAndUnread',
-    domain: 'issues-and-alerts',
-    reason: 'D1 notifications backend not formalized (G13)',
   },
   {
     operationId: 'policySetPlatformDefault',

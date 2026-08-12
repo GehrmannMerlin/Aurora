@@ -11,6 +11,7 @@ describe('navigationGetContext', () => {
         currentScope: { type: 'workspace', lifecycle: 'active' },
         defaultTarget: { routeId: 'workspace.home', pathParams: {}, query: {} },
         safeExitTarget: { routeId: 'workspace.home', pathParams: {}, query: {} },
+        unreadCount: { value: 0, status: 'available' },
       }).success,
     ).toBe(true);
   });
@@ -24,6 +25,7 @@ describe('navigationGetContext', () => {
         currentScope: { type: 'workspace', lifecycle: 'active' },
         defaultTarget: { routeId: 'anything.goes', pathParams: {}, query: {} },
         safeExitTarget: { routeId: 'workspace.home', pathParams: {}, query: {} },
+        unreadCount: { status: 'unavailable' },
       }).success,
     ).toBe(false);
   });

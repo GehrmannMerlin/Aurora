@@ -19,6 +19,10 @@ import { projectGovernanceRestoreProjectResponse } from '../../src/project-gover
 import { credentialsListPrivateTokensResponse } from '../../src/credentials/private-tokens.js';
 import { credentialsCreatePrivateTokenResponse } from '../../src/credentials/private-tokens.js';
 import { auditListSecurityAuditResponse } from '../../src/audit/security-audit.js';
+import {
+  notificationsListAndUnreadResponse,
+  notificationsMarkReadResponse,
+} from '../../src/notifications/notifications.js';
 import { auroraProblem } from '../../src/common/problem-details.js';
 import {
   validSessionSamples,
@@ -43,6 +47,8 @@ import {
   validListPrivateTokensSamples,
   validCreatePrivateTokenSamples,
   validListSecurityAuditSamples,
+  validListNotificationsSamples,
+  validMarkNotificationReadSamples,
 } from '../../src/contract-testkit/index.js';
 
 describe('contract testkit', () => {
@@ -86,6 +92,10 @@ describe('contract testkit', () => {
       expect(credentialsCreatePrivateTokenResponse.zod.safeParse(s).success).toBe(true);
     for (const s of validListSecurityAuditSamples)
       expect(auditListSecurityAuditResponse.zod.safeParse(s).success).toBe(true);
+    for (const s of validListNotificationsSamples)
+      expect(notificationsListAndUnreadResponse.zod.safeParse(s).success).toBe(true);
+    for (const s of validMarkNotificationReadSamples)
+      expect(notificationsMarkReadResponse.zod.safeParse(s).success).toBe(true);
   });
 
   it('invalid samples fail their schemas', () => {
@@ -117,6 +127,8 @@ describe('contract testkit', () => {
       ...validRestoreProjectSamples,
       ...validListPrivateTokensSamples,
       ...validListSecurityAuditSamples,
+      ...validListNotificationsSamples,
+      ...validMarkNotificationReadSamples,
     ]);
     expect(all).not.toMatch(/aurora_ingest_|Bearer |secret|password|sessionId/i);
     // The list tokens response is metadata-only: never a plaintext or digest.

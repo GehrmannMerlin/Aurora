@@ -109,6 +109,10 @@ import {
   handleDeleteAccountPreflight,
   handleRequestAccountDeletion,
 } from './routes/deletion.js';
+import {
+  handleListNotifications,
+  handleMarkNotificationRead,
+} from './routes/notifications.js';
 import { SESSION_COOKIE_NAME } from './session-cookie.js';
 import { InMemoryRateLimiter } from './rate-limit.js';
 import { sendProblem } from './error-mapper.js';
@@ -633,6 +637,17 @@ export function buildPlatformApi(deps: PlatformApiDependencies): FastifyInstance
 
   app.post('/api/platform/v1/account/deletion/cancel', async (request, reply) => {
     await handleCancelAccountDeletion(request, reply, routeContext);
+  });
+
+  // PLT-09 D1 account-level notification routes: list + unread (session query)
+  // and mark-read (session + CSRF + idempotent command). Account-scoped; the
+  // repository isolates rows by the session account.
+  app.get('/api/platform/v1/notifications', async (request, reply) => {
+    await handleListNotifications(request, reply, routeContext);
+  });
+
+  app.post('/api/platform/v1/notifications/:notificationId/read', async (request, reply) => {
+    await handleMarkNotificationRead(request, reply, routeContext);
   });
 
   app.setNotFoundHandler(async (request, reply) => {

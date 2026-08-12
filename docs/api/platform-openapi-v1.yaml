@@ -2489,6 +2489,76 @@ paths:
               required:
                 - resourceVersion
                 - idempotencyKey
+  /notifications:
+    get:
+      operationId: notificationsListAndUnread
+      summary: List the current account notifications (keyset pagination, read-state
+        filter) with the account-level unread count (D1)
+      tags:
+        - issues-and-alerts
+        - notifications
+      responses:
+        "200":
+          description: 200 response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/notificationsListAndUnreadResponse"
+      parameters:
+        - name: query
+          in: query
+          schema:
+            type: object
+            properties:
+              readState:
+                type: string
+                minLength: 1
+                maxLength: 16
+              cursor:
+                type: string
+                minLength: 1
+                maxLength: 512
+              limit:
+                type: number
+                minimum: 1
+                maximum: 50
+            additionalProperties: false
+  /notifications/{notificationId}/read:
+    post:
+      operationId: notificationsMarkRead
+      summary: Mark one account notification as read (idempotent, account-scoped)
+      tags:
+        - issues-and-alerts
+        - notifications
+      responses:
+        "200":
+          description: 200 response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/notificationsMarkReadResponse"
+      parameters:
+        - name: notificationId
+          in: path
+          required: true
+          schema: &a57
+            type: string
+            minLength: 3
+            maxLength: 64
+            description: NotificationId
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                idempotencyKey:
+                  type: string
+                  minLength: 8
+                  maxLength: 128
+              additionalProperties: false
+              required:
+                - idempotencyKey
 components:
   schemas:
     identityGetSessionResponse:
@@ -2682,6 +2752,20 @@ components:
             - "null"
         defaultTarget: *a16
         safeExitTarget: *a16
+        unreadCount:
+          type: object
+          properties:
+            value:
+              type: number
+              minimum: 0
+            status:
+              type: string
+              enum:
+                - available
+                - unavailable
+          additionalProperties: false
+          required:
+            - status
       additionalProperties: false
       required:
         - account
@@ -2690,6 +2774,7 @@ components:
         - currentScope
         - defaultTarget
         - safeExitTarget
+        - unreadCount
     identityRegisterResponse:
       type: object
       properties:
@@ -7224,6 +7309,108 @@ components:
       additionalProperties: false
       required:
         - data
+    notificationsListAndUnreadResponse:
+      type: object
+      properties:
+        data:
+          type: object
+          properties:
+            notifications:
+              type: object
+              properties:
+                status:
+                  type: string
+                  minLength: 1
+                  maxLength: 16
+                reason:
+                  type: string
+                  minLength: 1
+                  maxLength: 128
+                items:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      notificationId: *a57
+                      type:
+                        type: string
+                        enum:
+                          - alert_triggered
+                          - alert_recovered
+                          - new_issue
+                          - issue_reappeared
+                          - issue_assigned_to_me
+                      title:
+                        type: string
+                        minLength: 1
+                        maxLength: 256
+                      summary:
+                        type: string
+                        minLength: 1
+                        maxLength: 1024
+                      organizationId: *a2
+                      projectId: *a6
+                      occurredAt: *a7
+                      readAt: *a7
+                      target: *a16
+                    additionalProperties: false
+                    required:
+                      - notificationId
+                      - type
+                      - title
+                      - occurredAt
+                      - target
+                pagination: *a23
+              additionalProperties: false
+              required:
+                - status
+                - items
+                - pagination
+            unreadCount:
+              type: object
+              properties:
+                value:
+                  type: number
+                  minimum: 0
+                status:
+                  type: string
+                  enum:
+                    - available
+                    - unavailable
+              additionalProperties: false
+              required:
+                - status
+          additionalProperties: false
+          required:
+            - notifications
+            - unreadCount
+        meta: *a35
+        allowedActions: *a26
+        navigationTargets: *a15
+      additionalProperties: false
+      required:
+        - data
+        - meta
+        - allowedActions
+        - navigationTargets
+    notificationsMarkReadResponse:
+      type: object
+      properties:
+        data:
+          type: object
+          properties:
+            status:
+              type: string
+              enum:
+                - read
+            notificationId: *a57
+          additionalProperties: false
+          required:
+            - status
+            - notificationId
+      additionalProperties: false
+      required:
+        - data
 tags:
   - name: access
   - name: alerts
@@ -7239,6 +7426,7 @@ tags:
   - name: members
   - name: monitoring
   - name: navigation
+  - name: notifications
   - name: organization
   - name: performance
   - name: project-governance

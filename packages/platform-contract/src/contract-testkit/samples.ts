@@ -71,6 +71,7 @@ export const validNavigationSamples: readonly unknown[] = [
       query: {},
     },
     safeExitTarget: { routeId: 'workspace.home', pathParams: {}, query: {} },
+    unreadCount: { value: 0, status: 'available' },
   },
 ];
 
@@ -82,6 +83,7 @@ export const invalidNavigationSamples: readonly unknown[] = [
     currentScope: { type: 'workspace', lifecycle: 'active' },
     defaultTarget: { routeId: 'anything.goes', pathParams: {}, query: {} },
     safeExitTarget: { routeId: 'workspace.home', pathParams: {}, query: {} },
+    unreadCount: { status: 'unavailable' },
   },
 ];
 
@@ -282,5 +284,47 @@ export const validListSecurityAuditSamples: readonly unknown[] = [
       },
     ],
     pagination: { totalCountStatus: 'available' },
+  },
+];
+
+export const validListNotificationsSamples: readonly unknown[] = [
+  {
+    data: {
+      notifications: {
+        status: 'available',
+        items: [
+          {
+            notificationId: 'notif_test_1',
+            type: 'new_issue',
+            title: '新问题出现',
+            summary: 'TypeError: boom',
+            organizationId: 'org_test_1',
+            projectId: 'prj_test_1',
+            occurredAt: '2026-08-10T12:00:00.000Z',
+            readAt: '2026-08-10T12:05:00.000Z',
+            target: {
+              routeId: 'project.issue-detail',
+              pathParams: {
+                organizationId: 'org_test_1',
+                projectId: 'prj_test_1',
+                issueId: '7',
+              },
+              query: {},
+            },
+          },
+        ],
+        pagination: { nextCursor: 'cGFnZS0y', totalCount: 1, totalCountStatus: 'available' },
+      },
+      unreadCount: { value: 0, status: 'available' },
+    },
+    meta: { requestId: 'req_test_1', readAt: '2026-08-10T12:06:00.000Z' },
+    allowedActions: ['read'],
+    navigationTargets: [],
+  },
+];
+
+export const validMarkNotificationReadSamples: readonly unknown[] = [
+  {
+    data: { status: 'read', notificationId: 'notif_test_1' },
   },
 ];

@@ -22,4 +22,6 @@ export {
   validListPrivateTokensSamples,
   validCreatePrivateTokenSamples,
   validListSecurityAuditSamples,
+  validListNotificationsSamples,
+  validMarkNotificationReadSamples,
 } from './samples.js';

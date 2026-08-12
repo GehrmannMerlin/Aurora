@@ -65,11 +65,33 @@ describe('operation registry and manifest', () => {
       'sourceMapsUpload',
       'sourceMapsReplace',
       'sourceMapsReparse',
+      'accessListEffectiveMembers',
+      'accessGrantProjectMembership',
+      'accessChangeProjectRole',
+      'accessRemoveProjectMembership',
+      'credentialsListClientKeys',
+      'credentialsCreateClientKey',
+      'credentialsDisableClientKey',
+      'credentialsEnableClientKey',
+      'credentialsRevokeClientKey',
+      'settingsGetProject',
+      'settingsUpdateProject',
+      'settingsListEnvironments',
+      'settingsCreateEnvironment',
+      'lifecycleArchiveProject',
+      'lifecycleRestoreProject',
+      'lifecycleMoveToTrash',
+      'notificationsListAndUnread',
+      'notificationsMarkRead',
     ]);
   });
 
   it('registers blocked downstream operations without schemas', () => {
-    expect(BLOCKED_OPERATIONS.length).toBeGreaterThan(6);
+    expect(BLOCKED_OPERATIONS.map((op) => op.operationId)).toEqual([
+      'onboardingGetProgress',
+      'overviewGetProjectStatus',
+      'policySetPlatformDefault',
+    ]);
     for (const op of BLOCKED_OPERATIONS) {
       expect(op.reason.length).toBeGreaterThan(10);
       expect('responses' in op).toBe(false);
@@ -186,11 +208,11 @@ describe('operation registry and manifest', () => {
       'project.alert-rule-create': 'stable',
       'project.alert-rule-edit': 'stable',
       'project.alert-instance-detail': 'stable',
-      'project.access': 'blocked',
-      'project.client-keys': 'blocked',
-      'project.settings': 'blocked',
-      'project.lifecycle': 'blocked',
-      'account.notifications': 'blocked',
+      'project.access': 'stable',
+      'project.client-keys': 'stable',
+      'project.settings': 'stable',
+      'project.lifecycle': 'stable',
+      'account.notifications': 'stable',
       'platform.resource-policies': 'unavailable',
     };
     expect(Object.keys(expected)).toHaveLength(ROUTE_TARGET_IDS.length);
