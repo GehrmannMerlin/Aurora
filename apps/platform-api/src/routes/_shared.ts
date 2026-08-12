@@ -2,6 +2,7 @@ import type { FastifyReply, FastifyRequest } from 'fastify';
 import type { PoolClient } from 'pg';
 import type { SessionPayload } from '@aurora/platform-session';
 import type { RouteTargetId } from '@aurora/platform-contract';
+import { isPlatformAdmin } from '@aurora/platform-admin';
 import { checkProjectAccess, getProjectAccessRole } from '@aurora/platform-project-governance';
 import { effectivePermissions, type EffectivePermissions } from '../authorization.js';
 import { sendProblem } from '../error-mapper.js';
@@ -55,6 +56,43 @@ export async function requireSession(
     return null;
   }
   return request.sessionPayload;
+}
+
+/**
+ * Require platform admin capability (PLT-10a, ADR-034) for a D2 platform-level
+ * route handler. Session authentication first (401), then re-reads
+ * `platform_admins` for the CURRENT session account (never cached): a non-admin
+ * gets a closed `403 authorization` with no platform data leaked; a data-layer
+ * failure fails closed with `503 authority_unavailable` (never a degraded
+ * allow). Returns the resolved session payload, or null when a problem was
+ * already sent.
+ */
+export async function requirePlatformAdmin(
+  request: FastifyRequest,
+  reply: FastifyReply,
+  deps: PlatformApiRouteDependencies,
+  requestId: string,
+): Promise<SessionPayload | null> {
+  const session = await requireSession(request, reply, requestId);
+  if (session === null) return null;
+  let isAdmin;
+  try {
+    isAdmin = await isPlatformAdmin(deps.pool, { accountId: session.accountId });
+  } catch (error) {
+    if (await sendMappedError(reply, requestId, error)) return null;
+    throw error;
+  }
+  if (!isAdmin) {
+    await sendProblem(
+      reply,
+      requestId,
+      403,
+      'authorization',
+      'You do not have platform admin permission.',
+    );
+    return null;
+  }
+  return session;
 }
 
 /**

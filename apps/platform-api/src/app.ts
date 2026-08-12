@@ -113,6 +113,13 @@ import {
   handleListNotifications,
   handleMarkNotificationRead,
 } from './routes/notifications.js';
+import {
+  handleGetPlatformAdminCapability,
+  handleGrantPlatformAdmin,
+  handleListPlatformAdmins,
+  handleListPlatformAuditEvents,
+  handleRevokePlatformAdmin,
+} from './routes/platform-admin.js';
 import { SESSION_COOKIE_NAME } from './session-cookie.js';
 import { InMemoryRateLimiter } from './rate-limit.js';
 import { sendProblem } from './error-mapper.js';
@@ -648,6 +655,32 @@ export function buildPlatformApi(deps: PlatformApiDependencies): FastifyInstance
 
   app.post('/api/platform/v1/notifications/:notificationId/read', async (request, reply) => {
     await handleMarkNotificationRead(request, reply, routeContext);
+  });
+
+  // PLT-10a D2 platform admin/audit routes (ADR-034). Capability is session-only
+  // (any authenticated session may probe its own platform admin capability).
+  // admins-list, grant, revoke and audit-list are gated by `requirePlatformAdmin`
+  // (fresh `platform_admins` re-read; non-admin → closed 403). Grant/revoke are
+  // CSRF + idempotent commands that write their audit INSIDE the idempotency
+  // transaction; the admin/audit reads write an `audit_read` audit event.
+  app.get('/api/platform/v1/platform-admin/capability', async (request, reply) => {
+    await handleGetPlatformAdminCapability(request, reply, routeContext);
+  });
+
+  app.get('/api/platform/v1/platform-admin/admins', async (request, reply) => {
+    await handleListPlatformAdmins(request, reply, routeContext);
+  });
+
+  app.post('/api/platform/v1/platform-admin/admins/:accountId/grant', async (request, reply) => {
+    await handleGrantPlatformAdmin(request, reply, routeContext);
+  });
+
+  app.post('/api/platform/v1/platform-admin/admins/:accountId/revoke', async (request, reply) => {
+    await handleRevokePlatformAdmin(request, reply, routeContext);
+  });
+
+  app.get('/api/platform/v1/platform-admin/audit', async (request, reply) => {
+    await handleListPlatformAuditEvents(request, reply, routeContext);
   });
 
   app.setNotFoundHandler(async (request, reply) => {

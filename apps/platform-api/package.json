@@ -26,6 +26,7 @@
   "dependencies": {
     "@aurora/ingestion-credentials": "workspace:*",
     "@aurora/ingestion-inbox": "workspace:*",
+    "@aurora/platform-admin": "workspace:*",
     "@aurora/platform-audit": "workspace:*",
     "@aurora/platform-contract": "workspace:*",
     "@aurora/platform-credentials": "workspace:*",

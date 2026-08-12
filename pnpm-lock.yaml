@@ -171,6 +171,9 @@ importers:
       '@aurora/ingestion-inbox':
         specifier: workspace:*
         version: link:../../packages/ingestion-inbox
+      '@aurora/platform-admin':
+        specifier: workspace:*
+        version: link:../../packages/platform-admin
       '@aurora/platform-audit':
         specifier: workspace:*
         version: link:../../packages/platform-audit
