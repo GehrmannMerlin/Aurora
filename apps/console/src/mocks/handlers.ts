@@ -541,6 +541,103 @@ function mockAlertInstanceDetail(instanceId: string) {
   };
 }
 
+// PLT-08 (C13—C16) mock projections — access / client-keys / settings / lifecycle.
+// Test-mode MSW only (unit + browser smoke); never production data.
+
+function mockEffectiveMembers() {
+  return {
+    data: {
+      status: 'available',
+      data: {
+        items: [
+          {
+            accountId: 'account_test_1',
+            maskedEmail: 'o***@example.com',
+            effectiveRole: 'project_admin',
+            sources: ['org_inherited'],
+            allowedActions: ['read'],
+          },
+          {
+            accountId: 'account_test_2',
+            maskedEmail: 'd***@example.com',
+            effectiveRole: 'developer',
+            sources: ['project_member'],
+            projectRole: 'developer',
+            allowedActions: ['read', 'manage'],
+          },
+        ],
+      },
+    },
+    meta: { requestId: 'req_test_members', readAt: MONITORING_READ_AT, normalizedQuery: {} },
+    allowedActions: ['read'],
+    navigationTargets: [],
+  };
+}
+
+function mockClientKeys() {
+  return {
+    data: {
+      status: 'available',
+      data: {
+        items: [
+          {
+            credentialId: 'cred_test_1',
+            keyId: 'ck_abcdefgh',
+            status: 'active',
+            allowNonBrowser: false,
+            origins: ['https://app.example.invalid'],
+            environments: ['production'],
+            createdAt: '2026-08-12T00:00:00.000Z',
+            updatedAt: '2026-08-12T00:00:00.000Z',
+          },
+        ],
+      },
+    },
+    meta: { requestId: 'req_test_client_keys', readAt: MONITORING_READ_AT, normalizedQuery: {} },
+    allowedActions: ['read'],
+    navigationTargets: [],
+  };
+}
+
+function mockProjectSettings() {
+  return {
+    data: {
+      project: {
+        projectId: 'prj_test_1',
+        name: 'Web shop',
+        frameworkType: 'vue',
+        websiteUrl: 'https://example.invalid',
+        lifecycle: { status: 'active' },
+        resourceVersion: '2026-08-12T00:00:00.000Z',
+      },
+    },
+    meta: { requestId: 'req_test_settings', readAt: MONITORING_READ_AT, normalizedQuery: {} },
+    allowedActions: ['read', 'update'],
+    navigationTargets: [],
+  };
+}
+
+function mockProjectEnvironments() {
+  return {
+    data: {
+      status: 'available',
+      data: {
+        items: [
+          {
+            environmentId: 'env_test_1',
+            name: 'production',
+            isDefault: 'true',
+            createdAt: '2026-08-12T00:00:00.000Z',
+          },
+        ],
+      },
+    },
+    meta: { requestId: 'req_test_environments', readAt: MONITORING_READ_AT, normalizedQuery: {} },
+    allowedActions: ['read'],
+    navigationTargets: [],
+  };
+}
+
 export const handlerControls = {
   delayMs: 0,
   sessionRequests: 0,
@@ -588,6 +685,22 @@ export const handlerControls = {
   getAlertInstanceDetailRequests: 0,
   createAlertRuleRequests: 0,
   updateAlertRuleRequests: 0,
+  listEffectiveMembersRequests: 0,
+  grantMembershipRequests: 0,
+  projectChangeRoleRequests: 0,
+  removeMembershipRequests: 0,
+  listClientKeysRequests: 0,
+  createClientKeyRequests: 0,
+  disableClientKeyRequests: 0,
+  enableClientKeyRequests: 0,
+  revokeClientKeyRequests: 0,
+  getProjectSettingsRequests: 0,
+  updateProjectSettingsRequests: 0,
+  listEnvironmentsRequests: 0,
+  createEnvironmentRequests: 0,
+  archiveLifecycleRequests: 0,
+  restoreLifecycleRequests: 0,
+  moveToTrashRequests: 0,
   /** Toggle for the session projection: true = authenticated, false = 401. */
   sessionAuthenticated: readStoredSessionAuthenticated(),
   /** Toggle for the A5 deletion preflight projection: ready = no blocker. */
@@ -1157,6 +1270,193 @@ export function createPlatformHandlers() {
         await maybeDelay();
         return HttpResponse.json(
           { data: { status: 'succeeded', ruleId: 'rule_test_1', version: 2 } } as JsonBodyType,
+          { status: 200 },
+        );
+      },
+    ),
+    http.get(
+      '/api/platform/v1/organizations/:organizationId/projects/:projectId/access',
+      async () => {
+        handlerControls.listEffectiveMembersRequests += 1;
+        await maybeDelay();
+        return HttpResponse.json(mockEffectiveMembers() as JsonBodyType, { status: 200 });
+      },
+    ),
+    http.post(
+      '/api/platform/v1/organizations/:organizationId/projects/:projectId/access/members',
+      async () => {
+        handlerControls.grantMembershipRequests += 1;
+        await maybeDelay();
+        return HttpResponse.json(
+          { data: { status: 'granted', accountId: 'account_test_2', role: 'developer' } } as JsonBodyType,
+          { status: 200 },
+        );
+      },
+    ),
+    http.post(
+      '/api/platform/v1/organizations/:organizationId/projects/:projectId/access/members/:accountId/role',
+      async () => {
+        handlerControls.projectChangeRoleRequests += 1;
+        await maybeDelay();
+        return HttpResponse.json(
+          { data: { status: 'changed', accountId: 'account_test_2', role: 'project_admin' } } as JsonBodyType,
+          { status: 200 },
+        );
+      },
+    ),
+    http.post(
+      '/api/platform/v1/organizations/:organizationId/projects/:projectId/access/members/:accountId/remove',
+      async () => {
+        handlerControls.removeMembershipRequests += 1;
+        await maybeDelay();
+        return HttpResponse.json(
+          { data: { status: 'removed', accountId: 'account_test_2', remainingSources: [] } } as JsonBodyType,
+          { status: 200 },
+        );
+      },
+    ),
+    http.get(
+      '/api/platform/v1/organizations/:organizationId/projects/:projectId/client-keys',
+      async () => {
+        handlerControls.listClientKeysRequests += 1;
+        await maybeDelay();
+        return HttpResponse.json(mockClientKeys() as JsonBodyType, { status: 200 });
+      },
+    ),
+    http.post(
+      '/api/platform/v1/organizations/:organizationId/projects/:projectId/client-keys',
+      async () => {
+        handlerControls.createClientKeyRequests += 1;
+        await maybeDelay();
+        return HttpResponse.json(
+          {
+            data: {
+              status: 'created',
+              credentialId: 'cred_test_2',
+              keyId: 'ck_ijklmnop',
+              clientKey: 'aurora_ingest_ijklmnop_testsecret',
+              origins: [],
+              environments: ['production'],
+            },
+          } as JsonBodyType,
+          { status: 200 },
+        );
+      },
+    ),
+    http.post(
+      '/api/platform/v1/organizations/:organizationId/projects/:projectId/client-keys/:keyId/disable',
+      async () => {
+        handlerControls.disableClientKeyRequests += 1;
+        await maybeDelay();
+        return HttpResponse.json(
+          { data: { status: 'disabled', credentialId: 'cred_test_1', keyId: 'ck_abcdefgh' } } as JsonBodyType,
+          { status: 200 },
+        );
+      },
+    ),
+    http.post(
+      '/api/platform/v1/organizations/:organizationId/projects/:projectId/client-keys/:keyId/enable',
+      async () => {
+        handlerControls.enableClientKeyRequests += 1;
+        await maybeDelay();
+        return HttpResponse.json(
+          { data: { status: 'enabled', credentialId: 'cred_test_1', keyId: 'ck_abcdefgh' } } as JsonBodyType,
+          { status: 200 },
+        );
+      },
+    ),
+    http.post(
+      '/api/platform/v1/organizations/:organizationId/projects/:projectId/client-keys/:keyId/revoke',
+      async () => {
+        handlerControls.revokeClientKeyRequests += 1;
+        await maybeDelay();
+        return HttpResponse.json(
+          { data: { status: 'revoked', credentialId: 'cred_test_1', keyId: 'ck_abcdefgh' } } as JsonBodyType,
+          { status: 200 },
+        );
+      },
+    ),
+    http.get(
+      '/api/platform/v1/organizations/:organizationId/projects/:projectId/settings',
+      async () => {
+        handlerControls.getProjectSettingsRequests += 1;
+        await maybeDelay();
+        return HttpResponse.json(mockProjectSettings() as JsonBodyType, { status: 200 });
+      },
+    ),
+    http.patch(
+      '/api/platform/v1/organizations/:organizationId/projects/:projectId/settings',
+      async () => {
+        handlerControls.updateProjectSettingsRequests += 1;
+        await maybeDelay();
+        return HttpResponse.json(
+          {
+            data: {
+              status: 'updated',
+              projectId: 'prj_test_1',
+              name: 'Web shop',
+              resourceVersion: '2026-08-12T00:01:00.000Z',
+            },
+          } as JsonBodyType,
+          { status: 200 },
+        );
+      },
+    ),
+    http.get(
+      '/api/platform/v1/organizations/:organizationId/projects/:projectId/settings/environments',
+      async () => {
+        handlerControls.listEnvironmentsRequests += 1;
+        await maybeDelay();
+        return HttpResponse.json(mockProjectEnvironments() as JsonBodyType, { status: 200 });
+      },
+    ),
+    http.post(
+      '/api/platform/v1/organizations/:organizationId/projects/:projectId/settings/environments',
+      async () => {
+        handlerControls.createEnvironmentRequests += 1;
+        await maybeDelay();
+        return HttpResponse.json(
+          { data: { status: 'created', environmentId: 'env_test_2', name: 'staging' } } as JsonBodyType,
+          { status: 200 },
+        );
+      },
+    ),
+    http.post(
+      '/api/platform/v1/organizations/:organizationId/projects/:projectId/lifecycle/archive',
+      async () => {
+        handlerControls.archiveLifecycleRequests += 1;
+        await maybeDelay();
+        return HttpResponse.json(
+          { data: { status: 'archived', projectId: 'prj_test_1' } } as JsonBodyType,
+          { status: 200 },
+        );
+      },
+    ),
+    http.post(
+      '/api/platform/v1/organizations/:organizationId/projects/:projectId/lifecycle/restore',
+      async () => {
+        handlerControls.restoreLifecycleRequests += 1;
+        await maybeDelay();
+        return HttpResponse.json(
+          { data: { status: 'restored', projectId: 'prj_test_1' } } as JsonBodyType,
+          { status: 200 },
+        );
+      },
+    ),
+    http.post(
+      '/api/platform/v1/organizations/:organizationId/projects/:projectId/lifecycle/move-to-trash',
+      async () => {
+        handlerControls.moveToTrashRequests += 1;
+        await maybeDelay();
+        return HttpResponse.json(
+          {
+            data: {
+              status: 'trashed',
+              projectId: 'prj_test_1',
+              trashedAt: '2026-08-12T00:00:00.000Z',
+              recoverableUntil: '2026-08-19T00:00:00.000Z',
+            },
+          } as JsonBodyType,
           { status: 200 },
         );
       },

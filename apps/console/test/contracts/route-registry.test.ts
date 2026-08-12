@@ -112,6 +112,11 @@ describe('RouteTarget registry', () => {
       'project.alert-rule-create',
       'project.alert-rule-edit',
       'project.alert-instance-detail',
+      // PLT-08 replaces these unavailable stubs with real access/settings/lifecycle views.
+      'project.access',
+      'project.client-keys',
+      'project.settings',
+      'project.lifecycle',
     ]);
     for (const entry of ROUTE_REGISTRY) {
       if (entry.routeId === 'workspace.home') continue;
@@ -176,6 +181,37 @@ describe('RouteTarget registry', () => {
       if (entry === undefined) continue;
       expect(entry.unavailableReason, c.routeId).toBeNull();
       if (c.parent !== undefined) expect(entry.parent, c.routeId).toBe(c.parent);
+      const resolved = resolveRouteTarget({ routeId: c.routeId, pathParams: c.pathParams, query: {} });
+      expect(resolved.path, c.routeId).toBeDefined();
+      const component = await entry.lazy();
+      expect(typeof component).not.toBe('undefined');
+    }
+  });
+
+  it('resolves the PLT-08 access/client-keys/settings/lifecycle routes with real lazy views', async () => {
+    const cases: ReadonlyArray<{ routeId: RouteTargetId; pathParams: Record<string, string> }> = [
+      {
+        routeId: 'project.access',
+        pathParams: { organizationId: 'org_1', projectId: 'prj_1' },
+      },
+      {
+        routeId: 'project.client-keys',
+        pathParams: { organizationId: 'org_1', projectId: 'prj_1' },
+      },
+      {
+        routeId: 'project.settings',
+        pathParams: { organizationId: 'org_1', projectId: 'prj_1' },
+      },
+      {
+        routeId: 'project.lifecycle',
+        pathParams: { organizationId: 'org_1', projectId: 'prj_1' },
+      },
+    ];
+    for (const c of cases) {
+      const entry = ROUTE_BY_ID.get(c.routeId);
+      expect(entry, c.routeId).toBeDefined();
+      if (entry === undefined) continue;
+      expect(entry.unavailableReason, c.routeId).toBeNull();
       const resolved = resolveRouteTarget({ routeId: c.routeId, pathParams: c.pathParams, query: {} });
       expect(resolved.path, c.routeId).toBeDefined();
       const component = await entry.lazy();

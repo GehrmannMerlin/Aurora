@@ -8,16 +8,20 @@
  * wire payload, so the console types only describe what the contract promises.
  */
 import {
+  OPERATION_ID_ACCESS_LIST,
+  OPERATION_ID_ALERTS_GET_CAPABILITY,
+  OPERATION_ID_ALERTS_GET_INSTANCE,
+  OPERATION_ID_ALERTS_LIST,
+  OPERATION_ID_CREDENTIALS_LIST,
   OPERATION_ID_GET_DATA_STATUS,
   OPERATION_ID_GET_ISSUE_DETAIL,
   OPERATION_ID_LIST_ISSUES,
   OPERATION_ID_LIST_PERFORMANCE_PAGES,
   OPERATION_ID_LIST_REQUEST_ENDPOINTS,
   OPERATION_ID_RELEASES_LIST,
+  OPERATION_ID_SETTINGS_GET,
+  OPERATION_ID_SETTINGS_LIST_ENVIRONMENTS,
   OPERATION_ID_SOURCE_MAPS_LIST,
-  OPERATION_ID_ALERTS_GET_CAPABILITY,
-  OPERATION_ID_ALERTS_GET_INSTANCE,
-  OPERATION_ID_ALERTS_LIST,
 } from '@aurora/platform-contract';
 import { executeQuery } from '../api/query.js';
 import type { PlatformRequestInput } from '../api/client.js';
@@ -573,6 +577,132 @@ export function fetchAlertInstanceDetail(
   };
   return executeQuery<QueryResponse<AlertInstanceDetailData>>({
     operationId: OPERATION_ID_ALERTS_GET_INSTANCE,
+    input,
+    scope: projectScope(scope),
+    ...(options.signal !== undefined ? { signal: options.signal } : {}),
+  }).then((response) => response.data);
+}
+
+// --- C13 Effective project access (PLT-08) --------------------------------------------------------
+
+export type EffectiveMemberSource = 'org_inherited' | 'project_member';
+
+export interface EffectiveMember {
+  readonly accountId: string;
+  readonly maskedEmail: string;
+  readonly effectiveRole: string;
+  readonly sources: readonly EffectiveMemberSource[];
+  readonly projectRole?: string;
+  readonly allowedActions: readonly string[];
+}
+
+export interface EffectiveMembersData {
+  readonly members: SectionResult<{ readonly items: readonly EffectiveMember[] }>;
+}
+
+export function fetchEffectiveMembers(
+  scope: ProjectScope,
+  options: FetchOptions = {},
+): Promise<EffectiveMembersData> {
+  const input: PlatformRequestInput = {
+    pathParams: { organizationId: scope.organizationId, projectId: scope.projectId },
+  };
+  return executeQuery<QueryResponse<EffectiveMembersData>>({
+    operationId: OPERATION_ID_ACCESS_LIST,
+    input,
+    scope: projectScope(scope),
+    ...(options.signal !== undefined ? { signal: options.signal } : {}),
+  }).then((response) => response.data);
+}
+
+// --- C14 Client keys (PLT-08) ----------------------------------------------------------------------
+
+export interface ClientKeyMetadata {
+  readonly credentialId: string;
+  readonly keyId: string;
+  readonly status: string;
+  readonly allowNonBrowser: boolean;
+  readonly expiresAt?: string;
+  readonly origins: readonly string[];
+  readonly environments: readonly string[];
+  readonly createdAt: string;
+  readonly updatedAt: string;
+}
+
+export interface ClientKeysData {
+  readonly keys: SectionResult<{ readonly items: readonly ClientKeyMetadata[] }>;
+}
+
+export function fetchClientKeys(
+  scope: ProjectScope,
+  options: FetchOptions = {},
+): Promise<ClientKeysData> {
+  const input: PlatformRequestInput = {
+    pathParams: { organizationId: scope.organizationId, projectId: scope.projectId },
+  };
+  return executeQuery<QueryResponse<ClientKeysData>>({
+    operationId: OPERATION_ID_CREDENTIALS_LIST,
+    input,
+    scope: projectScope(scope),
+    ...(options.signal !== undefined ? { signal: options.signal } : {}),
+  }).then((response) => response.data);
+}
+
+// --- C15 Project settings + environments (PLT-08) --------------------------------------------------
+
+export interface ProjectSettings {
+  readonly projectId: string;
+  readonly name: string;
+  readonly frameworkType: string;
+  readonly websiteUrl?: string;
+  readonly lifecycle: {
+    readonly status: string;
+    readonly archivedAt?: string;
+    readonly trashedAt?: string;
+    readonly recoverableUntil?: string;
+  };
+  readonly resourceVersion: string;
+}
+
+export interface ProjectSettingsData {
+  readonly project: ProjectSettings;
+}
+
+export function fetchProjectSettings(
+  scope: ProjectScope,
+  options: FetchOptions = {},
+): Promise<ProjectSettingsData> {
+  const input: PlatformRequestInput = {
+    pathParams: { organizationId: scope.organizationId, projectId: scope.projectId },
+  };
+  return executeQuery<QueryResponse<ProjectSettingsData>>({
+    operationId: OPERATION_ID_SETTINGS_GET,
+    input,
+    scope: projectScope(scope),
+    ...(options.signal !== undefined ? { signal: options.signal } : {}),
+  }).then((response) => response.data);
+}
+
+export interface ProjectEnvironment {
+  readonly environmentId: string;
+  readonly name: string;
+  readonly isDefault: string;
+  readonly createdAt: string;
+}
+
+export interface ProjectEnvironmentsData {
+  readonly environments: SectionResult<{ readonly items: readonly ProjectEnvironment[] }>;
+}
+
+export function fetchProjectEnvironments(
+  scope: ProjectScope,
+  options: FetchOptions = {},
+): Promise<ProjectEnvironmentsData> {
+  const input: PlatformRequestInput = {
+    pathParams: { organizationId: scope.organizationId, projectId: scope.projectId },
+  };
+  return executeQuery<QueryResponse<ProjectEnvironmentsData>>({
+    operationId: OPERATION_ID_SETTINGS_LIST_ENVIRONMENTS,
     input,
     scope: projectScope(scope),
     ...(options.signal !== undefined ? { signal: options.signal } : {}),

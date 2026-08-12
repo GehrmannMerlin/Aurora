@@ -44,6 +44,14 @@ const projectAlertRuleFormView = (): Promise<Component> =>
   import('../views/project/ProjectAlertRuleFormView.vue');
 const projectAlertInstanceDetailView = (): Promise<Component> =>
   import('../views/project/ProjectAlertInstanceDetailView.vue');
+const projectAccessView = (): Promise<Component> =>
+  import('../views/project/ProjectAccessView.vue');
+const projectClientKeysView = (): Promise<Component> =>
+  import('../views/project/ProjectClientKeysView.vue');
+const projectSettingsView = (): Promise<Component> =>
+  import('../views/project/ProjectSettingsView.vue');
+const projectLifecycleView = (): Promise<Component> =>
+  import('../views/project/ProjectLifecycleView.vue');
 const usageView = (): Promise<Component> => import('../views/organization/UsageView.vue');
 const projectCreateView = (): Promise<Component> =>
   import('../views/organization/ProjectCreateView.vue');
@@ -435,9 +443,9 @@ export const ROUTE_REGISTRY: readonly RouteEntry[] = [
     label: '访问',
     paramsSchema: projectParams,
     querySchema: anyQuery,
-    lazy: unavailable,
+    lazy: projectAccessView,
     menu: true,
-    unavailableReason: 'capability-not-provided',
+    unavailableReason: null,
   },
   {
     routeId: 'project.client-keys',
@@ -446,9 +454,9 @@ export const ROUTE_REGISTRY: readonly RouteEntry[] = [
     label: '客户端密钥',
     paramsSchema: projectParams,
     querySchema: anyQuery,
-    lazy: unavailable,
+    lazy: projectClientKeysView,
     menu: true,
-    unavailableReason: 'capability-not-provided',
+    unavailableReason: null,
   },
   {
     routeId: 'project.settings',
@@ -457,9 +465,9 @@ export const ROUTE_REGISTRY: readonly RouteEntry[] = [
     label: '设置',
     paramsSchema: projectParams,
     querySchema: anyQuery,
-    lazy: unavailable,
+    lazy: projectSettingsView,
     menu: true,
-    unavailableReason: 'capability-not-provided',
+    unavailableReason: null,
   },
   {
     routeId: 'project.lifecycle',
@@ -469,9 +477,9 @@ export const ROUTE_REGISTRY: readonly RouteEntry[] = [
     parent: 'project.settings',
     paramsSchema: projectParams,
     querySchema: anyQuery,
-    lazy: unavailable,
+    lazy: projectLifecycleView,
     menu: false,
-    unavailableReason: 'capability-not-provided',
+    unavailableReason: null,
   },
   {
     routeId: 'account.notifications',
