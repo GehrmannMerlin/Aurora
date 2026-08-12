@@ -1,7 +1,7 @@
 import { readFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import { parse } from 'yaml';
-import { PLATFORM_OPERATIONS, OPERATION_MANIFEST } from '@aurora/platform-contract';
+import { PLATFORM_OPERATIONS } from '@aurora/platform-contract';
 import {
   buildCompatibilityBaseline,
   detectIncompatibleChanges,
@@ -68,9 +68,6 @@ export async function assertPlatformDrift(): Promise<void> {
   for (const opId of yamlOps) {
     if (!PLATFORM_OPERATIONS.some((o) => o.operationId === opId))
       drifts.push(`unregistered operation ${opId}`);
-  }
-  if (OPERATION_MANIFEST.routeTargetCoverage['platform.resource-policies'] !== 'unavailable') {
-    drifts.push('platform.resource-policies must remain unavailable (D2 gate)');
   }
 
   // Schema-level compatibility gate (spec §30 / ADR-027 决定细节 6). The committed baseline inside

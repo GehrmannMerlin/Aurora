@@ -14,9 +14,7 @@ describe('generated artifact', () => {
     expect(committed.replace(/^# 由契约源码生成、禁止手工修改\n/, '')).toBe(fresh);
   });
 
-  it('manifest marks platform.resource-policies unavailable', () => {
-    expect(OPERATION_MANIFEST.routeTargetCoverage['platform.resource-policies']).toBe(
-      'unavailable',
-    );
+  it('manifest marks platform.resource-policies stable', () => {
+    expect(OPERATION_MANIFEST.routeTargetCoverage['platform.resource-policies']).toBe('stable');
   });
 });

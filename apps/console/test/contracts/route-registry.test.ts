@@ -119,6 +119,8 @@ describe('RouteTarget registry', () => {
       'project.client-keys',
       'project.settings',
       'project.lifecycle',
+      // PLT-10c replaces the platform.resource-policies stub with the real D2 view.
+      'platform.resource-policies',
     ]);
     for (const entry of ROUTE_REGISTRY) {
       if (entry.routeId === 'workspace.home') continue;
@@ -183,7 +185,11 @@ describe('RouteTarget registry', () => {
       if (entry === undefined) continue;
       expect(entry.unavailableReason, c.routeId).toBeNull();
       if (c.parent !== undefined) expect(entry.parent, c.routeId).toBe(c.parent);
-      const resolved = resolveRouteTarget({ routeId: c.routeId, pathParams: c.pathParams, query: {} });
+      const resolved = resolveRouteTarget({
+        routeId: c.routeId,
+        pathParams: c.pathParams,
+        query: {},
+      });
       expect(resolved.path, c.routeId).toBeDefined();
       const component = await entry.lazy();
       expect(typeof component).not.toBe('undefined');
@@ -214,7 +220,11 @@ describe('RouteTarget registry', () => {
       expect(entry, c.routeId).toBeDefined();
       if (entry === undefined) continue;
       expect(entry.unavailableReason, c.routeId).toBeNull();
-      const resolved = resolveRouteTarget({ routeId: c.routeId, pathParams: c.pathParams, query: {} });
+      const resolved = resolveRouteTarget({
+        routeId: c.routeId,
+        pathParams: c.pathParams,
+        query: {},
+      });
       expect(resolved.path, c.routeId).toBeDefined();
       const component = await entry.lazy();
       expect(typeof component).not.toBe('undefined');

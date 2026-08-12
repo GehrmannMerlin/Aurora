@@ -130,7 +130,7 @@
     "project.settings": "stable",
     "project.lifecycle": "stable",
     "account.notifications": "stable",
-    "platform.resource-policies": "unavailable"
+    "platform.resource-policies": "stable"
   },
   "capabilities": [
     {

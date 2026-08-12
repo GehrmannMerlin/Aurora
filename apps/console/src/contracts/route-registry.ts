@@ -16,7 +16,6 @@ const ruleParams = projectParams.extend({ ruleId: z.string().min(1) });
 const instanceParams = projectParams.extend({ instanceId: z.string().min(1) });
 const anyQuery = z.record(z.string(), z.string());
 
-const unavailable = (): Promise<Component> => import('../components/pages/UnavailableView.vue');
 const workspaceHome = (): Promise<Component> => import('../views/workspace/WorkspaceHomeView.vue');
 const projectOnboardingView = (): Promise<Component> =>
   import('../views/project/ProjectOnboardingView.vue');
@@ -73,6 +72,8 @@ const accountSecurityView = (): Promise<Component> =>
   import('../views/account/AccountSecurityView.vue');
 const accountNotificationsView = (): Promise<Component> =>
   import('../views/account/NotificationsView.vue');
+const resourcePolicyView = (): Promise<Component> =>
+  import('../views/platform/ResourcePolicyView.vue');
 const deletionCancelView = (): Promise<Component> =>
   import('../views/account/DeletionCancelView.vue');
 const deletionConfirmView = (): Promise<Component> =>
@@ -501,9 +502,9 @@ export const ROUTE_REGISTRY: readonly RouteEntry[] = [
     label: '资源策略',
     paramsSchema: emptyParams,
     querySchema: anyQuery,
-    lazy: unavailable,
+    lazy: resourcePolicyView,
     menu: false,
-    unavailableReason: 'permission-unavailable',
+    unavailableReason: null,
   },
 ];
 

@@ -127,10 +127,8 @@ describe('operation registry and manifest', () => {
     }
   });
 
-  it('marks platform.resource-policies unavailable (D2 gate)', () => {
-    expect(OPERATION_MANIFEST.routeTargetCoverage['platform.resource-policies']).toBe(
-      'unavailable',
-    );
+  it('marks platform.resource-policies stable (D2 resource-policy page)', () => {
+    expect(OPERATION_MANIFEST.routeTargetCoverage['platform.resource-policies']).toBe('stable');
   });
 
   it('throws when a blocked operation carries a schema', () => {
@@ -226,7 +224,7 @@ describe('operation registry and manifest', () => {
       'project.settings': 'stable',
       'project.lifecycle': 'stable',
       'account.notifications': 'stable',
-      'platform.resource-policies': 'unavailable',
+      'platform.resource-policies': 'stable',
     };
     expect(Object.keys(expected)).toHaveLength(ROUTE_TARGET_IDS.length);
     for (const rt of ROUTE_TARGET_IDS) {
