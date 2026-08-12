@@ -49,13 +49,16 @@
     "alertsListRulesAndInstances",
     "alertsCreateRule",
     "alertsUpdateRule",
-    "alertsGetInstanceDetail"
+    "alertsGetInstanceDetail",
+    "releasesListReleases",
+    "sourceMapsListFiles",
+    "sourceMapsUpload",
+    "sourceMapsReplace",
+    "sourceMapsReparse"
   ],
   "blocked": {
     "onboardingGetProgress": "C1 onboarding model not formalized (G11)",
     "overviewGetProjectStatus": "C2 overview Query not formalized (G11)",
-    "releasesListReleases": "C8 releases model not formalized (G12)",
-    "sourceMapsListFiles": "C9 Source Map/object store not formalized (G12)",
     "accessListEffectiveMembers": "C13 access projection not formalized (G12)",
     "credentialsListClientKeys": "C14 client-key management not formalized (G12)",
     "settingsGetProject": "C15 settings model not formalized (G12)",
@@ -89,9 +92,9 @@
     "project.requests": "stable",
     "project.performance": "stable",
     "project.data-status": "stable",
-    "project.releases": "blocked",
+    "project.releases": "stable",
     "project.release-detail": "unavailable",
-    "project.source-maps": "blocked",
+    "project.source-maps": "stable",
     "project.alerts": "stable",
     "project.alert-rule-create": "stable",
     "project.alert-rule-edit": "stable",
@@ -9756,6 +9759,1061 @@
                         "maxLength": 512
                       }
                     }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "releasesListReleases": {
+        "responses": {
+          "200": {
+            "type": "object",
+            "required": [
+              "data",
+              "meta",
+              "allowedActions",
+              "navigationTargets"
+            ],
+            "properties": {
+              "data": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "required": [
+                      "status",
+                      "data"
+                    ],
+                    "properties": {
+                      "status": {
+                        "type": "string",
+                        "enum": [
+                          "available"
+                        ],
+                        "openEnum": false
+                      },
+                      "data": {
+                        "type": "object",
+                        "required": [
+                          "items"
+                        ],
+                        "properties": {
+                          "items": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "required": [
+                                "releaseId",
+                                "version",
+                                "source",
+                                "firstSeenAt",
+                                "sourceMapFileCount"
+                              ],
+                              "properties": {
+                                "releaseId": {
+                                  "type": "string",
+                                  "minLength": 1,
+                                  "maxLength": 64
+                                },
+                                "version": {
+                                  "type": "string",
+                                  "minLength": 1,
+                                  "maxLength": 256
+                                },
+                                "source": {
+                                  "type": "string",
+                                  "enum": [
+                                    "source_map_upload"
+                                  ],
+                                  "openEnum": false
+                                },
+                                "firstSeenAt": {
+                                  "type": "string",
+                                  "format": "date-time"
+                                },
+                                "sourceMapFileCount": {
+                                  "type": "number",
+                                  "minimum": 0
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  },
+                  {
+                    "type": "object",
+                    "required": [
+                      "status",
+                      "reason"
+                    ],
+                    "properties": {
+                      "status": {
+                        "type": "string",
+                        "enum": [
+                          "empty"
+                        ],
+                        "openEnum": false
+                      },
+                      "reason": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 256
+                      }
+                    }
+                  },
+                  {
+                    "type": "object",
+                    "required": [
+                      "status",
+                      "data",
+                      "missing"
+                    ],
+                    "properties": {
+                      "status": {
+                        "type": "string",
+                        "enum": [
+                          "partial"
+                        ],
+                        "openEnum": false
+                      },
+                      "data": {
+                        "type": "object",
+                        "required": [
+                          "items"
+                        ],
+                        "properties": {
+                          "items": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "required": [
+                                "releaseId",
+                                "version",
+                                "source",
+                                "firstSeenAt",
+                                "sourceMapFileCount"
+                              ],
+                              "properties": {
+                                "releaseId": {
+                                  "type": "string",
+                                  "minLength": 1,
+                                  "maxLength": 64
+                                },
+                                "version": {
+                                  "type": "string",
+                                  "minLength": 1,
+                                  "maxLength": 256
+                                },
+                                "source": {
+                                  "type": "string",
+                                  "enum": [
+                                    "source_map_upload"
+                                  ],
+                                  "openEnum": false
+                                },
+                                "firstSeenAt": {
+                                  "type": "string",
+                                  "format": "date-time"
+                                },
+                                "sourceMapFileCount": {
+                                  "type": "number",
+                                  "minimum": 0
+                                }
+                              }
+                            }
+                          }
+                        }
+                      },
+                      "missing": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 256
+                      }
+                    }
+                  },
+                  {
+                    "type": "object",
+                    "required": [
+                      "status",
+                      "data",
+                      "freshAt",
+                      "staleReason"
+                    ],
+                    "properties": {
+                      "status": {
+                        "type": "string",
+                        "enum": [
+                          "stale"
+                        ],
+                        "openEnum": false
+                      },
+                      "data": {
+                        "type": "object",
+                        "required": [
+                          "items"
+                        ],
+                        "properties": {
+                          "items": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "required": [
+                                "releaseId",
+                                "version",
+                                "source",
+                                "firstSeenAt",
+                                "sourceMapFileCount"
+                              ],
+                              "properties": {
+                                "releaseId": {
+                                  "type": "string",
+                                  "minLength": 1,
+                                  "maxLength": 64
+                                },
+                                "version": {
+                                  "type": "string",
+                                  "minLength": 1,
+                                  "maxLength": 256
+                                },
+                                "source": {
+                                  "type": "string",
+                                  "enum": [
+                                    "source_map_upload"
+                                  ],
+                                  "openEnum": false
+                                },
+                                "firstSeenAt": {
+                                  "type": "string",
+                                  "format": "date-time"
+                                },
+                                "sourceMapFileCount": {
+                                  "type": "number",
+                                  "minimum": 0
+                                }
+                              }
+                            }
+                          }
+                        }
+                      },
+                      "freshAt": {
+                        "type": "string",
+                        "minLength": 20,
+                        "maxLength": 24
+                      },
+                      "staleReason": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 256
+                      }
+                    }
+                  },
+                  {
+                    "type": "object",
+                    "required": [
+                      "status",
+                      "reason"
+                    ],
+                    "properties": {
+                      "status": {
+                        "type": "string",
+                        "enum": [
+                          "unavailable"
+                        ],
+                        "openEnum": false
+                      },
+                      "reason": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 256
+                      }
+                    }
+                  },
+                  {
+                    "type": "object",
+                    "required": [
+                      "status"
+                    ],
+                    "properties": {
+                      "status": {
+                        "type": "string",
+                        "enum": [
+                          "forbidden"
+                        ],
+                        "openEnum": false
+                      }
+                    }
+                  }
+                ]
+              },
+              "meta": {
+                "type": "object",
+                "required": [
+                  "requestId",
+                  "readAt"
+                ],
+                "properties": {
+                  "requestId": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 64
+                  },
+                  "readAt": {
+                    "type": "string",
+                    "format": "date-time"
+                  },
+                  "normalizedQuery": {
+                    "type": "object",
+                    "additionalProperties": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 512
+                    }
+                  }
+                }
+              },
+              "allowedActions": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "enum": [
+                    "create",
+                    "read",
+                    "update",
+                    "delete",
+                    "manage",
+                    "restore",
+                    "transfer",
+                    "revoke"
+                  ],
+                  "openEnum": false
+                }
+              },
+              "navigationTargets": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "routeId",
+                    "pathParams",
+                    "query"
+                  ],
+                  "properties": {
+                    "routeId": {
+                      "type": "string",
+                      "enum": [
+                        "auth.register",
+                        "auth.verify-email",
+                        "auth.verify-email-confirm",
+                        "auth.login",
+                        "auth.forgot-password",
+                        "auth.reset-password",
+                        "invitation.accept",
+                        "account.security",
+                        "account.deletion-cancel",
+                        "account.deletion-confirm",
+                        "workspace.home",
+                        "organization.project-create",
+                        "organization.members",
+                        "organization.settings",
+                        "organization.usage",
+                        "organization.tokens",
+                        "organization.audit",
+                        "organization.trash",
+                        "project.onboarding",
+                        "project.overview",
+                        "project.issues",
+                        "project.issue-detail",
+                        "project.requests",
+                        "project.performance",
+                        "project.data-status",
+                        "project.releases",
+                        "project.release-detail",
+                        "project.source-maps",
+                        "project.alerts",
+                        "project.alert-rule-create",
+                        "project.alert-rule-edit",
+                        "project.alert-instance-detail",
+                        "project.access",
+                        "project.client-keys",
+                        "project.settings",
+                        "project.lifecycle",
+                        "account.notifications",
+                        "platform.resource-policies"
+                      ],
+                      "openEnum": false
+                    },
+                    "pathParams": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 256
+                      }
+                    },
+                    "query": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 512
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "sourceMapsListFiles": {
+        "responses": {
+          "200": {
+            "type": "object",
+            "required": [
+              "data",
+              "meta",
+              "allowedActions",
+              "navigationTargets"
+            ],
+            "properties": {
+              "data": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "required": [
+                      "status",
+                      "data"
+                    ],
+                    "properties": {
+                      "status": {
+                        "type": "string",
+                        "enum": [
+                          "available"
+                        ],
+                        "openEnum": false
+                      },
+                      "data": {
+                        "type": "object",
+                        "required": [
+                          "items"
+                        ],
+                        "properties": {
+                          "items": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "required": [
+                                "sourceMapFileId",
+                                "buildPath",
+                                "digestPrefix",
+                                "status",
+                                "reparse",
+                                "uploadedAt",
+                                "version"
+                              ],
+                              "properties": {
+                                "sourceMapFileId": {
+                                  "type": "string",
+                                  "minLength": 1,
+                                  "maxLength": 64
+                                },
+                                "buildPath": {
+                                  "type": "string",
+                                  "minLength": 1,
+                                  "maxLength": 2048
+                                },
+                                "digestPrefix": {
+                                  "type": "string",
+                                  "minLength": 8,
+                                  "maxLength": 16
+                                },
+                                "status": {
+                                  "type": "string",
+                                  "enum": [
+                                    "active",
+                                    "replaced"
+                                  ],
+                                  "openEnum": false
+                                },
+                                "reparse": {
+                                  "type": "object",
+                                  "required": [
+                                    "state"
+                                  ],
+                                  "properties": {
+                                    "state": {
+                                      "type": "string",
+                                      "enum": [
+                                        "queued",
+                                        "processing",
+                                        "completed",
+                                        "failed"
+                                      ],
+                                      "openEnum": false
+                                    },
+                                    "processedCount": {
+                                      "type": "number",
+                                      "minimum": 0
+                                    },
+                                    "totalCount": {
+                                      "type": "number",
+                                      "minimum": 0
+                                    },
+                                    "updatedAt": {
+                                      "type": "string",
+                                      "format": "date-time"
+                                    }
+                                  }
+                                },
+                                "uploadedAt": {
+                                  "type": "string",
+                                  "format": "date-time"
+                                },
+                                "replacedAt": {
+                                  "type": "string",
+                                  "format": "date-time"
+                                },
+                                "version": {
+                                  "type": "number",
+                                  "minimum": 1
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  },
+                  {
+                    "type": "object",
+                    "required": [
+                      "status",
+                      "reason"
+                    ],
+                    "properties": {
+                      "status": {
+                        "type": "string",
+                        "enum": [
+                          "empty"
+                        ],
+                        "openEnum": false
+                      },
+                      "reason": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 256
+                      }
+                    }
+                  },
+                  {
+                    "type": "object",
+                    "required": [
+                      "status",
+                      "data",
+                      "missing"
+                    ],
+                    "properties": {
+                      "status": {
+                        "type": "string",
+                        "enum": [
+                          "partial"
+                        ],
+                        "openEnum": false
+                      },
+                      "data": {
+                        "type": "object",
+                        "required": [
+                          "items"
+                        ],
+                        "properties": {
+                          "items": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "required": [
+                                "sourceMapFileId",
+                                "buildPath",
+                                "digestPrefix",
+                                "status",
+                                "reparse",
+                                "uploadedAt",
+                                "version"
+                              ],
+                              "properties": {
+                                "sourceMapFileId": {
+                                  "type": "string",
+                                  "minLength": 1,
+                                  "maxLength": 64
+                                },
+                                "buildPath": {
+                                  "type": "string",
+                                  "minLength": 1,
+                                  "maxLength": 2048
+                                },
+                                "digestPrefix": {
+                                  "type": "string",
+                                  "minLength": 8,
+                                  "maxLength": 16
+                                },
+                                "status": {
+                                  "type": "string",
+                                  "enum": [
+                                    "active",
+                                    "replaced"
+                                  ],
+                                  "openEnum": false
+                                },
+                                "reparse": {
+                                  "type": "object",
+                                  "required": [
+                                    "state"
+                                  ],
+                                  "properties": {
+                                    "state": {
+                                      "type": "string",
+                                      "enum": [
+                                        "queued",
+                                        "processing",
+                                        "completed",
+                                        "failed"
+                                      ],
+                                      "openEnum": false
+                                    },
+                                    "processedCount": {
+                                      "type": "number",
+                                      "minimum": 0
+                                    },
+                                    "totalCount": {
+                                      "type": "number",
+                                      "minimum": 0
+                                    },
+                                    "updatedAt": {
+                                      "type": "string",
+                                      "format": "date-time"
+                                    }
+                                  }
+                                },
+                                "uploadedAt": {
+                                  "type": "string",
+                                  "format": "date-time"
+                                },
+                                "replacedAt": {
+                                  "type": "string",
+                                  "format": "date-time"
+                                },
+                                "version": {
+                                  "type": "number",
+                                  "minimum": 1
+                                }
+                              }
+                            }
+                          }
+                        }
+                      },
+                      "missing": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 256
+                      }
+                    }
+                  },
+                  {
+                    "type": "object",
+                    "required": [
+                      "status",
+                      "data",
+                      "freshAt",
+                      "staleReason"
+                    ],
+                    "properties": {
+                      "status": {
+                        "type": "string",
+                        "enum": [
+                          "stale"
+                        ],
+                        "openEnum": false
+                      },
+                      "data": {
+                        "type": "object",
+                        "required": [
+                          "items"
+                        ],
+                        "properties": {
+                          "items": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "required": [
+                                "sourceMapFileId",
+                                "buildPath",
+                                "digestPrefix",
+                                "status",
+                                "reparse",
+                                "uploadedAt",
+                                "version"
+                              ],
+                              "properties": {
+                                "sourceMapFileId": {
+                                  "type": "string",
+                                  "minLength": 1,
+                                  "maxLength": 64
+                                },
+                                "buildPath": {
+                                  "type": "string",
+                                  "minLength": 1,
+                                  "maxLength": 2048
+                                },
+                                "digestPrefix": {
+                                  "type": "string",
+                                  "minLength": 8,
+                                  "maxLength": 16
+                                },
+                                "status": {
+                                  "type": "string",
+                                  "enum": [
+                                    "active",
+                                    "replaced"
+                                  ],
+                                  "openEnum": false
+                                },
+                                "reparse": {
+                                  "type": "object",
+                                  "required": [
+                                    "state"
+                                  ],
+                                  "properties": {
+                                    "state": {
+                                      "type": "string",
+                                      "enum": [
+                                        "queued",
+                                        "processing",
+                                        "completed",
+                                        "failed"
+                                      ],
+                                      "openEnum": false
+                                    },
+                                    "processedCount": {
+                                      "type": "number",
+                                      "minimum": 0
+                                    },
+                                    "totalCount": {
+                                      "type": "number",
+                                      "minimum": 0
+                                    },
+                                    "updatedAt": {
+                                      "type": "string",
+                                      "format": "date-time"
+                                    }
+                                  }
+                                },
+                                "uploadedAt": {
+                                  "type": "string",
+                                  "format": "date-time"
+                                },
+                                "replacedAt": {
+                                  "type": "string",
+                                  "format": "date-time"
+                                },
+                                "version": {
+                                  "type": "number",
+                                  "minimum": 1
+                                }
+                              }
+                            }
+                          }
+                        }
+                      },
+                      "freshAt": {
+                        "type": "string",
+                        "minLength": 20,
+                        "maxLength": 24
+                      },
+                      "staleReason": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 256
+                      }
+                    }
+                  },
+                  {
+                    "type": "object",
+                    "required": [
+                      "status",
+                      "reason"
+                    ],
+                    "properties": {
+                      "status": {
+                        "type": "string",
+                        "enum": [
+                          "unavailable"
+                        ],
+                        "openEnum": false
+                      },
+                      "reason": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 256
+                      }
+                    }
+                  },
+                  {
+                    "type": "object",
+                    "required": [
+                      "status"
+                    ],
+                    "properties": {
+                      "status": {
+                        "type": "string",
+                        "enum": [
+                          "forbidden"
+                        ],
+                        "openEnum": false
+                      }
+                    }
+                  }
+                ]
+              },
+              "meta": {
+                "type": "object",
+                "required": [
+                  "requestId",
+                  "readAt"
+                ],
+                "properties": {
+                  "requestId": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 64
+                  },
+                  "readAt": {
+                    "type": "string",
+                    "format": "date-time"
+                  },
+                  "normalizedQuery": {
+                    "type": "object",
+                    "additionalProperties": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 512
+                    }
+                  }
+                }
+              },
+              "allowedActions": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "enum": [
+                    "create",
+                    "read",
+                    "update",
+                    "delete",
+                    "manage",
+                    "restore",
+                    "transfer",
+                    "revoke"
+                  ],
+                  "openEnum": false
+                }
+              },
+              "navigationTargets": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "routeId",
+                    "pathParams",
+                    "query"
+                  ],
+                  "properties": {
+                    "routeId": {
+                      "type": "string",
+                      "enum": [
+                        "auth.register",
+                        "auth.verify-email",
+                        "auth.verify-email-confirm",
+                        "auth.login",
+                        "auth.forgot-password",
+                        "auth.reset-password",
+                        "invitation.accept",
+                        "account.security",
+                        "account.deletion-cancel",
+                        "account.deletion-confirm",
+                        "workspace.home",
+                        "organization.project-create",
+                        "organization.members",
+                        "organization.settings",
+                        "organization.usage",
+                        "organization.tokens",
+                        "organization.audit",
+                        "organization.trash",
+                        "project.onboarding",
+                        "project.overview",
+                        "project.issues",
+                        "project.issue-detail",
+                        "project.requests",
+                        "project.performance",
+                        "project.data-status",
+                        "project.releases",
+                        "project.release-detail",
+                        "project.source-maps",
+                        "project.alerts",
+                        "project.alert-rule-create",
+                        "project.alert-rule-edit",
+                        "project.alert-instance-detail",
+                        "project.access",
+                        "project.client-keys",
+                        "project.settings",
+                        "project.lifecycle",
+                        "account.notifications",
+                        "platform.resource-policies"
+                      ],
+                      "openEnum": false
+                    },
+                    "pathParams": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 256
+                      }
+                    },
+                    "query": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 512
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "sourceMapsUpload": {
+        "responses": {
+          "200": {
+            "type": "object",
+            "required": [
+              "data"
+            ],
+            "properties": {
+              "data": {
+                "type": "object",
+                "required": [
+                  "status",
+                  "releaseId"
+                ],
+                "properties": {
+                  "status": {
+                    "type": "string",
+                    "enum": [
+                      "uploaded",
+                      "duplicate",
+                      "replace_conflict"
+                    ],
+                    "openEnum": false
+                  },
+                  "releaseId": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 64
+                  },
+                  "sourceMapFileId": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 64
+                  },
+                  "currentDigest": {
+                    "type": "string",
+                    "minLength": 64,
+                    "maxLength": 64
+                  },
+                  "version": {
+                    "type": "number",
+                    "minimum": 1
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "sourceMapsReplace": {
+        "responses": {
+          "200": {
+            "type": "object",
+            "required": [
+              "data"
+            ],
+            "properties": {
+              "data": {
+                "type": "object",
+                "required": [
+                  "status",
+                  "sourceMapFileId",
+                  "version"
+                ],
+                "properties": {
+                  "status": {
+                    "type": "string",
+                    "enum": [
+                      "replaced"
+                    ],
+                    "openEnum": false
+                  },
+                  "sourceMapFileId": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 64
+                  },
+                  "version": {
+                    "type": "number",
+                    "minimum": 1
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "sourceMapsReparse": {
+        "responses": {
+          "200": {
+            "type": "object",
+            "required": [
+              "data"
+            ],
+            "properties": {
+              "data": {
+                "type": "object",
+                "required": [
+                  "status",
+                  "releaseId",
+                  "taskCount"
+                ],
+                "properties": {
+                  "status": {
+                    "type": "string",
+                    "enum": [
+                      "queued"
+                    ],
+                    "openEnum": false
+                  },
+                  "releaseId": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 64
+                  },
+                  "taskCount": {
+                    "type": "number",
+                    "minimum": 1
                   }
                 }
               }

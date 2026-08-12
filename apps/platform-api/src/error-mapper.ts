@@ -6,6 +6,7 @@ import { PlatformOrganizationError } from '@aurora/platform-organization';
 import { PlatformProjectGovernanceError } from '@aurora/platform-project-governance';
 import { PlatformCredentialsError } from '@aurora/platform-credentials';
 import { PlatformAuditError } from '@aurora/platform-audit';
+import { PlatformReleasesError } from '@aurora/platform-releases';
 import { ProcessingStoreError } from '@aurora/processing-store';
 
 /** A single field-level validation error (RFC 9457 `fieldErrors`). */
@@ -135,7 +136,8 @@ export function isStableDataError(
   | PlatformAuditError
   | ProcessingStoreError
   | IngestionInboxError
-  | IngestionCredentialsError {
+  | IngestionCredentialsError
+  | PlatformReleasesError {
   return (
     error instanceof PlatformIdentityError ||
     error instanceof PlatformOrganizationError ||
@@ -144,7 +146,8 @@ export function isStableDataError(
     error instanceof PlatformAuditError ||
     error instanceof ProcessingStoreError ||
     error instanceof IngestionInboxError ||
-    error instanceof IngestionCredentialsError
+    error instanceof IngestionCredentialsError ||
+    error instanceof PlatformReleasesError
   );
 }
 

@@ -5,8 +5,10 @@ export const OrganizationId = brandedId<'OrganizationId'>('OrganizationId');
 export const ProjectId = brandedId<'ProjectId'>('ProjectId');
 export const EnvironmentId = brandedId<'EnvironmentId'>('EnvironmentId');
 export const IssueId = brandedId<'IssueId'>('IssueId', 1);
-export const ReleaseId = brandedId<'ReleaseId'>('ReleaseId');
-export const SourceMapFileId = brandedId<'SourceMapFileId'>('SourceMapFileId');
+// bigserial identifiers render as short decimal strings (e.g. "1"), so the
+// minimum length is 1 (IssueId precedent).
+export const ReleaseId = brandedId<'ReleaseId'>('ReleaseId', 1);
+export const SourceMapFileId = brandedId<'SourceMapFileId'>('SourceMapFileId', 1);
 // bigserial identifiers render as short decimal strings (e.g. "1"), so the
 // minimum length is 1 (IssueId precedent).
 export const AlertRuleId = brandedId<'AlertRuleId'>('AlertRuleId', 1);

@@ -192,6 +192,9 @@ importers:
       '@aurora/platform-project-governance':
         specifier: workspace:*
         version: link:../../packages/platform-project-governance
+      '@aurora/platform-releases':
+        specifier: workspace:*
+        version: link:../../packages/platform-releases
       '@aurora/platform-session':
         specifier: workspace:*
         version: link:../../packages/platform-session
@@ -235,6 +238,9 @@ importers:
       '@aurora/platform-identity':
         specifier: workspace:*
         version: link:../../packages/platform-identity
+      '@aurora/platform-releases':
+        specifier: workspace:*
+        version: link:../../packages/platform-releases
       '@aurora/processing-store':
         specifier: workspace:*
         version: link:../../packages/processing-store
@@ -536,6 +542,34 @@ importers:
         version: 4.1.10(@types/node@24.13.3)(@vitest/coverage-v8@4.1.10)(jsdom@30.0.1(@noble/hashes@2.2.0))(msw@2.15.0(@types/node@24.13.3)(typescript@6.0.3))(vite@8.2.1(@types/node@24.13.3)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.1)(yaml@2.9.0))
 
   packages/platform-project-governance:
+    dependencies:
+      pg:
+        specifier: 8.22.0
+        version: 8.22.0
+    devDependencies:
+      '@types/node':
+        specifier: 24.13.3
+        version: 24.13.3
+      '@types/pg':
+        specifier: 8.20.0
+        version: 8.20.0
+      '@vitest/coverage-v8':
+        specifier: 4.1.10
+        version: 4.1.10(vitest@4.1.10)
+      node-pg-migrate:
+        specifier: 9.0.0
+        version: 9.0.0(@types/pg@8.20.0)(pg@8.22.0)
+      tsx:
+        specifier: 4.23.1
+        version: 4.23.1
+      typescript:
+        specifier: 6.0.3
+        version: 6.0.3
+      vitest:
+        specifier: 4.1.10
+        version: 4.1.10(@types/node@24.13.3)(@vitest/coverage-v8@4.1.10)(jsdom@30.0.1(@noble/hashes@2.2.0))(msw@2.15.0(@types/node@24.13.3)(typescript@6.0.3))(vite@8.2.1(@types/node@24.13.3)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.1)(yaml@2.9.0))
+
+  packages/platform-releases:
     dependencies:
       pg:
         specifier: 8.22.0

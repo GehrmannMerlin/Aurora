@@ -33,6 +33,7 @@
     "@aurora/platform-identity": "workspace:*",
     "@aurora/platform-organization": "workspace:*",
     "@aurora/platform-project-governance": "workspace:*",
+    "@aurora/platform-releases": "workspace:*",
     "@aurora/platform-session": "workspace:*",
     "@aurora/processing-store": "workspace:*",
     "fastify": "5.10.0",

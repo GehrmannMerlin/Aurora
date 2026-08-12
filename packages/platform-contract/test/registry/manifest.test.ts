@@ -60,11 +60,16 @@ describe('operation registry and manifest', () => {
       'alertsCreateRule',
       'alertsUpdateRule',
       'alertsGetInstanceDetail',
+      'releasesListReleases',
+      'sourceMapsListFiles',
+      'sourceMapsUpload',
+      'sourceMapsReplace',
+      'sourceMapsReparse',
     ]);
   });
 
   it('registers blocked downstream operations without schemas', () => {
-    expect(BLOCKED_OPERATIONS.length).toBeGreaterThan(8);
+    expect(BLOCKED_OPERATIONS.length).toBeGreaterThan(6);
     for (const op of BLOCKED_OPERATIONS) {
       expect(op.reason.length).toBeGreaterThan(10);
       expect('responses' in op).toBe(false);
@@ -128,7 +133,7 @@ describe('operation registry and manifest', () => {
   it('throws when a route target is marked stable without an emittable operation', () => {
     const bad: Readonly<Record<RouteTargetId, CoverageKind>> = {
       ...OPERATION_MANIFEST.routeTargetCoverage,
-      'project.releases': 'stable',
+      'project.release-detail': 'stable',
     };
     expect(() => {
       validateManifest({ coverage: bad });
@@ -174,9 +179,9 @@ describe('operation registry and manifest', () => {
       'project.requests': 'stable',
       'project.performance': 'stable',
       'project.data-status': 'stable',
-      'project.releases': 'blocked',
+      'project.releases': 'stable',
       'project.release-detail': 'unavailable',
-      'project.source-maps': 'blocked',
+      'project.source-maps': 'stable',
       'project.alerts': 'stable',
       'project.alert-rule-create': 'stable',
       'project.alert-rule-edit': 'stable',

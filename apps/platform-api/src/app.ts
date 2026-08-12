@@ -64,6 +64,13 @@ import {
   handleListRulesAndInstances,
   handleUpdateAlertRule,
 } from './routes/alerts.js';
+import {
+  handleListReleases,
+  handleListSourceMapFiles,
+  handleReparseRelease,
+  handleReplaceSourceMap,
+  handleUploadSourceMap,
+} from './routes/source-maps.js';
 import { handleListTrash, handleRestoreProject } from './routes/trash.js';
 import {
   handleInvitationLink,
@@ -81,6 +88,10 @@ import {
 import { SESSION_COOKIE_NAME } from './session-cookie.js';
 import { InMemoryRateLimiter } from './rate-limit.js';
 import { sendProblem } from './error-mapper.js';
+import {
+  InMemorySourceMapObjectStorage,
+  type SourceMapObjectStoragePort,
+} from '@aurora/platform-releases';
 import type { PlatformApiRouteDependencies } from './route-deps.js';
 
 export interface PlatformApiDependencies {
@@ -88,6 +99,12 @@ export interface PlatformApiDependencies {
   readonly pool: Pool;
   readonly sessionStore: SessionStore;
   readonly emailPort: EmailDeliveryPort;
+  /**
+   * DAT-18 private Source Map object storage. Optional: defaults to a fresh
+   * disposable in-memory adapter (tests/dev; production S3 wiring pending —
+   * PRODUCTION_OBJECT_STORAGE_EVIDENCE_PENDING).
+   */
+  readonly sourceMapObjectStorage?: SourceMapObjectStoragePort;
   readonly requestIdProvider?: PlatformRequestIdProvider;
   readonly now?: () => Date;
 }
@@ -116,6 +133,7 @@ export function buildPlatformApi(deps: PlatformApiDependencies): FastifyInstance
     pool: deps.pool,
     sessionStore: deps.sessionStore,
     emailPort: deps.emailPort,
+    sourceMapObjectStorage: deps.sourceMapObjectStorage ?? new InMemorySourceMapObjectStorage(),
     requestIdProvider,
     now,
     cookieOptions,
@@ -390,6 +408,41 @@ export function buildPlatformApi(deps: PlatformApiDependencies): FastifyInstance
     '/api/platform/v1/organizations/:organizationId/projects/:projectId/alerts/instances/:instanceId',
     async (request, reply) => {
       await handleGetAlertInstanceDetail(request, reply, routeContext);
+    },
+  );
+
+  // DAT-18 Release / Source Map (5). Project view auth for reads; project
+  // handle auth (org manager / project_admin / developer, PRD §8.3.10) for
+  // upload/replace/reparse. Strict matching by project + release + normalized
+  // build path; no cross-version guessing.
+  app.get(
+    '/api/platform/v1/organizations/:organizationId/projects/:projectId/releases',
+    async (request, reply) => {
+      await handleListReleases(request, reply, routeContext);
+    },
+  );
+  app.get(
+    '/api/platform/v1/organizations/:organizationId/projects/:projectId/releases/:releaseId/source-maps',
+    async (request, reply) => {
+      await handleListSourceMapFiles(request, reply, routeContext);
+    },
+  );
+  app.post(
+    '/api/platform/v1/organizations/:organizationId/projects/:projectId/source-maps',
+    async (request, reply) => {
+      await handleUploadSourceMap(request, reply, routeContext);
+    },
+  );
+  app.post(
+    '/api/platform/v1/organizations/:organizationId/projects/:projectId/releases/:releaseId/source-maps/:sourceMapFileId/replace',
+    async (request, reply) => {
+      await handleReplaceSourceMap(request, reply, routeContext);
+    },
+  );
+  app.post(
+    '/api/platform/v1/organizations/:organizationId/projects/:projectId/releases/:releaseId/reparse',
+    async (request, reply) => {
+      await handleReparseRelease(request, reply, routeContext);
     },
   );
 

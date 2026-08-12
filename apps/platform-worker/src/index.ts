@@ -5,6 +5,7 @@ import {
   type OutboxRepository,
 } from '@aurora/platform-email';
 import { claimOutboxRows, insertOutboxRow, markOutboxResult } from '@aurora/platform-identity';
+import type { SourceMapObjectStoragePort } from '@aurora/platform-releases';
 import type { CleanupAdapter } from './retention/cleanup-adapters.js';
 import { buildPlatformWorker, type PlatformWorker } from './worker.js';
 
@@ -50,6 +51,14 @@ export interface BuildPlatformWorkerCompositionInput {
   readonly alertsEnabled: boolean;
   /** DAT-19 product-alert evaluation: max rules per round. */
   readonly alertMaxRules: number;
+  /** DAT-18 Source Map reparse: enable the per-poll round. */
+  readonly sourceMapsReparseEnabled: boolean;
+  /** DAT-18 Source Map reparse: max occurrences re-symbolized per task. */
+  readonly sourceMapsReparseMaxOccurrences: number;
+  /** DAT-18 Source Map reparse: max tasks claimed per round. */
+  readonly sourceMapsReparseMaxTasks: number;
+  /** DAT-18 Source Map private object storage (disposable in-memory in tests/dev). */
+  readonly sourceMapsObjectStorage: SourceMapObjectStoragePort;
 }
 
 /**
@@ -71,5 +80,14 @@ export function buildPlatformWorkerComposition(
       maxAttempts: input.cleanupMaxAttempts,
     },
     ...(input.alertsEnabled ? { alerts: { maxRules: input.alertMaxRules } } : {}),
+    ...(input.sourceMapsReparseEnabled
+      ? {
+          sourceMaps: {
+            objectStorage: input.sourceMapsObjectStorage,
+            maxOccurrences: input.sourceMapsReparseMaxOccurrences,
+            maxTasks: input.sourceMapsReparseMaxTasks,
+          },
+        }
+      : {}),
   });
 }

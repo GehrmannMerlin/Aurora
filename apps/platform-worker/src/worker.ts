@@ -2,6 +2,8 @@ import type { Pool } from 'pg';
 import { consumeOutboxEmails, type OutboxRepository } from '@aurora/platform-email';
 import type { EmailDeliveryPort } from '@aurora/platform-email';
 import { runAlertEvaluationRound } from '@aurora/processing-store';
+import type { SourceMapObjectStoragePort } from '@aurora/platform-releases';
+import { runSourceMapReparseRound } from './source-maps/reparse-round.js';
 import { defaultSleeper, type SleeperPort } from './timers.js';
 import type { CleanupAdapter } from './retention/cleanup-adapters.js';
 import { runCleanupRound } from './retention/cleanup-orchestrator.js';
@@ -16,6 +18,13 @@ export interface CleanupWorkerSettings {
 /** DAT-19 alert evaluation worker section (bounded rules per poll). */
 export interface AlertWorkerSettings {
   readonly maxRules: number;
+}
+
+/** DAT-18 Source Map reparse worker section (bounded tasks/occurrences per poll). */
+export interface SourceMapWorkerSettings {
+  readonly objectStorage: SourceMapObjectStoragePort;
+  readonly maxOccurrences: number;
+  readonly maxTasks: number;
 }
 
 export interface PlatformWorker {
@@ -35,6 +44,8 @@ export interface BuildPlatformWorkerInput {
   readonly cleanup?: CleanupWorkerSettings;
   /** Optional DAT-19 product-alert evaluation loop. */
   readonly alerts?: AlertWorkerSettings;
+  /** Optional DAT-18 Source Map reparse loop. */
+  readonly sourceMaps?: SourceMapWorkerSettings;
   /** Injectable sleeper for tests; production uses the real setTimeout sleeper. */
   readonly sleeper?: SleeperPort;
 }
@@ -85,6 +96,16 @@ export function buildPlatformWorker(input: BuildPlatformWorkerInput): PlatformWo
         pool: input.pool,
         now: new Date(),
         maxRules: input.alerts.maxRules,
+      });
+    }
+    if (input.sourceMaps !== undefined) {
+      // Source Map reparse (PRD §8.3.8). Bounded per poll; a single task
+      // failure never blocks the round or the rest of the worker.
+      await runSourceMapReparseRound({
+        pool: input.pool,
+        objectStorage: input.sourceMaps.objectStorage,
+        maxTasks: input.sourceMaps.maxTasks,
+        maxOccurrences: input.sourceMaps.maxOccurrences,
       });
     }
   };

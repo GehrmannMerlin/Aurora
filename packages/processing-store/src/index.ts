@@ -63,6 +63,13 @@ export {
   type AlertEvaluationRoundInput,
   type AlertEvaluationRoundResult,
 } from './alert-evaluation-round.js';
+export type {
+  SymbolizationStatus,
+  PersistSymbolizationInput,
+  ReparseCandidate,
+} from './symbolization-types.js';
+export { persistSymbolization, queryReparseCandidates } from './symbolization-repository.js';
+export { extractStackFrames, type StackFrame } from './stack-frames.js';
 export { ProcessingStoreError, type ProcessingStoreErrorKind } from './errors.js';
 export type {
   PersistErrorEventOccurrenceInput,

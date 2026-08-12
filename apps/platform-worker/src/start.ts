@@ -1,6 +1,7 @@
 import { Pool } from 'pg';
 import { buildPlatformWorkerComposition } from './index.js';
 import type { PlatformWorkerConfig } from './config.js';
+import { InMemorySourceMapObjectStorage } from '@aurora/platform-releases';
 import { PostgresCleanupAdapter } from './retention/postgres-cleanup-adapter.js';
 import { RedisSessionCleanupAdapter } from './retention/redis-session-cleanup-adapter.js';
 import { ObjectStorageCleanupAdapter } from './retention/object-storage-cleanup-adapter.js';
@@ -49,6 +50,10 @@ export async function startPlatformWorker(
       ],
       alertsEnabled: options.config.alertsEnabled,
       alertMaxRules: options.config.alertMaxRules,
+      sourceMapsReparseEnabled: options.config.sourceMapsReparseEnabled,
+      sourceMapsReparseMaxOccurrences: options.config.sourceMapsReparseMaxOccurrences,
+      sourceMapsReparseMaxTasks: options.config.sourceMapsReparseMaxTasks,
+      sourceMapsObjectStorage: new InMemorySourceMapObjectStorage(),
     });
     await worker.start();
 
