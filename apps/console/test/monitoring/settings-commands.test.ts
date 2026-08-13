@@ -36,7 +36,7 @@ describe('C15 settings Command client', () => {
     const call = lastCall();
     expect(call.operationId).toBe('settingsUpdateProject');
     expect(call.csrf).toBe(CSRF);
-    expect(call.input!.body).toMatchObject({
+    expect(call.input?.body).toMatchObject({
       name: 'Web shop',
       websiteUrl: 'https://example.invalid',
       resourceVersion: '1',
@@ -52,6 +52,6 @@ describe('C15 settings Command client', () => {
     );
     const call = lastCall();
     expect(call.operationId).toBe('settingsCreateEnvironment');
-    expect(call.input!.body).toMatchObject({ name: 'staging', idempotencyKey: FIXED_KEY });
+    expect(call.input?.body).toMatchObject({ name: 'staging', idempotencyKey: FIXED_KEY });
   });
 });

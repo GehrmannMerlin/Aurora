@@ -14,7 +14,7 @@ import {
 } from './alert-evaluator-types.js';
 
 export function isRatioMetric(metric: AlertMetric): boolean {
-  return (ALERT_RATIO_METRICS as readonly string[]).includes(metric);
+  return ALERT_RATIO_METRICS.includes(metric);
 }
 
 export type AlertObservationClass =

@@ -99,20 +99,17 @@ function normalizeRuleInput(
   if (!(ALERT_METRIC_VALUES as readonly string[]).includes(metric)) {
     return { ok: false, code: 'invalid_metric' };
   }
-  if (!(ALERT_WINDOWS_MINUTES as readonly number[]).includes(windowMinutes)) {
+  if (!ALERT_WINDOWS_MINUTES.includes(windowMinutes)) {
     return { ok: false, code: 'invalid_window' };
   }
-  if (!(ALERT_TRIGGER_DURATIONS_MINUTES as readonly number[]).includes(triggerDurationMinutes)) {
+  if (!ALERT_TRIGGER_DURATIONS_MINUTES.includes(triggerDurationMinutes)) {
     return { ok: false, code: 'invalid_trigger_duration' };
   }
-  if (!(ALERT_COOLDOWN_MINUTES as readonly number[]).includes(cooldownMinutes)) {
+  if (!ALERT_COOLDOWN_MINUTES.includes(cooldownMinutes)) {
     return { ok: false, code: 'invalid_cooldown' };
   }
-  const recoveryDurationMinutes =
-    input.recoveryDurationMinutes === undefined
-      ? triggerDurationMinutes
-      : input.recoveryDurationMinutes;
-  if (!(ALERT_TRIGGER_DURATIONS_MINUTES as readonly number[]).includes(recoveryDurationMinutes)) {
+  const recoveryDurationMinutes = input.recoveryDurationMinutes ?? triggerDurationMinutes;
+  if (!ALERT_TRIGGER_DURATIONS_MINUTES.includes(recoveryDurationMinutes)) {
     return { ok: false, code: 'invalid_recovery_duration' };
   }
   if (!(input.triggerThreshold >= 0) || !(input.recoveryThreshold >= 0)) {

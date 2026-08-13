@@ -94,7 +94,7 @@ export const useNavigationStore = defineStore('navigation', () => {
       currentScope.value = data.currentScope;
       defaultTarget.value = data.defaultTarget;
       safeExitTarget.value = data.safeExitTarget;
-      unreadCount.value = data.unreadCount ?? { status: 'unavailable' };
+      unreadCount.value = data.unreadCount;
       status.value = 'ready';
     } catch (caught) {
       if (startedEpoch !== epoch) return; // do not overwrite a post-clear state with 'unavailable'
