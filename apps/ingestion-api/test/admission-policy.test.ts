@@ -8,7 +8,7 @@ describe('createIngestionAdmissionPolicy (ING-12 rate limiter)', () => {
   it('allows requests within the sustainable event rate', async () => {
     const policy = createIngestionAdmissionPolicy({ maxEventsPerSecond: 10, retryAfterMs: 1000 });
     for (let i = 0; i < 10; i += 1) {
-      await expect(policy.check({ requestId: `r-${i}`, eventCount: 1 })).resolves.toEqual({
+      await expect(policy.check({ requestId: `r-${String(i)}`, eventCount: 1 })).resolves.toEqual({
         status: 'allow',
       });
     }

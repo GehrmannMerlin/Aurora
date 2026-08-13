@@ -83,7 +83,7 @@ export function createIngestionAdmissionPolicy(
   let lastRefillMs = now();
 
   return {
-    async check(input: CheckIngestionAdmissionInput): Promise<CheckIngestionAdmissionResult> {
+    check(input: CheckIngestionAdmissionInput): Promise<CheckIngestionAdmissionResult> {
       const currentMs = now();
       const elapsedMs = Math.max(0, currentMs - lastRefillMs);
       const refilled = (elapsedMs / 1000) * frozen.maxEventsPerSecond;
@@ -93,9 +93,12 @@ export function createIngestionAdmissionPolicy(
       const cost = Math.max(1, input.eventCount ?? 1);
       if (tokens >= cost) {
         tokens -= cost;
-        return { status: 'allow' };
+        return Promise.resolve({ status: 'allow' });
       }
-      return { status: 'temporarilyRejected', retryAfterMs: frozen.retryAfterMs };
+      return Promise.resolve({
+        status: 'temporarilyRejected',
+        retryAfterMs: frozen.retryAfterMs,
+      });
     },
   };
 }
