@@ -11,6 +11,14 @@ on:
         description: 'Release version tag (e.g. v0.1.0)'
         required: true
         type: string
+      release_type:
+        description: 'SDK release type: stable (dist-tag latest) or prerelease (dist-tag next)'
+        required: false
+        type: choice
+        default: stable
+        options:
+          - stable
+          - prerelease
 
 permissions:
   contents: read
