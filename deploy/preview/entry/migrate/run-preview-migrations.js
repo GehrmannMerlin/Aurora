@@ -1,14 +1,15 @@
 /**
  * Aurora public-preview migration runner.
  *
- * Deploy-only, plain ESM. Merges the repository's eight migration packages
- * (ingestion-inbox ×3, ingestion-credentials ×1, processing-store ×4,
- * platform-identity ×2, platform-organization ×1, platform-project-governance
- * ×1, platform-credentials ×1, platform-audit ×1) into a stable combined
- * directory and applies them with node-pg-migrate over the preview
- * DATABASE_URL. node-pg-migrate bundles jiti, so the checked-in .ts migration
- * files load without tsx. This is the same combined-directory pattern proven
- * by the credentials/benchmark integration harnesses.
+ * Deploy-only, plain ESM. Merges the repository's eleven migration packages
+ * (ingestion-inbox ×3, ingestion-credentials ×1, processing-store ×10,
+ * platform-identity ×3, platform-organization ×1, platform-project-governance
+ * ×1, platform-credentials ×1, platform-audit ×1, platform-admin ×2,
+ * platform-policy ×3, platform-releases ×1) into a stable combined directory
+ * and applies them with node-pg-migrate over the preview DATABASE_URL.
+ * node-pg-migrate bundles jiti, so the checked-in .ts migration files load
+ * without tsx. This is the same combined-directory pattern proven by the
+ * credentials/benchmark integration harnesses.
  *
  * Filename-collision note: node-pg-migrate v9 sorts by numeric timestamp, then
  * falls back to a numeric localeCompare of the full file name, so all files in
@@ -16,10 +17,12 @@
  * timestamp order. Every migration here has a distinct full filename — the two
  * `1722500000002_*` files (inbox replay + client credentials) already coexist
  * in the deployed combined dir and tie-break deterministically by name. The
- * five platform packages use distinct 1786…/1787… timestamps that sort after
- * the ingestion set in dependency order (identity base → organization →
- * account-deletion → project-governance → credentials → audit). No filename
- * prefixing is required.
+ * eight platform packages use distinct 1786…/1787…/17870… timestamps that sort
+ * after the ingestion/processing set in dependency order (identity base →
+ * organization → account-deletion → account-cleanup-steps → project-governance
+ * → credentials → audit → platform-admins → platform-audit-events →
+ * resource-policies/overrides/limits → releases), and the notifications
+ * migration (1897000000001) sorts last. No filename prefixing is required.
  */
 import { copyFile, mkdir, readdir, rm } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
@@ -47,6 +50,9 @@ const MIGRATION_SOURCES = [
   join(REPO_ROOT, 'packages', 'platform-project-governance', 'migrations'),
   join(REPO_ROOT, 'packages', 'platform-credentials', 'migrations'),
   join(REPO_ROOT, 'packages', 'platform-audit', 'migrations'),
+  join(REPO_ROOT, 'packages', 'platform-admin', 'migrations'),
+  join(REPO_ROOT, 'packages', 'platform-policy', 'migrations'),
+  join(REPO_ROOT, 'packages', 'platform-releases', 'migrations'),
 ];
 
 const COMBINED_DIR = join(REPO_ROOT, '.migrations-combined-preview');
