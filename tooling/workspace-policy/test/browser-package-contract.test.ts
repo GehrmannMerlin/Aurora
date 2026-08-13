@@ -21,10 +21,15 @@ describe('browser package contract', () => {
       sideEffects: false,
       exports: { '.': { types: './dist/index.d.ts', import: './dist/index.js' } },
       aurora: { layer: 'sdk-browser' },
-      dependencies: { '@aurora/core': 'workspace:*', '@aurora/sdk': 'workspace:*' },
+      dependencies: {
+        '@aurora/core': 'workspace:*',
+        '@aurora/event-schema': 'workspace:*',
+        '@aurora/sdk': 'workspace:*',
+      },
     });
     expect(Object.keys(isRecord(manifest.dependencies) ? manifest.dependencies : {})).toEqual([
       '@aurora/core',
+      '@aurora/event-schema',
       '@aurora/sdk',
     ]);
   });

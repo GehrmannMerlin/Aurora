@@ -324,7 +324,7 @@ reopen condition：后续 PRD 明确资源监控用户价值、字段、隐私�
 
 ### 8.4 G14 工程质量与兼容门禁记录（2026-08-08）
 
-本节记录 G14（工程质量与兼容门禁）的 OPS-01 完成状态与 OPS-02 blocked 原因。
+本节记录 G14（工程质量与兼容门禁）的 OPS-01 完成状态与 OPS-02 参考矩阵状态。
 
 **OPS-01（CI quality workflows）— completed：**
 
@@ -336,21 +336,21 @@ reopen condition：后续 PRD 明确资源监控用户价值、字段、隐私�
 - Windows libuv 归类为 local Windows tooling/environment issue（仓库源码无 libuv 引用），不影响 Linux CI；
 - 叶子计数：completed 37 → 38、remaining 41 → 40。
 
-**OPS-02（Compatibility/device/performance reference validation）— blocked：**
+**OPS-02（Compatibility/device/performance reference validation）— implemented-in-feature-branch / remote-pending：**
 
-| 前置                                                | 状态                                         |
-| --------------------------------------------------- | -------------------------------------------- |
-| SDK reference app                                   | **缺失**（无 examples/参考应用）             |
-| Console                                             | **缺失**（无 apps/console）                  |
-| Browser matrix（Chrome/Edge/Firefox/Safari 版本表） | approved 设计存在，证据 `requires-benchmark` |
-| Device matrix（真实 Safari/移动设备）               | **缺失**，`requires-benchmark`               |
-| Performance measurement environment                 | **缺失**                                     |
-| Repeatable test environment                         | 部分（OPS-01 建立 Chromium CI job）          |
-| Playwright/Chromium infrastructure                  | 已建立（OPS-01 main workflow browser job）   |
-| Accessibility target                                | approved WCAG 2.2 AA，无实现                 |
-| Production UI                                       | **缺失**（无 platform-api/console）          |
+| 前置                                                | 状态                                                                                                        |
+| --------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| SDK reference app                                   | **implemented**：`examples/sdk-reference`（`@aurora/sdk-reference`，完整组合 fixture + matrix 契约 + 单测） |
+| Console                                             | **存在**（apps/console，PLT-02 已 merge）+ reference matrix config                                          |
+| Browser matrix（Chrome/Edge/Firefox/Safari 版本表） | approved 设计存在；OPS-02 建立 Playwright 三引擎 CI 矩阵；真实 Safari/精确版本表仍 `requires-benchmark`     |
+| Device matrix（真实 Safari/移动设备）               | 设备类别 approved；OPS-02 建立代表 viewport（Pixel5/iPhone14）CI 矩阵；真实设备仍 `requires-benchmark`      |
+| Performance measurement environment                 | **implemented**：固定 harness（Desktop Chrome + Pixel5，init p95，release 运行）                            |
+| Repeatable test environment                         | OPS-01 Chromium CI job + OPS-02 browser-matrix job（nightly/release）                                       |
+| Playwright/Chromium infrastructure                  | 已建立（OPS-01）+ 扩展 firefox/webkit（OPS-02 browser-matrix）                                              |
+| Accessibility target                                | approved WCAG 2.2 AA；复用现有 axe infra，参考页 0 violations                                               |
+| Production UI                                       | **存在**（apps/console）                                                                                    |
 
-OPS-02 关键前置（reference app、Console、device matrix、performance env）缺失，按用户规则**不伪造** reference app/Console 关闭 G14。**OPS-02 = blocked，G14 = partially completed**；OPS-01 完成状态保留。该阻塞不阻碍后续 Preview CD。
+正式规格 [compatibility-reference-matrix.md](../architecture/compatibility-reference-matrix.md)（approved + implemented-in-feature-branch）与实施计划 [2026-08-11-ops-02-compatibility-reference-matrix.md](../superpowers/plans/2026-08-11-ops-02-compatibility-reference-matrix.md)；`examples/sdk-reference` reference fixture、Vue/React/Console 参考集成矩阵项目（chromium/firefox/webkit + Pixel5/iPhone14）、performance reference harness、PR 核心 Chromium smoke + nightly/release 完整矩阵 wiring 已 implemented-in-feature-branch（未 merge main）。修复一个存量构建缺陷：plugin-error/request/performance `tsconfig.build.json` 缺 DOM lib，导致构建 browser `delivery-transport.d.ts`（引用 `typeof fetch`）失败（G06 潜在问题）；三包 build tsconfig 补 `"lib": ["ES2024", "DOM"]` 与 plugin-vue/react 对齐。**OPS-02 implementation = completed、OPS-02 acceptance = remote-pending（等待真实 GitHub Actions 完整兼容矩阵 PASS）、G14 = release-pending**；计数保持 62 / 16（remote PASS 后 63 / 15 才解锁 G15）。
 
 ## 9. 机器契约和可执行规格清单
 

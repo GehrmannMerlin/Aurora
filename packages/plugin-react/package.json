@@ -24,7 +24,8 @@
     "test": "vitest run --exclude test/package-entry.test.ts",
     "test:coverage": "vitest run --coverage --exclude test/package-entry.test.ts",
     "test:package": "pnpm build && vitest run test/package-entry.test.ts",
-    "test:browser": "pnpm build && playwright test --config playwright.config.ts"
+    "test:browser": "pnpm build && playwright test --config playwright.config.ts --project=chromium-desktop",
+    "test:matrix": "pnpm build && playwright test --config playwright.config.ts"
   },
   "dependencies": {
     "@aurora/browser": "workspace:*",
