@@ -12,14 +12,15 @@
 import {
   startIngestionApi,
   loadIngestionApiConfig,
-  allowAllIngestionAdmissionPolicy,
+  createIngestionAdmissionPolicy,
+  DEFAULT_INGESTION_ADMISSION_POLICY_CONFIG,
 } from './index.js';
 
 async function main() {
   const config = loadIngestionApiConfig(process.env);
   const running = await startIngestionApi({
     config,
-    admissionPolicy: allowAllIngestionAdmissionPolicy,
+    admissionPolicy: createIngestionAdmissionPolicy(DEFAULT_INGESTION_ADMISSION_POLICY_CONFIG),
   });
   const onSignal = async () => {
     process.off('SIGTERM', onSignal);

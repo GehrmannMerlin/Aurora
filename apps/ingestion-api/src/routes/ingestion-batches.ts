@@ -69,7 +69,19 @@ export async function handlePostBatches(
   }
   const { projectId } = auth;
 
-  const admission = await deps.admissionPolicy.check({ requestId });
+  // Peek the parsed body only to count events for admission (rate-limit on the
+  // ING-13 sustainable event rate); the body is re-parsed/validated below.
+  const bodyPeek = request.body;
+  const eventCount =
+    typeof bodyPeek === 'object' &&
+    bodyPeek !== null &&
+    Array.isArray((bodyPeek as { events?: unknown }).events)
+      ? (bodyPeek as { events: unknown[] }).events.length
+      : undefined;
+
+  const admission = await deps.admissionPolicy.check(
+    eventCount === undefined ? { requestId } : { requestId, eventCount },
+  );
   if (admission.status === 'temporarilyRejected') {
     const retryAfter = String(Math.ceil(admission.retryAfterMs / 1000));
     void reply.header('Retry-After', retryAfter);
