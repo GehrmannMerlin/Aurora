@@ -157,7 +157,7 @@ function projectHref(projectId: string): string {
         没有可访问的组织。
       </p>
 
-      <template v-if="activeOrg !== null">
+      <template v-if="activeOrg !== null && loadError === null">
         <div class="au-projects-head">
           <h2 class="au-projects-title">{{ activeOrg.name }} 的项目</h2>
           <AppButton
@@ -184,14 +184,18 @@ function projectHref(projectId: string): string {
           >
             创建项目
           </AppButton>
+          <p v-else class="au-hint" data-testid="create-project-forbidden">
+            你当前没有在该组织中创建项目的权限。
+          </p>
         </div>
         <ul v-else class="au-project-list" data-testid="project-list">
           <li v-for="project in projects" :key="project.projectId" class="au-project-item">
             <AppLink :to="projectHref(project.projectId)">{{ project.name }}</AppLink>
-            <span class="au-project-meta">{{ project.frameworkType }}</span>
+            <span class="au-project-meta">接入类型：{{ project.frameworkType }}</span>
             <AppStatusBadge :tone="project.lifecycle === 'active' ? 'success' : 'neutral'">
-              {{ project.lifecycle }}
+              状态：{{ project.status }}
             </AppStatusBadge>
+            <span class="au-project-meta">生命周期：{{ project.lifecycle }}</span>
           </li>
         </ul>
       </template>

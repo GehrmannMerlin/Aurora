@@ -49,7 +49,14 @@ export async function handleListNotifications(
   deps: PlatformApiRouteDependencies,
 ): Promise<void> {
   const requestId = deps.requestIdProvider();
-  const parsed = parseInput(LIST_OPERATION, { params: request.params, query: request.query });
+  const rawQuery = request.query as Record<string, unknown>;
+  const rawLimit = rawQuery.limit;
+  const normalizedLimit =
+    typeof rawLimit === 'string' && /^\d+$/u.test(rawLimit) ? Number(rawLimit) : rawLimit;
+  const parsed = parseInput(LIST_OPERATION, {
+    params: request.params,
+    query: { ...rawQuery, ...(rawLimit === undefined ? {} : { limit: normalizedLimit }) },
+  });
   if (!parsed.ok) {
     await sendProblem(
       reply,
@@ -84,7 +91,8 @@ export async function handleListNotifications(
   const body = {
     data: {
       notifications: {
-        status: 'available' as const,
+        status: page.items.length === 0 ? ('empty' as const) : ('available' as const),
+        ...(page.items.length === 0 ? { reason: '暂无通知' } : {}),
         items: page.items.map(toContractNotification),
         pagination: {
           ...(page.nextCursor === undefined ? {} : { nextCursor: page.nextCursor }),

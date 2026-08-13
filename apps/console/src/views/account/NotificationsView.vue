@@ -47,6 +47,17 @@ const markingRead = ref<ReadonlySet<string>>(new Set());
 const actionError = ref<string | null>(null);
 const unreadCount = ref<UnreadCountProjection>({ status: 'unavailable' });
 
+function describeNotificationsError(caught: unknown): string {
+  if (caught instanceof ApiError) {
+    if (caught.code === 'authentication') return '登录状态已失效，请重新登录。';
+    if (caught.code === 'authorization') return '你没有查看通知的权限。';
+    if (caught.code === 'structural_error' || caught.code === 'field_validation') {
+      return '通知查询条件无效，请刷新页面后重试。';
+    }
+  }
+  return describeRequestError(caught);
+}
+
 /** The flat notifications section; the view-model maps it to a render state. */
 function currentSection(): NotificationsSection | null {
   return section.value;
@@ -61,7 +72,7 @@ async function load(): Promise<void> {
     accumulatedItems.value = data.notifications.items;
     unreadCount.value = data.unreadCount;
   } catch (caught) {
-    error.value = describeRequestError(caught);
+    error.value = describeNotificationsError(caught);
     section.value = null;
     accumulatedItems.value = [];
   } finally {
@@ -85,7 +96,7 @@ async function loadMore(): Promise<void> {
     accumulatedItems.value = section.value.items;
     unreadCount.value = next.unreadCount;
   } catch (caught) {
-    actionError.value = describeRequestError(caught);
+    actionError.value = describeNotificationsError(caught);
   } finally {
     loading.value = false;
   }

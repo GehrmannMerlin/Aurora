@@ -10,7 +10,16 @@ const route = useRoute();
 const router = useRouter();
 const { organizations, currentOrganizationId } = storeToRefs(navigation);
 
-const selected = computed(() => currentOrganizationId.value ?? '');
+const selected = computed(() => {
+  const routeOrganizationId = route.params.organizationId;
+  if (
+    typeof routeOrganizationId === 'string' &&
+    organizations.value.some((organization) => organization.organizationId === routeOrganizationId)
+  ) {
+    return routeOrganizationId;
+  }
+  return currentOrganizationId.value ?? '';
+});
 const projects = computed(
   () =>
     organizations.value.find((organization) => organization.organizationId === selected.value)

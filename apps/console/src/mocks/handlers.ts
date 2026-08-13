@@ -1141,6 +1141,28 @@ export function createPlatformHandlers() {
       await maybeDelay();
       return HttpResponse.json(validListProjectsSamples[0] as JsonBodyType, { status: 200 });
     }),
+    http.get('/api/platform/v1/organizations/:organizationId/usage', async ({ params }) => {
+      await maybeDelay();
+      return HttpResponse.json(
+        {
+          data: {
+            organizationId: String(params.organizationId),
+            periodStart: '2026-07-13T00:00:00.000Z',
+            periodEnd: '2026-08-12T00:00:00.000Z',
+            acceptedEvents: 12,
+            processedEvents: 10,
+            quotaAcceptedEvents: 1000000,
+            ratio: 0.000012,
+            stage: 'normal',
+            note: 'usage from real processed data; performance/slow sample counts unavailable',
+          },
+          meta: { requestId: 'req_test_usage', readAt: '2026-08-12T00:00:00.000Z' },
+          allowedActions: ['read'],
+          navigationTargets: [],
+        } as JsonBodyType,
+        { status: 200 },
+      );
+    }),
     http.post('/api/platform/v1/organizations/:organizationId/projects', async () => {
       handlerControls.createProjectRequests += 1;
       await maybeDelay();

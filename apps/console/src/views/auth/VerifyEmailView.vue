@@ -2,13 +2,16 @@
 import { computed, ref } from 'vue';
 import { storeToRefs } from 'pinia';
 import { useAuthStore } from '../../stores/auth.js';
+import { useSessionStore } from '../../stores/session.js';
 import AuthCard from '../../components/auth/AuthCard.vue';
 import AuthStatusBanner from '../../components/auth/AuthStatusBanner.vue';
 import AppButton from '../../components/aurora/AppButton.vue';
 import AppLink from '../../components/aurora/AppLink.vue';
 
 const authStore = useAuthStore();
+const session = useSessionStore();
 const { registration } = storeToRefs(authStore);
+const { status: sessionStatus, account } = storeToRefs(session);
 
 const cooldownActive = computed<boolean>(() => {
   const resend = registration.value?.resendAvailableAt;
@@ -74,8 +77,23 @@ function onResend(): void {
       </p>
     </template>
     <AuthStatusBanner v-else tone="warning">
-      未找到注册信息。
-      <AppLink to="/register" label="重新注册" />
+      <template v-if="sessionStatus === 'authenticated' && account?.verified">
+        当前账号邮箱已验证。
+        <AppLink to="/workspace" label="继续工作空间" />
+      </template>
+      <template v-else-if="sessionStatus === 'authenticated'">
+        当前账号尚未验证，但本浏览器中的注册交接信息已丢失，因此无法安全重发验证邮件。
+        <AppLink to="/workspace" label="进入受限工作空间" />
+      </template>
+      <template v-else-if="sessionStatus === 'loading' || sessionStatus === 'idle'">
+        正在检查当前账号状态…
+      </template>
+      <template v-else>
+        未找到可用的注册交接或登录会话。
+        <AppLink to="/login" label="返回登录" />
+        或
+        <AppLink to="/register" label="重新注册" />
+      </template>
     </AuthStatusBanner>
   </AuthCard>
 </template>

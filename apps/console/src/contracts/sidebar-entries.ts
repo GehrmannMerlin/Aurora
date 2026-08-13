@@ -1,6 +1,7 @@
 import type { RouteTargetId } from '@aurora/platform-contract';
 
 export const ORG_SIDEBAR_ENTRIES: readonly RouteTargetId[] = [
+  'workspace.home',
   'organization.members',
   'organization.settings',
   'organization.usage',
@@ -8,6 +9,8 @@ export const ORG_SIDEBAR_ENTRIES: readonly RouteTargetId[] = [
   'organization.audit',
   'organization.trash',
 ];
+
+export const WORKSPACE_SIDEBAR_ENTRIES: readonly RouteTargetId[] = ['workspace.home'];
 
 export const PROJECT_SIDEBAR_ENTRIES: readonly RouteTargetId[] = [
   'project.onboarding',

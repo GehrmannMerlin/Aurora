@@ -125,6 +125,25 @@ describe('VerifyEmailView', () => {
     const resend = screen.getByTestId<HTMLButtonElement>('resend-button');
     expect(resend.disabled).toBe(true);
   });
+
+  it('uses the authenticated session as the recovery path when registration handoff is lost', async () => {
+    handlerControls.sessionAuthenticated = true;
+    await useSessionStore().restore();
+    await router.push('/verify-email');
+    await router.isReady();
+    render(VerifyEmailView, { global: { plugins: [pinia, router] } });
+    expect(screen.getByText(/当前账号邮箱已验证/)).toBeTruthy();
+    expect(screen.getByRole('link', { name: '继续工作空间' })).toBeTruthy();
+    expect(screen.queryByText('未找到注册信息。')).toBeNull();
+  });
+
+  it('offers login and registration when neither session nor handoff exists', async () => {
+    await router.push('/verify-email');
+    await router.isReady();
+    render(VerifyEmailView, { global: { plugins: [pinia, router] } });
+    expect(screen.getByRole('link', { name: '返回登录' })).toBeTruthy();
+    expect(screen.getByRole('link', { name: '重新注册' })).toBeTruthy();
+  });
 });
 
 describe('VerifyEmailConfirmView', () => {

@@ -120,16 +120,16 @@ describe('B1 workspace home (7A)', () => {
   });
 });
 
-describe('B5 usage unavailable (7A)', () => {
-  it('renders an honest capability gap with no fabricated usage data', async () => {
+describe('B5 usage query (7A)', () => {
+  it('renders the real usage projection from usageGetSummary', async () => {
     await router.push('/organizations/org_test_1/usage');
     await router.isReady();
     render(UsageView, { global: { plugins: [pinia, router] } });
-    expect(screen.getByTestId('usage-view')).toBeTruthy();
-    expect(screen.getByText('功能未提供')).toBeTruthy();
-    expect(screen.getByText(/不会显示任何模拟数据/)).toBeTruthy();
+    expect((await screen.findByTestId('usage-accepted')).textContent).toContain('12');
+    expect(screen.getByTestId('usage-processed').textContent).toContain('10');
+    expect(screen.getByText('正常')).toBeTruthy();
     expect(screen.queryByTestId('usage-chart')).toBeNull();
-    expect(screen.queryByTestId('usage-number')).toBeNull();
+    expect(screen.queryByText('功能未提供')).toBeNull();
   });
 
   it('redirects an authenticated non-member to the forbidden page', async () => {

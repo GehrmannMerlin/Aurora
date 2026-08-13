@@ -151,6 +151,9 @@ describeDb('PLT-09 notifications API (real PostgreSQL 17 + Redis)', () => {
       [issueNotif, alertNotif].sort(),
     );
 
+    const limited = await getNotifications(app, alice, '?readState=all&limit=50');
+    expect(limited.status).toBe(200);
+
     // Unread filter returns only unread rows.
     const unread = await getNotifications(app, alice, '?readState=unread');
     expect(unread.status).toBe(200);
@@ -180,6 +183,7 @@ describeDb('PLT-09 notifications API (real PostgreSQL 17 + Redis)', () => {
     expect(bobList.status).toBe(200);
     const bobData = bobList.body.data as { notifications: { items: NotificationItem[] } };
     expect(bobData.notifications.items).toHaveLength(0);
+    expect((bobData.notifications as { status?: string }).status).toBe('empty');
 
     // Bob cannot mark Alice's notification read (account isolation → 404).
     const bobRead = await postMarkRead(app, bob, alertNotif);

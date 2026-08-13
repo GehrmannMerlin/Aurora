@@ -1,4 +1,4 @@
-import { cleanup, render, screen } from '@testing-library/vue';
+import { cleanup, render, screen, within } from '@testing-library/vue';
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import App from '../../src/App.vue';
 import { router } from '../../src/router';
@@ -23,10 +23,10 @@ afterAll(() => {
 describe('app shell', () => {
   it('renders the top bar entries when authenticated (real session projection)', async () => {
     render(App, { global: { plugins: [pinia, router] } });
-    expect(await screen.findByRole('navigation', { name: '顶栏导航' })).toBeTruthy();
-    expect(screen.getByRole('link', { name: '工作空间' })).toBeTruthy();
-    expect(screen.getByRole('link', { name: '通知' })).toBeTruthy();
-    expect(screen.getByRole('link', { name: '账号安全' })).toBeTruthy();
+    const topnav = await screen.findByRole('navigation', { name: '顶栏导航' });
+    expect(within(topnav).getByRole('link', { name: '工作空间' })).toBeTruthy();
+    expect(within(topnav).getByRole('link', { name: '通知' })).toBeTruthy();
+    expect(within(topnav).getByRole('link', { name: '账号安全' })).toBeTruthy();
   });
 
   it('renders the project sidebar entries in project scope', async () => {

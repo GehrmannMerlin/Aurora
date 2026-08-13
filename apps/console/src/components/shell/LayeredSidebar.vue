@@ -5,7 +5,11 @@ import { storeToRefs } from 'pinia';
 import { useRoute } from 'vue-router';
 import { ROUTE_BY_ID, resolveRouteTarget } from '../../contracts/route-registry';
 import type { RouteEntry } from '../../contracts/route-types';
-import { ORG_SIDEBAR_ENTRIES, PROJECT_SIDEBAR_ENTRIES } from '../../contracts/sidebar-entries';
+import {
+  ORG_SIDEBAR_ENTRIES,
+  PROJECT_SIDEBAR_ENTRIES,
+  WORKSPACE_SIDEBAR_ENTRIES,
+} from '../../contracts/sidebar-entries';
 import { useNavigationStore } from '../../stores/navigation';
 import AppLink from '../aurora/AppLink.vue';
 
@@ -14,7 +18,17 @@ const navigation = useNavigationStore();
 const { status, currentScope, currentOrganizationId } = storeToRefs(navigation);
 
 const entries = computed(() => {
-  if (status.value !== 'ready') return [];
+  const routeProjectId = route.params.projectId;
+  if (status.value !== 'ready') {
+    return WORKSPACE_SIDEBAR_ENTRIES.map((id) => ROUTE_BY_ID.get(id)).filter(
+      (entry): entry is RouteEntry => entry !== undefined && entry.menu,
+    );
+  }
+  if (typeof routeProjectId === 'string' && routeProjectId.length > 0) {
+    return PROJECT_SIDEBAR_ENTRIES.map((id) => ROUTE_BY_ID.get(id)).filter(
+      (entry): entry is RouteEntry => entry !== undefined && entry.menu,
+    );
+  }
   if (currentScope.value?.type === 'organization') {
     return ORG_SIDEBAR_ENTRIES.map((id) => ROUTE_BY_ID.get(id)).filter(
       (entry): entry is RouteEntry => entry !== undefined && entry.menu,
@@ -25,14 +39,21 @@ const entries = computed(() => {
       (entry): entry is RouteEntry => entry !== undefined && entry.menu,
     );
   }
-  return [];
+  return WORKSPACE_SIDEBAR_ENTRIES.map((id) => ROUTE_BY_ID.get(id)).filter(
+    (entry): entry is RouteEntry => entry !== undefined && entry.menu,
+  );
 });
 
 function paramsFor(): Readonly<Record<string, string>> {
   const params: Record<string, string> = {};
   const orgId = currentOrganizationId.value;
   if (orgId !== null) params.organizationId = orgId;
-  if (currentScope.value?.type === 'project' && currentScope.value.id !== undefined) {
+  const routeOrganizationId = route.params.organizationId;
+  if (typeof routeOrganizationId === 'string') params.organizationId = routeOrganizationId;
+  const routeProjectId = route.params.projectId;
+  if (typeof routeProjectId === 'string') {
+    params.projectId = routeProjectId;
+  } else if (currentScope.value?.type === 'project' && currentScope.value.id !== undefined) {
     params.projectId = currentScope.value.id;
   }
   return params;

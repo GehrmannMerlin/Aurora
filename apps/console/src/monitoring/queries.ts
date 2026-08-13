@@ -28,6 +28,7 @@ import {
   OPERATION_ID_SETTINGS_GET,
   OPERATION_ID_SETTINGS_LIST_ENVIRONMENTS,
   OPERATION_ID_SOURCE_MAPS_LIST,
+  OPERATION_ID_GET_USAGE_SUMMARY,
 } from '@aurora/platform-contract';
 import { executeQuery } from '../api/query.js';
 import type { PlatformRequestInput } from '../api/client.js';
@@ -778,6 +779,30 @@ export function fetchNotifications(
     operationId: OPERATION_ID_NOTIFICATIONS_LIST,
     input,
     scope: { type: 'account' },
+    ...(options.signal !== undefined ? { signal: options.signal } : {}),
+  }).then((response) => response.data);
+}
+
+export interface UsageSummaryData {
+  readonly organizationId: string;
+  readonly periodStart: string;
+  readonly periodEnd: string;
+  readonly acceptedEvents: number;
+  readonly processedEvents: number;
+  readonly quotaAcceptedEvents: number;
+  readonly ratio: number;
+  readonly stage: 'normal' | 'near-limit' | 'degraded' | 'hard-limit';
+  readonly note?: string;
+}
+
+export function fetchUsageSummary(
+  organizationId: string,
+  options: FetchOptions = {},
+): Promise<UsageSummaryData> {
+  return executeQuery<QueryResponse<UsageSummaryData>>({
+    operationId: OPERATION_ID_GET_USAGE_SUMMARY,
+    input: { pathParams: { organizationId } },
+    scope: { type: 'organization', id: organizationId },
     ...(options.signal !== undefined ? { signal: options.signal } : {}),
   }).then((response) => response.data);
 }

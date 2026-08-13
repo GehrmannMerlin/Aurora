@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import { onMounted, ref, watch } from 'vue';
+import { computed, onMounted, ref, watch } from 'vue';
 import { storeToRefs } from 'pinia';
+import { useRoute } from 'vue-router';
 import { useNavigationStore } from '../../stores/navigation';
 import { useSessionStore } from '../../stores/session';
 import AppButton from '../aurora/AppButton.vue';
@@ -12,8 +13,10 @@ import TopBar from './TopBar.vue';
 
 const session = useSessionStore();
 const navigation = useNavigationStore();
+const route = useRoute();
 const { status } = storeToRefs(session);
 const drawerOpen = ref(false);
+const publicLayout = computed(() => route.meta.scope === 'public');
 
 onMounted(() => {
   void session.restore();
@@ -29,7 +32,12 @@ watch(
 </script>
 
 <template>
-  <div class="au-shell">
+  <div v-if="publicLayout" class="au-public-shell">
+    <main class="au-public-content">
+      <ContentOutlet />
+    </main>
+  </div>
+  <div v-else class="au-shell">
     <TopBar />
     <div class="au-shell-body">
       <aside class="au-desktop-sidebar">
@@ -61,6 +69,16 @@ watch(
   display: flex;
   flex-direction: column;
   background-color: var(--color-page-bg);
+}
+.au-public-shell {
+  min-height: 100vh;
+  display: grid;
+  place-items: start center;
+  padding: var(--space-6) var(--space-4);
+  background-color: var(--color-page-bg);
+}
+.au-public-content {
+  width: min(100%, 480px);
 }
 .au-shell-body {
   display: flex;
