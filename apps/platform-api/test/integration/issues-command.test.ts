@@ -363,11 +363,18 @@ describeDb('DAT-14 issue lifecycle Commands (real PostgreSQL 17 + Redis)', () =>
     const projectId = await createProjectFor(pool, owner);
     const issueId = await seedIssue(pool, projectId);
 
-    const first = await postIssue(app, owner, owner.organizationId, projectId, `${issueId}/assignee`, {
-      assigneeAccountId: assignee.accountId,
-      version: 1,
-      idempotencyKey: `idem-${randomUUID()}`,
-    });
+    const first = await postIssue(
+      app,
+      owner,
+      owner.organizationId,
+      projectId,
+      `${issueId}/assignee`,
+      {
+        assigneeAccountId: assignee.accountId,
+        version: 1,
+        idempotencyKey: `idem-${randomUUID()}`,
+      },
+    );
     expect(first.status).toBe(200);
 
     const rows = await pool.query<{
@@ -389,11 +396,18 @@ describeDb('DAT-14 issue lifecycle Commands (real PostgreSQL 17 + Redis)', () =>
     expect(row.target.routeId).toBe('project.issue-detail');
 
     // Re-assigning the same person is not a change → no duplicate notification.
-    const second = await postIssue(app, owner, owner.organizationId, projectId, `${issueId}/assignee`, {
-      assigneeAccountId: assignee.accountId,
-      version: 2,
-      idempotencyKey: `idem-${randomUUID()}`,
-    });
+    const second = await postIssue(
+      app,
+      owner,
+      owner.organizationId,
+      projectId,
+      `${issueId}/assignee`,
+      {
+        assigneeAccountId: assignee.accountId,
+        version: 2,
+        idempotencyKey: `idem-${randomUUID()}`,
+      },
+    );
     expect(second.status).toBe(200);
     const count = await pool.query<{ n: string }>(
       `SELECT count(*)::bigint AS n FROM notifications

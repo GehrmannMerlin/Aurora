@@ -8,7 +8,13 @@ function batch() {
   return {
     protocolVersion: 1,
     events: [
-      { protocolVersion: 1, eventId: 'e1', eventType: 'error', occurredAt: 1, body: { message: 'x' } },
+      {
+        protocolVersion: 1,
+        eventId: 'e1',
+        eventType: 'error',
+        occurredAt: 1,
+        body: { message: 'x' },
+      },
     ],
   };
 }
@@ -40,10 +46,16 @@ function jsonResponse(body: unknown, status: number, headers?: Record<string, st
 describe('createBrowserBatchTransport', () => {
   it('POSTs to {endpoint}/v1/batches with chain-provided headers', async () => {
     const spy = vi.fn(() => Promise.resolve(jsonResponse(receiptBody(), 200)));
-    const transport = createBrowserBatchTransport({ ingestEndpoint: 'https://ingest.example.test/', fetchImpl: spy });
-    const result = await transport.send(batch() as Parameters<SdkBatchTransport['send']>[0], context());
+    const transport = createBrowserBatchTransport({
+      ingestEndpoint: 'https://ingest.example.test/',
+      fetchImpl: spy,
+    });
+    const result = await transport.send(
+      batch() as Parameters<SdkBatchTransport['send']>[0],
+      context(),
+    );
     expect(spy).toHaveBeenCalledTimes(1);
-    const [url, init] = (spy.mock.calls[0] as unknown as [string, RequestInit | undefined]);
+    const [url, init] = spy.mock.calls[0] as unknown as [string, RequestInit | undefined];
     expect(url).toBe('https://ingest.example.test/v1/batches');
     expect(init?.method).toBe('POST');
     const headers = init?.headers as Record<string, string> | undefined;
@@ -56,14 +68,25 @@ describe('createBrowserBatchTransport', () => {
     const spy = vi.fn(() =>
       Promise.resolve(
         jsonResponse(
-          { batchState: 'temporarily_failed', retryable: true, errorCode: 'rate_limited', perEventResults: [] },
+          {
+            batchState: 'temporarily_failed',
+            retryable: true,
+            errorCode: 'rate_limited',
+            perEventResults: [],
+          },
           429,
           { 'Retry-After': '2' },
         ),
       ),
     );
-    const transport = createBrowserBatchTransport({ ingestEndpoint: 'https://ingest.example.test', fetchImpl: spy });
-    const result = await transport.send(batch() as Parameters<SdkBatchTransport['send']>[0], context());
+    const transport = createBrowserBatchTransport({
+      ingestEndpoint: 'https://ingest.example.test',
+      fetchImpl: spy,
+    });
+    const result = await transport.send(
+      batch() as Parameters<SdkBatchTransport['send']>[0],
+      context(),
+    );
     expect(result.kind).toBe('http_error');
     if (result.kind !== 'http_error') return;
     expect(result.status).toBe(429);
@@ -72,22 +95,37 @@ describe('createBrowserBatchTransport', () => {
 
   it('maps network failure to transport_failure and never throws', async () => {
     const spy = vi.fn(() => Promise.reject(new TypeError('network down')));
-    const transport = createBrowserBatchTransport({ ingestEndpoint: 'https://ingest.example.test', fetchImpl: spy });
-    const result = await transport.send(batch() as Parameters<SdkBatchTransport['send']>[0], context());
+    const transport = createBrowserBatchTransport({
+      ingestEndpoint: 'https://ingest.example.test',
+      fetchImpl: spy,
+    });
+    const result = await transport.send(
+      batch() as Parameters<SdkBatchTransport['send']>[0],
+      context(),
+    );
     expect(result.kind).toBe('transport_failure');
   });
 
   it('uses fetch keepalive in best_effort mode', async () => {
     const spy = vi.fn(() => Promise.resolve(jsonResponse(receiptBody(), 200)));
-    const transport = createBrowserBatchTransport({ ingestEndpoint: 'https://ingest.example.test', fetchImpl: spy });
-    await transport.send(batch() as Parameters<SdkBatchTransport['send']>[0], { ...context(), mode: 'best_effort' });
+    const transport = createBrowserBatchTransport({
+      ingestEndpoint: 'https://ingest.example.test',
+      fetchImpl: spy,
+    });
+    await transport.send(batch() as Parameters<SdkBatchTransport['send']>[0], {
+      ...context(),
+      mode: 'best_effort',
+    });
     const calls = spy.mock.calls as unknown as [string, RequestInit | undefined][];
     expect(calls[0]?.[1]?.keepalive).toBe(true);
   });
 
   it('returns non-retryable http_error when no ingest endpoint is configured', async () => {
     const transport = createBrowserBatchTransport({ ingestEndpoint: '' });
-    const result = await transport.send(batch() as Parameters<SdkBatchTransport['send']>[0], context());
+    const result = await transport.send(
+      batch() as Parameters<SdkBatchTransport['send']>[0],
+      context(),
+    );
     expect(result.kind).toBe('http_error');
     if (result.kind !== 'http_error') return;
     expect(result.status).toBe(0);
@@ -98,7 +136,10 @@ describe('createBrowserBatchTransport', () => {
       ingestEndpoint: 'https://ingest.example.test',
       fetchImpl: () => Promise.resolve(new Response('not-json', { status: 200 })),
     });
-    const result = await transport.send(batch() as Parameters<SdkBatchTransport['send']>[0], context());
+    const result = await transport.send(
+      batch() as Parameters<SdkBatchTransport['send']>[0],
+      context(),
+    );
     expect(result.kind).toBe('transport_failure');
   });
 
@@ -107,7 +148,10 @@ describe('createBrowserBatchTransport', () => {
       ingestEndpoint: 'https://ingest.example.test',
       fetchImpl: () => Promise.resolve(new Response('not-json', { status: 500 })),
     });
-    const result = await transport.send(batch() as Parameters<SdkBatchTransport['send']>[0], context());
+    const result = await transport.send(
+      batch() as Parameters<SdkBatchTransport['send']>[0],
+      context(),
+    );
     expect(result.kind).toBe('http_error');
     if (result.kind !== 'http_error') return;
     expect(result.status).toBe(500);
@@ -125,7 +169,10 @@ describe('createBrowserBatchTransport', () => {
       ingestEndpoint: 'https://ingest.example.test',
       fetchImpl: () => Promise.resolve(failingResponse),
     });
-    const result = await transport.send(batch() as Parameters<SdkBatchTransport['send']>[0], context());
+    const result = await transport.send(
+      batch() as Parameters<SdkBatchTransport['send']>[0],
+      context(),
+    );
     expect(result.kind).toBe('transport_failure');
   });
 });

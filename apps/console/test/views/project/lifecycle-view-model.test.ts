@@ -21,7 +21,11 @@ function projectWithStatus(status: string, name = 'Web shop'): ProjectSettings {
 
 describe('buildLifecycleView', () => {
   it('unwraps the lifecycle-carrying project', () => {
-    const view = buildLifecycleView({ loading: false, error: null, project: projectWithStatus('archived') });
+    const view = buildLifecycleView({
+      loading: false,
+      error: null,
+      project: projectWithStatus('archived'),
+    });
     expect(view.project.kind).toBe('available');
     if (view.project.kind === 'available') {
       expect(view.project.data.lifecycle.status).toBe('archived');
@@ -29,9 +33,15 @@ describe('buildLifecycleView', () => {
   });
 
   it('surfaces loading/error/unavailable honestly', () => {
-    expect(buildLifecycleView({ loading: true, error: null, project: null }).project.kind).toBe('loading');
-    expect(buildLifecycleView({ loading: false, error: '加载失败', project: null }).project.kind).toBe('error');
-    expect(buildLifecycleView({ loading: false, error: null, project: null }).project.kind).toBe('unavailable');
+    expect(buildLifecycleView({ loading: true, error: null, project: null }).project.kind).toBe(
+      'loading',
+    );
+    expect(
+      buildLifecycleView({ loading: false, error: '加载失败', project: null }).project.kind,
+    ).toBe('error');
+    expect(buildLifecycleView({ loading: false, error: null, project: null }).project.kind).toBe(
+      'unavailable',
+    );
   });
 });
 

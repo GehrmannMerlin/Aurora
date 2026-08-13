@@ -55,7 +55,13 @@ describe('DAT-19 Alert rule Command client', () => {
   });
 
   it('updateAlertRule includes the optimistic version on the rule id', async () => {
-    await updateAlertRule(SCOPE, 'rule_1', RULE_INPUT, { version: 3 }, { csrf: CSRF, idempotencyKey: FIXED_KEY });
+    await updateAlertRule(
+      SCOPE,
+      'rule_1',
+      RULE_INPUT,
+      { version: 3 },
+      { csrf: CSRF, idempotencyKey: FIXED_KEY },
+    );
     const call = lastCall();
     expect(call.operationId).toBe('alertsUpdateRule');
     expect(call.input).toMatchObject({

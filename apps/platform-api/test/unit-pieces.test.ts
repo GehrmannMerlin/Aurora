@@ -173,8 +173,7 @@ describe('loadPlatformApiConfig', () => {
       const config = loadPlatformApiConfig({
         DATABASE_URL: 'postgresql://localhost/db',
         REDIS_URL: 'redis://localhost:6379',
-        PLATFORM_ADMIN_BOOTSTRAP_ACCOUNT_IDS:
-          'not-a-uuid,11111111-1111-4111-8111-111111111111,,  ',
+        PLATFORM_ADMIN_BOOTSTRAP_ACCOUNT_IDS: 'not-a-uuid,11111111-1111-4111-8111-111111111111,,  ',
       });
       expect(config.platformAdminBootstrapAccountIds).toEqual([
         '11111111-1111-4111-8111-111111111111',

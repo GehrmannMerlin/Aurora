@@ -468,14 +468,78 @@ function mockAlertCapability() {
   return {
     data: {
       metrics: [
-        { metric: 'error_count', displayName: 'Error count', unit: 'count', direction: 'higher_is_worse', isRatio: false, minSamplesRequired: false, filterDimensions: ['environment', 'release', 'page_or_endpoint', 'error_severity'] },
-        { metric: 'new_issue_count', displayName: 'New issue count', unit: 'count', direction: 'higher_is_worse', isRatio: false, minSamplesRequired: false, filterDimensions: ['environment', 'release', 'page_or_endpoint', 'error_severity'] },
-        { metric: 'issue_reappearance_count', displayName: 'Issue reappearance count', unit: 'count', direction: 'higher_is_worse', isRatio: false, minSamplesRequired: false, filterDimensions: ['environment', 'release', 'page_or_endpoint', 'error_severity'] },
-        { metric: 'request_failure_rate', displayName: 'Request failure rate', unit: 'percentage', direction: 'higher_is_worse', isRatio: true, minSamplesRequired: true, filterDimensions: ['environment', 'release', 'page_or_endpoint'] },
-        { metric: 'slow_request_count', displayName: 'Slow request count', unit: 'count', direction: 'higher_is_worse', isRatio: false, minSamplesRequired: false, filterDimensions: ['environment', 'release', 'page_or_endpoint'] },
-        { metric: 'lcp_ratio', displayName: 'LCP exceeded ratio', unit: 'percentage', direction: 'higher_is_worse', isRatio: true, minSamplesRequired: true, filterDimensions: ['environment', 'release', 'page_or_endpoint'] },
-        { metric: 'inp_ratio', displayName: 'INP exceeded ratio', unit: 'percentage', direction: 'higher_is_worse', isRatio: true, minSamplesRequired: true, filterDimensions: ['environment', 'release', 'page_or_endpoint'] },
-        { metric: 'cls_ratio', displayName: 'CLS exceeded ratio', unit: 'percentage', direction: 'higher_is_worse', isRatio: true, minSamplesRequired: true, filterDimensions: ['environment', 'release', 'page_or_endpoint'] },
+        {
+          metric: 'error_count',
+          displayName: 'Error count',
+          unit: 'count',
+          direction: 'higher_is_worse',
+          isRatio: false,
+          minSamplesRequired: false,
+          filterDimensions: ['environment', 'release', 'page_or_endpoint', 'error_severity'],
+        },
+        {
+          metric: 'new_issue_count',
+          displayName: 'New issue count',
+          unit: 'count',
+          direction: 'higher_is_worse',
+          isRatio: false,
+          minSamplesRequired: false,
+          filterDimensions: ['environment', 'release', 'page_or_endpoint', 'error_severity'],
+        },
+        {
+          metric: 'issue_reappearance_count',
+          displayName: 'Issue reappearance count',
+          unit: 'count',
+          direction: 'higher_is_worse',
+          isRatio: false,
+          minSamplesRequired: false,
+          filterDimensions: ['environment', 'release', 'page_or_endpoint', 'error_severity'],
+        },
+        {
+          metric: 'request_failure_rate',
+          displayName: 'Request failure rate',
+          unit: 'percentage',
+          direction: 'higher_is_worse',
+          isRatio: true,
+          minSamplesRequired: true,
+          filterDimensions: ['environment', 'release', 'page_or_endpoint'],
+        },
+        {
+          metric: 'slow_request_count',
+          displayName: 'Slow request count',
+          unit: 'count',
+          direction: 'higher_is_worse',
+          isRatio: false,
+          minSamplesRequired: false,
+          filterDimensions: ['environment', 'release', 'page_or_endpoint'],
+        },
+        {
+          metric: 'lcp_ratio',
+          displayName: 'LCP exceeded ratio',
+          unit: 'percentage',
+          direction: 'higher_is_worse',
+          isRatio: true,
+          minSamplesRequired: true,
+          filterDimensions: ['environment', 'release', 'page_or_endpoint'],
+        },
+        {
+          metric: 'inp_ratio',
+          displayName: 'INP exceeded ratio',
+          unit: 'percentage',
+          direction: 'higher_is_worse',
+          isRatio: true,
+          minSamplesRequired: true,
+          filterDimensions: ['environment', 'release', 'page_or_endpoint'],
+        },
+        {
+          metric: 'cls_ratio',
+          displayName: 'CLS exceeded ratio',
+          unit: 'percentage',
+          direction: 'higher_is_worse',
+          isRatio: true,
+          minSamplesRequired: true,
+          filterDimensions: ['environment', 'release', 'page_or_endpoint'],
+        },
       ],
       windowsMinutes: [1, 5, 10, 30, 60],
       triggerDurationsMinutes: [0, 1, 2, 5, 10],
@@ -488,7 +552,11 @@ function mockAlertCapability() {
       ],
       recipients: [{ accountId: 'account_test_1', maskedEmail: 'a***@example.com' }],
     },
-    meta: { requestId: 'req_test_alert_capability', readAt: MONITORING_READ_AT, normalizedQuery: {} },
+    meta: {
+      requestId: 'req_test_alert_capability',
+      readAt: MONITORING_READ_AT,
+      normalizedQuery: {},
+    },
     allowedActions: ['read'],
     navigationTargets: [],
   };
@@ -532,7 +600,12 @@ function mockAlertInstanceDetail(instanceId: string) {
         appliedFilters: { environment: [], release: [], pageOrEndpoint: [], errorSeverity: [] },
       },
       transitions: [
-        { from: 'pending_trigger', to: 'triggered', reason: 'triggered', occurredAt: '2026-08-10T08:30:00.000Z' },
+        {
+          from: 'pending_trigger',
+          to: 'triggered',
+          reason: 'triggered',
+          occurredAt: '2026-08-10T08:30:00.000Z',
+        },
       ],
     },
     meta: { requestId: 'req_test_alert_instance', readAt: MONITORING_READ_AT, normalizedQuery: {} },
@@ -1373,7 +1446,9 @@ export function createPlatformHandlers() {
         handlerControls.replaceSourceMapRequests += 1;
         await maybeDelay();
         return HttpResponse.json(
-          { data: { status: 'replaced', sourceMapFileId: 'sm_test_1', version: 2 } } as JsonBodyType,
+          {
+            data: { status: 'replaced', sourceMapFileId: 'sm_test_1', version: 2 },
+          } as JsonBodyType,
           { status: 200 },
         );
       },
@@ -1452,7 +1527,9 @@ export function createPlatformHandlers() {
         handlerControls.grantMembershipRequests += 1;
         await maybeDelay();
         return HttpResponse.json(
-          { data: { status: 'granted', accountId: 'account_test_2', role: 'developer' } } as JsonBodyType,
+          {
+            data: { status: 'granted', accountId: 'account_test_2', role: 'developer' },
+          } as JsonBodyType,
           { status: 200 },
         );
       },
@@ -1463,7 +1540,9 @@ export function createPlatformHandlers() {
         handlerControls.projectChangeRoleRequests += 1;
         await maybeDelay();
         return HttpResponse.json(
-          { data: { status: 'changed', accountId: 'account_test_2', role: 'project_admin' } } as JsonBodyType,
+          {
+            data: { status: 'changed', accountId: 'account_test_2', role: 'project_admin' },
+          } as JsonBodyType,
           { status: 200 },
         );
       },
@@ -1474,7 +1553,9 @@ export function createPlatformHandlers() {
         handlerControls.removeMembershipRequests += 1;
         await maybeDelay();
         return HttpResponse.json(
-          { data: { status: 'removed', accountId: 'account_test_2', remainingSources: [] } } as JsonBodyType,
+          {
+            data: { status: 'removed', accountId: 'account_test_2', remainingSources: [] },
+          } as JsonBodyType,
           { status: 200 },
         );
       },
@@ -1513,7 +1594,9 @@ export function createPlatformHandlers() {
         handlerControls.disableClientKeyRequests += 1;
         await maybeDelay();
         return HttpResponse.json(
-          { data: { status: 'disabled', credentialId: 'cred_test_1', keyId: 'ck_abcdefgh' } } as JsonBodyType,
+          {
+            data: { status: 'disabled', credentialId: 'cred_test_1', keyId: 'ck_abcdefgh' },
+          } as JsonBodyType,
           { status: 200 },
         );
       },
@@ -1524,7 +1607,9 @@ export function createPlatformHandlers() {
         handlerControls.enableClientKeyRequests += 1;
         await maybeDelay();
         return HttpResponse.json(
-          { data: { status: 'enabled', credentialId: 'cred_test_1', keyId: 'ck_abcdefgh' } } as JsonBodyType,
+          {
+            data: { status: 'enabled', credentialId: 'cred_test_1', keyId: 'ck_abcdefgh' },
+          } as JsonBodyType,
           { status: 200 },
         );
       },
@@ -1535,7 +1620,9 @@ export function createPlatformHandlers() {
         handlerControls.revokeClientKeyRequests += 1;
         await maybeDelay();
         return HttpResponse.json(
-          { data: { status: 'revoked', credentialId: 'cred_test_1', keyId: 'ck_abcdefgh' } } as JsonBodyType,
+          {
+            data: { status: 'revoked', credentialId: 'cred_test_1', keyId: 'ck_abcdefgh' },
+          } as JsonBodyType,
           { status: 200 },
         );
       },
@@ -1580,7 +1667,9 @@ export function createPlatformHandlers() {
         handlerControls.createEnvironmentRequests += 1;
         await maybeDelay();
         return HttpResponse.json(
-          { data: { status: 'created', environmentId: 'env_test_2', name: 'staging' } } as JsonBodyType,
+          {
+            data: { status: 'created', environmentId: 'env_test_2', name: 'staging' },
+          } as JsonBodyType,
           { status: 200 },
         );
       },
@@ -1641,10 +1730,9 @@ export function createPlatformHandlers() {
     http.post('/api/platform/v1/notifications/:notificationId/read', async ({ params }) => {
       await maybeDelay();
       const notificationId = String(params.notificationId ?? 'notif_test_2');
-      return HttpResponse.json(
-        { data: { status: 'read', notificationId } } as JsonBodyType,
-        { status: 200 },
-      );
+      return HttpResponse.json({ data: { status: 'read', notificationId } } as JsonBodyType, {
+        status: 200,
+      });
     }),
     http.get('/api/platform/v1/platform-admin/capability', async () => {
       await maybeDelay();
@@ -1674,42 +1762,36 @@ export function createPlatformHandlers() {
     }),
     http.post('/api/platform/v1/platform-admin/policy/default', async () => {
       await maybeDelay();
-      return HttpResponse.json(
-        { data: { status: 'set', version: 2 } } as JsonBodyType,
-        { status: 200 },
-      );
+      return HttpResponse.json({ data: { status: 'set', version: 2 } } as JsonBodyType, {
+        status: 200,
+      });
     }),
     http.post('/api/platform/v1/platform-admin/policy/organizations/:organizationId', async () => {
       await maybeDelay();
-      return HttpResponse.json(
-        { data: { status: 'set', version: 2 } } as JsonBodyType,
-        { status: 200 },
-      );
+      return HttpResponse.json({ data: { status: 'set', version: 2 } } as JsonBodyType, {
+        status: 200,
+      });
     }),
     http.post(
       '/api/platform/v1/platform-admin/policy/organizations/:organizationId/reset',
       async () => {
         await maybeDelay();
-        return HttpResponse.json(
-          { data: { status: 'reset' } } as JsonBodyType,
-          { status: 200 },
-        );
+        return HttpResponse.json({ data: { status: 'reset' } } as JsonBodyType, { status: 200 });
       },
     ),
     http.post('/api/platform/v1/platform-admin/policy/projects/:projectId/limit', async () => {
       await maybeDelay();
-      return HttpResponse.json(
-        { data: { status: 'set', version: 2 } } as JsonBodyType,
-        { status: 200 },
-      );
+      return HttpResponse.json({ data: { status: 'set', version: 2 } } as JsonBodyType, {
+        status: 200,
+      });
     }),
-    http.post('/api/platform/v1/platform-admin/policy/projects/:projectId/limit/clear', async () => {
-      await maybeDelay();
-      return HttpResponse.json(
-        { data: { status: 'cleared' } } as JsonBodyType,
-        { status: 200 },
-      );
-    }),
+    http.post(
+      '/api/platform/v1/platform-admin/policy/projects/:projectId/limit/clear',
+      async () => {
+        await maybeDelay();
+        return HttpResponse.json({ data: { status: 'cleared' } } as JsonBodyType, { status: 200 });
+      },
+    ),
     http.post('/__mock/session', async ({ request }) => {
       const body = (await request.json()) as { authenticated?: boolean };
       persistSessionAuthenticated(body.authenticated ?? true);

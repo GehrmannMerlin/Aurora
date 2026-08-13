@@ -186,10 +186,16 @@ async function submit(): Promise<void> {
   const input: AlertRuleInput = { ...draft.value, filters: EMPTY_FILTERS };
   try {
     if (isEdit) {
-      await updateAlertRule(scope, ruleId, input, { version: existingVersion.value ?? 1 }, {
-        csrf: session.csrf ?? '',
-        idempotencyKey: createIdempotencyKey(),
-      });
+      await updateAlertRule(
+        scope,
+        ruleId,
+        input,
+        { version: existingVersion.value ?? 1 },
+        {
+          csrf: session.csrf ?? '',
+          idempotencyKey: createIdempotencyKey(),
+        },
+      );
     } else {
       await createAlertRule(scope, input, {
         csrf: session.csrf ?? '',
@@ -197,13 +203,17 @@ async function submit(): Promise<void> {
       });
     }
     invalidateScope({ type: 'project', id: projectId });
-    await router.push({ path: `/organizations/${organizationId}/projects/${projectId}/alerts`, query: { tab: 'rules' } });
+    await router.push({
+      path: `/organizations/${organizationId}/projects/${projectId}/alerts`,
+      query: { tab: 'rules' },
+    });
   } catch (caught) {
     if (caught instanceof ApiError) {
       if (caught.code === 'authorization') submitError.value = '你没有管理该项目告警规则的权限。';
       else if (caught.code === 'version_conflict' || caught.code === 'idempotency_conflict') {
         submitError.value = '规则版本已变化，请返回列表刷新后重试。';
-      } else if (caught.code === 'field_validation') submitError.value = '规则配置未通过校验，请检查字段。';
+      } else if (caught.code === 'field_validation')
+        submitError.value = '规则配置未通过校验，请检查字段。';
       else submitError.value = describeRequestError(caught);
     } else {
       submitError.value = describeRequestError(caught);
@@ -239,13 +249,13 @@ function backHref(): string {
       <form class="mon-form" data-testid="alert-rule-form" @submit.prevent="submit">
         <label class="mon-field">
           指标
-          <select
-            :value="draft.metric"
-            data-testid="alert-rule-metric"
-            @change="onMetricSelect"
-          >
+          <select :value="draft.metric" data-testid="alert-rule-metric" @change="onMetricSelect">
             <option value="" disabled>请选择指标</option>
-            <option v-for="metric in capability.metrics" :key="metric.metric" :value="metric.metric">
+            <option
+              v-for="metric in capability.metrics"
+              :key="metric.metric"
+              :value="metric.metric"
+            >
               {{ metric.displayName }}
             </option>
           </select>
@@ -255,8 +265,12 @@ function backHref(): string {
         <template v-if="draft.metric !== ''">
           <p class="mon-hint" data-testid="alert-rule-metric-note">
             {{ selectedCapability?.displayName }} ·
-            {{ selectedCapability?.unit === 'percentage' ? '百分比' : '数量' }} ·
-            方向 {{ selectedCapability?.direction === 'higher_is_worse' ? '越高越异常' : selectedCapability?.direction }}
+            {{ selectedCapability?.unit === 'percentage' ? '百分比' : '数量' }} · 方向
+            {{
+              selectedCapability?.direction === 'higher_is_worse'
+                ? '越高越异常'
+                : selectedCapability?.direction
+            }}
             <template v-if="selectedCapability?.isRatio"> · 需要最小样本数</template>
           </p>
 
@@ -265,13 +279,17 @@ function backHref(): string {
             <select
               :value="draft.windowMinutes"
               data-testid="alert-rule-window"
-              @change="patchDraft({ windowMinutes: Number(($event.target as HTMLSelectElement).value) })"
+              @change="
+                patchDraft({ windowMinutes: Number(($event.target as HTMLSelectElement).value) })
+              "
             >
               <option v-for="window in capability.windowsMinutes" :key="window" :value="window">
                 最近 {{ window }} 分钟
               </option>
             </select>
-            <span v-if="fieldErrors.windowMinutes" class="mon-error">{{ fieldErrors.windowMinutes }}</span>
+            <span v-if="fieldErrors.windowMinutes" class="mon-error">{{
+              fieldErrors.windowMinutes
+            }}</span>
           </label>
 
           <label class="mon-field">
@@ -281,7 +299,9 @@ function backHref(): string {
               min="0"
               :value="draft.triggerThreshold"
               data-testid="alert-rule-trigger-threshold"
-              @change="patchDraft({ triggerThreshold: Number(($event.target as HTMLInputElement).value) })"
+              @change="
+                patchDraft({ triggerThreshold: Number(($event.target as HTMLInputElement).value) })
+              "
             />
           </label>
 
@@ -290,13 +310,23 @@ function backHref(): string {
             <select
               :value="draft.triggerDurationMinutes"
               data-testid="alert-rule-trigger-duration"
-              @change="patchDraft({ triggerDurationMinutes: Number(($event.target as HTMLSelectElement).value) })"
+              @change="
+                patchDraft({
+                  triggerDurationMinutes: Number(($event.target as HTMLSelectElement).value),
+                })
+              "
             >
-              <option v-for="duration in capability.triggerDurationsMinutes" :key="duration" :value="duration">
+              <option
+                v-for="duration in capability.triggerDurationsMinutes"
+                :key="duration"
+                :value="duration"
+              >
                 {{ duration === 0 ? '立即' : `${duration} 分钟` }}
               </option>
             </select>
-            <span v-if="fieldErrors.triggerDurationMinutes" class="mon-error">{{ fieldErrors.triggerDurationMinutes }}</span>
+            <span v-if="fieldErrors.triggerDurationMinutes" class="mon-error">{{
+              fieldErrors.triggerDurationMinutes
+            }}</span>
           </label>
 
           <label class="mon-field">
@@ -306,7 +336,9 @@ function backHref(): string {
               min="0"
               :value="draft.recoveryThreshold"
               data-testid="alert-rule-recovery-threshold"
-              @change="patchDraft({ recoveryThreshold: Number(($event.target as HTMLInputElement).value) })"
+              @change="
+                patchDraft({ recoveryThreshold: Number(($event.target as HTMLInputElement).value) })
+              "
             />
           </label>
 
@@ -317,9 +349,13 @@ function backHref(): string {
               min="1"
               :value="draft.minSampleCount ?? ''"
               data-testid="alert-rule-min-sample"
-              @change="patchDraft({ minSampleCount: Number(($event.target as HTMLInputElement).value) })"
+              @change="
+                patchDraft({ minSampleCount: Number(($event.target as HTMLInputElement).value) })
+              "
             />
-            <span v-if="fieldErrors.minSampleCount" class="mon-error">{{ fieldErrors.minSampleCount }}</span>
+            <span v-if="fieldErrors.minSampleCount" class="mon-error">{{
+              fieldErrors.minSampleCount
+            }}</span>
           </label>
 
           <label class="mon-field">
@@ -327,13 +363,21 @@ function backHref(): string {
             <select
               :value="draft.cooldownMinutes"
               data-testid="alert-rule-cooldown"
-              @change="patchDraft({ cooldownMinutes: Number(($event.target as HTMLSelectElement).value) })"
+              @change="
+                patchDraft({ cooldownMinutes: Number(($event.target as HTMLSelectElement).value) })
+              "
             >
-              <option v-for="cooldown in capability.cooldownsMinutes" :key="cooldown" :value="cooldown">
+              <option
+                v-for="cooldown in capability.cooldownsMinutes"
+                :key="cooldown"
+                :value="cooldown"
+              >
                 {{ cooldown }} 分钟
               </option>
             </select>
-            <span v-if="fieldErrors.cooldownMinutes" class="mon-error">{{ fieldErrors.cooldownMinutes }}</span>
+            <span v-if="fieldErrors.cooldownMinutes" class="mon-error">{{
+              fieldErrors.cooldownMinutes
+            }}</span>
           </label>
 
           <label class="mon-field">
@@ -349,7 +393,11 @@ function backHref(): string {
           <fieldset class="mon-field">
             <legend>接收成员（至少一个）</legend>
             <div v-if="capability.recipients.length > 0" class="mon-recipients">
-              <label v-for="recipient in capability.recipients" :key="recipient.accountId" class="mon-check">
+              <label
+                v-for="recipient in capability.recipients"
+                :key="recipient.accountId"
+                class="mon-check"
+              >
                 <input
                   type="checkbox"
                   :checked="draft.recipientAccountIds.includes(recipient.accountId)"
@@ -360,18 +408,39 @@ function backHref(): string {
               </label>
             </div>
             <p v-else class="mon-hint">没有可选的接收成员。</p>
-            <span v-if="fieldErrors.recipientAccountIds" class="mon-error">{{ fieldErrors.recipientAccountIds }}</span>
+            <span v-if="fieldErrors.recipientAccountIds" class="mon-error">{{
+              fieldErrors.recipientAccountIds
+            }}</span>
           </fieldset>
 
           <p class="mon-hint" data-testid="alert-rule-filter-note">
             筛选维度当前无事件侧数据源（服务端返回 unavailable），本版规则作用于项目全部事件。
           </p>
 
-          <p v-if="pendingMetric !== null" class="mon-confirm" role="alert" data-testid="alert-rule-metric-switch-confirm">
+          <p
+            v-if="pendingMetric !== null"
+            class="mon-confirm"
+            role="alert"
+            data-testid="alert-rule-metric-switch-confirm"
+          >
             切换指标将清除字段：最小样本数。取消则保持当前草稿。
             <span class="mon-actions-inline">
-              <button type="button" class="au-button" data-testid="alert-rule-confirm-switch" @click="confirmMetricSwitch">确认切换</button>
-              <button type="button" class="au-button" data-testid="alert-rule-cancel-switch" @click="cancelMetricSwitch">取消</button>
+              <button
+                type="button"
+                class="au-button"
+                data-testid="alert-rule-confirm-switch"
+                @click="confirmMetricSwitch"
+              >
+                确认切换
+              </button>
+              <button
+                type="button"
+                class="au-button"
+                data-testid="alert-rule-cancel-switch"
+                @click="cancelMetricSwitch"
+              >
+                取消
+              </button>
             </span>
           </p>
 

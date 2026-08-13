@@ -22,7 +22,14 @@ const FIXED_KEY = 'k12345678';
 beforeEach(() => {
   mockedExecuteQuery.mockReset();
   mockedExecuteQuery.mockResolvedValue({
-    data: { status: 'created', credentialId: 'cred_1', keyId: 'ck_abcdefgh', clientKey: 'aurora_ingest_x', origins: [], environments: [] },
+    data: {
+      status: 'created',
+      credentialId: 'cred_1',
+      keyId: 'ck_abcdefgh',
+      clientKey: 'aurora_ingest_x',
+      origins: [],
+      environments: [],
+    },
   });
 });
 
@@ -37,7 +44,11 @@ describe('C14 client-key Command client', () => {
   it('create passes origins/environments/allowNonBrowser and returns the one-time clientKey', async () => {
     const result = await createClientKey(
       SCOPE,
-      { origins: ['https://app.example.invalid'], environments: ['production'], allowNonBrowser: false },
+      {
+        origins: ['https://app.example.invalid'],
+        environments: ['production'],
+        allowNonBrowser: false,
+      },
       { csrf: CSRF, idempotencyKey: FIXED_KEY },
     );
     expect(result.clientKey).toBe('aurora_ingest_x');

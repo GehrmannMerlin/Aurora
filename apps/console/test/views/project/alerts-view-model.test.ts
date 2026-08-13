@@ -44,7 +44,10 @@ describe('buildAlertsView', () => {
       loading: false,
       error: '实例查询失败',
       rules: { status: 'available', data: { items: [rule] } },
-      instances: { status: 'available', data: { items: [instance], count: 1, totalCountStatus: 'bounded' } },
+      instances: {
+        status: 'available',
+        data: { items: [instance], count: 1, totalCountStatus: 'bounded' },
+      },
     });
     // Error is page-level: both sections surface it rather than fabricating normal.
     expect(view.rules.kind).toBe('error');
@@ -69,7 +72,9 @@ describe('ruleSectionToItems', () => {
       kind: 'available',
       data: [rule],
     });
-    expect(ruleSectionToItems({ status: 'unavailable', reason: 'deferred' }).kind).toBe('unavailable');
+    expect(ruleSectionToItems({ status: 'unavailable', reason: 'deferred' }).kind).toBe(
+      'unavailable',
+    );
   });
 });
 

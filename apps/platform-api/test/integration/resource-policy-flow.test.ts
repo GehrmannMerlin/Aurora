@@ -286,7 +286,9 @@ describeDb('PLT-10b platform resource-policy flow (real PostgreSQL 17 + Redis)',
     effective: PolicyFields;
     version: number;
   } {
-    const data = body.data as { data: { configured: PolicyFields; source: string; effective: PolicyFields; version: number } };
+    const data = body.data as {
+      data: { configured: PolicyFields; source: string; effective: PolicyFields; version: number };
+    };
     return data.data;
   }
 
@@ -294,7 +296,10 @@ describeDb('PLT-10b platform resource-policy flow (real PostgreSQL 17 + Redis)',
     const app = buildApp();
     const alice = await registerVerifiedActor(app, pool, `alice-${randomUUID()}@example.com`);
     const bob = await registerVerifiedActor(app, pool, `bob-${randomUUID()}@example.com`);
-    await bootstrapPlatformAdmins(pool, { accountIds: [bob.accountId], bootstrapBy: alice.accountId });
+    await bootstrapPlatformAdmins(pool, {
+      accountIds: [bob.accountId],
+      bootstrapBy: alice.accountId,
+    });
 
     const res = await getDefault(app, alice);
     expect(res.status).toBe(403);
@@ -308,7 +313,10 @@ describeDb('PLT-10b platform resource-policy flow (real PostgreSQL 17 + Redis)',
     const app = buildApp();
     const alice = await registerVerifiedActor(app, pool, `alice-${randomUUID()}@example.com`);
     const bob = await registerVerifiedActor(app, pool, `bob-${randomUUID()}@example.com`);
-    await bootstrapPlatformAdmins(pool, { accountIds: [bob.accountId], bootstrapBy: alice.accountId });
+    await bootstrapPlatformAdmins(pool, {
+      accountIds: [bob.accountId],
+      bootstrapBy: alice.accountId,
+    });
 
     // policyGetDefault triggers the controlled bootstrap: source system_default, version 1.
     const res = await getDefault(app, bob);
@@ -332,7 +340,10 @@ describeDb('PLT-10b platform resource-policy flow (real PostgreSQL 17 + Redis)',
     const app = buildApp();
     const alice = await registerVerifiedActor(app, pool, `alice-${randomUUID()}@example.com`);
     const bob = await registerVerifiedActor(app, pool, `bob-${randomUUID()}@example.com`);
-    await bootstrapPlatformAdmins(pool, { accountIds: [bob.accountId], bootstrapBy: alice.accountId });
+    await bootstrapPlatformAdmins(pool, {
+      accountIds: [bob.accountId],
+      bootstrapBy: alice.accountId,
+    });
 
     // Fresh database (beforeEach truncated the policy tables): deep-linking
     // straight to the org effective path must bootstrap the platform default and
@@ -346,9 +357,11 @@ describeDb('PLT-10b platform resource-policy flow (real PostgreSQL 17 + Redis)',
     const { projectId } = await createProject(app, bob, `plt10b-boot-${randomUUID()}`);
     const projRes = await getProjectEffective(app, bob, projectId);
     expect(projRes.status).toBe(200);
-    const projData = (projRes.body.data as {
-      data: { source: string; effective: PolicyFields; version: number };
-    }).data;
+    const projData = (
+      projRes.body.data as {
+        data: { source: string; effective: PolicyFields; version: number };
+      }
+    ).data;
     expect(projData.source).toBe('inherited_from_platform');
     expect(projData.version).toBe(0);
     expect(projData.effective).toEqual(FIVE_FIELDS);
@@ -360,7 +373,10 @@ describeDb('PLT-10b platform resource-policy flow (real PostgreSQL 17 + Redis)',
     const app = buildApp();
     const alice = await registerVerifiedActor(app, pool, `alice-${randomUUID()}@example.com`);
     const bob = await registerVerifiedActor(app, pool, `bob-${randomUUID()}@example.com`);
-    await bootstrapPlatformAdmins(pool, { accountIds: [bob.accountId], bootstrapBy: alice.accountId });
+    await bootstrapPlatformAdmins(pool, {
+      accountIds: [bob.accountId],
+      bootstrapBy: alice.accountId,
+    });
 
     await getDefault(app, bob); // bootstrap → version 1
 
@@ -420,7 +436,10 @@ describeDb('PLT-10b platform resource-policy flow (real PostgreSQL 17 + Redis)',
     const app = buildApp();
     const alice = await registerVerifiedActor(app, pool, `alice-${randomUUID()}@example.com`);
     const bob = await registerVerifiedActor(app, pool, `bob-${randomUUID()}@example.com`);
-    await bootstrapPlatformAdmins(pool, { accountIds: [bob.accountId], bootstrapBy: alice.accountId });
+    await bootstrapPlatformAdmins(pool, {
+      accountIds: [bob.accountId],
+      bootstrapBy: alice.accountId,
+    });
     await getDefault(app, bob);
 
     // Before override: org effective inherits the platform default.
@@ -446,7 +465,10 @@ describeDb('PLT-10b platform resource-policy flow (real PostgreSQL 17 + Redis)',
     const audits = await auditEventsFor('policy_set_organization', bob.accountId);
     expect(audits).toHaveLength(1);
     expect(audits[0]?.result).toBe('succeeded');
-    expect(audits[0]?.target).toEqual({ targetType: 'organization', organizationId: bob.organizationId });
+    expect(audits[0]?.target).toEqual({
+      targetType: 'organization',
+      organizationId: bob.organizationId,
+    });
 
     const after = await getOrgEffective(app, bob, bob.organizationId);
     expect(after.status).toBe(200);
@@ -500,7 +522,10 @@ describeDb('PLT-10b platform resource-policy flow (real PostgreSQL 17 + Redis)',
     const app = buildApp();
     const alice = await registerVerifiedActor(app, pool, `alice-${randomUUID()}@example.com`);
     const bob = await registerVerifiedActor(app, pool, `bob-${randomUUID()}@example.com`);
-    await bootstrapPlatformAdmins(pool, { accountIds: [bob.accountId], bootstrapBy: alice.accountId });
+    await bootstrapPlatformAdmins(pool, {
+      accountIds: [bob.accountId],
+      bootstrapBy: alice.accountId,
+    });
     await getDefault(app, bob);
     // Org override so the five inherited fields differ from the platform default.
     await postSetOrganization(app, bob, bob.organizationId, {
@@ -519,14 +544,16 @@ describeDb('PLT-10b platform resource-policy flow (real PostgreSQL 17 + Redis)',
     // five protective fields come from the override).
     const before = await getProjectEffective(app, bob, projectId);
     expect(before.status).toBe(200);
-    const beforeData = (before.body.data as {
-      data: {
-        configured: Record<string, unknown>;
-        source: string;
-        effective: Record<string, unknown>;
-        version: number;
-      };
-    }).data;
+    const beforeData = (
+      before.body.data as {
+        data: {
+          configured: Record<string, unknown>;
+          source: string;
+          effective: Record<string, unknown>;
+          version: number;
+        };
+      }
+    ).data;
     expect(beforeData.source).toBe('inherited_from_organization');
     expect(beforeData.version).toBe(0);
     expect(beforeData.configured).not.toHaveProperty('resourceLimit');
@@ -553,7 +580,16 @@ describeDb('PLT-10b platform resource-policy flow (real PostgreSQL 17 + Redis)',
 
     const after = await getProjectEffective(app, bob, projectId);
     expect(after.status).toBe(200);
-    const data = (after.body.data as { data: { configured: { resourceLimit: number }; source: string; effective: PolicyFields & { resourceLimit: number }; version: number } }).data;
+    const data = (
+      after.body.data as {
+        data: {
+          configured: { resourceLimit: number };
+          source: string;
+          effective: PolicyFields & { resourceLimit: number };
+          version: number;
+        };
+      }
+    ).data;
     expect(data.source).toBe('platform_admin');
     expect(data.version).toBe(1);
     expect(data.configured).toEqual({ resourceLimit: 50_000 });
@@ -582,7 +618,10 @@ describeDb('PLT-10b platform resource-policy flow (real PostgreSQL 17 + Redis)',
     const app = buildApp();
     const alice = await registerVerifiedActor(app, pool, `alice-${randomUUID()}@example.com`);
     const bob = await registerVerifiedActor(app, pool, `bob-${randomUUID()}@example.com`);
-    await bootstrapPlatformAdmins(pool, { accountIds: [bob.accountId], bootstrapBy: alice.accountId });
+    await bootstrapPlatformAdmins(pool, {
+      accountIds: [bob.accountId],
+      bootstrapBy: alice.accountId,
+    });
     await getDefault(app, bob);
     await postSetOrganization(app, bob, bob.organizationId, {
       defaultPeriodQuota: 500_000,
@@ -627,7 +666,10 @@ describeDb('PLT-10b platform resource-policy flow (real PostgreSQL 17 + Redis)',
     expect(reset.body.data).toEqual({ status: 'reset' });
     const resetAudits = await auditEventsFor('policy_reset_organization', bob.accountId);
     expect(resetAudits).toHaveLength(1);
-    expect(resetAudits[0]?.target).toEqual({ targetType: 'organization', organizationId: bob.organizationId });
+    expect(resetAudits[0]?.target).toEqual({
+      targetType: 'organization',
+      organizationId: bob.organizationId,
+    });
 
     const orgAfter = await getOrgEffective(app, bob, bob.organizationId);
     expect(projection(orgAfter.body).source).toBe('inherited_from_platform');
@@ -646,14 +688,16 @@ describeDb('PLT-10b platform resource-policy flow (real PostgreSQL 17 + Redis)',
 
     const projectAfter = await getProjectEffective(app, bob, projectId);
     expect(projectAfter.status).toBe(200);
-    const projectData = (projectAfter.body.data as {
-      data: {
-        configured: Record<string, unknown>;
-        source: string;
-        effective: Record<string, unknown>;
-        version: number;
-      };
-    }).data;
+    const projectData = (
+      projectAfter.body.data as {
+        data: {
+          configured: Record<string, unknown>;
+          source: string;
+          effective: Record<string, unknown>;
+          version: number;
+        };
+      }
+    ).data;
     expect(projectData.source).toBe('inherited_from_platform');
     expect(projectData.version).toBe(0);
     // After clear, NO project resourceLimit is reported in configured/effective.
@@ -684,7 +728,10 @@ describeDb('PLT-10b platform resource-policy flow (real PostgreSQL 17 + Redis)',
     const app = buildApp();
     const alice = await registerVerifiedActor(app, pool, `alice-${randomUUID()}@example.com`);
     const bob = await registerVerifiedActor(app, pool, `bob-${randomUUID()}@example.com`);
-    await bootstrapPlatformAdmins(pool, { accountIds: [bob.accountId], bootstrapBy: alice.accountId });
+    await bootstrapPlatformAdmins(pool, {
+      accountIds: [bob.accountId],
+      bootstrapBy: alice.accountId,
+    });
 
     const prefix = `p10-${randomUUID()}`;
     // A kind='organization' org (the search only returns organization-kind orgs).
@@ -707,9 +754,7 @@ describeDb('PLT-10b platform resource-policy flow (real PostgreSQL 17 + Redis)',
     };
     expect(data.organizations.some((org) => org.organizationId === orgId)).toBe(true);
     expect(data.projects.some((project) => project.projectId === projectId)).toBe(true);
-    expect(data.pagination.totalCount).toBe(
-      data.organizations.length + data.projects.length,
-    );
+    expect(data.pagination.totalCount).toBe(data.organizations.length + data.projects.length);
     expect(data.pagination.totalCountStatus).toBe('available');
 
     await app.close();

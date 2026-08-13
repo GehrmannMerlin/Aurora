@@ -18,15 +18,15 @@ import {
   type ReleaseSummary,
   type SourceMapFilesSection,
 } from '../../monitoring/queries.js';
-import {
-  reparseRelease,
-  replaceSourceMap,
-  uploadSourceMap,
-} from '../../monitoring/commands.js';
+import { reparseRelease, replaceSourceMap, uploadSourceMap } from '../../monitoring/commands.js';
 import { createIdempotencyKey } from '../../api/client.js';
 import type { ScopeKey } from '../../api/scope.js';
 import { useSessionStore } from '../../stores/session.js';
-import { buildSourceMapsView, reparseStateLabel, sourceMapStatusLabel } from './source-maps-view-model.js';
+import {
+  buildSourceMapsView,
+  reparseStateLabel,
+  sourceMapStatusLabel,
+} from './source-maps-view-model.js';
 import AppPageHeader from '../../components/aurora/AppPageHeader.vue';
 import SectionNotice from '../../components/monitoring/SectionNotice.vue';
 
@@ -45,8 +45,8 @@ const errorFiles = ref<string | null>(null);
 const loadingReleases = ref(false);
 const errorReleases = ref<string | null>(null);
 
-const currentRelease = computed<ReleaseSummary | null>(() =>
-  releases.value.find((release) => release.releaseId === releaseId) ?? null,
+const currentRelease = computed<ReleaseSummary | null>(
+  () => releases.value.find((release) => release.releaseId === releaseId) ?? null,
 );
 
 async function loadFiles(): Promise<void> {
@@ -296,9 +296,7 @@ const releaseVersionText = computed<string>(() => {
 
     <section class="mon-block" data-testid="source-map-release-context">
       <h2 class="mon-title">发布上下文</h2>
-      <p class="mon-meta">
-        发布版本：{{ releaseVersionText }} · 稳定标识 {{ releaseId }}
-      </p>
+      <p class="mon-meta">发布版本：{{ releaseVersionText }} · 稳定标识 {{ releaseId }}</p>
     </section>
 
     <section class="mon-block" data-testid="source-map-files">
@@ -318,7 +316,9 @@ const releaseVersionText = computed<string>(() => {
             </div>
             <div class="mon-meta">
               摘要 {{ file.digestPrefix }}… · 上传 {{ formatUtc(file.uploadedAt) }}
-              <template v-if="file.replacedAt !== undefined"> · 替换 {{ formatUtc(file.replacedAt) }}</template>
+              <template v-if="file.replacedAt !== undefined">
+                · 替换 {{ formatUtc(file.replacedAt) }}</template
+              >
             </div>
             <div class="mon-meta">
               重解析：{{ reparseStateLabel(file.reparse.state) }}
@@ -331,7 +331,9 @@ const releaseVersionText = computed<string>(() => {
             </div>
           </li>
         </ul>
-        <p v-else class="mon-hint">该发布尚无有效 Source Map 文件。仅项目管理员或获准开发成员可上传。</p>
+        <p v-else class="mon-hint">
+          该发布尚无有效 Source Map 文件。仅项目管理员或获准开发成员可上传。
+        </p>
       </template>
     </section>
 
@@ -339,7 +341,10 @@ const releaseVersionText = computed<string>(() => {
       <h2 class="mon-title">上传 Source Map</h2>
       <template v-if="replacePhase.kind === 'confirm'">
         <div class="mon-confirm" role="alert" data-testid="source-map-replace-confirm">
-          <p>同一构建路径已存在不同内容的 Source Map。显式确认替换将覆盖当前文件并重新解析，替换进入审计。</p>
+          <p>
+            同一构建路径已存在不同内容的 Source
+            Map。显式确认替换将覆盖当前文件并重新解析，替换进入审计。
+          </p>
           <div class="mon-actions-row">
             <button
               type="button"
@@ -421,11 +426,7 @@ const releaseVersionText = computed<string>(() => {
         >
           {{ uploadSuccessMessage }}
         </p>
-        <p
-          v-if="uploadErrorMessage !== null"
-          class="mon-notice mon-notice--error"
-          role="status"
-        >
+        <p v-if="uploadErrorMessage !== null" class="mon-notice mon-notice--error" role="status">
           {{ uploadErrorMessage }}
         </p>
       </template>

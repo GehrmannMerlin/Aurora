@@ -119,7 +119,13 @@ export async function handleListClientKeys(
   const requestId = deps.requestIdProvider();
   const parsed = parseInput(LIST_OP, { params: request.params });
   if (!parsed.ok) {
-    await sendProblem(reply, requestId, 400, 'structural_error', 'Request does not match the public contract.');
+    await sendProblem(
+      reply,
+      requestId,
+      400,
+      'structural_error',
+      'Request does not match the public contract.',
+    );
     return;
   }
   const auth = await authorizeClientKeyView(request, reply, deps, requestId);
@@ -155,7 +161,11 @@ export async function handleListClientKeys(
           },
     meta: { requestId, readAt: deps.now().toISOString(), normalizedQuery: {} },
     allowedActions: ['read'],
-    navigationTargets: projectNavigation('project.client-keys', auth.organizationId, auth.projectId),
+    navigationTargets: projectNavigation(
+      'project.client-keys',
+      auth.organizationId,
+      auth.projectId,
+    ),
   };
 
   const serialized = serializeOutput(LIST_OP, 200, body);
@@ -183,7 +193,13 @@ export async function handleCreateClientKey(
   const requestId = deps.requestIdProvider();
   const parsed = parseInput(CREATE_OP, { params: request.params, body: request.body });
   if (!parsed.ok) {
-    await sendProblem(reply, requestId, 400, 'structural_error', 'Request does not match the public contract.');
+    await sendProblem(
+      reply,
+      requestId,
+      400,
+      'structural_error',
+      'Request does not match the public contract.',
+    );
     return;
   }
   const auth = await authorizeClientKeyView(request, reply, deps, requestId);
@@ -210,7 +226,13 @@ export async function handleCreateClientKey(
     return;
   }
   if (probe.outcome === 'conflict') {
-    await sendProblem(reply, requestId, 409, 'idempotency_conflict', 'Idempotency key was used with a different request.');
+    await sendProblem(
+      reply,
+      requestId,
+      409,
+      'idempotency_conflict',
+      'Idempotency key was used with a different request.',
+    );
     return;
   }
 
@@ -225,7 +247,12 @@ export async function handleCreateClientKey(
       operation: OPERATION_ID_CREDENTIALS_CREATE,
       digest,
       execute: async (client) => {
-        await requireProjectAdminAccessOnTransaction(client, session?.accountId ?? '', auth.organizationId, auth.projectId);
+        await requireProjectAdminAccessOnTransaction(
+          client,
+          session?.accountId ?? '',
+          auth.organizationId,
+          auth.projectId,
+        );
         const result = await createIngestionClientCredential(client, {
           projectId: auth.projectId,
           origins: [...body.origins],
@@ -290,7 +317,13 @@ interface ClientKeyPathParams {
 
 function requireKeyId(value: unknown, reply: FastifyReply, requestId: string): boolean {
   if (typeof value !== 'string' || value.length < 8 || value.length > 128) {
-    sendProblem(reply, requestId, 400, 'structural_error', 'Request does not match the public contract.');
+    sendProblem(
+      reply,
+      requestId,
+      400,
+      'structural_error',
+      'Request does not match the public contract.',
+    );
     return false;
   }
   return true;
@@ -313,12 +346,22 @@ async function handleKeyMutation(
   const requestId = deps.requestIdProvider();
   const parsed = parseInput(op, { params: request.params, body: request.body });
   if (!parsed.ok) {
-    await sendProblem(reply, requestId, 400, 'structural_error', 'Request does not match the public contract.');
+    await sendProblem(
+      reply,
+      requestId,
+      400,
+      'structural_error',
+      'Request does not match the public contract.',
+    );
     return;
   }
   const params = request.params as ClientKeyPathParams;
   if (
-    !requireUuidParams({ organizationId: params.organizationId, projectId: params.projectId }, reply, requestId)
+    !requireUuidParams(
+      { organizationId: params.organizationId, projectId: params.projectId },
+      reply,
+      requestId,
+    )
   ) {
     return;
   }
@@ -371,10 +414,22 @@ async function handleKeyMutation(
       return;
     }
     if (result.status === 'expired') {
-      await sendProblem(reply, requestId, 409, 'state_machine_conflict', 'The client key is expired.');
+      await sendProblem(
+        reply,
+        requestId,
+        409,
+        'state_machine_conflict',
+        'The client key is expired.',
+      );
       return;
     }
-    await sendProblem(reply, requestId, 503, 'authority_unavailable', 'Client key store unavailable.');
+    await sendProblem(
+      reply,
+      requestId,
+      503,
+      'authority_unavailable',
+      'Client key store unavailable.',
+    );
     return;
   }
 

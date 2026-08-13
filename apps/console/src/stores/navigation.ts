@@ -128,7 +128,10 @@ export const useNavigationStore = defineStore('navigation', () => {
    * (e.g. the D1 notifications list response after a successful mark-read).
    * Only accepts server-confirmed values; never fabricates a count.
    */
-  function applyUnreadCount(value: number | undefined, countStatus: 'available' | 'unavailable'): void {
+  function applyUnreadCount(
+    value: number | undefined,
+    countStatus: 'available' | 'unavailable',
+  ): void {
     unreadCount.value =
       countStatus === 'available' && value !== undefined
         ? { value, status: 'available' }

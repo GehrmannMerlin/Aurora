@@ -10,7 +10,10 @@ import { computed, onMounted, ref } from 'vue';
 import { useRoute } from 'vue-router';
 import { describeRequestError } from '../../api/feedback.js';
 import { formatUtc } from '../../monitoring/format.js';
-import { fetchAlertInstanceDetail, type AlertInstanceDetailData } from '../../monitoring/queries.js';
+import {
+  fetchAlertInstanceDetail,
+  type AlertInstanceDetailData,
+} from '../../monitoring/queries.js';
 import {
   buildAlertInstanceDetailView,
   completenessLabel,
@@ -75,7 +78,8 @@ function filtersText(filters: {
   const parts: string[] = [];
   if (filters.environment.length > 0) parts.push(`环境：${filters.environment.join(', ')}`);
   if (filters.release.length > 0) parts.push(`发布：${filters.release.join(', ')}`);
-  if (filters.pageOrEndpoint.length > 0) parts.push(`页面/接口：${filters.pageOrEndpoint.join(', ')}`);
+  if (filters.pageOrEndpoint.length > 0)
+    parts.push(`页面/接口：${filters.pageOrEndpoint.join(', ')}`);
   if (filters.errorSeverity.length > 0) parts.push(`严重级别：${filters.errorSeverity.join(', ')}`);
   return parts.length > 0 ? parts.join(' · ') : '未限定范围';
 }
@@ -104,7 +108,9 @@ function filtersText(filters: {
           <AppStatusBadge :tone="instanceTone(state.instance.data.state)">
             {{ instanceStateLabel(state.instance.data.state) }}
           </AppStatusBadge>
-          <span class="mon-rule-name">{{ state.instance.data.ruleName ?? state.instance.data.ruleId }}</span>
+          <span class="mon-rule-name">{{
+            state.instance.data.ruleName ?? state.instance.data.ruleId
+          }}</span>
         </div>
         <dl class="mon-dl">
           <dt>直接原因</dt>
@@ -140,7 +146,13 @@ function filtersText(filters: {
             <dt>触发阈值</dt>
             <dd>{{ state.ruleSnapshot.data.triggerThreshold }}</dd>
             <dt>触发持续时间</dt>
-            <dd>{{ state.ruleSnapshot.data.triggerDurationMinutes === 0 ? '立即' : `${state.ruleSnapshot.data.triggerDurationMinutes} 分钟` }}</dd>
+            <dd>
+              {{
+                state.ruleSnapshot.data.triggerDurationMinutes === 0
+                  ? '立即'
+                  : `${state.ruleSnapshot.data.triggerDurationMinutes} 分钟`
+              }}
+            </dd>
             <dt>恢复阈值</dt>
             <dd>{{ state.ruleSnapshot.data.recoveryThreshold }}</dd>
             <dt>最小样本数</dt>
@@ -163,12 +175,20 @@ function filtersText(filters: {
             <dt>评估时间</dt>
             <dd>{{ formatUtc(state.evidence.data.evaluatedAt) }}</dd>
             <dt>窗口</dt>
-            <dd>{{ formatUtc(state.evidence.data.windowStartAt) }} → {{ formatUtc(state.evidence.data.windowEndAt) }}</dd>
+            <dd>
+              {{ formatUtc(state.evidence.data.windowStartAt) }} →
+              {{ formatUtc(state.evidence.data.windowEndAt) }}
+            </dd>
             <template v-if="state.evidence.data.observedValue !== undefined">
               <dt>观测值</dt>
               <dd>{{ state.evidence.data.observedValue }}</dd>
             </template>
-            <template v-if="state.evidence.data.numerator !== undefined && state.evidence.data.denominator !== undefined">
+            <template
+              v-if="
+                state.evidence.data.numerator !== undefined &&
+                state.evidence.data.denominator !== undefined
+              "
+            >
               <dt>分子/分母</dt>
               <dd>{{ state.evidence.data.numerator }} / {{ state.evidence.data.denominator }}</dd>
             </template>
@@ -176,7 +196,12 @@ function filtersText(filters: {
               <dt>样本数</dt>
               <dd>{{ state.evidence.data.sampleCount }}</dd>
             </template>
-            <template v-if="state.evidence.data.minSampleRequirement !== undefined && state.evidence.data.minSampleRequirement > 0">
+            <template
+              v-if="
+                state.evidence.data.minSampleRequirement !== undefined &&
+                state.evidence.data.minSampleRequirement > 0
+              "
+            >
               <dt>最小样本要求</dt>
               <dd>{{ state.evidence.data.minSampleRequirement }}</dd>
             </template>
@@ -201,9 +226,18 @@ function filtersText(filters: {
         </template>
         <template v-else>
           <ol v-if="state.transitions.data.length > 0" class="mon-timeline">
-            <li v-for="(transition, index) in state.transitions.data" :key="index" class="mon-timeline-item">
-              <span class="mon-state">{{ instanceStateLabel(transition.from) }} → {{ instanceStateLabel(transition.to) }}</span>
-              <span class="mon-meta">{{ transition.reason }} · {{ formatUtc(transition.occurredAt) }}</span>
+            <li
+              v-for="(transition, index) in state.transitions.data"
+              :key="index"
+              class="mon-timeline-item"
+            >
+              <span class="mon-state"
+                >{{ instanceStateLabel(transition.from) }} →
+                {{ instanceStateLabel(transition.to) }}</span
+              >
+              <span class="mon-meta"
+                >{{ transition.reason }} · {{ formatUtc(transition.occurredAt) }}</span
+              >
             </li>
           </ol>
           <p v-else class="mon-hint">该实例尚无业务状态转移记录。</p>

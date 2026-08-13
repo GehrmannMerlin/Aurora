@@ -46,7 +46,8 @@ function createProbePlugin(): Probe {
       return capturedContext.submitEvent(draft);
     },
     recordActivity: (entry: unknown): unknown => {
-      if (capturedContext?.recordActivity === undefined) throw new TypeError('recordActivity not provided');
+      if (capturedContext?.recordActivity === undefined)
+        throw new TypeError('recordActivity not provided');
       return capturedContext.recordActivity(entry);
     },
   };
@@ -59,7 +60,14 @@ function errorDraft(body: unknown = { message: 'boom' }) {
 function requestDraft(url: string) {
   return {
     eventType: 'request',
-    body: { method: 'GET', url, startedAt: 1, durationMs: 100, outcome: 'success', statusCode: 200 },
+    body: {
+      method: 'GET',
+      url,
+      startedAt: 1,
+      durationMs: 100,
+      outcome: 'success',
+      statusCode: 200,
+    },
   };
 }
 
@@ -93,9 +101,10 @@ describe('createAuroraSdk', () => {
     const kept = probe.submit(errorDraft()) as { ok: boolean; code: string };
     expect(kept.ok).toBe(true);
 
-    const disallowed = probe.submit(
-      requestDraft('https://analytics.example.net/collect'),
-    ) as { ok: boolean; code: string };
+    const disallowed = probe.submit(requestDraft('https://analytics.example.net/collect')) as {
+      ok: boolean;
+      code: string;
+    };
     expect(disallowed.ok).toBe(false);
 
     await handle.destroy();
@@ -141,7 +150,11 @@ describe('createAuroraSdk', () => {
       action: 'from_plugin',
     });
     expect(result).toMatchObject({ ok: true, code: 'recorded' });
-    expect(handle.getActivityTrail().some((entry) => entry.kind === 'sdk_report' && entry.action === 'from_plugin')).toBe(true);
+    expect(
+      handle
+        .getActivityTrail()
+        .some((entry) => entry.kind === 'sdk_report' && entry.action === 'from_plugin'),
+    ).toBe(true);
     await handle.destroy();
   });
 
@@ -173,7 +186,11 @@ describe('createAuroraSdk', () => {
       },
     };
     const probe = createProbePlugin();
-    const handle = createAuroraSdk({ config: { clientKey: 'k' }, transport, plugins: [probe.plugin] });
+    const handle = createAuroraSdk({
+      config: { clientKey: 'k' },
+      transport,
+      plugins: [probe.plugin],
+    });
     await handle.start();
     const result = probe.submit(errorDraft({ message: 'boom' }));
     expect(result).toMatchObject({ ok: true, code: 'accepted' });

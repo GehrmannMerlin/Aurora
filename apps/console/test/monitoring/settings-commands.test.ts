@@ -8,10 +8,7 @@ vi.mock('../../src/api/query.js', async (importOriginal) => {
 
 const mockedExecuteQuery = vi.mocked(executeQuery);
 
-import {
-  createProjectEnvironment,
-  updateProjectSettings,
-} from '../../src/monitoring/commands.js';
+import { createProjectEnvironment, updateProjectSettings } from '../../src/monitoring/commands.js';
 
 const SCOPE = { organizationId: 'org_1', projectId: 'prj_1' };
 const CSRF = 'csrf-token-123';
@@ -48,7 +45,11 @@ describe('C15 settings Command client', () => {
   });
 
   it('create-environment sends the name', async () => {
-    await createProjectEnvironment(SCOPE, { name: 'staging' }, { csrf: CSRF, idempotencyKey: FIXED_KEY });
+    await createProjectEnvironment(
+      SCOPE,
+      { name: 'staging' },
+      { csrf: CSRF, idempotencyKey: FIXED_KEY },
+    );
     const call = lastCall();
     expect(call.operationId).toBe('settingsCreateEnvironment');
     expect(call.input!.body).toMatchObject({ name: 'staging', idempotencyKey: FIXED_KEY });

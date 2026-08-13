@@ -139,10 +139,7 @@ export function loadPlatformApiConfig(env: NodeJS.ProcessEnv): PlatformApiConfig
     cookieSecure: optionalBoolean(env, 'COOKIE_SECURE', false),
     emailDeliveryMode: env.EMAIL_DELIVERY_MODE ?? 'console',
     appOrigins: optionalOriginList(env, 'APP_ORIGIN'),
-    platformAdminBootstrapAccountIds: optionalUuidList(
-      env,
-      'PLATFORM_ADMIN_BOOTSTRAP_ACCOUNT_IDS',
-    ),
+    platformAdminBootstrapAccountIds: optionalUuidList(env, 'PLATFORM_ADMIN_BOOTSTRAP_ACCOUNT_IDS'),
     consoleOrigin: firstDefined(
       env.CONSOLE_ORIGIN?.trim(),
       optionalOriginList(env, 'APP_ORIGIN')[0],

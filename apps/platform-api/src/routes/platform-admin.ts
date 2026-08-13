@@ -24,7 +24,9 @@ import { lookupIdempotency, requestDigest, runIdempotentCommand } from '../idemp
 import { requirePlatformAdmin, requireSession, UUID_PATTERN } from './_shared.js';
 import type { PlatformApiRouteDependencies } from '../route-deps.js';
 
-const CAPABILITY_OPERATION: OperationDef = operationById(OPERATION_ID_PLATFORM_ADMIN_GET_CAPABILITY);
+const CAPABILITY_OPERATION: OperationDef = operationById(
+  OPERATION_ID_PLATFORM_ADMIN_GET_CAPABILITY,
+);
 const LIST_OPERATION: OperationDef = operationById(OPERATION_ID_PLATFORM_ADMIN_LIST);
 const GRANT_OPERATION: OperationDef = operationById(OPERATION_ID_PLATFORM_ADMIN_GRANT);
 const REVOKE_OPERATION: OperationDef = operationById(OPERATION_ID_PLATFORM_ADMIN_REVOKE);
@@ -119,13 +121,7 @@ export async function handleGetPlatformAdminCapability(
   const body = { data: { hasCapability } };
   const serialized = serializeOutput(CAPABILITY_OPERATION, 200, body);
   if (!serialized.ok) {
-    await sendProblem(
-      reply,
-      requestId,
-      500,
-      'internal_error',
-      'An internal error occurred.',
-    );
+    await sendProblem(reply, requestId, 500, 'internal_error', 'An internal error occurred.');
     return;
   }
   void reply.header('x-aurora-request-id', requestId).code(200).send(serialized.body);
@@ -183,13 +179,7 @@ export async function handleListPlatformAdmins(
 
   const serialized = serializeOutput(LIST_OPERATION, 200, body);
   if (!serialized.ok) {
-    await sendProblem(
-      reply,
-      requestId,
-      500,
-      'internal_error',
-      'An internal error occurred.',
-    );
+    await sendProblem(reply, requestId, 500, 'internal_error', 'An internal error occurred.');
     return;
   }
   void reply.header('x-aurora-request-id', requestId).code(200).send(serialized.body);
@@ -295,13 +285,7 @@ export async function handleGrantPlatformAdmin(
       },
     });
     if (idempotency.outcome === 'conflict') {
-      await sendProblem(
-        reply,
-        requestId,
-        409,
-        'idempotency_conflict',
-        'Idempotency key conflict.',
-      );
+      await sendProblem(reply, requestId, 409, 'idempotency_conflict', 'Idempotency key conflict.');
       return;
     }
     await sendSerialized(GRANT_OPERATION, reply, requestId, idempotency.resultData);
@@ -415,13 +399,7 @@ export async function handleRevokePlatformAdmin(
       },
     });
     if (idempotency.outcome === 'conflict') {
-      await sendProblem(
-        reply,
-        requestId,
-        409,
-        'idempotency_conflict',
-        'Idempotency key conflict.',
-      );
+      await sendProblem(reply, requestId, 409, 'idempotency_conflict', 'Idempotency key conflict.');
       return;
     }
     await sendSerialized(REVOKE_OPERATION, reply, requestId, idempotency.resultData);
@@ -491,13 +469,7 @@ export async function handleListPlatformAuditEvents(
 
   const serialized = serializeOutput(AUDIT_LIST_OPERATION, 200, body);
   if (!serialized.ok) {
-    await sendProblem(
-      reply,
-      requestId,
-      500,
-      'internal_error',
-      'An internal error occurred.',
-    );
+    await sendProblem(reply, requestId, 500, 'internal_error', 'An internal error occurred.');
     return;
   }
   void reply.header('x-aurora-request-id', requestId).code(200).send(serialized.body);
@@ -512,13 +484,7 @@ async function sendSerialized(
 ): Promise<void> {
   const serialized = serializeOutput(operation, 200, { data });
   if (!serialized.ok) {
-    await sendProblem(
-      reply,
-      requestId,
-      500,
-      'internal_error',
-      'An internal error occurred.',
-    );
+    await sendProblem(reply, requestId, 500, 'internal_error', 'An internal error occurred.');
     return;
   }
   void reply.header('x-aurora-request-id', requestId).code(200).send(serialized.body);

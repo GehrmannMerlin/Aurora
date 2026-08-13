@@ -82,11 +82,7 @@ export const policyTargetSearchQuery = obj({
 
 export const policyTargetSearchResponse = queryResponse(
   obj({
-    organizations: arr(
-      obj({ organizationId: OrganizationId, name: str(1, 128) }),
-      0,
-      50,
-    ),
+    organizations: arr(obj({ organizationId: OrganizationId, name: str(1, 128) }), 0, 50),
     projects: arr(
       obj({ projectId: ProjectId, organizationId: OrganizationId, name: str(1, 128) }),
       0,

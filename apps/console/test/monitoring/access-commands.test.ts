@@ -32,7 +32,11 @@ function lastCall() {
 
 describe('C13 project access Command client', () => {
   it('grant sends accountId + role + idempotency + csrf', async () => {
-    await grantProjectMembership(SCOPE, { accountId: 'acc_1', role: 'developer' }, { csrf: CSRF, idempotencyKey: FIXED_KEY });
+    await grantProjectMembership(
+      SCOPE,
+      { accountId: 'acc_1', role: 'developer' },
+      { csrf: CSRF, idempotencyKey: FIXED_KEY },
+    );
     const call = lastCall();
     expect(call.operationId).toBe('accessGrantProjectMembership');
     expect(call.csrf).toBe(CSRF);
@@ -43,7 +47,12 @@ describe('C13 project access Command client', () => {
   });
 
   it('change-role and remove target the account path param', async () => {
-    await changeProjectRole(SCOPE, 'acc_1', { role: 'project_admin' }, { csrf: CSRF, idempotencyKey: FIXED_KEY });
+    await changeProjectRole(
+      SCOPE,
+      'acc_1',
+      { role: 'project_admin' },
+      { csrf: CSRF, idempotencyKey: FIXED_KEY },
+    );
     expect(lastCall().operationId).toBe('accessChangeProjectRole');
     expect(lastCall().input!.pathParams).toMatchObject({ accountId: 'acc_1' });
 

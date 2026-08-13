@@ -37,9 +37,7 @@ const session = useSessionStore();
 const navigation = useNavigationStore();
 
 /** URL `?read=all|unread` is authoritative; any other value means all. */
-const readFilter = computed<ReadFilter>(() =>
-  route.query.read === 'unread' ? 'unread' : 'all',
-);
+const readFilter = computed<ReadFilter>(() => (route.query.read === 'unread' ? 'unread' : 'all'));
 
 const section = ref<NotificationsSection | null>(null);
 const accumulatedItems = ref<readonly NotificationItem[]>([]);
@@ -128,11 +126,13 @@ async function onMarkRead(item: NotificationItem): Promise<void> {
 }
 
 function openTarget(item: NotificationItem): void {
-  const resolved = resolveRouteTarget(item.target as {
-    routeId: RouteTargetId;
-    pathParams: Readonly<Record<string, string>>;
-    query: Readonly<Record<string, string>>;
-  });
+  const resolved = resolveRouteTarget(
+    item.target as {
+      routeId: RouteTargetId;
+      pathParams: Readonly<Record<string, string>>;
+      query: Readonly<Record<string, string>>;
+    },
+  );
   if (resolved.error !== undefined || resolved.path === undefined) return;
   void router.push(resolved.path);
 }

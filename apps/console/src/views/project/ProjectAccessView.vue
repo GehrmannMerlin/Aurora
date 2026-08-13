@@ -105,10 +105,14 @@ async function submitGrant(): Promise<void> {
   grantBusy.value = true;
   grantError.value = null;
   try {
-    await grantProjectMembership(scope, { accountId, role: grantRole.value }, {
-      csrf: session.csrf ?? '',
-      idempotencyKey: createIdempotencyKey(),
-    });
+    await grantProjectMembership(
+      scope,
+      { accountId, role: grantRole.value },
+      {
+        csrf: session.csrf ?? '',
+        idempotencyKey: createIdempotencyKey(),
+      },
+    );
     grantAccountId.value = '';
     invalidateScope({ type: 'project', id: projectId });
     await load();
@@ -121,10 +125,15 @@ async function submitGrant(): Promise<void> {
 
 function changeRole(member: EffectiveMember, role: string): void {
   void runAction(member.accountId, () =>
-    changeProjectRole(scope, member.accountId, { role: role as ProjectRoleValue }, {
-      csrf: session.csrf ?? '',
-      idempotencyKey: createIdempotencyKey(),
-    }),
+    changeProjectRole(
+      scope,
+      member.accountId,
+      { role: role as ProjectRoleValue },
+      {
+        csrf: session.csrf ?? '',
+        idempotencyKey: createIdempotencyKey(),
+      },
+    ),
   );
 }
 
@@ -171,7 +180,11 @@ function memberTone(effectiveRole: string): 'neutral' | 'success' | 'warning' {
                 · 项目角色 {{ effectiveRoleLabel(member.projectRole) }}
               </template>
             </div>
-            <div v-if="canManageMember(member)" class="mon-actions-row" :data-testid="`member-actions-${member.accountId}`">
+            <div
+              v-if="canManageMember(member)"
+              class="mon-actions-row"
+              :data-testid="`member-actions-${member.accountId}`"
+            >
               <label class="mon-field-inline">
                 角色
                 <select
@@ -233,8 +246,12 @@ function memberTone(effectiveRole: string): 'neutral' | 'success' | 'warning' {
           {{ grantBusy ? '授予中…' : '授予' }}
         </button>
       </div>
-      <p v-if="grantError !== null" class="mon-notice mon-notice--error" role="status">{{ grantError }}</p>
-      <p v-if="actionError !== null" class="mon-notice mon-notice--error" role="status">{{ actionError }}</p>
+      <p v-if="grantError !== null" class="mon-notice mon-notice--error" role="status">
+        {{ grantError }}
+      </p>
+      <p v-if="actionError !== null" class="mon-notice mon-notice--error" role="status">
+        {{ actionError }}
+      </p>
     </section>
   </section>
 </template>

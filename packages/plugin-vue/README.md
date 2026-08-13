@@ -50,12 +50,12 @@ app.mount('#app');
 createVueAuroraPlugin(input: CreateAuroraSdkInput): VueAuroraPlugin
 ```
 
-| 成员 | 类型 | 说明 |
-|---|---|---|
-| `install(app, options?)` | `(app, options?: VueAuroraOptions) => void` | Vue 插件安装点：包装 errorHandler、注册可选路由钩子、启动 SDK；重复安装幂等 |
-| `uninstall(app)` | `(app) => void` | 恢复原 errorHandler（仅当仍为本实例包装）、移除路由钩子、销毁 SDK |
-| `sdk` | `AuroraSdkHandle` | 底层 SDK 句柄（`start/stop/destroy/config/control/delivery/getActivityTrail`） |
-| `destroy()` | `() => Promise<void>` | 释放全部资源并恢复宿主状态；幂等 |
+| 成员                     | 类型                                        | 说明                                                                           |
+| ------------------------ | ------------------------------------------- | ------------------------------------------------------------------------------ |
+| `install(app, options?)` | `(app, options?: VueAuroraOptions) => void` | Vue 插件安装点：包装 errorHandler、注册可选路由钩子、启动 SDK；重复安装幂等    |
+| `uninstall(app)`         | `(app) => void`                             | 恢复原 errorHandler（仅当仍为本实例包装）、移除路由钩子、销毁 SDK              |
+| `sdk`                    | `AuroraSdkHandle`                           | 底层 SDK 句柄（`start/stop/destroy/config/control/delivery/getActivityTrail`） |
+| `destroy()`              | `() => Promise<void>`                       | 释放全部资源并恢复宿主状态；幂等                                               |
 
 ```ts
 interface VueAuroraOptions {

@@ -22,11 +22,15 @@ function readRetryAfterMs(header: string | null): number | undefined {
 export function createBrowserBatchTransport(
   options: CreateBrowserBatchTransportOptions,
 ): SdkBatchTransport {
-  const fetchImpl = options.fetchImpl ?? ((input: RequestInfo | URL, init?: RequestInit) => fetch(input, init));
+  const fetchImpl =
+    options.fetchImpl ?? ((input: RequestInfo | URL, init?: RequestInit) => fetch(input, init));
   const base = options.ingestEndpoint === '' ? '' : options.ingestEndpoint.replace(/\/+$/, '');
   const endpoint = base === '' ? '' : `${base}/v1/batches`;
 
-  async function send(request: Parameters<SdkBatchTransport['send']>[0], context: SdkTransportContext): Promise<SdkTransportResult> {
+  async function send(
+    request: Parameters<SdkBatchTransport['send']>[0],
+    context: SdkTransportContext,
+  ): Promise<SdkTransportResult> {
     if (endpoint === '') return { kind: 'http_error', status: 0 };
     let response: Response;
     try {
@@ -53,7 +57,10 @@ export function createBrowserBatchTransport(
       parsedBody = undefined;
     }
     if (response.ok) {
-      const receiptResult = parsedBody === undefined ? { success: false as const } : parseIngestionRequestReceipt(parsedBody);
+      const receiptResult =
+        parsedBody === undefined
+          ? { success: false as const }
+          : parseIngestionRequestReceipt(parsedBody);
       if (receiptResult.success) {
         return { kind: 'success', status: response.status, receipt: receiptResult.data };
       }

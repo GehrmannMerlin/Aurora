@@ -54,7 +54,17 @@ describe('C13 access contract', () => {
     const result = accessListEffectiveMembersResponse.zod.safeParse({
       data: {
         status: 'available',
-        data: { items: [{ accountId: 'acc_1', maskedEmail: 'a***@example.com', effectiveRole: 'developer', sources: [], allowedActions: ['read'] }] },
+        data: {
+          items: [
+            {
+              accountId: 'acc_1',
+              maskedEmail: 'a***@example.com',
+              effectiveRole: 'developer',
+              sources: [],
+              allowedActions: ['read'],
+            },
+          ],
+        },
       },
       meta: { requestId: 'req_1', readAt: '2026-08-12T00:00:00.000Z', normalizedQuery: {} },
       allowedActions: ['read'],
@@ -88,7 +98,10 @@ describe('C13 access contract', () => {
 
   it('change-role and remove bodies are contract-valid', () => {
     expect(
-      accessChangeProjectRoleBody.zod.safeParse({ role: 'project_admin', idempotencyKey: 'k'.repeat(36) }).success,
+      accessChangeProjectRoleBody.zod.safeParse({
+        role: 'project_admin',
+        idempotencyKey: 'k'.repeat(36),
+      }).success,
     ).toBe(true);
     expect(
       accessRemoveProjectMembershipBody.zod.safeParse({ idempotencyKey: 'k'.repeat(36) }).success,

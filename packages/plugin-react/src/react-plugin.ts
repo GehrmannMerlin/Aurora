@@ -1,8 +1,4 @@
-import {
-  createAuroraSdk,
-  type AuroraSdkHandle,
-  type CreateAuroraSdkInput,
-} from '@aurora/browser';
+import { createAuroraSdk, type AuroraSdkHandle, type CreateAuroraSdkInput } from '@aurora/browser';
 import { EventType, type ErrorEventBody } from '@aurora/event-schema';
 import { Component, type ComponentType, type ReactNode } from 'react';
 import { buildReactErrorDraft } from './react-error-bridge.js';

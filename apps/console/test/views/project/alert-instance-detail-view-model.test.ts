@@ -37,7 +37,12 @@ const detail: AlertInstanceDetailData = {
     appliedFilters: { environment: [], release: [], pageOrEndpoint: [], errorSeverity: [] },
   },
   transitions: [
-    { from: 'pending_trigger', to: 'triggered', reason: 'triggered', occurredAt: '2026-08-10T08:30:00.000Z' },
+    {
+      from: 'pending_trigger',
+      to: 'triggered',
+      reason: 'triggered',
+      occurredAt: '2026-08-10T08:30:00.000Z',
+    },
   ],
 };
 
@@ -51,9 +56,9 @@ describe('buildAlertInstanceDetailView', () => {
   });
 
   it('surfaces loading and error honestly', () => {
-    expect(buildAlertInstanceDetailView({ loading: true, error: null, detail: null }).instance.kind).toBe(
-      'loading',
-    );
+    expect(
+      buildAlertInstanceDetailView({ loading: true, error: null, detail: null }).instance.kind,
+    ).toBe('loading');
     const errorView = buildAlertInstanceDetailView({
       loading: false,
       error: '加载失败',

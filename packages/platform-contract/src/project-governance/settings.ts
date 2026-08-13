@@ -40,9 +40,7 @@ export const settingsGetProjectPathParams = obj({
   projectId: ProjectId,
 });
 
-export const settingsGetProjectResponse = queryResponse(
-  obj({ project: projectSettings }),
-);
+export const settingsGetProjectResponse = queryResponse(obj({ project: projectSettings }));
 
 export const settingsUpdateProjectPathParams = obj({
   organizationId: OrganizationId,

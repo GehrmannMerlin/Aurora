@@ -101,7 +101,12 @@ describeDb('PLT-09 notifications API (real PostgreSQL 17 + Redis)', () => {
     return { status: res.statusCode, body: res.json() };
   }
 
-  async function seedFor(actor: RegisteredActor, projectId: string, type: NotificationType, key: string) {
+  async function seedFor(
+    actor: RegisteredActor,
+    projectId: string,
+    type: NotificationType,
+    key: string,
+  ) {
     const result = await persistNotification(pool, {
       accountId: actor.accountId,
       type,
@@ -161,7 +166,9 @@ describeDb('PLT-09 notifications API (real PostgreSQL 17 + Redis)', () => {
     const afterReadData = afterRead.body.data as { unreadCount: { value: number } };
     expect(afterReadData.unreadCount.value).toBe(1);
     const unreadAfter = await getNotifications(app, alice, '?readState=unread');
-    const unreadAfterData = unreadAfter.body.data as { notifications: { items: NotificationItem[] } };
+    const unreadAfterData = unreadAfter.body.data as {
+      notifications: { items: NotificationItem[] };
+    };
     expect(unreadAfterData.notifications.items.map((i) => i.notificationId)).toEqual([alertNotif]);
 
     // Idempotent re-mark still succeeds (mark read is idempotent).

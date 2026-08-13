@@ -183,7 +183,10 @@ async function runCreateProjectEnvironment(
     );
     const row = inserted.rows[0];
     if (row === undefined) {
-      throw new PlatformProjectGovernanceError('statement_failed', 'environment insert returned no row');
+      throw new PlatformProjectGovernanceError(
+        'statement_failed',
+        'environment insert returned no row',
+      );
     }
     await insertAuditEvent(client, {
       organizationId: input.orgId,

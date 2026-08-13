@@ -80,10 +80,14 @@ describe('C15 settings contract', () => {
 
   it('create-environment body takes a 1-32 char name', () => {
     expect(
-      settingsCreateEnvironmentBody.zod.safeParse({ name: 'staging', idempotencyKey: 'k'.repeat(36) }).success,
+      settingsCreateEnvironmentBody.zod.safeParse({
+        name: 'staging',
+        idempotencyKey: 'k'.repeat(36),
+      }).success,
     ).toBe(true);
     expect(
-      settingsCreateEnvironmentBody.zod.safeParse({ name: '', idempotencyKey: 'k'.repeat(36) }).success,
+      settingsCreateEnvironmentBody.zod.safeParse({ name: '', idempotencyKey: 'k'.repeat(36) })
+        .success,
     ).toBe(false);
   });
 });

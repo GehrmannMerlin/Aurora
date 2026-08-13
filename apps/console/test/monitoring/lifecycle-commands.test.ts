@@ -40,7 +40,11 @@ describe('C16 lifecycle Command client', () => {
   });
 
   it('move-to-trash carries the optimistic resourceVersion', async () => {
-    await moveProjectToTrash(SCOPE, { resourceVersion: '1' }, { csrf: CSRF, idempotencyKey: FIXED_KEY });
+    await moveProjectToTrash(
+      SCOPE,
+      { resourceVersion: '1' },
+      { csrf: CSRF, idempotencyKey: FIXED_KEY },
+    );
     const call = lastCall();
     expect(call.operationId).toBe('lifecycleMoveToTrash');
     expect(call.input!.body).toMatchObject({ resourceVersion: '1', idempotencyKey: FIXED_KEY });

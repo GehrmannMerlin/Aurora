@@ -88,7 +88,11 @@ describe('buildNotificationsView', () => {
 describe('notificationSectionToItems', () => {
   it('maps empty and unavailable flat sections', () => {
     expect(
-      notificationSectionToItems({ status: 'empty', items: [], pagination: { totalCount: 0, totalCountStatus: 'available' } }).kind,
+      notificationSectionToItems({
+        status: 'empty',
+        items: [],
+        pagination: { totalCount: 0, totalCountStatus: 'available' },
+      }).kind,
     ).toBe('empty');
     expect(
       notificationSectionToItems({

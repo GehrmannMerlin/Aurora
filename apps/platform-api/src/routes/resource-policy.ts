@@ -269,13 +269,7 @@ export async function handlePolicyTargetSearch(
 
   const serialized = serializeOutput(TARGET_SEARCH_OPERATION, 200, body);
   if (!serialized.ok) {
-    await sendProblem(
-      reply,
-      requestId,
-      500,
-      'internal_error',
-      'An internal error occurred.',
-    );
+    await sendProblem(reply, requestId, 500, 'internal_error', 'An internal error occurred.');
     return;
   }
   void reply.header('x-aurora-request-id', requestId).code(200).send(serialized.body);
@@ -348,13 +342,7 @@ export async function handlePolicyGetDefault(
 
   const serialized = serializeOutput(GET_DEFAULT_OPERATION, 200, body);
   if (!serialized.ok) {
-    await sendProblem(
-      reply,
-      requestId,
-      500,
-      'internal_error',
-      'An internal error occurred.',
-    );
+    await sendProblem(reply, requestId, 500, 'internal_error', 'An internal error occurred.');
     return;
   }
   void reply.header('x-aurora-request-id', requestId).code(200).send(serialized.body);
@@ -469,13 +457,7 @@ export async function handlePolicyGetOrganizationEffective(
 
   const serialized = serializeOutput(GET_ORG_OPERATION, 200, body);
   if (!serialized.ok) {
-    await sendProblem(
-      reply,
-      requestId,
-      500,
-      'internal_error',
-      'An internal error occurred.',
-    );
+    await sendProblem(reply, requestId, 500, 'internal_error', 'An internal error occurred.');
     return;
   }
   void reply.header('x-aurora-request-id', requestId).code(200).send(serialized.body);
@@ -603,13 +585,7 @@ export async function handlePolicyGetProjectEffective(
 
   const serialized = serializeOutput(GET_PROJECT_OPERATION, 200, body);
   if (!serialized.ok) {
-    await sendProblem(
-      reply,
-      requestId,
-      500,
-      'internal_error',
-      'An internal error occurred.',
-    );
+    await sendProblem(reply, requestId, 500, 'internal_error', 'An internal error occurred.');
     return;
   }
   void reply.header('x-aurora-request-id', requestId).code(200).send(serialized.body);
@@ -708,13 +684,7 @@ export async function handlePolicySetDefault(
       },
     });
     if (idempotency.outcome === 'conflict') {
-      await sendProblem(
-        reply,
-        requestId,
-        409,
-        'idempotency_conflict',
-        'Idempotency key conflict.',
-      );
+      await sendProblem(reply, requestId, 409, 'idempotency_conflict', 'Idempotency key conflict.');
       return;
     }
     await sendSerialized(SET_DEFAULT_OPERATION, reply, requestId, idempotency.resultData);
@@ -765,7 +735,11 @@ export async function handlePolicySetOrganization(
 
   // The digest must cover the operation AND the path `organizationId` so two
   // different-target requests reusing the same idempotency key never replay.
-  const digest = requestDigest({ operation: OPERATION_ID_POLICY_SET_ORGANIZATION, ...body, organizationId });
+  const digest = requestDigest({
+    operation: OPERATION_ID_POLICY_SET_ORGANIZATION,
+    ...body,
+    organizationId,
+  });
   const probe = await lookupIdempotency(deps.pool, body.idempotencyKey, digest);
   if (probe.outcome === 'replay') {
     await sendSerialized(SET_ORG_OPERATION, reply, requestId, probe.resultData);
@@ -833,13 +807,7 @@ export async function handlePolicySetOrganization(
       },
     });
     if (idempotency.outcome === 'conflict') {
-      await sendProblem(
-        reply,
-        requestId,
-        409,
-        'idempotency_conflict',
-        'Idempotency key conflict.',
-      );
+      await sendProblem(reply, requestId, 409, 'idempotency_conflict', 'Idempotency key conflict.');
       return;
     }
     await sendSerialized(SET_ORG_OPERATION, reply, requestId, idempotency.resultData);
@@ -898,7 +866,11 @@ export async function handlePolicyResetOrganization(
     return;
   }
 
-  const digest = requestDigest({ operation: OPERATION_ID_POLICY_RESET_ORGANIZATION, ...body, organizationId });
+  const digest = requestDigest({
+    operation: OPERATION_ID_POLICY_RESET_ORGANIZATION,
+    ...body,
+    organizationId,
+  });
   const probe = await lookupIdempotency(deps.pool, body.idempotencyKey, digest);
   if (probe.outcome === 'replay') {
     await sendSerialized(RESET_ORG_OPERATION, reply, requestId, probe.resultData);
@@ -963,13 +935,7 @@ export async function handlePolicyResetOrganization(
       },
     });
     if (idempotency.outcome === 'conflict') {
-      await sendProblem(
-        reply,
-        requestId,
-        409,
-        'idempotency_conflict',
-        'Idempotency key conflict.',
-      );
+      await sendProblem(reply, requestId, 409, 'idempotency_conflict', 'Idempotency key conflict.');
       return;
     }
     await sendSerialized(RESET_ORG_OPERATION, reply, requestId, idempotency.resultData);
@@ -1021,7 +987,11 @@ export async function handlePolicySetProjectLimit(
   if (session === null) return;
   const body = parsed.data.body as SetProjectLimitBody;
 
-  const digest = requestDigest({ operation: OPERATION_ID_POLICY_SET_PROJECT_LIMIT, ...body, projectId });
+  const digest = requestDigest({
+    operation: OPERATION_ID_POLICY_SET_PROJECT_LIMIT,
+    ...body,
+    projectId,
+  });
   const probe = await lookupIdempotency(deps.pool, body.idempotencyKey, digest);
   if (probe.outcome === 'replay') {
     await sendSerialized(SET_PROJECT_LIMIT_OPERATION, reply, requestId, probe.resultData);
@@ -1085,13 +1055,7 @@ export async function handlePolicySetProjectLimit(
       },
     });
     if (idempotency.outcome === 'conflict') {
-      await sendProblem(
-        reply,
-        requestId,
-        409,
-        'idempotency_conflict',
-        'Idempotency key conflict.',
-      );
+      await sendProblem(reply, requestId, 409, 'idempotency_conflict', 'Idempotency key conflict.');
       return;
     }
     await sendSerialized(SET_PROJECT_LIMIT_OPERATION, reply, requestId, idempotency.resultData);
@@ -1153,7 +1117,11 @@ export async function handlePolicyClearProjectLimit(
     return;
   }
 
-  const digest = requestDigest({ operation: OPERATION_ID_POLICY_CLEAR_PROJECT_LIMIT, ...body, projectId });
+  const digest = requestDigest({
+    operation: OPERATION_ID_POLICY_CLEAR_PROJECT_LIMIT,
+    ...body,
+    projectId,
+  });
   const probe = await lookupIdempotency(deps.pool, body.idempotencyKey, digest);
   if (probe.outcome === 'replay') {
     await sendSerialized(CLEAR_PROJECT_LIMIT_OPERATION, reply, requestId, probe.resultData);
@@ -1218,13 +1186,7 @@ export async function handlePolicyClearProjectLimit(
       },
     });
     if (idempotency.outcome === 'conflict') {
-      await sendProblem(
-        reply,
-        requestId,
-        409,
-        'idempotency_conflict',
-        'Idempotency key conflict.',
-      );
+      await sendProblem(reply, requestId, 409, 'idempotency_conflict', 'Idempotency key conflict.');
       return;
     }
     await sendSerialized(CLEAR_PROJECT_LIMIT_OPERATION, reply, requestId, idempotency.resultData);
@@ -1243,13 +1205,7 @@ async function sendSerialized(
 ): Promise<void> {
   const serialized = serializeOutput(operation, 200, { data });
   if (!serialized.ok) {
-    await sendProblem(
-      reply,
-      requestId,
-      500,
-      'internal_error',
-      'An internal error occurred.',
-    );
+    await sendProblem(reply, requestId, 500, 'internal_error', 'An internal error occurred.');
     return;
   }
   void reply.header('x-aurora-request-id', requestId).code(200).send(serialized.body);

@@ -131,7 +131,12 @@ describeDb('PLT-09 issue trigger notifications (real PostgreSQL 17 + Redis)', ()
     const issueId = first.issueId;
     await notifyIssue({ projectId, issueId, kind: 'new_issue' });
 
-    const rows = await pool.query<{ account_id: string; organization_id: string; project_id: string; target: { routeId: string } }>(
+    const rows = await pool.query<{
+      account_id: string;
+      organization_id: string;
+      project_id: string;
+      target: { routeId: string };
+    }>(
       `SELECT account_id, organization_id, project_id, target
          FROM notifications WHERE type = $1 AND business_key = $2`,
       ['new_issue', `issue:${issueId}`],

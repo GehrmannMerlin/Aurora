@@ -18,10 +18,7 @@ import {
   type ProjectEnvironmentsData,
   type ProjectSettingsData,
 } from '../../monitoring/queries.js';
-import {
-  createProjectEnvironment,
-  updateProjectSettings,
-} from '../../monitoring/commands.js';
+import { createProjectEnvironment, updateProjectSettings } from '../../monitoring/commands.js';
 import { useSessionStore } from '../../stores/session.js';
 import { buildSettingsView, frameworkLabel } from './settings-view-model.js';
 import AppPageHeader from '../../components/aurora/AppPageHeader.vue';
@@ -135,10 +132,14 @@ async function submitCreateEnvironment(): Promise<void> {
   envBusy.value = true;
   envError.value = null;
   try {
-    await createProjectEnvironment(scope, { name }, {
-      csrf: session.csrf ?? '',
-      idempotencyKey: createIdempotencyKey(),
-    });
+    await createProjectEnvironment(
+      scope,
+      { name },
+      {
+        csrf: session.csrf ?? '',
+        idempotencyKey: createIdempotencyKey(),
+      },
+    );
     envNameInput.value = '';
     invalidateScope({ type: 'project', id: projectId });
     const envData = await fetchProjectEnvironments(scope);
@@ -194,11 +195,7 @@ async function submitCreateEnvironment(): Promise<void> {
           <form class="mon-form" @submit.prevent="submitSettings">
             <label class="mon-field">
               项目名称
-              <input
-                type="text"
-                v-model="nameInput"
-                data-testid="settings-name"
-              />
+              <input type="text" v-model="nameInput" data-testid="settings-name" />
             </label>
             <label class="mon-field">
               生产网站地址（可选）
@@ -209,7 +206,9 @@ async function submitCreateEnvironment(): Promise<void> {
                 data-testid="settings-website"
               />
             </label>
-            <p class="mon-meta">框架/接入类型：{{ frameworkLabel(state.project.data.frameworkType) }}（只读）</p>
+            <p class="mon-meta">
+              框架/接入类型：{{ frameworkLabel(state.project.data.frameworkType) }}（只读）
+            </p>
             <div class="mon-actions-row">
               <button
                 type="submit"
@@ -220,7 +219,9 @@ async function submitCreateEnvironment(): Promise<void> {
                 {{ saveBusy ? '保存中…' : '保存设置' }}
               </button>
             </div>
-            <p v-if="saveError !== null" class="mon-notice mon-notice--error" role="status">{{ saveError }}</p>
+            <p v-if="saveError !== null" class="mon-notice mon-notice--error" role="status">
+              {{ saveError }}
+            </p>
           </form>
         </template>
       </section>
@@ -237,7 +238,11 @@ async function submitCreateEnvironment(): Promise<void> {
         </template>
         <template v-else>
           <ul v-if="state.environments.data.length > 0" class="mon-env-list">
-            <li v-for="env in state.environments.data" :key="env.environmentId" class="mon-env-item">
+            <li
+              v-for="env in state.environments.data"
+              :key="env.environmentId"
+              class="mon-env-item"
+            >
               <span class="mon-env-name">{{ env.name }}</span>
               <span v-if="env.isDefault === 'true'" class="mon-badge">默认</span>
               <span class="mon-meta">{{ env.environmentId }}</span>
@@ -265,7 +270,9 @@ async function submitCreateEnvironment(): Promise<void> {
               {{ envBusy ? '创建中…' : '创建环境' }}
             </button>
           </div>
-          <p v-if="envError !== null" class="mon-notice mon-notice--error" role="status">{{ envError }}</p>
+          <p v-if="envError !== null" class="mon-notice mon-notice--error" role="status">
+            {{ envError }}
+          </p>
         </template>
       </section>
     </template>

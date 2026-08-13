@@ -83,13 +83,21 @@ describe('C14 client-key contract', () => {
     // The one-time secret is required in the first response.
     expect(
       credentialsCreateClientKeyResponse.zod.safeParse({
-        data: { status: 'created', credentialId: 'cred_1', keyId: 'ck_abcdefgh', origins: [], environments: [] },
+        data: {
+          status: 'created',
+          credentialId: 'cred_1',
+          keyId: 'ck_abcdefgh',
+          origins: [],
+          environments: [],
+        },
       }).success,
     ).toBe(false);
   });
 
   it('mutation bodies carry an idempotency key', () => {
-    expect(credentialsDisableClientKeyBody.zod.safeParse({ idempotencyKey: 'k'.repeat(36) }).success).toBe(true);
+    expect(
+      credentialsDisableClientKeyBody.zod.safeParse({ idempotencyKey: 'k'.repeat(36) }).success,
+    ).toBe(true);
     expect(
       credentialsRevokeClientKeyResponse.zod.safeParse({
         data: { status: 'revoked', credentialId: 'cred_1', keyId: 'ck_abcdefgh' },

@@ -104,13 +104,7 @@ export async function handleListNotifications(
 
   const serialized = serializeOutput(LIST_OPERATION, 200, body);
   if (!serialized.ok) {
-    await sendProblem(
-      reply,
-      requestId,
-      500,
-      'internal_error',
-      'An internal error occurred.',
-    );
+    await sendProblem(reply, requestId, 500, 'internal_error', 'An internal error occurred.');
     return;
   }
   void reply.header('x-aurora-request-id', requestId).code(200).send(serialized.body);
@@ -194,13 +188,7 @@ export async function handleMarkNotificationRead(
       },
     });
     if (idempotency.outcome === 'conflict') {
-      await sendProblem(
-        reply,
-        requestId,
-        409,
-        'idempotency_conflict',
-        'Idempotency key conflict.',
-      );
+      await sendProblem(reply, requestId, 409, 'idempotency_conflict', 'Idempotency key conflict.');
       return;
     }
     await sendSerialized(MARK_READ_OPERATION, reply, requestId, idempotency.resultData);
@@ -219,13 +207,7 @@ async function sendSerialized(
 ): Promise<void> {
   const serialized = serializeOutput(operation, 200, { data });
   if (!serialized.ok) {
-    await sendProblem(
-      reply,
-      requestId,
-      500,
-      'internal_error',
-      'An internal error occurred.',
-    );
+    await sendProblem(reply, requestId, 500, 'internal_error', 'An internal error occurred.');
     return;
   }
   void reply.header('x-aurora-request-id', requestId).code(200).send(serialized.body);

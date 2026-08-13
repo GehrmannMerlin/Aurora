@@ -27,8 +27,8 @@ const releases = ref<readonly ReleaseSummary[]>([]);
 const loading = ref(false);
 const error = ref<string | null>(null);
 
-const currentRelease = computed<ReleaseSummary | null>(() =>
-  releases.value.find((release) => release.releaseId === releaseId) ?? null,
+const currentRelease = computed<ReleaseSummary | null>(
+  () => releases.value.find((release) => release.releaseId === releaseId) ?? null,
 );
 
 async function load(): Promise<void> {

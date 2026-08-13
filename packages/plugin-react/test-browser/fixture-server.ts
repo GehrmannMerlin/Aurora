@@ -19,7 +19,10 @@ const reactDomUmdPath = fileURLToPath(
 // scheduler 是 react-dom 的传递依赖，位于 pnpm store；这里从 plugin-vue 侧不再可用，
 // 从 react-dom 所在 store 路径解析不可靠，改用 workspace 顶层 store 常量定位。
 const schedulerUmdPath = fileURLToPath(
-  new URL('../../../node_modules/.pnpm/scheduler@0.23.2/node_modules/scheduler/umd/scheduler.development.js', import.meta.url),
+  new URL(
+    '../../../node_modules/.pnpm/scheduler@0.23.2/node_modules/scheduler/umd/scheduler.development.js',
+    import.meta.url,
+  ),
 );
 
 const pageHtml = `<!doctype html>

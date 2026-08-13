@@ -98,7 +98,13 @@ export async function handleGetProjectSettings(
   const requestId = deps.requestIdProvider();
   const parsed = parseInput(GET_OP, { params: request.params });
   if (!parsed.ok) {
-    await sendProblem(reply, requestId, 400, 'structural_error', 'Request does not match the public contract.');
+    await sendProblem(
+      reply,
+      requestId,
+      400,
+      'structural_error',
+      'Request does not match the public contract.',
+    );
     return;
   }
   const auth = await authorizeSettingsView(request, reply, deps, requestId);
@@ -106,7 +112,10 @@ export async function handleGetProjectSettings(
 
   let project;
   try {
-    project = await getProjectById(deps.pool, { orgId: auth.organizationId, projectId: auth.projectId });
+    project = await getProjectById(deps.pool, {
+      orgId: auth.organizationId,
+      projectId: auth.projectId,
+    });
   } catch (error) {
     if (await sendMappedError(reply, requestId, error)) return;
     throw error;
@@ -127,7 +136,9 @@ export async function handleGetProjectSettings(
           status: project.status,
           ...(project.archivedAt === null ? {} : { archivedAt: project.archivedAt }),
           ...(project.trashedAt === null ? {} : { trashedAt: project.trashedAt }),
-          ...(project.recoverableUntil === null ? {} : { recoverableUntil: project.recoverableUntil }),
+          ...(project.recoverableUntil === null
+            ? {}
+            : { recoverableUntil: project.recoverableUntil }),
         },
         resourceVersion: project.updatedAt,
       },
@@ -161,7 +172,13 @@ export async function handleUpdateProjectSettings(
   const requestId = deps.requestIdProvider();
   const parsed = parseInput(UPDATE_OP, { params: request.params, body: request.body });
   if (!parsed.ok) {
-    await sendProblem(reply, requestId, 400, 'structural_error', 'Request does not match the public contract.');
+    await sendProblem(
+      reply,
+      requestId,
+      400,
+      'structural_error',
+      'Request does not match the public contract.',
+    );
     return;
   }
   const auth = await authorizeSettingsView(request, reply, deps, requestId);
@@ -188,7 +205,13 @@ export async function handleUpdateProjectSettings(
     return;
   }
   if (probe.outcome === 'conflict') {
-    await sendProblem(reply, requestId, 409, 'idempotency_conflict', 'Idempotency key was used with a different request.');
+    await sendProblem(
+      reply,
+      requestId,
+      409,
+      'idempotency_conflict',
+      'Idempotency key was used with a different request.',
+    );
     return;
   }
 
@@ -217,18 +240,30 @@ export async function handleUpdateProjectSettings(
           throw new ServiceError(404, 'not_found', 'The project was not found.');
         }
         if (result.status === 'version_conflict') {
-          throw new ServiceError(412, 'version_conflict', 'The project settings version is stale.', {
-            fieldErrors: [
-              { field: 'resourceVersion', reason: `Current version is ${result.currentResourceVersion}.` },
-            ],
-          });
+          throw new ServiceError(
+            412,
+            'version_conflict',
+            'The project settings version is stale.',
+            {
+              fieldErrors: [
+                {
+                  field: 'resourceVersion',
+                  reason: `Current version is ${result.currentResourceVersion}.`,
+                },
+              ],
+            },
+          );
         }
         if (result.status === 'state_machine_conflict') {
           throw new ServiceError(
             409,
             'state_machine_conflict',
             'The project is not in an editable state.',
-            { fieldErrors: [{ field: 'status', reason: `Current status is ${result.currentStatus}.` }] },
+            {
+              fieldErrors: [
+                { field: 'status', reason: `Current status is ${result.currentStatus}.` },
+              ],
+            },
           );
         }
         return {
@@ -260,7 +295,13 @@ export async function handleListProjectEnvironments(
   const requestId = deps.requestIdProvider();
   const parsed = parseInput(LIST_ENVS_OP, { params: request.params });
   if (!parsed.ok) {
-    await sendProblem(reply, requestId, 400, 'structural_error', 'Request does not match the public contract.');
+    await sendProblem(
+      reply,
+      requestId,
+      400,
+      'structural_error',
+      'Request does not match the public contract.',
+    );
     return;
   }
   const auth = await authorizeSettingsView(request, reply, deps, requestId);
@@ -319,7 +360,13 @@ export async function handleCreateProjectEnvironment(
   const requestId = deps.requestIdProvider();
   const parsed = parseInput(CREATE_ENV_OP, { params: request.params, body: request.body });
   if (!parsed.ok) {
-    await sendProblem(reply, requestId, 400, 'structural_error', 'Request does not match the public contract.');
+    await sendProblem(
+      reply,
+      requestId,
+      400,
+      'structural_error',
+      'Request does not match the public contract.',
+    );
     return;
   }
   const auth = await authorizeSettingsView(request, reply, deps, requestId);
@@ -346,7 +393,13 @@ export async function handleCreateProjectEnvironment(
     return;
   }
   if (probe.outcome === 'conflict') {
-    await sendProblem(reply, requestId, 409, 'idempotency_conflict', 'Idempotency key was used with a different request.');
+    await sendProblem(
+      reply,
+      requestId,
+      409,
+      'idempotency_conflict',
+      'Idempotency key was used with a different request.',
+    );
     return;
   }
 
@@ -373,7 +426,11 @@ export async function handleCreateProjectEnvironment(
           throw new ServiceError(404, 'not_found', 'The project was not found.');
         }
         if (result.status === 'duplicate') {
-          throw new ServiceError(422, 'field_validation', 'An environment with that name already exists.');
+          throw new ServiceError(
+            422,
+            'field_validation',
+            'An environment with that name already exists.',
+          );
         }
         return { status: 'created', environmentId: result.environmentId, name: result.name };
       },

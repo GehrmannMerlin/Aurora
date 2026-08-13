@@ -22,7 +22,16 @@ describe('buildSettingsView', () => {
       project,
       environments: {
         status: 'available',
-        data: { items: [{ environmentId: 'env_1', name: 'production', isDefault: 'true', createdAt: '2026-08-12T00:00:00.000Z' }] },
+        data: {
+          items: [
+            {
+              environmentId: 'env_1',
+              name: 'production',
+              isDefault: 'true',
+              createdAt: '2026-08-12T00:00:00.000Z',
+            },
+          ],
+        },
       },
     });
     expect(view.project.kind).toBe('available');
@@ -39,7 +48,9 @@ describe('buildSettingsView', () => {
 describe('environmentSectionToItems', () => {
   it('maps empty/unavailable honestly', () => {
     expect(environmentSectionToItems({ status: 'empty', reason: 'none' }).kind).toBe('empty');
-    expect(environmentSectionToItems({ status: 'unavailable', reason: 'deferred' }).kind).toBe('unavailable');
+    expect(environmentSectionToItems({ status: 'unavailable', reason: 'deferred' }).kind).toBe(
+      'unavailable',
+    );
   });
 });
 

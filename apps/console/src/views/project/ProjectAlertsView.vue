@@ -13,11 +13,7 @@ import { describeRequestError } from '../../api/feedback.js';
 import { formatUtc } from '../../monitoring/format.js';
 import { fetchAlertsList, type AlertsData } from '../../monitoring/queries.js';
 import { resolveRouteTarget } from '../../contracts/route-registry.js';
-import {
-  buildAlertsView,
-  instanceStateLabel,
-  ruleStateLabel,
-} from './alerts-view-model.js';
+import { buildAlertsView, instanceStateLabel, ruleStateLabel } from './alerts-view-model.js';
 import AppPageHeader from '../../components/aurora/AppPageHeader.vue';
 import AppLink from '../../components/aurora/AppLink.vue';
 import AppStatusBadge from '../../components/aurora/AppStatusBadge.vue';
@@ -147,7 +143,11 @@ function instanceTone(stateName: string): 'neutral' | 'warning' | 'danger' {
         </template>
         <template v-else>
           <ul v-if="state.instances.data.length > 0" class="mon-list">
-            <li v-for="instance in state.instances.data" :key="instance.instanceId" class="mon-list-item">
+            <li
+              v-for="instance in state.instances.data"
+              :key="instance.instanceId"
+              class="mon-list-item"
+            >
               <AppLink :to="instanceHref(instance.instanceId)" class="mon-link">
                 {{ instance.ruleName ?? instance.ruleId }}
               </AppLink>
@@ -157,7 +157,9 @@ function instanceTone(stateName: string): 'neutral' | 'warning' | 'danger' {
                 </AppStatusBadge>
                 <span>{{ instance.metric }}</span>
                 <span>触发 {{ formatUtc(instance.triggeredAt) }}</span>
-                <span v-if="instance.recoveredAt !== undefined">恢复 {{ formatUtc(instance.recoveredAt) }}</span>
+                <span v-if="instance.recoveredAt !== undefined"
+                  >恢复 {{ formatUtc(instance.recoveredAt) }}</span
+                >
                 <span v-if="instance.pauseReason !== undefined">{{ instance.pauseReason }}</span>
               </div>
             </li>

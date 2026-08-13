@@ -97,7 +97,13 @@ export async function handleArchiveProject(
   const requestId = deps.requestIdProvider();
   const parsed = parseInput(ARCHIVE_OP, { params: request.params, body: request.body });
   if (!parsed.ok) {
-    await sendProblem(reply, requestId, 400, 'structural_error', 'Request does not match the public contract.');
+    await sendProblem(
+      reply,
+      requestId,
+      400,
+      'structural_error',
+      'Request does not match the public contract.',
+    );
     return;
   }
   const auth = await authorizeLifecycleView(request, reply, deps, requestId);
@@ -124,7 +130,13 @@ export async function handleArchiveProject(
     return;
   }
   if (probe.outcome === 'conflict') {
-    await sendProblem(reply, requestId, 409, 'idempotency_conflict', 'Idempotency key was used with a different request.');
+    await sendProblem(
+      reply,
+      requestId,
+      409,
+      'idempotency_conflict',
+      'Idempotency key was used with a different request.',
+    );
     return;
   }
 
@@ -154,7 +166,11 @@ export async function handleArchiveProject(
             409,
             'state_machine_conflict',
             'The project is not in an archivable state.',
-            { fieldErrors: [{ field: 'status', reason: `Current status is ${result.currentStatus}.` }] },
+            {
+              fieldErrors: [
+                { field: 'status', reason: `Current status is ${result.currentStatus}.` },
+              ],
+            },
           );
         }
         return { status: 'archived', projectId: auth.projectId };
@@ -180,7 +196,13 @@ export async function handleRestoreProjectFromArchive(
   const requestId = deps.requestIdProvider();
   const parsed = parseInput(RESTORE_OP, { params: request.params, body: request.body });
   if (!parsed.ok) {
-    await sendProblem(reply, requestId, 400, 'structural_error', 'Request does not match the public contract.');
+    await sendProblem(
+      reply,
+      requestId,
+      400,
+      'structural_error',
+      'Request does not match the public contract.',
+    );
     return;
   }
   const auth = await authorizeLifecycleView(request, reply, deps, requestId);
@@ -207,7 +229,13 @@ export async function handleRestoreProjectFromArchive(
     return;
   }
   if (probe.outcome === 'conflict') {
-    await sendProblem(reply, requestId, 409, 'idempotency_conflict', 'Idempotency key was used with a different request.');
+    await sendProblem(
+      reply,
+      requestId,
+      409,
+      'idempotency_conflict',
+      'Idempotency key was used with a different request.',
+    );
     return;
   }
 
@@ -246,12 +274,11 @@ export async function handleRestoreProjectFromArchive(
           throw new ServiceError(412, 'version_conflict', 'The project version is stale.');
         }
         if (result.status === 'state_machine_conflict') {
-          throw new ServiceError(
-            409,
-            'state_machine_conflict',
-            'The project is not archived.',
-            { fieldErrors: [{ field: 'status', reason: `Current status is ${result.currentStatus}.` }] },
-          );
+          throw new ServiceError(409, 'state_machine_conflict', 'The project is not archived.', {
+            fieldErrors: [
+              { field: 'status', reason: `Current status is ${result.currentStatus}.` },
+            ],
+          });
         }
         return { status: 'restored', projectId: auth.projectId };
       },
@@ -281,7 +308,13 @@ export async function handleMoveProjectToTrash(
   const requestId = deps.requestIdProvider();
   const parsed = parseInput(TRASH_OP, { params: request.params, body: request.body });
   if (!parsed.ok) {
-    await sendProblem(reply, requestId, 400, 'structural_error', 'Request does not match the public contract.');
+    await sendProblem(
+      reply,
+      requestId,
+      400,
+      'structural_error',
+      'Request does not match the public contract.',
+    );
     return;
   }
   const auth = await authorizeLifecycleView(request, reply, deps, requestId);
@@ -326,7 +359,13 @@ export async function handleMoveProjectToTrash(
     return;
   }
   if (probe.outcome === 'conflict') {
-    await sendProblem(reply, requestId, 409, 'idempotency_conflict', 'Idempotency key was used with a different request.');
+    await sendProblem(
+      reply,
+      requestId,
+      409,
+      'idempotency_conflict',
+      'Idempotency key was used with a different request.',
+    );
     return;
   }
 
@@ -351,7 +390,11 @@ export async function handleMoveProjectToTrash(
             409,
             'state_machine_conflict',
             'The project is not in a state that can be moved to the trash.',
-            { fieldErrors: [{ field: 'status', reason: `Current status is ${result.currentStatus}.` }] },
+            {
+              fieldErrors: [
+                { field: 'status', reason: `Current status is ${result.currentStatus}.` },
+              ],
+            },
           );
         }
         return {

@@ -66,9 +66,7 @@ export function applyMetricDefaults(
     draft.triggerDurationMinutes,
   )
     ? draft.triggerDurationMinutes
-    : (capability.triggerDurationsMinutes[1] ??
-      capability.triggerDurationsMinutes[0] ??
-      2);
+    : (capability.triggerDurationsMinutes[1] ?? capability.triggerDurationsMinutes[0] ?? 2);
   const cooldownMinutes = capability.cooldownsMinutes.includes(draft.cooldownMinutes)
     ? draft.cooldownMinutes
     : 10;
@@ -79,7 +77,10 @@ export function applyMetricDefaults(
     triggerDurationMinutes,
     cooldownMinutes,
     ...(cap.isRatio
-      ? { minSampleCount: draft.minSampleCount ?? 1, recoveryDurationMinutes: triggerDurationMinutes }
+      ? {
+          minSampleCount: draft.minSampleCount ?? 1,
+          recoveryDurationMinutes: triggerDurationMinutes,
+        }
       : {}),
   };
 }
@@ -96,7 +97,12 @@ export function metricSwitchConflicts(
   const next = metricCapability(capability, nextMetric);
   const current = metricCapability(capability, draft.metric);
   if (next === undefined) return [];
-  if (current !== undefined && current.isRatio && !next.isRatio && draft.minSampleCount !== undefined) {
+  if (
+    current !== undefined &&
+    current.isRatio &&
+    !next.isRatio &&
+    draft.minSampleCount !== undefined
+  ) {
     return ['minSampleCount'];
   }
   return [];

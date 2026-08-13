@@ -58,17 +58,20 @@ describe('buildReleasesView', () => {
 
 describe('releaseSectionToItems', () => {
   it('unwraps an available section to the raw item list', () => {
-    expect(
-      releaseSectionToItems({ status: 'available', data: { items: [release] } }),
-    ).toEqual({ kind: 'available', data: [release] });
+    expect(releaseSectionToItems({ status: 'available', data: { items: [release] } })).toEqual({
+      kind: 'available',
+      data: [release],
+    });
   });
 
   it('never invents zero for partial/stale/unavailable', () => {
-    expect(releaseSectionToItems({ status: 'partial', data: { items: [] }, missing: 'x' })).toEqual({
-      kind: 'partial',
-      data: [],
-      missing: 'x',
-    });
+    expect(releaseSectionToItems({ status: 'partial', data: { items: [] }, missing: 'x' })).toEqual(
+      {
+        kind: 'partial',
+        data: [],
+        missing: 'x',
+      },
+    );
     expect(releaseSectionToItems({ status: 'unavailable', reason: 'deferred' }).kind).toBe(
       'unavailable',
     );

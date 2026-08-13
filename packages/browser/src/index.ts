@@ -56,7 +56,11 @@ export {
   type BrowserClockSnapshot,
   type BrowserPageSnapshot,
 } from './page-snapshot.js';
-export { createAuroraSdk, type AuroraSdkHandle, type CreateAuroraSdkInput } from './sdk-composition.js';
+export {
+  createAuroraSdk,
+  type AuroraSdkHandle,
+  type CreateAuroraSdkInput,
+} from './sdk-composition.js';
 export {
   createBrowserBatchTransport,
   type CreateBrowserBatchTransportOptions,

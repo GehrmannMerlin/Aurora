@@ -28,7 +28,9 @@ export interface AlertInstanceDetailSource {
   readonly detail: AlertInstanceDetailData | null;
 }
 
-export function buildAlertInstanceDetailView(source: AlertInstanceDetailSource): AlertInstanceDetailViewState {
+export function buildAlertInstanceDetailView(
+  source: AlertInstanceDetailSource,
+): AlertInstanceDetailViewState {
   if (source.loading) {
     return {
       instance: { kind: 'loading' },

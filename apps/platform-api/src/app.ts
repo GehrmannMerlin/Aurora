@@ -109,10 +109,7 @@ import {
   handleDeleteAccountPreflight,
   handleRequestAccountDeletion,
 } from './routes/deletion.js';
-import {
-  handleListNotifications,
-  handleMarkNotificationRead,
-} from './routes/notifications.js';
+import { handleListNotifications, handleMarkNotificationRead } from './routes/notifications.js';
 import {
   handleGetPlatformAdminCapability,
   handleGrantPlatformAdmin,

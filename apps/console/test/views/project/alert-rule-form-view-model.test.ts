@@ -9,8 +9,24 @@ import type { AlertCapabilityData } from '../../../src/monitoring/queries.js';
 
 const capability: AlertCapabilityData = {
   metrics: [
-    { metric: 'error_count', displayName: 'Error count', unit: 'count', direction: 'higher_is_worse', isRatio: false, minSamplesRequired: false, filterDimensions: ['environment'] },
-    { metric: 'request_failure_rate', displayName: 'Request failure rate', unit: 'percentage', direction: 'higher_is_worse', isRatio: true, minSamplesRequired: true, filterDimensions: ['environment'] },
+    {
+      metric: 'error_count',
+      displayName: 'Error count',
+      unit: 'count',
+      direction: 'higher_is_worse',
+      isRatio: false,
+      minSamplesRequired: false,
+      filterDimensions: ['environment'],
+    },
+    {
+      metric: 'request_failure_rate',
+      displayName: 'Request failure rate',
+      unit: 'percentage',
+      direction: 'higher_is_worse',
+      isRatio: true,
+      minSamplesRequired: true,
+      filterDimensions: ['environment'],
+    },
   ],
   windowsMinutes: [1, 5, 10, 30, 60],
   triggerDurationsMinutes: [0, 1, 2, 5, 10],
@@ -39,7 +55,12 @@ describe('initialDraft / applyMetricDefaults', () => {
   });
 
   it('keeps an existing draft value when it is already in the fixed options', () => {
-    const draft = { ...initialDraft(), windowMinutes: 30, triggerDurationMinutes: 10, cooldownMinutes: 60 };
+    const draft = {
+      ...initialDraft(),
+      windowMinutes: 30,
+      triggerDurationMinutes: 10,
+      cooldownMinutes: 60,
+    };
     const selected = applyMetricDefaults(draft, 'error_count', capability);
     expect(selected.windowMinutes).toBe(30);
     expect(selected.triggerDurationMinutes).toBe(10);

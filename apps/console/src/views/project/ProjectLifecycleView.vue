@@ -114,7 +114,10 @@ function archive(): void {
 
 function restoreFromArchive(): void {
   void runAction('restore', () =>
-    restoreProjectFromArchive(scope, { csrf: session.csrf ?? '', idempotencyKey: createIdempotencyKey() }),
+    restoreProjectFromArchive(scope, {
+      csrf: session.csrf ?? '',
+      idempotencyKey: createIdempotencyKey(),
+    }),
   );
 }
 
@@ -126,10 +129,14 @@ function moveToTrash(): void {
   }
   if (!window.confirm('移入回收站后密钥立即失效、令牌撤销，7 天内可恢复。确定移入回收站？')) return;
   void runAction('trash', () =>
-    moveProjectToTrash(scope, { resourceVersion: resourceVersion.value }, {
-      csrf: session.csrf ?? '',
-      idempotencyKey: createIdempotencyKey(),
-    }),
+    moveProjectToTrash(
+      scope,
+      { resourceVersion: resourceVersion.value },
+      {
+        csrf: session.csrf ?? '',
+        idempotencyKey: createIdempotencyKey(),
+      },
+    ),
   );
 }
 
@@ -178,7 +185,11 @@ function statusTone(status: string): 'neutral' | 'success' | 'warning' | 'danger
     </section>
 
     <template v-if="lifecycle !== null">
-      <section v-if="canArchive(lifecycle.status)" class="mon-block" data-testid="lifecycle-archive">
+      <section
+        v-if="canArchive(lifecycle.status)"
+        class="mon-block"
+        data-testid="lifecycle-archive"
+      >
         <h2 class="mon-title">归档项目</h2>
         <p class="mon-hint">归档后停止接收新事件，告警停止，历史数据保留；可随时从归档恢复。</p>
         <button
@@ -192,7 +203,11 @@ function statusTone(status: string): 'neutral' | 'success' | 'warning' | 'danger
         </button>
       </section>
 
-      <section v-if="canRestoreFromArchive(lifecycle.status)" class="mon-block" data-testid="lifecycle-restore">
+      <section
+        v-if="canRestoreFromArchive(lifecycle.status)"
+        class="mon-block"
+        data-testid="lifecycle-restore"
+      >
         <h2 class="mon-title">从归档恢复</h2>
         <p class="mon-hint">恢复后重新接收新数据；告警规则保持关闭，由管理员手动启用。</p>
         <button
@@ -206,11 +221,15 @@ function statusTone(status: string): 'neutral' | 'success' | 'warning' | 'danger
         </button>
       </section>
 
-      <section v-if="canMoveToTrash(lifecycle.status)" class="mon-block mon-danger-zone" data-testid="lifecycle-trash">
+      <section
+        v-if="canMoveToTrash(lifecycle.status)"
+        class="mon-block mon-danger-zone"
+        data-testid="lifecycle-trash"
+      >
         <h2 class="mon-title">移入回收站</h2>
         <p class="mon-hint">
-          仅组织管理员/所有者可执行。移入回收站后上报密钥立即失效、私密令牌撤销，
-          默认 7 天内可恢复（在组织回收站处理）。请输入项目名称
+          仅组织管理员/所有者可执行。移入回收站后上报密钥立即失效、私密令牌撤销， 默认 7
+          天内可恢复（在组织回收站处理）。请输入项目名称
           <code class="mon-code">{{ authoritativeName }}</code> 确认。
         </p>
         <label class="mon-field">
@@ -236,7 +255,9 @@ function statusTone(status: string): 'neutral' | 'success' | 'warning' | 'danger
       </section>
     </template>
 
-    <p v-if="actionError !== null" class="mon-notice mon-notice--error" role="status">{{ actionError }}</p>
+    <p v-if="actionError !== null" class="mon-notice mon-notice--error" role="status">
+      {{ actionError }}
+    </p>
   </section>
 </template>
 

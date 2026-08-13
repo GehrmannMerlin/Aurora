@@ -62,7 +62,8 @@ export function buildReleasesView(source: ReleasesSource): ReleasesViewState {
     list,
     deployments: {
       kind: 'unavailable',
-      reason: '部署记录契约未提供（DAT-18 v1 无 Deployment Query）；发布由 SDK 首次上报或获准令牌/CI 创建。',
+      reason:
+        '部署记录契约未提供（DAT-18 v1 无 Deployment Query）；发布由 SDK 首次上报或获准令牌/CI 创建。',
     },
   };
 }

@@ -65,7 +65,10 @@ describe('buildSourceMapsView', () => {
       replace: { kind: 'idle' },
       reparse: { kind: 'idle' },
     });
-    expect(emptyView.files).toEqual({ kind: 'empty', reason: 'no source map files for this release' });
+    expect(emptyView.files).toEqual({
+      kind: 'empty',
+      reason: 'no source map files for this release',
+    });
   });
 });
 
@@ -75,7 +78,9 @@ describe('fileSectionToItems', () => {
       kind: 'available',
       data: [file],
     });
-    expect(fileSectionToItems({ status: 'partial', data: { items: [file] }, missing: 'detail' })).toEqual({
+    expect(
+      fileSectionToItems({ status: 'partial', data: { items: [file] }, missing: 'detail' }),
+    ).toEqual({
       kind: 'partial',
       data: [file],
       missing: 'detail',

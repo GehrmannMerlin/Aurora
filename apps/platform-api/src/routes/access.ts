@@ -99,7 +99,13 @@ export async function handleListEffectiveMembers(
   const requestId = deps.requestIdProvider();
   const parsed = parseInput(LIST_OP, { params: request.params });
   if (!parsed.ok) {
-    await sendProblem(reply, requestId, 400, 'structural_error', 'Request does not match the public contract.');
+    await sendProblem(
+      reply,
+      requestId,
+      400,
+      'structural_error',
+      'Request does not match the public contract.',
+    );
     return;
   }
   const auth = await authorizeAccessView(request, reply, deps, requestId);
@@ -128,9 +134,7 @@ export async function handleListEffectiveMembers(
                 maskedEmail: maskEmail(member.email),
                 effectiveRole: member.effectiveRole,
                 sources: member.sources,
-                ...(member.projectRole === undefined
-                  ? {}
-                  : { projectRole: member.projectRole }),
+                ...(member.projectRole === undefined ? {} : { projectRole: member.projectRole }),
                 allowedActions:
                   member.effectiveRole === 'project_admin'
                     ? (['read', 'manage'] as const)
@@ -160,7 +164,13 @@ export async function handleGrantProjectMembership(
   const requestId = deps.requestIdProvider();
   const parsed = parseInput(GRANT_OP, { params: request.params, body: request.body });
   if (!parsed.ok) {
-    await sendProblem(reply, requestId, 400, 'structural_error', 'Request does not match the public contract.');
+    await sendProblem(
+      reply,
+      requestId,
+      400,
+      'structural_error',
+      'Request does not match the public contract.',
+    );
     return;
   }
   const auth = await authorizeAccessView(request, reply, deps, requestId);
@@ -191,7 +201,13 @@ export async function handleGrantProjectMembership(
     return;
   }
   if (probe.outcome === 'conflict') {
-    await sendProblem(reply, requestId, 409, 'idempotency_conflict', 'Idempotency key was used with a different request.');
+    await sendProblem(
+      reply,
+      requestId,
+      409,
+      'idempotency_conflict',
+      'Idempotency key was used with a different request.',
+    );
     return;
   }
 
@@ -247,14 +263,26 @@ export async function handleChangeProjectRole(
   const requestId = deps.requestIdProvider();
   const parsed = parseInput(CHANGE_OP, { params: request.params, body: request.body });
   if (!parsed.ok) {
-    await sendProblem(reply, requestId, 400, 'structural_error', 'Request does not match the public contract.');
+    await sendProblem(
+      reply,
+      requestId,
+      400,
+      'structural_error',
+      'Request does not match the public contract.',
+    );
     return;
   }
   const params = request.params as AccessProjectParams & { accountId?: string };
   const auth = await authorizeAccessView(request, reply, deps, requestId);
   if (auth === null) return;
   if (params.accountId === undefined || !/^[0-9a-f-]{36}$/i.test(params.accountId)) {
-    await sendProblem(reply, requestId, 400, 'structural_error', 'Request does not match the public contract.');
+    await sendProblem(
+      reply,
+      requestId,
+      400,
+      'structural_error',
+      'Request does not match the public contract.',
+    );
     return;
   }
   const session = request.sessionPayload;
@@ -283,7 +311,13 @@ export async function handleChangeProjectRole(
     return;
   }
   if (probe.outcome === 'conflict') {
-    await sendProblem(reply, requestId, 409, 'idempotency_conflict', 'Idempotency key was used with a different request.');
+    await sendProblem(
+      reply,
+      requestId,
+      409,
+      'idempotency_conflict',
+      'Idempotency key was used with a different request.',
+    );
     return;
   }
 
@@ -333,14 +367,26 @@ export async function handleRemoveProjectMembership(
   const requestId = deps.requestIdProvider();
   const parsed = parseInput(REMOVE_OP, { params: request.params, body: request.body });
   if (!parsed.ok) {
-    await sendProblem(reply, requestId, 400, 'structural_error', 'Request does not match the public contract.');
+    await sendProblem(
+      reply,
+      requestId,
+      400,
+      'structural_error',
+      'Request does not match the public contract.',
+    );
     return;
   }
   const params = request.params as AccessProjectParams & { accountId?: string };
   const auth = await authorizeAccessView(request, reply, deps, requestId);
   if (auth === null) return;
   if (params.accountId === undefined || !/^[0-9a-f-]{36}$/i.test(params.accountId)) {
-    await sendProblem(reply, requestId, 400, 'structural_error', 'Request does not match the public contract.');
+    await sendProblem(
+      reply,
+      requestId,
+      400,
+      'structural_error',
+      'Request does not match the public contract.',
+    );
     return;
   }
   const session = request.sessionPayload;
@@ -366,7 +412,13 @@ export async function handleRemoveProjectMembership(
     return;
   }
   if (probe.outcome === 'conflict') {
-    await sendProblem(reply, requestId, 409, 'idempotency_conflict', 'Idempotency key was used with a different request.');
+    await sendProblem(
+      reply,
+      requestId,
+      409,
+      'idempotency_conflict',
+      'Idempotency key was used with a different request.',
+    );
     return;
   }
 

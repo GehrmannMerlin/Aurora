@@ -36,7 +36,11 @@ describe('buildAccessView', () => {
   });
 
   it('never invents zero for empty/unavailable and prioritizes error', () => {
-    const empty = buildAccessView({ loading: false, error: null, members: { status: 'empty', reason: 'none' } });
+    const empty = buildAccessView({
+      loading: false,
+      error: null,
+      members: { status: 'empty', reason: 'none' },
+    });
     expect(empty.members.kind).toBe('empty');
     const errorView = buildAccessView({ loading: false, error: '加载失败', members: null });
     expect(errorView.members).toEqual({ kind: 'error', message: '加载失败' });

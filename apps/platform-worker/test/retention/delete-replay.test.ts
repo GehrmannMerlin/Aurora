@@ -1,5 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { validateDeleteReplayFacts, type DeleteReplayFact } from '../../src/retention/delete-replay.js';
+import {
+  validateDeleteReplayFacts,
+  type DeleteReplayFact,
+} from '../../src/retention/delete-replay.js';
 
 const COMPLETE: readonly DeleteReplayFact[] = [
   'account-deletion',

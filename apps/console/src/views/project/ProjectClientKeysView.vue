@@ -147,20 +147,29 @@ async function runAction(keyId: string, task: () => Promise<unknown>): Promise<v
 
 function disable(key: ClientKeyMetadata): void {
   void runAction(key.keyId, () =>
-    disableClientKey(scope, key.keyId, { csrf: session.csrf ?? '', idempotencyKey: createIdempotencyKey() }),
+    disableClientKey(scope, key.keyId, {
+      csrf: session.csrf ?? '',
+      idempotencyKey: createIdempotencyKey(),
+    }),
   );
 }
 
 function enable(key: ClientKeyMetadata): void {
   void runAction(key.keyId, () =>
-    enableClientKey(scope, key.keyId, { csrf: session.csrf ?? '', idempotencyKey: createIdempotencyKey() }),
+    enableClientKey(scope, key.keyId, {
+      csrf: session.csrf ?? '',
+      idempotencyKey: createIdempotencyKey(),
+    }),
   );
 }
 
 function revoke(key: ClientKeyMetadata): void {
   if (!window.confirm('撤销后该密钥永久失效且不可恢复。确定撤销？')) return;
   void runAction(key.keyId, () =>
-    revokeClientKey(scope, key.keyId, { csrf: session.csrf ?? '', idempotencyKey: createIdempotencyKey() }),
+    revokeClientKey(scope, key.keyId, {
+      csrf: session.csrf ?? '',
+      idempotencyKey: createIdempotencyKey(),
+    }),
   );
 }
 
@@ -181,12 +190,24 @@ function keyTone(status: string): 'neutral' | 'success' | 'warning' | 'danger' {
       <template v-if="createPhase.kind === 'revealed'">
         <div class="mon-secret" role="status" data-testid="client-key-secret">
           <p class="mon-secret-title">密钥已创建 — 现在保存，关闭后无法再次查看。</p>
-          <code class="mon-secret-value" data-testid="client-key-secret-value">{{ createPhase.clientKey }}</code>
+          <code class="mon-secret-value" data-testid="client-key-secret-value">{{
+            createPhase.clientKey
+          }}</code>
           <div class="mon-actions-row">
-            <button type="button" class="au-button" data-testid="client-key-copy" @click="copySecret">
+            <button
+              type="button"
+              class="au-button"
+              data-testid="client-key-copy"
+              @click="copySecret"
+            >
               {{ copyState === 'copied' ? '已复制' : '复制密钥' }}
             </button>
-            <button type="button" class="au-button" data-testid="client-key-ack" @click="acknowledgeSecret">
+            <button
+              type="button"
+              class="au-button"
+              data-testid="client-key-ack"
+              @click="acknowledgeSecret"
+            >
               我已保存
             </button>
           </div>
@@ -251,8 +272,8 @@ function keyTone(status: string): 'neutral' | 'success' | 'warning' | 'danger' {
               </AppStatusBadge>
             </div>
             <div class="mon-meta">
-              来源 {{ key.origins.length > 0 ? key.origins.join(', ') : '（未限定）' }} ·
-              环境 {{ key.environments.length > 0 ? key.environments.join(', ') : '（未限定）' }}
+              来源 {{ key.origins.length > 0 ? key.origins.join(', ') : '（未限定）' }} · 环境
+              {{ key.environments.length > 0 ? key.environments.join(', ') : '（未限定）' }}
             </div>
             <div class="mon-meta">
               {{ key.allowNonBrowser ? '允许非浏览器' : '仅浏览器' }}
@@ -295,7 +316,9 @@ function keyTone(status: string): 'neutral' | 'success' | 'warning' | 'danger' {
         </ul>
         <p v-else class="mon-hint">项目尚无客户端上报密钥。</p>
       </template>
-      <p v-if="actionError !== null" class="mon-notice mon-notice--error" role="status">{{ actionError }}</p>
+      <p v-if="actionError !== null" class="mon-notice mon-notice--error" role="status">
+        {{ actionError }}
+      </p>
     </section>
   </section>
 </template>
