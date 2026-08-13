@@ -161,7 +161,7 @@ function projectHref(projectId: string): string {
         <div class="au-projects-head">
           <h2 class="au-projects-title">{{ activeOrg.name }} 的项目</h2>
           <AppButton
-            v-if="canCreateProject"
+            v-if="canCreateProject && projects.length > 0"
             variant="secondary"
             data-testid="create-project-button"
             @click="onCreateProject"
@@ -172,9 +172,19 @@ function projectHref(projectId: string): string {
         <div v-if="loading" class="au-hint" role="status" data-testid="projects-loading">
           正在加载项目…
         </div>
-        <p v-else-if="projects.length === 0" class="au-hint" data-testid="projects-empty">
-          该组织暂无项目。
-        </p>
+        <div v-else-if="projects.length === 0" class="au-empty-card" data-testid="projects-empty">
+          <h3 class="au-empty-title">开始使用 Aurora</h3>
+          <p class="au-hint">你还没有项目，创建第一个项目开始监控应用。</p>
+          <p class="au-hint">创建项目后可获得 SDK 接入配置并发送第一条测试错误。</p>
+          <AppButton
+            v-if="canCreateProject"
+            variant="primary"
+            data-testid="create-project-empty-button"
+            @click="onCreateProject"
+          >
+            创建项目
+          </AppButton>
+        </div>
         <ul v-else class="au-project-list" data-testid="project-list">
           <li v-for="project in projects" :key="project.projectId" class="au-project-item">
             <AppLink :to="projectHref(project.projectId)">{{ project.name }}</AppLink>
@@ -226,5 +236,22 @@ function projectHref(projectId: string): string {
 }
 .au-project-meta {
   color: var(--color-text-secondary);
+}
+.au-empty-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-2);
+  padding: var(--space-5);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-base);
+  background-color: var(--color-surface-bg);
+}
+.au-empty-title {
+  margin: 0;
+  color: var(--color-text-primary);
+}
+.au-empty-card .au-hint {
+  margin: 0;
 }
 </style>

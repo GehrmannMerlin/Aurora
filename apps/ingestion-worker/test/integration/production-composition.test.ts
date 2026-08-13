@@ -10,16 +10,32 @@ import {
 } from '@aurora/ingestion-inbox';
 import { createProductionIngestionWorker } from '../../src/production-composition.js';
 import { buildIngestionWorker } from '../../src/worker-runtime.js';
-import { assertIsTestDatabase, clearEventInbox, createTestPool, migrateUp, ensureRequestProcessingTables, queryRow, queryRows } from './helpers.js';
+import {
+  assertIsTestDatabase,
+  clearEventInbox,
+  createTestPool,
+  migrateUp,
+  ensureRequestProcessingTables,
+  queryRow,
+  queryRows,
+} from './helpers.js';
 
 const hasDb = process.env.AURORA_TEST_DATABASE_URL !== undefined;
 const describeDb = hasDb ? describe : describe.skip;
 
 const projectA = '11111111-1111-1111-1111-111111111111';
 
-interface OccurrenceRow { event_id: string; error_category: string; }
-interface MetricBucketRow { metric_name: string; observed_count: string; }
-interface SampleRow { event_id: string; }
+interface OccurrenceRow {
+  event_id: string;
+  error_category: string;
+}
+interface MetricBucketRow {
+  metric_name: string;
+  observed_count: string;
+}
+interface SampleRow {
+  event_id: string;
+}
 
 describeDb('production worker composition (real PostgreSQL 17)', () => {
   let pool: Pool;
@@ -36,6 +52,12 @@ describeDb('production worker composition (real PostgreSQL 17)', () => {
     await pool.query('DELETE FROM performance_metric_event_applications');
     await pool.query('DELETE FROM performance_metric_buckets');
     await pool.query('DELETE FROM performance_event_samples');
+    await pool.query('DELETE FROM project_onboarding');
+    await pool.query(
+      `INSERT INTO project_onboarding (project_id, status, current_step)
+       VALUES ($1, 'not_started', 0)`,
+      [projectA],
+    );
     await clearEventInbox(pool);
   });
 
@@ -47,6 +69,7 @@ describeDb('production worker composition (real PostgreSQL 17)', () => {
     await pool.query('DELETE FROM performance_metric_event_applications').catch(() => undefined);
     await pool.query('DELETE FROM performance_metric_buckets').catch(() => undefined);
     await pool.query('DELETE FROM performance_event_samples').catch(() => undefined);
+    await pool.query('DELETE FROM project_onboarding').catch(() => undefined);
     await clearEventInbox(pool).catch(() => undefined);
     await pool.end();
   });
@@ -123,7 +146,11 @@ describeDb('production worker composition (real PostgreSQL 17)', () => {
   }
 
   /** Run the worker long enough to claim and process the inserted event, then stop. */
-  async function runOnce(eventId: string, eventType: string, body: Record<string, unknown>): Promise<void> {
+  async function runOnce(
+    eventId: string,
+    eventType: string,
+    body: Record<string, unknown>,
+  ): Promise<void> {
     await insertIntoInbox(eventId, eventType, body);
     const { worker, close } = makeWorker();
     await worker.start();
@@ -142,23 +169,60 @@ describeDb('production worker composition (real PostgreSQL 17)', () => {
   }
 
   it('processes an error event end-to-end into error_event_occurrences', async () => {
-    await runOnce('prod-err-1', 'error', { category: 'javascript', error: { message: 'Synthetic runtime failure' } });
-    const rows = await queryRows<OccurrenceRow>(pool, `SELECT event_id, error_category FROM error_event_occurrences WHERE event_id = 'prod-err-1'`);
+    await runOnce('prod-err-1', 'error', {
+      category: 'javascript',
+      error: { message: 'Synthetic runtime failure' },
+    });
+    const rows = await queryRows<OccurrenceRow>(
+      pool,
+      `SELECT event_id, error_category FROM error_event_occurrences WHERE event_id = 'prod-err-1'`,
+    );
     expect(rows).toHaveLength(1);
     expect(rows[0]?.error_category).toBe('javascript');
+    const onboarding = await queryRow<{ status: string; current_step: number }>(
+      pool,
+      'SELECT status, current_step FROM project_onboarding WHERE project_id = $1',
+      [projectA],
+    );
+    expect(onboarding).toEqual({ status: 'completed', current_step: 3 });
   });
 
   it('processes a request event end-to-end into request_metric_buckets', async () => {
-    await runOnce('prod-req-1', 'request', { method: 'GET', url: 'https://api.example.test/orders', startedAt: 1_800_000_054_000, durationMs: 120, outcome: 'success', statusCode: 200 });
-    const rows = await queryRows<MetricBucketRow>(pool, `SELECT method, observed_count FROM request_metric_buckets WHERE project_id = $1 AND method = 'GET'`, [projectA]);
+    await runOnce('prod-req-1', 'request', {
+      method: 'GET',
+      url: 'https://api.example.test/orders',
+      startedAt: 1_800_000_054_000,
+      durationMs: 120,
+      outcome: 'success',
+      statusCode: 200,
+    });
+    const rows = await queryRows<MetricBucketRow>(
+      pool,
+      `SELECT method, observed_count FROM request_metric_buckets WHERE project_id = $1 AND method = 'GET'`,
+      [projectA],
+    );
     expect(rows.length).toBeGreaterThan(0);
   });
 
   it('processes a performance event end-to-end into performance_metric_buckets with no sample', async () => {
-    await runOnce('prod-perf-1', 'performance', { metricCategory: 'page', metricName: 'lcp', value: 2500, unit: 'millisecond', startedAt: 1_800_000_050_000 });
-    const buckets = await queryRows<MetricBucketRow>(pool, `SELECT metric_name, observed_count FROM performance_metric_buckets WHERE project_id = $1 AND metric_name = 'lcp'`, [projectA]);
+    await runOnce('prod-perf-1', 'performance', {
+      metricCategory: 'page',
+      metricName: 'lcp',
+      value: 2500,
+      unit: 'millisecond',
+      startedAt: 1_800_000_050_000,
+    });
+    const buckets = await queryRows<MetricBucketRow>(
+      pool,
+      `SELECT metric_name, observed_count FROM performance_metric_buckets WHERE project_id = $1 AND metric_name = 'lcp'`,
+      [projectA],
+    );
     expect(buckets.length).toBeGreaterThan(0);
-    const samples = await queryRows<SampleRow>(pool, `SELECT event_id FROM performance_event_samples WHERE project_id = $1`, [projectA]);
+    const samples = await queryRows<SampleRow>(
+      pool,
+      `SELECT event_id FROM performance_event_samples WHERE project_id = $1`,
+      [projectA],
+    );
     expect(samples).toHaveLength(0);
   });
 });

@@ -8,6 +8,7 @@ import { ApiError } from '../../api/errors.js';
 import { describeRequestError } from '../../api/feedback.js';
 import { resolveRouteTarget } from '../../contracts/route-registry.js';
 import { useSessionStore } from '../../stores/session.js';
+import { useNavigationStore } from '../../stores/navigation.js';
 import AppButton from '../../components/aurora/AppButton.vue';
 import AppPageHeader from '../../components/aurora/AppPageHeader.vue';
 import AppStatusBadge from '../../components/aurora/AppStatusBadge.vue';
@@ -18,12 +19,14 @@ type FrameworkType = (typeof FRAMEWORK_TYPES)[number];
 interface CreateProjectResult {
   readonly projectId: string;
   readonly clientKeyPublicIdentifier: string;
+  readonly clientKey: string;
   readonly defaultEnvironment: string;
 }
 
 const route = useRoute();
 const router = useRouter();
 const session = useSessionStore();
+const navigation = useNavigationStore();
 
 const organizationId = computed(() => {
   const raw = route.params.organizationId;
@@ -36,7 +39,6 @@ const frameworkType = ref<FrameworkType>('javascript');
 const websiteUrl = ref('');
 const creating = ref(false);
 const createError = ref<string | null>(null);
-const createResult = ref<CreateProjectResult | null>(null);
 
 // ---- UX-only owner/admin gate (the server re-checks authoritatively). ----
 // The create-page contract exposes no allowedActions of its own, so the page
@@ -109,9 +111,9 @@ function describeCreateError(caught: unknown): string {
   return describeRequestError(caught);
 }
 
-function projectHref(projectId: string): string {
+function onboardingHref(projectId: string): string {
   const result = resolveRouteTarget({
-    routeId: 'project.overview',
+    routeId: 'project.onboarding',
     pathParams: { organizationId: organizationId.value ?? '', projectId },
     query: {},
   });
@@ -137,18 +139,21 @@ async function onCreateProject(): Promise<void> {
       { pathParams: { organizationId: orgId }, body },
       { scope: { type: 'organization', id: orgId }, csrf: session.csrf },
     );
-    // The response carries only the PUBLIC client key identifier — never a secret.
-    createResult.value = data;
+    navigation.clear();
+    await navigation.load();
     creating.value = false;
+    await router.push({
+      path: onboardingHref(data.projectId),
+      state: {
+        clientKey: data.clientKey,
+        frameworkType: frameworkType.value,
+        environment: data.defaultEnvironment,
+      },
+    });
   } catch (caught) {
     creating.value = false;
     createError.value = describeCreateError(caught);
   }
-}
-
-function onEnterProject(): void {
-  if (createResult.value === null) return;
-  void router.push(projectHref(createResult.value.projectId));
 }
 </script>
 
@@ -165,20 +170,7 @@ function onEnterProject(): void {
     </p>
 
     <template v-else-if="!gateLoading">
-      <div v-if="createResult !== null" class="au-create-success" data-testid="create-success">
-        <AppStatusBadge tone="success">项目已创建</AppStatusBadge>
-        <p class="au-success-text">
-          客户端密钥（公钥标识，非密钥明文）：<code data-testid="client-key-public-identifier">{{
-            createResult.clientKeyPublicIdentifier
-          }}</code>
-        </p>
-        <p class="au-success-text">默认环境：{{ createResult.defaultEnvironment }}</p>
-        <AppButton variant="primary" data-testid="enter-project-button" @click="onEnterProject">
-          进入项目
-        </AppButton>
-      </div>
-
-      <form v-else class="au-create-form" novalidate @submit.prevent="onCreateProject">
+      <form class="au-create-form" novalidate @submit.prevent="onCreateProject">
         <div class="au-field">
           <label class="au-field__label" for="create-project-name">项目名称</label>
           <input
@@ -271,16 +263,5 @@ function onEnterProject(): void {
   margin: 0;
   color: var(--color-status-danger);
   font-size: 13px;
-}
-.au-create-success {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: var(--space-3);
-  max-width: 56ch;
-}
-.au-success-text {
-  margin: 0;
-  color: var(--color-text-secondary);
 }
 </style>

@@ -58,6 +58,13 @@ export async function migrateUp(): Promise<void> {
     await pool.query('DROP TABLE IF EXISTS issues CASCADE');
     await pool.query('DROP TABLE IF EXISTS issue_activities CASCADE');
     await pool.query('DROP TABLE IF EXISTS issue_notes CASCADE');
+    await pool.query('DROP TABLE IF EXISTS alert_instance_transitions CASCADE');
+    await pool.query('DROP TABLE IF EXISTS alert_instance_evidence CASCADE');
+    await pool.query('DROP TABLE IF EXISTS alert_instances CASCADE');
+    await pool.query('DROP TABLE IF EXISTS alert_rules CASCADE');
+    await pool.query('DROP TABLE IF EXISTS error_occurrence_symbolizations CASCADE');
+    await pool.query('DROP TABLE IF EXISTS notifications CASCADE');
+    await pool.query('DROP TABLE IF EXISTS project_onboarding CASCADE');
     await pool.query('DROP TABLE IF EXISTS pgmigrations CASCADE');
   } finally {
     await pool.end();
@@ -111,6 +118,20 @@ export async function ensureRequestProcessingTables(): Promise<void> {
     checkOrder: false,
     log: () => undefined,
   });
+  const pool = createTestPool();
+  try {
+    await pool.query(`CREATE TABLE IF NOT EXISTS project_onboarding (
+      project_id uuid PRIMARY KEY,
+      status text NOT NULL DEFAULT 'not_started',
+      current_step integer NOT NULL DEFAULT 0,
+      first_request_at timestamptz,
+      completed_at timestamptz,
+      created_at timestamptz NOT NULL DEFAULT now(),
+      updated_at timestamptz NOT NULL DEFAULT now()
+    )`);
+  } finally {
+    await pool.end();
+  }
 }
 
 /** Clear the event_inbox table for a fresh test. */

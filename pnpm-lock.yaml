@@ -140,6 +140,9 @@ importers:
       '@aurora/ingestion-inbox':
         specifier: workspace:*
         version: link:../../packages/ingestion-inbox
+      '@aurora/platform-project-governance':
+        specifier: workspace:*
+        version: link:../../packages/platform-project-governance
       '@aurora/processing-store':
         specifier: workspace:*
         version: link:../../packages/processing-store

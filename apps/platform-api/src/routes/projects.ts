@@ -1,10 +1,12 @@
 import type { FastifyReply, FastifyRequest } from 'fastify';
+import { createIngestionClientCredential } from '@aurora/ingestion-credentials';
 import { createProject } from '@aurora/platform-project-governance';
+import { insertAuditEvent } from '@aurora/platform-identity';
 import { OPERATION_ID_CREATE_PROJECT } from '@aurora/platform-contract';
 import { parseInput, serializeOutput, type OperationDef } from '@aurora/platform-contract/server';
 import { operationById } from '../operations.js';
 import { sendProblem } from '../error-mapper.js';
-import { sendMappedError } from '../service-error.js';
+import { sendMappedError, ServiceError } from '../service-error.js';
 import { effectivePermissions } from '../authorization.js';
 import {
   orgNavigation,
@@ -22,6 +24,7 @@ import {
 import type { PlatformApiRouteDependencies } from '../route-deps.js';
 
 const CREATE_PROJECT_OPERATION: OperationDef = operationById(OPERATION_ID_CREATE_PROJECT);
+const SECRET_LOST_PLACEHOLDER = 'secret-not-recoverable-000000000000';
 
 interface CreateProjectBody {
   readonly name: string;
@@ -36,11 +39,11 @@ interface CreateProjectBody {
  * plugins (registry marks this operation `csrf: true`), so the handler does no
  * manual CSRF work (mirrors handleAcceptInvitation).
  *
- * The data layer creates { project + default `production` environment + default
- * client key (public_identifier + SHA-256 key_digest) + onboarding row } in ONE
- * transaction and never persists or returns the client-key secret. The handler
- * therefore returns only `clientKeyPublicIdentifier` (public, safe in browser
- * code) — never a key secret.
+ * The command creates { project + default `production` environment + browser
+ * ingestion credential + onboarding row + audit } in ONE transaction. The
+ * complete browser-safe ingestion key is delivered once in the first response;
+ * only its digest is persisted. Idempotent replay returns a fixed recovery
+ * placeholder because plaintext is intentionally unrecoverable.
  *
  * Idempotency: same key + same request replays the stored first result; same
  * key + a different request -> 409 idempotency_conflict. The command re-reads
@@ -110,6 +113,7 @@ export async function handleCreateProject(
   }
 
   let idempotency: IdempotentCommandResult;
+  const firstRunClientKey: { value: string | null } = { value: null };
   try {
     idempotency = await runIdempotentCommand({
       pool: deps.pool,
@@ -128,9 +132,47 @@ export async function handleCreateProject(
           ...(input.websiteUrl === undefined ? {} : { websiteUrl: input.websiteUrl }),
           createdBy: session.accountId,
         });
+        const origins = [...deps.config.appOrigins];
+        if (input.websiteUrl !== undefined) {
+          try {
+            const parsedUrl = new URL(input.websiteUrl);
+            if (
+              (parsedUrl.protocol === 'http:' || parsedUrl.protocol === 'https:') &&
+              !origins.includes(parsedUrl.origin)
+            ) {
+              origins.push(parsedUrl.origin);
+            }
+          } catch {
+            // The public contract already bounds the optional string. An
+            // unusable website URL simply contributes no credential Origin.
+          }
+        }
+        const credential = await createIngestionClientCredential(client, {
+          projectId: result.projectId,
+          origins,
+          environments: ['production'],
+          // The first-run acceptance and server-side SDKs may send without an
+          // Origin header. Browser requests remain restricted to websiteUrl.
+          allowNonBrowser: true,
+          expiresAt: null,
+        });
+        if (credential.status !== 'success') {
+          if (credential.status === 'invalid_input') {
+            throw new ServiceError(422, 'field_validation', 'Client key input is invalid.');
+          }
+          throw new ServiceError(503, 'authority_unavailable', 'Client key store unavailable.');
+        }
+        firstRunClientKey.value = credential.clientKey;
+        await insertAuditEvent(client, {
+          organizationId,
+          actorAccountId: session.accountId,
+          action: 'client_key.created',
+          details: { projectId: result.projectId, keyId: credential.metadata.keyId },
+        });
         return {
           projectId: result.projectId,
           clientKeyPublicIdentifier: result.clientKeyPublicIdentifier,
+          clientKey: SECRET_LOST_PLACEHOLDER,
           defaultEnvironment: result.environmentName,
           onboardingStatus: result.onboardingStatus,
           navigationTargets: orgNavigation('organization.project-create', organizationId),
@@ -147,7 +189,12 @@ export async function handleCreateProject(
     return;
   }
 
-  const serialized = serializeOutput(CREATE_PROJECT_OPERATION, 200, idempotency.resultData);
+  const stored = idempotency.resultData as Record<string, unknown>;
+  const responseData =
+    idempotency.outcome === 'succeeded' && firstRunClientKey.value !== null
+      ? { ...stored, clientKey: firstRunClientKey.value }
+      : stored;
+  const serialized = serializeOutput(CREATE_PROJECT_OPERATION, 200, responseData);
   if (!serialized.ok) {
     await sendProblem(reply, requestId, 500, 'internal_error', 'An internal error occurred.');
     return;

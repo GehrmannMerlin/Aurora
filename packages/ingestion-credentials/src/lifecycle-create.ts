@@ -13,8 +13,7 @@ import type {
 /** Bounded retry constant for keyId uniqueness collisions. */
 export const MAX_KEY_ID_ATTEMPTS = 5;
 
-const UUID_PATTERN =
-  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 function toBase64Url(bytes: Uint8Array): string {
   let binary = '';
@@ -95,6 +94,10 @@ interface InsertedRow {
   updated_at: string;
 }
 
+function isPoolClient(value: Pool | PoolClient): value is PoolClient {
+  return typeof (value as PoolClient).release === 'function';
+}
+
 /** Insert one credential plus its origins/environments inside the given client's transaction. */
 async function insertCredentialTransaction(
   client: PoolClient,
@@ -153,9 +156,12 @@ function rowToMetadata(row: InsertedRow): CredentialMetadata {
 }
 
 /**
- * Create a new client credential in a single transaction. The complete client
- * key is returned only after COMMIT succeeds. keyId uniqueness collisions are
- * retried with a small bounded loop; other errors are not blindly retried.
+ * Create a new client credential atomically. A Pool owns BEGIN/COMMIT and only
+ * returns the complete key after COMMIT; an already-leased PoolClient stages
+ * the same writes under a savepoint so a caller can compose them into its
+ * larger transaction and expose the key only after that transaction commits.
+ * keyId uniqueness collisions are retried with a small bounded loop; other
+ * errors are not blindly retried.
  */
 export async function createIngestionClientCredential(
   pool: Pool | PoolClient,
@@ -166,20 +172,35 @@ export async function createIngestionClientCredential(
     return { status: 'invalid_input' };
   }
 
-  for (let attempt = 0; attempt < MAX_KEY_ID_ATTEMPTS; attempt += 1) {
-    const { keyId, secret, clientKey } = generateClientKeyPair();
-    let client: PoolClient;
-    try {
-      client = (await pool.connect()) as PoolClient;
-    } catch (error) {
-      void error;
-      return { status: 'temporarily_unavailable' };
-    }
-    try {
-      await client.query('BEGIN');
-      let row: InsertedRow;
+  const callerOwnsTransaction = isPoolClient(pool);
+  let client: PoolClient;
+  try {
+    client = callerOwnsTransaction ? pool : await pool.connect();
+  } catch (error) {
+    void error;
+    return { status: 'temporarily_unavailable' };
+  }
+
+  try {
+    for (let attempt = 0; attempt < MAX_KEY_ID_ATTEMPTS; attempt += 1) {
+      const { keyId, secret, clientKey } = generateClientKeyPair();
+      const savepoint = `aurora_create_ingestion_credential_${attempt}`;
+      const rollbackAttempt = async (): Promise<void> => {
+        if (callerOwnsTransaction) {
+          await client.query(`ROLLBACK TO SAVEPOINT ${savepoint}`).catch(() => undefined);
+          await client.query(`RELEASE SAVEPOINT ${savepoint}`).catch(() => undefined);
+        } else {
+          await client.query('ROLLBACK').catch(() => undefined);
+        }
+      };
+
       try {
-        row = await insertCredentialTransaction(
+        if (callerOwnsTransaction) {
+          await client.query(`SAVEPOINT ${savepoint}`);
+        } else {
+          await client.query('BEGIN');
+        }
+        const row = await insertCredentialTransaction(
           client,
           validated.projectId ?? '',
           keyId,
@@ -189,32 +210,24 @@ export async function createIngestionClientCredential(
           validated.origins ?? [],
           validated.environments ?? [],
         );
+        if (callerOwnsTransaction) {
+          await client.query(`RELEASE SAVEPOINT ${savepoint}`);
+        } else {
+          await client.query('COMMIT');
+        }
+        return { status: 'success', metadata: rowToMetadata(row), clientKey };
       } catch (error) {
+        await rollbackAttempt();
         const pgError = error as { code?: string; constraint?: string };
         const isKeyIdCollision =
-          pgError.code === '23505' && pgError.constraint === 'ingestion_client_credentials_key_id_key';
-        await client.query('ROLLBACK').catch(() => undefined);
-        if (isKeyIdCollision) {
-          // Retry with a fresh keyId; continue the bounded loop.
-          throw error;
-        }
+          pgError.code === '23505' &&
+          pgError.constraint === 'ingestion_client_credentials_key_id_key';
+        if (isKeyIdCollision) continue;
         return { status: 'temporarily_unavailable' };
       }
-      await client.query('COMMIT');
-      return { status: 'success', metadata: rowToMetadata(row), clientKey };
-    } catch (error) {
-      await client.query('ROLLBACK').catch(() => undefined);
-      const pgError = error as { code?: string; constraint?: string };
-      const isKeyIdCollision =
-        pgError.code === '23505' &&
-        pgError.constraint === 'ingestion_client_credentials_key_id_key';
-      if (isKeyIdCollision) {
-        continue; // bounded retry on keyId collision only
-      }
-      return { status: 'temporarily_unavailable' };
-    } finally {
-      client.release();
     }
+    return { status: 'generation_failed' };
+  } finally {
+    if (!callerOwnsTransaction) client.release();
   }
-  return { status: 'generation_failed' };
 }
