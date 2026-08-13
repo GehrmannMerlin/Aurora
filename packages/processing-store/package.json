@@ -26,10 +26,10 @@
     "migrate": "tsx src/run-migrations.ts"
   },
   "dependencies": {
+    "@aurora/event-schema": "workspace:*",
     "pg": "8.22.0"
   },
   "devDependencies": {
-    "@aurora/event-schema": "workspace:*",
     "@types/node": "24.13.3",
     "@types/pg": "8.20.0",
     "@vitest/coverage-v8": "4.1.10",
