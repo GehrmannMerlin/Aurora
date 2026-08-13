@@ -1,6 +1,7 @@
 {
   "name": "@aurora/plugin-error",
   "version": "0.0.0",
+  "private": false,
   "type": "module",
   "description": "Aurora browser error capture plugin",
   "sideEffects": false,

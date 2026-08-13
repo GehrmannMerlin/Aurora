@@ -1,6 +1,7 @@
 {
   "name": "@aurora/plugin-request",
   "version": "0.0.0",
+  "private": false,
   "type": "module",
   "description": "Aurora browser request capture plugin",
   "sideEffects": false,

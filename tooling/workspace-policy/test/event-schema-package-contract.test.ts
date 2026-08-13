@@ -33,7 +33,7 @@ describe('event-schema package contract', () => {
     const manifest = await readManifest();
     expect(manifest.name).toBe('@aurora/event-schema');
     expect(manifest.version).toBe('0.0.0');
-    expect(manifest.private).toBeUndefined();
+    expect(manifest.private).toBe(false);
     expect(manifest.publishConfig).toEqual({ access: 'public' });
     expect(manifest.type).toBe('module');
     expect(manifest.dependencies).toBeUndefined();

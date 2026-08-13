@@ -1,6 +1,7 @@
 {
   "name": "@aurora/plugin-react",
   "version": "0.0.0",
+  "private": false,
   "type": "module",
   "description": "Aurora React 18 framework adapter (Error Boundary, framework error bridge, StrictMode-safe lifecycle)",
   "sideEffects": false,

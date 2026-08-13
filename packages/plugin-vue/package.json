@@ -1,6 +1,7 @@
 {
   "name": "@aurora/plugin-vue",
   "version": "0.0.0",
+  "private": false,
   "type": "module",
   "description": "Aurora Vue 3 framework adapter (framework lifecycle wiring, Vue error bridge, route context)",
   "sideEffects": false,

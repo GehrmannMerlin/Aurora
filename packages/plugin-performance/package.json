@@ -1,6 +1,7 @@
 {
   "name": "@aurora/plugin-performance",
   "version": "0.0.0",
+  "private": false,
   "type": "module",
   "description": "Aurora browser performance capture plugin",
   "sideEffects": false,

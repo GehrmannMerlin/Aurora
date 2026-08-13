@@ -1,6 +1,7 @@
 {
   "name": "@aurora/sdk",
   "version": "0.0.0",
+  "private": false,
   "type": "module",
   "description": "Aurora SDK public control plane (configuration, privacy, beforeSend, sampling, request classification)",
   "sideEffects": false,

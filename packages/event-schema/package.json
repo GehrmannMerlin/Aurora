@@ -1,6 +1,7 @@
 {
   "name": "@aurora/event-schema",
   "version": "0.0.0",
+  "private": false,
   "type": "module",
   "description": "Aurora public event protocol foundation",
   "sideEffects": false,

@@ -1,6 +1,7 @@
 {
   "name": "@aurora/browser",
   "version": "0.0.0",
+  "private": false,
   "type": "module",
   "description": "Aurora browser environment and page lifecycle foundation",
   "sideEffects": false,
