@@ -29,17 +29,20 @@ import { fileURLToPath } from 'node:url';
 import { join, dirname } from 'node:path';
 import { createRequire } from 'node:module';
 
+import { analyzeMigrationOrder, compareMigrationNames } from './migration-order.js';
+
 // node-pg-migrate is a devDependency of apps/ingestion-api, whose own
 // node_modules resolve it under pnpm's strict layout. Anchor a require here so
 // ESM resolution works regardless of this runner's file location.
-const require = createRequire('file:///workspace/apps/ingestion-api/package.json');
-const { runner } = require('node-pg-migrate');
-
 const here = dirname(fileURLToPath(import.meta.url));
 
 // this file: <repo>/deploy/preview/entry/migrate/run-preview-migrations.js
 // repo root = ../../../../ from here (migrate → entry → preview → deploy → root).
 const REPO_ROOT = join(here, '..', '..', '..', '..');
+
+const require = createRequire(join(REPO_ROOT, 'apps', 'ingestion-api', 'package.json'));
+const { runner } = require('node-pg-migrate');
+const { Client } = require('pg');
 
 const MIGRATION_SOURCES = [
   join(REPO_ROOT, 'packages', 'ingestion-inbox', 'migrations'),
@@ -57,17 +60,57 @@ const MIGRATION_SOURCES = [
 
 const COMBINED_DIR = join(REPO_ROOT, '.migrations-combined-preview');
 
+function migrationSchema() {
+  const value = process.env.MIGRATIONS_SCHEMA ?? 'public';
+  if (!/^[a-z_][a-z0-9_]*$/u.test(value)) {
+    throw new Error('MIGRATIONS_SCHEMA must be a simple PostgreSQL identifier');
+  }
+  return value;
+}
+
 async function ensureCombinedDir() {
   await rm(COMBINED_DIR, { recursive: true, force: true });
   await mkdir(COMBINED_DIR, { recursive: true });
+  const filenames = [];
   for (const source of MIGRATION_SOURCES) {
     for (const entry of await readdir(source)) {
       if (entry.endsWith('.ts')) {
+        filenames.push(entry);
+      }
+    }
+  }
+  filenames.sort(compareMigrationNames);
+  const seen = new Set();
+  for (const entry of filenames) {
+    if (seen.has(entry)) {
+      throw new Error(`duplicate migration filename across packages: ${entry}`);
+    }
+    seen.add(entry);
+  }
+  for (const source of MIGRATION_SOURCES) {
+    const entries = new Set(await readdir(source));
+    for (const entry of filenames) {
+      if (entries.has(entry)) {
         await copyFile(join(source, entry), join(COMBINED_DIR, entry));
       }
     }
   }
-  return COMBINED_DIR;
+  return { dir: COMBINED_DIR, filenames };
+}
+
+async function readExecutedMigrations(databaseUrl, schema) {
+  const client = new Client({ connectionString: databaseUrl });
+  await client.connect();
+  try {
+    const table = await client.query('SELECT to_regclass($1) AS name', [`${schema}.pgmigrations`]);
+    if (table.rows[0]?.name === null) {
+      return [];
+    }
+    const result = await client.query(`SELECT name FROM "${schema}".pgmigrations ORDER BY id ASC`);
+    return result.rows.map((row) => String(row.name));
+  } finally {
+    await client.end();
+  }
 }
 
 async function main() {
@@ -75,16 +118,24 @@ async function main() {
   if (databaseUrl === undefined || databaseUrl === '') {
     throw new Error('DATABASE_URL must be set to run preview migrations');
   }
-  const dir = await ensureCombinedDir();
+  const schema = migrationSchema();
+  const { dir, filenames } = await ensureCombinedDir();
+  const executedNames = await readExecutedMigrations(databaseUrl, schema);
+  const order = analyzeMigrationOrder(filenames, executedNames);
   const executed = await runner({
     databaseUrl,
     dir,
     direction: 'up',
     migrationsTable: 'pgmigrations',
+    migrationsSchema: schema,
+    schema,
     count: Infinity,
     log: () => undefined,
+    checkOrder: order.checkOrder,
   });
-  console.log(`preview migrations up: ${String(executed.length)} executed`);
+  console.log(
+    `preview migrations up: ${String(executed.length)} executed; order=${order.compatibility}; pending-before=${String(order.pendingNames.length)}`,
+  );
 }
 
 main()
