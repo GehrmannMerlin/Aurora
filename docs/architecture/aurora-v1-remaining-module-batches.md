@@ -15,8 +15,8 @@ related:
 supersedes: none
 audit-baseline-date: 2026-08-03
 fixed-v1-leaf-modules: 78
-completed-v1-leaf-modules: 43
-remaining-v1-leaf-modules: 35
+completed-v1-leaf-modules: 78
+remaining-v1-leaf-modules: 0
 ---
 
 # Aurora 第一版剩余模块分批基线
@@ -57,6 +57,7 @@ remaining_v1_leaf_modules = 38
 > 更新（2026-08-09）：PLT-03 closed（completed 40→41），not_started 9→8，remaining 38→37（独立验收通过）。
 > 更新（2026-08-09）：PLT-04 closed（completed 41→42），not_started 8→7，remaining 37→36。
 > 更新（2026-08-09）：SEC-01 closed（completed 42→43），not_started 7→6，remaining 36→35（独立验收通过）。
+> 更新（2026-08-13，最终收口）：**AURORA_V1_IMPLEMENTATION_LEAVES_COMPLETED** —— G08（ING-13/ING-12）、G14（OPS-01/02）、G16（OPS-04/05/06/07）与 G15（OPS-03）全部关闭后 `completed = 78 / remaining = 0`（见 AGENTS.md/AURORA_RULES.md 当前快照）。非阻塞 operational debt 见同名条目：`LIVE_PUBLISH_CREDENTIAL_PENDING`、`LICENSE_PENDING`、`OFF_HOST_BACKUP_RECOMMENDED`、`KNOWN_BASELINE_DEBT`、`REMOTE_INFRA_DEBT`、MVP recovery/production hardening。
 
 分组只改变后续工作的组织方式，不改变计数方式：
 

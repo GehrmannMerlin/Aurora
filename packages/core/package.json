@@ -1,7 +1,7 @@
 {
   "name": "@aurora/core",
   "version": "0.0.0",
-  "private": true,
+  "private": false,
   "type": "module",
   "description": "Aurora environment-neutral SDK Core foundation",
   "sideEffects": false,
@@ -36,5 +36,8 @@
     "@vitest/coverage-v8": "4.1.10",
     "typescript": "6.0.3",
     "vitest": "4.1.10"
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }

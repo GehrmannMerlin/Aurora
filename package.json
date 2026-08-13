@@ -25,11 +25,17 @@
     "check": "pnpm format:check && pnpm openapi:check && pnpm lint && pnpm typecheck && pnpm test && pnpm test:coverage && pnpm check:boundaries && pnpm build && pnpm --filter @aurora/event-schema test:package && pnpm --filter @aurora/platform-contract test:package && pnpm --filter @aurora/core test:package && pnpm --filter @aurora/browser test:package && pnpm --filter @aurora/plugin-error test:package && pnpm --filter @aurora/plugin-request test:package && pnpm --filter @aurora/plugin-performance test:package && pnpm --filter @aurora/browser test:browser && pnpm --filter @aurora/plugin-error test:browser && pnpm --filter @aurora/plugin-request test:browser && pnpm --filter @aurora/plugin-performance test:browser && pnpm --filter @aurora/console test:package && pnpm --filter @aurora/console test:browser",
     "check:ci": "pnpm check",
     "deploy:preview": "bash deploy/preview/scripts/deploy-preview.sh",
-    "deploy:preview:rollback": "bash deploy/preview/scripts/rollback-preview.sh"
+    "deploy:preview:rollback": "bash deploy/preview/scripts/rollback-preview.sh",
+    "release:validate": "tsx tooling/release-tool/src/main.ts validate --root .",
+    "release:pack": "tsx tooling/release-tool/src/main.ts pack --root .",
+    "release:compat": "tsx tooling/release-tool/src/main.ts compat --root .",
+    "release:size": "tsx tooling/release-tool/src/main.ts size --root .",
+    "release:version": "tsx tooling/release-tool/src/main.ts version --root . --apply"
   },
   "devDependencies": {
     "@eslint/js": "10.0.1",
     "@redocly/cli": "2.43.1",
+    "esbuild": "^0.28.2",
     "eslint": "10.8.0",
     "prettier": "3.9.6",
     "tsx": "4.23.1",

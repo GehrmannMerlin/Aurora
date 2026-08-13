@@ -1,0 +1,34 @@
+{
+  "name": "@aurora/release-tool",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Aurora SDK release contract engine: validate/version/pack/compat/size/deprecate gates for the public @aurora/* packages (OPS-03)",
+  "engines": {
+    "node": ">=24.18.0 <25"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run",
+    "cli": "tsx src/main.ts"
+  },
+  "devDependencies": {
+    "@types/node": "24.13.3",
+    "esbuild": "^0.28.2",
+    "typescript": "6.0.3",
+    "vitest": "4.1.10"
+  },
+  "aurora": {
+    "layer": "tooling"
+  }
+}

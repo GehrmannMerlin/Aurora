@@ -16,7 +16,7 @@ describe('browser package contract', () => {
     expect(manifest).toMatchObject({
       name: '@aurora/browser',
       version: '0.0.0',
-      private: true,
+      publishConfig: { access: 'public' },
       type: 'module',
       sideEffects: false,
       exports: { '.': { types: './dist/index.d.ts', import: './dist/index.js' } },

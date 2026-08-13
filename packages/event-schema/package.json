@@ -1,7 +1,7 @@
 {
   "name": "@aurora/event-schema",
   "version": "0.0.0",
-  "private": true,
+  "private": false,
   "type": "module",
   "description": "Aurora public event protocol foundation",
   "sideEffects": false,
@@ -19,7 +19,8 @@
     }
   },
   "files": [
-    "dist"
+    "dist",
+    "README.md"
   ],
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
@@ -36,5 +37,8 @@
   },
   "aurora": {
     "layer": "protocol"
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }

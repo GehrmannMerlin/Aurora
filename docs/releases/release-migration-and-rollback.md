@@ -58,7 +58,8 @@ review-cycle: release-policy-or-migration-change
 - npm 发布遵循 SemVer、精确文件清单、公开 exports、类型、tree-shaking、包体、安装和真实示例验证；
 - 协议、SDK、接入与消费者的兼容组合必须进入发布清单；
 - 已发布包不可覆盖；撤回或弃用必须保留迁移说明；
-- SDK 与应用制品可以独立发布，但版本编排、统一/独立版本策略属于 `requires-accepted-adr`。
+- SDK 与应用制品可以独立发布，但版本编排、统一/独立版本策略属于 `requires-accepted-adr`；
+- SDK 发布工程链见 [sdk-package-versioning-and-release.md](sdk-package-versioning-and-release.md)（OPS-03）；回滚/deprecate 的可执行命令由 `@aurora/release-tool` 提供（`release-tool deprecate` / `latest` / `rollback`，发布到 npm 前先 `--dry-run`）。
 
 ## 6. 发布证据与阻断
 

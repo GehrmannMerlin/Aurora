@@ -1,7 +1,7 @@
 {
   "name": "@aurora/browser",
   "version": "0.0.0",
-  "private": true,
+  "private": false,
   "type": "module",
   "description": "Aurora browser environment and page lifecycle foundation",
   "sideEffects": false,
@@ -15,7 +15,8 @@
     }
   },
   "files": [
-    "dist"
+    "dist",
+    "README.md"
   ],
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
@@ -39,5 +40,8 @@
   },
   "aurora": {
     "layer": "sdk-browser"
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }
