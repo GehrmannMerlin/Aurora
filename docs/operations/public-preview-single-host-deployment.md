@@ -1,9 +1,9 @@
 ---
-title: Aurora Public Preview 单主机部署桥接
-status: temporary-operational-snapshot
+title: Aurora 单主机部署（Provider-Neutral Single-Host）
+status: approved
 owner: operations
 created: 2026-08-08
-last-reviewed: 2026-08-08
+last-reviewed: 2026-08-13
 applies-to: Aurora 临时公网预览桥接——现有阿里云单主机、Docker Compose、共享 nginx 边缘、固定 HTTPS 域名
 related:
   - ../../AGENTS.md
@@ -27,17 +27,18 @@ review-cycle: preview-lifecycle-or-replacement
 
 ## 1. 定位与效力
 
-本文记录 **Aurora Public Preview 单主机部署桥接**（`public-preview`）。它让当前已真实实现的 Aurora 应用（`apps/ingestion-api`、`apps/ingestion-worker`）尽快拥有一个真实公网运行环境，使用用户已有的阿里云 ECS 服务器与已绑定域名。
+本文记录 **Aurora provider-neutral 单主机部署**（原 `public-preview` 单主机桥接）。它让当前已真实实现的 Aurora 应用（`apps/ingestion-api`、`apps/ingestion-worker`、`apps/console`）拥有一个真实公网运行环境，使用用户已有的阿里云 ECS 服务器与已绑定域名。
 
-**这不是正式生产架构，不是 OPS-04 completed，不是 G16 completed。**
+> **2026-08-13 转正（append-only）**：accepted [ADR-036](../adr/ADR-036-provider-neutral-single-host-deployment.md) 把本单主机部署从 `temporary-operational-snapshot` 转正为 **v1 正式部署路径**（`supersedes` ADR-022/023/024 的 AWS-first 方向）。"当前部署实例在阿里云" ≠ "架构绑定阿里云"；正式架构保持 provider-neutral，未来可迁移 AWS/其他云/托管数据库。第一版为 MVP/early-production single-host，不承诺 99.9% SLA / Multi-AZ / 自动故障转移 / 跨区域 DR。
+
+**单主机早期生产定位（诚实记录）**：
 
 - 单服务器、无 Multi-AZ、无正式 DR、无 99.9% production SLO；
 - 不创建付费云资源（无 RDS、Redis、ALB、CDN、对象存储）；
 - 只部署仓库中真实存在、真实 build/test 通过的应用；不创建 fake 服务；
-- 只部署明确标注的 Preview 状态；不伪造 Console、不把 ingestion-api 伪装成管理平台；
 - 由用户本地显式执行 `pnpm deploy:preview` 触发，不监听文件保存自动公网发布。
 
-**替换条件**：G14 OPS-01 + G16 OPS-05 建立 approved CI/CD 与不可变制品流水线后，本桥接被替换/重新评估。
+**替换条件（ADR-036 后更新）**：出现 ADR-036 重新评估条件（持续付费用户规模增长、单机资源逼近批准容量阈值、可用性需求升级、明确需要 Multi-AZ、数据驻留变化、单机故障造成不可接受业务影响、运营收入足以承担托管基础设施成本）时，经新 ADR 迁移到 managed/multi-node；否则本单主机部署保持 v1 正式路径。
 
 ## 2. 服务器部署边界
 

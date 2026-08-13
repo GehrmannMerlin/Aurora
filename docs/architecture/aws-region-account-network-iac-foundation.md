@@ -31,6 +31,8 @@ review-cycle: cloud-foundation-or-approval
 
 ## 1. 定位、效力与当前状态
 
+> **superseded（2026-08-13）**：本文承载的 AWS-first IaC 基础设施方向已被 accepted [ADR-036](../adr/ADR-036-provider-neutral-single-host-deployment.md) 替代（`supersedes` ADR-022/023/024）。本文与 `tooling/aws-infra`（CDK）作为历史实现保留、不再作为 v1 部署路径；v1 正式部署见 [deployment.md](deployment.md)（provider-neutral 单主机 Docker Compose）与 [public-preview-single-host-deployment.md](../operations/public-preview-single-host-deployment.md)。
+
 本文是 OPS-04 叶子模块（AWS region/account/network/IaC foundation）的正式规格草案。它把已批准部署架构 [deployment.md](deployment.md) 中标记为 `deferred`/`requires-accepted-adr` 的增量——主区域、账号/环境细化、网络模型、IaC 工具、托管计算、托管 PostgreSQL、Redis/对象存储提供边界、秘密与加密、边缘/DNS/TLS——正式化为可审批的基础设施边界。
 
 **当前状态**：`status: approved`、`implementation-status: in-progress`、`approval-status: approved`（2026-08-11 用户批准 [Cloud Decision Package](../operations/g16-ops04-cloud-decision-package.md) D1—D11 全部推荐方案；required ADR-022/023/024 已同步为 `accepted`）。本文现可作为 OPS-04 实施与后续 OPS-05 的权威依据。本增量实现只建立 **IaC 基础工程与基础设施边界契约**（`tooling/aws-infra`，CDK TypeScript，经 `cdk synth` 验证），**不创建任何真实 AWS 资源、不购买域名、不运行 OPS-05 部署**；实际 provisioning 与 ECS Service 部署属 OPS-05。

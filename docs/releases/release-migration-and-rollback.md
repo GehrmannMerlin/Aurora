@@ -20,7 +20,7 @@ review-cycle: release-policy-or-migration-change
 
 ## 1. 发布原则
 
-本文正式承载 approved 不可变制品、分阶段晋级、expand/contract Migration 和受保护生产批准规则。GitHub Actions 是 approved 设计方向，但流水线、Environment、OIDC 角色、制品仓库和真实命令均不存在；发布基础设施为 `requires-accepted-adr`。
+本文正式承载 approved 不可变制品、分阶段晋级、expand/contract Migration 和受保护生产批准规则。第一版部署为 provider-neutral 单主机 Docker Compose（accepted [ADR-036](../adr/ADR-036-provider-neutral-single-host-deployment.md)，`supersedes` ADR-022/023/024 的 AWS-first 方向）；部署/回滚经 `pnpm deploy:preview` / `deploy:preview:rollback` 受控执行，不再依赖 ECS/CloudWatch/ECS task definition。GitHub Actions 是 approved 设计方向，但流水线、Environment、OIDC 角色、制品仓库和真实命令均不存在；发布基础设施为 `requires-accepted-adr`。
 
 ## 2. 晋级序列
 
@@ -47,7 +47,7 @@ review-cycle: release-policy-or-migration-change
 
 ## 4. SPA、API 与 Worker 回滚
 
-- ECS 服务使用健康阈值、最小健康比例、部署熔断和 CloudWatch 告警；失败时回滚到上一已验证 task definition/digest；
+- Docker Compose 单主机使用健康检查、`restart: unless-stopped` 与部署前 `docker compose config` 校验；失败时回滚到上一已验证 release/digest（`deploy:preview:rollback` 回退到上一成功 release，不自动回退破坏性 DB Migration，向后不兼容时停止并报告）；
 - 应用回滚必须继续兼容已执行的 expand 结构，不依赖破坏性数据库回退；
 - SPA 以版本前缀和内容哈希发布，入口切换失败时恢复上一入口版本；旧静态资源保留兼容窗口，避免已打开页面引用失效；
 - Worker 可暂停消费、回滚版本后续跑；不得丢弃已经可靠接收或 Outbox 中的事实；

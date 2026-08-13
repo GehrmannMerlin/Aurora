@@ -181,7 +181,7 @@ remaining_v1_leaf_modules = 38
 
 | Module | 业务逻辑分类                         | 固定回读集合                                                                                                                                       | 重点章节与实施前置                                                                                                                  |
 | ------ | ------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
-| ING-13 | 生产 RDS 容量、韧性和参数证据        | `BASE-PRD`、`BASE-ARCH`、`BASE-IMPL`、`ING-HTTP`、`ING-INBOX`、`ING-WORKER`、`ING-CREDENTIALS`、`ING-BENCH`、`OPS-QUALITY`、`OPS-DELIVERY`、`FORM` | PRD §6—7、§15.3；Benchmark §5—26；测试/部署设计 §9；必须先有目标 AWS/RDS 环境、可观测性和成本记录，且不得把本地数据解释为生产容量。 |
+| ING-13 | 生产容量、韧性和参数证据（目标 PostgreSQL 环境） | `BASE-PRD`、`BASE-ARCH`、`BASE-IMPL`、`ING-HTTP`、`ING-INBOX`、`ING-WORKER`、`ING-CREDENTIALS`、`ING-BENCH`、`OPS-QUALITY`、`OPS-DELIVERY`、`FORM` | PRD §6—7、§15.3；Benchmark §5—26；测试/部署设计 §9；必须先有目标部署主机与目标 PostgreSQL 环境（`TARGET_POSTGRESQL_ENVIRONMENT`：记录 CPU/RAM/PostgreSQL 版本/容器资源/基准参数并真实测量），可观测性和成本记录，且不得用开发机 PostgreSQL 冒充目标服务器。 |
 | ING-12 | 生产准入、限流、大小和服务端隐私策略 | `BASE-PRD`、`BASE-ARCH`、`BASE-IMPL`、`ING-HTTP`、`ING-CREDENTIALS`、`ING-BENCH`、`OPS-QUALITY`、`FORM`                                            | PRD §7.1—7.2、§14、§15.3—15.8；HTTP Service §6、§8—10、§18；OpenAPI §13—24。必须使用 ING-13 批准参数，不得硬编码未验证阈值。        |
 
 ### 5.6 G09—G13：管理平台回读路由
@@ -331,7 +331,7 @@ Vue 与 React 不得合成一个叶子或一个实现计划，因为组件生命
 | 数量         | 2                                                                                                                                      |
 | 推荐计划包装 | 同一批次、两份计划                                                                                                                     |
 | 内部顺序     | G16 云环境与部署基础 → ING-13 → ING-12                                                                                                 |
-| 进入门禁     | 目标区域、RDS、网络、可观测性和成本记录路径存在；不得用本地 benchmark 代替生产证据                                                     |
+| 进入门禁     | 目标部署主机、目标 PostgreSQL 环境、网络、可观测性和成本记录路径存在；不得用本地 benchmark 代替目标服务器证据 |
 | 退出条件     | 生产参数具有可重复基准证据，API 的准入 adapter 使用已批准参数且有拒绝、安全和降级验证                                                  |
 
 基准和准入策略必须分开计划：一个负责测量和证据，另一个负责生产行为。把二者合并会导致未验证参数直接进入服务配置。
