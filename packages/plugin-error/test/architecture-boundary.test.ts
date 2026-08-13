@@ -17,7 +17,7 @@ describe('error plugin architecture boundary', () => {
       aurora?: unknown;
       dependencies?: unknown;
     };
-    expect(manifest.private).toBe(true);
+    expect(manifest.private).toBe(false);
     expect(manifest.sideEffects).toBe(false);
     expect(manifest.exports).toEqual({
       '.': { types: './dist/index.d.ts', import: './dist/index.js' },
