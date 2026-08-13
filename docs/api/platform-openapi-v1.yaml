@@ -882,7 +882,7 @@ paths:
         - name: tokenId
           in: path
           required: true
-          schema: &a17
+          schema: &a26
             type: string
             minLength: 3
             maxLength: 64
@@ -1032,6 +1032,25 @@ paths:
             properties:
               timeRange: *a8
             additionalProperties: false
+  /organizations/{organizationId}/usage:
+    get:
+      operationId: usageGetSummary
+      summary: Resolve the organization periodic resource usage and degradation stage
+        (PRD §15) from real processed data
+      tags:
+        - usage-and-policy
+      responses:
+        "200":
+          description: 200 response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/usageGetSummaryResponse"
+      parameters:
+        - name: organizationId
+          in: path
+          required: true
+          schema: *a2
   /organizations/{organizationId}/projects/{projectId}/issues/{issueId}/state:
     post:
       operationId: issuesUpdateState
@@ -1266,7 +1285,7 @@ paths:
         - name: noteId
           in: path
           required: true
-          schema: &a36
+          schema: &a45
             type: string
             minLength: 1
             maxLength: 64
@@ -1455,6 +1474,1517 @@ paths:
           in: path
           required: true
           schema: *a9
+  /organizations/{organizationId}/projects/{projectId}/alerts/capability:
+    get:
+      operationId: alertsGetCapability
+      summary: Resolve the alert rule capability contract, fixed options, filter
+        dimension availability and eligible recipients (C11)
+      tags:
+        - issues-and-alerts
+        - alerts
+      responses:
+        "200":
+          description: 200 response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/alertsGetCapabilityResponse"
+      parameters:
+        - name: organizationId
+          in: path
+          required: true
+          schema: *a2
+        - name: projectId
+          in: path
+          required: true
+          schema: *a6
+  /organizations/{organizationId}/projects/{projectId}/alerts:
+    get:
+      operationId: alertsListRulesAndInstances
+      summary: List alert rules with their current evaluation projection and alert
+        instances (C10)
+      tags:
+        - issues-and-alerts
+        - alerts
+      responses:
+        "200":
+          description: 200 response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/alertsListRulesAndInstancesResponse"
+      parameters:
+        - name: organizationId
+          in: path
+          required: true
+          schema: *a2
+        - name: projectId
+          in: path
+          required: true
+          schema: *a6
+        - name: query
+          in: query
+          schema:
+            type: object
+            properties: {}
+            additionalProperties: false
+  /organizations/{organizationId}/projects/{projectId}/alerts/rules:
+    post:
+      operationId: alertsCreateRule
+      summary: Create an alert rule (project admin, PRD §11.2)
+      tags:
+        - issues-and-alerts
+        - alerts
+      responses:
+        "200":
+          description: 200 response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/alertsCreateRuleResponse"
+      parameters:
+        - name: organizationId
+          in: path
+          required: true
+          schema: *a2
+        - name: projectId
+          in: path
+          required: true
+          schema: *a6
+      requestBody:
+        content:
+          application/json:
+            schema: &a11
+              type: object
+              properties:
+                name:
+                  type: string
+                  minLength: 1
+                  maxLength: 120
+                metric:
+                  type: string
+                  enum: &a47
+                    - error_count
+                    - new_issue_count
+                    - issue_reappearance_count
+                    - request_failure_rate
+                    - slow_request_count
+                    - lcp_ratio
+                    - inp_ratio
+                    - cls_ratio
+                filters: &a54
+                  type: object
+                  properties:
+                    environment:
+                      type: array
+                      items:
+                        type: string
+                        minLength: 1
+                        maxLength: 256
+                    release:
+                      type: array
+                      items:
+                        type: string
+                        minLength: 1
+                        maxLength: 256
+                    pageOrEndpoint:
+                      type: array
+                      items:
+                        type: string
+                        minLength: 1
+                        maxLength: 256
+                    errorSeverity:
+                      type: array
+                      items:
+                        type: string
+                        minLength: 1
+                        maxLength: 32
+                  additionalProperties: false
+                  required:
+                    - environment
+                    - release
+                    - pageOrEndpoint
+                    - errorSeverity
+                windowMinutes:
+                  type: number
+                  minimum: 1
+                triggerThreshold:
+                  type: number
+                  minimum: 0
+                triggerDurationMinutes:
+                  type: number
+                  minimum: 0
+                recoveryThreshold:
+                  type: number
+                  minimum: 0
+                recoveryDurationMinutes:
+                  type: number
+                  minimum: 0
+                minSampleCount:
+                  type: number
+                  minimum: 1
+                cooldownMinutes:
+                  type: number
+                  minimum: 1
+                recipientAccountIds:
+                  type: array
+                  items: *a4
+                idempotencyKey:
+                  type: string
+                  minLength: 8
+                  maxLength: 128
+              additionalProperties: false
+              required:
+                - metric
+                - filters
+                - windowMinutes
+                - triggerThreshold
+                - triggerDurationMinutes
+                - recoveryThreshold
+                - cooldownMinutes
+                - recipientAccountIds
+                - idempotencyKey
+  /organizations/{organizationId}/projects/{projectId}/alerts/rules/{ruleId}:
+    post:
+      operationId: alertsUpdateRule
+      summary: Update an alert rule (project admin, optimistic version, PRD §11.2)
+      tags:
+        - issues-and-alerts
+        - alerts
+      responses:
+        "200":
+          description: 200 response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/alertsUpdateRuleResponse"
+      parameters:
+        - name: organizationId
+          in: path
+          required: true
+          schema: *a2
+        - name: projectId
+          in: path
+          required: true
+          schema: *a6
+        - name: ruleId
+          in: path
+          required: true
+          schema: &a49
+            type: string
+            minLength: 1
+            maxLength: 64
+            description: AlertRuleId
+      requestBody:
+        content:
+          application/json:
+            schema: *a11
+  /organizations/{organizationId}/projects/{projectId}/alerts/instances/{instanceId}:
+    get:
+      operationId: alertsGetInstanceDetail
+      summary: Resolve an alert instance detail with its rule snapshot, evaluation
+        evidence and business transition timeline (C12)
+      tags:
+        - issues-and-alerts
+        - alerts
+      responses:
+        "200":
+          description: 200 response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/alertsGetInstanceDetailResponse"
+      parameters:
+        - name: organizationId
+          in: path
+          required: true
+          schema: *a2
+        - name: projectId
+          in: path
+          required: true
+          schema: *a6
+        - name: instanceId
+          in: path
+          required: true
+          schema: &a51
+            type: string
+            minLength: 1
+            maxLength: 64
+            description: AlertInstanceId
+  /organizations/{organizationId}/projects/{projectId}/releases:
+    get:
+      operationId: releasesListReleases
+      summary: List release identities for a project (C8)
+      tags:
+        - releases
+      responses:
+        "200":
+          description: 200 response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/releasesListReleasesResponse"
+      parameters:
+        - name: organizationId
+          in: path
+          required: true
+          schema: *a2
+        - name: projectId
+          in: path
+          required: true
+          schema: *a6
+  /organizations/{organizationId}/projects/{projectId}/releases/{releaseId}/source-maps:
+    get:
+      operationId: sourceMapsListFiles
+      summary: List current effective Source Map files for a release (C9)
+      tags:
+        - releases
+        - source-maps
+      responses:
+        "200":
+          description: 200 response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/sourceMapsListFilesResponse"
+      parameters:
+        - name: organizationId
+          in: path
+          required: true
+          schema: *a2
+        - name: projectId
+          in: path
+          required: true
+          schema: *a6
+        - name: releaseId
+          in: path
+          required: true
+          schema: &a12
+            type: string
+            minLength: 1
+            maxLength: 64
+            description: ReleaseId
+  /organizations/{organizationId}/projects/{projectId}/source-maps:
+    post:
+      operationId: sourceMapsUpload
+      summary: Upload a Source Map for a release build path (idempotent digest;
+        replace requires explicit confirmation)
+      tags:
+        - releases
+        - source-maps
+      responses:
+        "200":
+          description: 200 response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/sourceMapsUploadResponse"
+      parameters:
+        - name: organizationId
+          in: path
+          required: true
+          schema: *a2
+        - name: projectId
+          in: path
+          required: true
+          schema: *a6
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                releaseVersion:
+                  type: string
+                  minLength: 1
+                  maxLength: 256
+                buildPath:
+                  type: string
+                  minLength: 1
+                  maxLength: 2048
+                content:
+                  type: string
+                  minLength: 1
+                  maxLength: 240000
+                digest:
+                  type: string
+                  minLength: 64
+                  maxLength: 64
+                buildId:
+                  type: string
+                  minLength: 1
+                  maxLength: 128
+                idempotencyKey:
+                  type: string
+                  minLength: 8
+                  maxLength: 128
+              additionalProperties: false
+              required:
+                - releaseVersion
+                - buildPath
+                - content
+                - digest
+                - idempotencyKey
+  /organizations/{organizationId}/projects/{projectId}/releases/{releaseId}/source-maps/{sourceMapFileId}/replace:
+    post:
+      operationId: sourceMapsReplace
+      summary: Explicitly replace a Source Map after a digest conflict (versioned,
+        audited)
+      tags:
+        - releases
+        - source-maps
+      responses:
+        "200":
+          description: 200 response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/sourceMapsReplaceResponse"
+      parameters:
+        - name: organizationId
+          in: path
+          required: true
+          schema: *a2
+        - name: projectId
+          in: path
+          required: true
+          schema: *a6
+        - name: releaseId
+          in: path
+          required: true
+          schema: *a12
+        - name: sourceMapFileId
+          in: path
+          required: true
+          schema: &a56
+            type: string
+            minLength: 1
+            maxLength: 64
+            description: SourceMapFileId
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                content:
+                  type: string
+                  minLength: 1
+                  maxLength: 240000
+                digest:
+                  type: string
+                  minLength: 64
+                  maxLength: 64
+                version:
+                  type: number
+                  minimum: 1
+                idempotencyKey:
+                  type: string
+                  minLength: 8
+                  maxLength: 128
+              additionalProperties: false
+              required:
+                - content
+                - digest
+                - version
+                - idempotencyKey
+  /organizations/{organizationId}/projects/{projectId}/releases/{releaseId}/reparse:
+    post:
+      operationId: sourceMapsReparse
+      summary: Queue a bounded reparse for a release (retry/refresh symbolication, PRD
+        §8.3.8)
+      tags:
+        - releases
+        - source-maps
+      responses:
+        "200":
+          description: 200 response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/sourceMapsReparseResponse"
+      parameters:
+        - name: organizationId
+          in: path
+          required: true
+          schema: *a2
+        - name: projectId
+          in: path
+          required: true
+          schema: *a6
+        - name: releaseId
+          in: path
+          required: true
+          schema: *a12
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                idempotencyKey:
+                  type: string
+                  minLength: 8
+                  maxLength: 128
+              additionalProperties: false
+              required:
+                - idempotencyKey
+  /organizations/{organizationId}/projects/{projectId}/access:
+    get:
+      operationId: accessListEffectiveMembers
+      summary: List effective project access for every person (org inheritance +
+        explicit membership)
+      tags:
+        - project-governance
+        - access
+      responses:
+        "200":
+          description: 200 response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/accessListEffectiveMembersResponse"
+      parameters:
+        - name: organizationId
+          in: path
+          required: true
+          schema: *a2
+        - name: projectId
+          in: path
+          required: true
+          schema: *a6
+  /organizations/{organizationId}/projects/{projectId}/access/members:
+    post:
+      operationId: accessGrantProjectMembership
+      summary: Grant a project role to a current organization member (audited)
+      tags:
+        - project-governance
+        - access
+      responses:
+        "200":
+          description: 200 response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/accessGrantProjectMembershipResponse"
+      parameters:
+        - name: organizationId
+          in: path
+          required: true
+          schema: *a2
+        - name: projectId
+          in: path
+          required: true
+          schema: *a6
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                accountId: *a4
+                role:
+                  type: string
+                  enum: &a13
+                    - project_admin
+                    - developer
+                    - read_only
+                idempotencyKey: *a1
+              additionalProperties: false
+              required:
+                - accountId
+                - role
+                - idempotencyKey
+  /organizations/{organizationId}/projects/{projectId}/access/members/{accountId}/role:
+    post:
+      operationId: accessChangeProjectRole
+      summary: Change an explicit project member role (audited)
+      tags:
+        - project-governance
+        - access
+      responses:
+        "200":
+          description: 200 response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/accessChangeProjectRoleResponse"
+      parameters:
+        - name: organizationId
+          in: path
+          required: true
+          schema: *a2
+        - name: projectId
+          in: path
+          required: true
+          schema: *a6
+        - name: accountId
+          in: path
+          required: true
+          schema: *a4
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                role:
+                  type: string
+                  enum: *a13
+                idempotencyKey: *a1
+              additionalProperties: false
+              required:
+                - role
+                - idempotencyKey
+  /organizations/{organizationId}/projects/{projectId}/access/members/{accountId}/remove:
+    post:
+      operationId: accessRemoveProjectMembership
+      summary: Remove an explicit project membership (org inheritance may remain;
+        audited)
+      tags:
+        - project-governance
+        - access
+      responses:
+        "200":
+          description: 200 response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/accessRemoveProjectMembershipResponse"
+      parameters:
+        - name: organizationId
+          in: path
+          required: true
+          schema: *a2
+        - name: projectId
+          in: path
+          required: true
+          schema: *a6
+        - name: accountId
+          in: path
+          required: true
+          schema: *a4
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                idempotencyKey: *a1
+              additionalProperties: false
+              required:
+                - idempotencyKey
+  /organizations/{organizationId}/projects/{projectId}/client-keys:
+    get:
+      operationId: credentialsListClientKeys
+      summary: List client-key metadata (never the secret)
+      tags:
+        - credentials
+        - client-keys
+      responses:
+        "200":
+          description: 200 response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/credentialsListClientKeysResponse"
+      parameters:
+        - name: organizationId
+          in: path
+          required: true
+          schema: *a2
+        - name: projectId
+          in: path
+          required: true
+          schema: *a6
+    post:
+      operationId: credentialsCreateClientKey
+      summary: Create a client key (one-time clientKey delivery, audited)
+      tags:
+        - credentials
+        - client-keys
+      responses:
+        "200":
+          description: 200 response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/credentialsCreateClientKeyResponse"
+      parameters:
+        - name: organizationId
+          in: path
+          required: true
+          schema: *a2
+        - name: projectId
+          in: path
+          required: true
+          schema: *a6
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                origins:
+                  type: array
+                  items:
+                    type: string
+                    minLength: 1
+                    maxLength: 256
+                environments:
+                  type: array
+                  items:
+                    type: string
+                    minLength: 1
+                    maxLength: 256
+                allowNonBrowser:
+                  type: boolean
+                expiresAt: *a7
+                idempotencyKey: *a1
+              additionalProperties: false
+              required:
+                - origins
+                - environments
+                - allowNonBrowser
+                - idempotencyKey
+  /organizations/{organizationId}/projects/{projectId}/client-keys/{keyId}/disable:
+    post:
+      operationId: credentialsDisableClientKey
+      summary: Temporarily disable a client key (audited)
+      tags:
+        - credentials
+        - client-keys
+      responses:
+        "200":
+          description: 200 response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/credentialsDisableClientKeyResponse"
+      parameters:
+        - name: organizationId
+          in: path
+          required: true
+          schema: *a2
+        - name: projectId
+          in: path
+          required: true
+          schema: *a6
+        - name: keyId
+          in: path
+          required: true
+          schema: &a14
+            type: string
+            minLength: 8
+            maxLength: 128
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                idempotencyKey: *a1
+              additionalProperties: false
+              required:
+                - idempotencyKey
+  /organizations/{organizationId}/projects/{projectId}/client-keys/{keyId}/enable:
+    post:
+      operationId: credentialsEnableClientKey
+      summary: Re-enable a disabled client key (audited)
+      tags:
+        - credentials
+        - client-keys
+      responses:
+        "200":
+          description: 200 response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/credentialsEnableClientKeyResponse"
+      parameters:
+        - name: organizationId
+          in: path
+          required: true
+          schema: *a2
+        - name: projectId
+          in: path
+          required: true
+          schema: *a6
+        - name: keyId
+          in: path
+          required: true
+          schema: *a14
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                idempotencyKey: *a1
+              additionalProperties: false
+              required:
+                - idempotencyKey
+  /organizations/{organizationId}/projects/{projectId}/client-keys/{keyId}/revoke:
+    post:
+      operationId: credentialsRevokeClientKey
+      summary: Irreversibly revoke a client key (audited)
+      tags:
+        - credentials
+        - client-keys
+      responses:
+        "200":
+          description: 200 response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/credentialsRevokeClientKeyResponse"
+      parameters:
+        - name: organizationId
+          in: path
+          required: true
+          schema: *a2
+        - name: projectId
+          in: path
+          required: true
+          schema: *a6
+        - name: keyId
+          in: path
+          required: true
+          schema: *a14
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                idempotencyKey: *a1
+              additionalProperties: false
+              required:
+                - idempotencyKey
+  /organizations/{organizationId}/projects/{projectId}/settings:
+    get:
+      operationId: settingsGetProject
+      summary: Resolve project settings and the authoritative lifecycle summary
+      tags:
+        - project-governance
+        - settings
+      responses:
+        "200":
+          description: 200 response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/settingsGetProjectResponse"
+      parameters:
+        - name: organizationId
+          in: path
+          required: true
+          schema: *a2
+        - name: projectId
+          in: path
+          required: true
+          schema: *a6
+    patch:
+      operationId: settingsUpdateProject
+      summary: Update editable project settings (name + optional website URL, versioned)
+      tags:
+        - project-governance
+        - settings
+      responses:
+        "200":
+          description: 200 response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/settingsUpdateProjectResponse"
+      parameters:
+        - name: organizationId
+          in: path
+          required: true
+          schema: *a2
+        - name: projectId
+          in: path
+          required: true
+          schema: *a6
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  minLength: 2
+                  maxLength: 50
+                websiteUrl:
+                  type: string
+                  minLength: 8
+                  maxLength: 512
+                resourceVersion: *a5
+                idempotencyKey: *a1
+              additionalProperties: false
+              required:
+                - name
+                - resourceVersion
+                - idempotencyKey
+  /organizations/{organizationId}/projects/{projectId}/settings/environments:
+    get:
+      operationId: settingsListEnvironments
+      summary: List the project environment directory
+      tags:
+        - project-governance
+        - settings
+      responses:
+        "200":
+          description: 200 response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/settingsListEnvironmentsResponse"
+      parameters:
+        - name: organizationId
+          in: path
+          required: true
+          schema: *a2
+        - name: projectId
+          in: path
+          required: true
+          schema: *a6
+    post:
+      operationId: settingsCreateEnvironment
+      summary: Create an environment (immutable after creation; audited)
+      tags:
+        - project-governance
+        - settings
+      responses:
+        "200":
+          description: 200 response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/settingsCreateEnvironmentResponse"
+      parameters:
+        - name: organizationId
+          in: path
+          required: true
+          schema: *a2
+        - name: projectId
+          in: path
+          required: true
+          schema: *a6
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  minLength: 1
+                  maxLength: 32
+                idempotencyKey: *a1
+              additionalProperties: false
+              required:
+                - name
+                - idempotencyKey
+  /organizations/{organizationId}/projects/{projectId}/lifecycle/archive:
+    post:
+      operationId: lifecycleArchiveProject
+      summary: Archive a project (stops ingestion, retains history; audited)
+      tags:
+        - project-governance
+        - lifecycle
+      responses:
+        "200":
+          description: 200 response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/lifecycleArchiveProjectResponse"
+      parameters:
+        - name: organizationId
+          in: path
+          required: true
+          schema: *a2
+        - name: projectId
+          in: path
+          required: true
+          schema: *a6
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                idempotencyKey: *a1
+              additionalProperties: false
+              required:
+                - idempotencyKey
+  /organizations/{organizationId}/projects/{projectId}/lifecycle/restore:
+    post:
+      operationId: lifecycleRestoreProject
+      summary: Restore an archived project to active (alerts stay off; audited)
+      tags:
+        - project-governance
+        - lifecycle
+      responses:
+        "200":
+          description: 200 response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/lifecycleRestoreProjectResponse"
+      parameters:
+        - name: organizationId
+          in: path
+          required: true
+          schema: *a2
+        - name: projectId
+          in: path
+          required: true
+          schema: *a6
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                idempotencyKey: *a1
+              additionalProperties: false
+              required:
+                - idempotencyKey
+  /organizations/{organizationId}/projects/{projectId}/lifecycle/move-to-trash:
+    post:
+      operationId: lifecycleMoveToTrash
+      summary: Move a project to the trash (org manager only; name + version
+        confirmed; audited)
+      tags:
+        - project-governance
+        - lifecycle
+      responses:
+        "200":
+          description: 200 response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/lifecycleMoveToTrashResponse"
+      parameters:
+        - name: organizationId
+          in: path
+          required: true
+          schema: *a2
+        - name: projectId
+          in: path
+          required: true
+          schema: *a6
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                resourceVersion: *a5
+                idempotencyKey: *a1
+              additionalProperties: false
+              required:
+                - resourceVersion
+                - idempotencyKey
+  /notifications:
+    get:
+      operationId: notificationsListAndUnread
+      summary: List the current account notifications (keyset pagination, read-state
+        filter) with the account-level unread count (D1)
+      tags:
+        - issues-and-alerts
+        - notifications
+      responses:
+        "200":
+          description: 200 response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/notificationsListAndUnreadResponse"
+      parameters:
+        - name: query
+          in: query
+          schema:
+            type: object
+            properties:
+              readState:
+                type: string
+                minLength: 1
+                maxLength: 16
+              cursor:
+                type: string
+                minLength: 1
+                maxLength: 512
+              limit:
+                type: number
+                minimum: 1
+                maximum: 50
+            additionalProperties: false
+  /notifications/{notificationId}/read:
+    post:
+      operationId: notificationsMarkRead
+      summary: Mark one account notification as read (idempotent, account-scoped)
+      tags:
+        - issues-and-alerts
+        - notifications
+      responses:
+        "200":
+          description: 200 response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/notificationsMarkReadResponse"
+      parameters:
+        - name: notificationId
+          in: path
+          required: true
+          schema: &a62
+            type: string
+            minLength: 3
+            maxLength: 64
+            description: NotificationId
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                idempotencyKey:
+                  type: string
+                  minLength: 8
+                  maxLength: 128
+              additionalProperties: false
+              required:
+                - idempotencyKey
+  /platform-admin/capability:
+    get:
+      operationId: platformAdminGetCapability
+      summary: Resolve whether the current account holds platform admin capability (D2)
+      tags:
+        - usage-and-policy
+        - platform-admin
+      responses:
+        "200":
+          description: 200 response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/platformAdminGetCapabilityResponse"
+  /platform-admin/admins:
+    get:
+      operationId: platformAdminList
+      summary: List platform admin identities with grant provenance (admin only)
+      tags:
+        - usage-and-policy
+        - platform-admin
+      responses:
+        "200":
+          description: 200 response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/platformAdminListResponse"
+  /platform-admin/admins/{accountId}/grant:
+    post:
+      operationId: platformAdminGrant
+      summary: Grant platform admin capability to an account (idempotent, audited)
+      tags:
+        - usage-and-policy
+        - platform-admin
+      responses:
+        "200":
+          description: 200 response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/platformAdminGrantResponse"
+      parameters:
+        - name: accountId
+          in: path
+          required: true
+          schema: *a4
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                idempotencyKey:
+                  type: string
+                  minLength: 8
+                  maxLength: 128
+              additionalProperties: false
+              required:
+                - idempotencyKey
+  /platform-admin/admins/{accountId}/revoke:
+    post:
+      operationId: platformAdminRevoke
+      summary: Revoke platform admin capability from an account (idempotent, audited)
+      tags:
+        - usage-and-policy
+        - platform-admin
+      responses:
+        "200":
+          description: 200 response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/platformAdminRevokeResponse"
+      parameters:
+        - name: accountId
+          in: path
+          required: true
+          schema: *a4
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                idempotencyKey:
+                  type: string
+                  minLength: 8
+                  maxLength: 128
+              additionalProperties: false
+              required:
+                - idempotencyKey
+  /platform-admin/audit:
+    get:
+      operationId: platformAuditListEvents
+      summary: List platform-level audit events (1-year retention, admin only)
+      tags:
+        - usage-and-policy
+        - platform-admin
+      responses:
+        "200":
+          description: 200 response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/platformAuditListEventsResponse"
+      parameters:
+        - name: query
+          in: query
+          schema:
+            type: object
+            properties:
+              cursor:
+                type: string
+                minLength: 1
+                maxLength: 512
+              limit:
+                type: number
+                minimum: 1
+                maximum: 50
+            additionalProperties: false
+  /platform-admin/policy/targets:
+    get:
+      operationId: policyTargetSearch
+      summary: Search policy targets (organizations and projects) by name for the D2
+        resource-policy workspace (admin only)
+      tags:
+        - usage-and-policy
+        - platform-admin
+      responses:
+        "200":
+          description: 200 response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/policyTargetSearchResponse"
+      parameters:
+        - name: query
+          in: query
+          schema:
+            type: object
+            properties:
+              q:
+                type: string
+                minLength: 1
+                maxLength: 64
+              limit:
+                type: number
+                minimum: 1
+                maximum: 50
+            additionalProperties: false
+  /platform-admin/policy/default:
+    get:
+      operationId: policyGetDefault
+      summary: Resolve the platform default resource policy with
+        configured/source/effective separation (admin only)
+      tags:
+        - usage-and-policy
+        - platform-admin
+      responses:
+        "200":
+          description: 200 response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/policyGetDefaultResponse"
+    post:
+      operationId: policySetDefault
+      summary: Set the platform default resource policy (idempotent, optimistic
+        version, audited; admin only)
+      tags:
+        - usage-and-policy
+        - platform-admin
+      responses:
+        "200":
+          description: 200 response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/policySetDefaultResponse"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                defaultPeriodQuota: &a15
+                  type: number
+                  minimum: 1
+                warningRatio: &a16
+                  type: number
+                  minimum: 1
+                  maximum: 100
+                hardLimit: &a17
+                  type: number
+                  minimum: 1
+                  maximum: 100
+                degradationEnabled: &a18
+                  type: boolean
+                highValueRetentionDays: &a19
+                  type: number
+                  minimum: 1
+                version:
+                  type: number
+                  minimum: 0
+                idempotencyKey:
+                  type: string
+                  minLength: 8
+                  maxLength: 128
+              additionalProperties: false
+              required:
+                - defaultPeriodQuota
+                - warningRatio
+                - hardLimit
+                - degradationEnabled
+                - highValueRetentionDays
+                - version
+                - idempotencyKey
+  /platform-admin/policy/organizations/{organizationId}/effective:
+    get:
+      operationId: policyGetOrganizationEffective
+      summary: Resolve an organization effective resource policy (configured override,
+        source, computed effective) (admin only)
+      tags:
+        - usage-and-policy
+        - platform-admin
+      responses:
+        "200":
+          description: 200 response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/policyGetOrganizationEffectiveResponse"
+      parameters:
+        - name: organizationId
+          in: path
+          required: true
+          schema: *a2
+  /platform-admin/policy/projects/{projectId}/effective:
+    get:
+      operationId: policyGetProjectEffective
+      summary: Resolve a project effective resource policy including its own
+        resource-limit override (admin only)
+      tags:
+        - usage-and-policy
+        - platform-admin
+      responses:
+        "200":
+          description: 200 response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/policyGetProjectEffectiveResponse"
+      parameters:
+        - name: projectId
+          in: path
+          required: true
+          schema: *a6
+  /platform-admin/policy/organizations/{organizationId}:
+    post:
+      operationId: policySetOrganization
+      summary: Set (replace) an organization resource-policy override (idempotent,
+        optimistic version, audited; admin only)
+      tags:
+        - usage-and-policy
+        - platform-admin
+      responses:
+        "200":
+          description: 200 response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/policySetOrganizationResponse"
+      parameters:
+        - name: organizationId
+          in: path
+          required: true
+          schema: *a2
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                defaultPeriodQuota: *a15
+                warningRatio: *a16
+                hardLimit: *a17
+                degradationEnabled: *a18
+                highValueRetentionDays: *a19
+                version:
+                  type: number
+                  minimum: 0
+                idempotencyKey:
+                  type: string
+                  minLength: 8
+                  maxLength: 128
+              additionalProperties: false
+              required:
+                - defaultPeriodQuota
+                - warningRatio
+                - hardLimit
+                - degradationEnabled
+                - highValueRetentionDays
+                - version
+                - idempotencyKey
+  /platform-admin/policy/organizations/{organizationId}/reset:
+    post:
+      operationId: policyResetOrganization
+      summary: Reset an organization override back to the platform default (confirmed,
+        optimistic version, audited; admin only)
+      tags:
+        - usage-and-policy
+        - platform-admin
+      responses:
+        "200":
+          description: 200 response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/policyResetOrganizationResponse"
+      parameters:
+        - name: organizationId
+          in: path
+          required: true
+          schema: *a2
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                version:
+                  type: number
+                  minimum: 0
+                confirm:
+                  type: boolean
+                idempotencyKey:
+                  type: string
+                  minLength: 8
+                  maxLength: 128
+              additionalProperties: false
+              required:
+                - version
+                - confirm
+                - idempotencyKey
+  /platform-admin/policy/projects/{projectId}/limit:
+    post:
+      operationId: policySetProjectLimit
+      summary: Set a project resource-limit override (idempotent, optimistic version,
+        audited; admin only)
+      tags:
+        - usage-and-policy
+        - platform-admin
+      responses:
+        "200":
+          description: 200 response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/policySetProjectLimitResponse"
+      parameters:
+        - name: projectId
+          in: path
+          required: true
+          schema: *a6
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                resourceLimit:
+                  type: number
+                  minimum: 1
+                version:
+                  type: number
+                  minimum: 0
+                idempotencyKey:
+                  type: string
+                  minLength: 8
+                  maxLength: 128
+              additionalProperties: false
+              required:
+                - resourceLimit
+                - version
+                - idempotencyKey
+  /platform-admin/policy/projects/{projectId}/limit/clear:
+    post:
+      operationId: policyClearProjectLimit
+      summary: Clear a project resource-limit override (confirmed, optimistic version,
+        audited; admin only)
+      tags:
+        - usage-and-policy
+        - platform-admin
+      responses:
+        "200":
+          description: 200 response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/policyClearProjectLimitResponse"
+      parameters:
+        - name: projectId
+          in: path
+          required: true
+          schema: *a6
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                version:
+                  type: number
+                  minimum: 0
+                confirm:
+                  type: boolean
+                idempotencyKey:
+                  type: string
+                  minLength: 8
+                  maxLength: 128
+              additionalProperties: false
+              required:
+                - version
+                - confirm
+                - idempotencyKey
 components:
   schemas:
     identityGetSessionResponse:
@@ -1493,9 +3023,9 @@ components:
           type: string
           minLength: 1
           maxLength: 256
-        navigation: &a11
+        navigation: &a20
           type: array
-          items: &a12
+          items: &a21
             type: object
             properties:
               routeId:
@@ -1581,7 +3111,7 @@ components:
             - accountId
             - email
             - verified
-        workspace: *a11
+        workspace: *a20
         organizations:
           type: array
           items:
@@ -1607,14 +3137,14 @@ components:
                       enum:
                         - active
                         - archived
-                    entry: *a12
+                    entry: *a21
                   additionalProperties: false
                   required:
                     - projectId
                     - name
                     - lifecycle
                     - entry
-              entry: *a12
+              entry: *a21
             additionalProperties: false
             required:
               - organizationId
@@ -1646,8 +3176,22 @@ components:
           type:
             - object
             - "null"
-        defaultTarget: *a12
-        safeExitTarget: *a12
+        defaultTarget: *a21
+        safeExitTarget: *a21
+        unreadCount:
+          type: object
+          properties:
+            value:
+              type: number
+              minimum: 0
+            status:
+              type: string
+              enum:
+                - available
+                - unavailable
+          additionalProperties: false
+          required:
+            - status
       additionalProperties: false
       required:
         - account
@@ -1656,6 +3200,7 @@ components:
         - currentScope
         - defaultTarget
         - safeExitTarget
+        - unreadCount
     identityRegisterResponse:
       type: object
       properties:
@@ -1701,7 +3246,7 @@ components:
         verificationStatus:
           type: object
           properties:
-            verified: &a13
+            verified: &a22
               type: boolean
               enum:
                 - true
@@ -1716,7 +3261,7 @@ components:
               type: string
               minLength: 3
               maxLength: 320
-            verified: *a13
+            verified: *a22
           additionalProperties: false
           required:
             - accountId
@@ -1762,11 +3307,11 @@ components:
           type: string
           minLength: 1
           maxLength: 256
-        navigation: *a11
+        navigation: *a20
         continuation:
           type: object
           properties:
-            target: *a12
+            target: *a21
             kind:
               type: string
               enum:
@@ -1898,7 +3443,7 @@ components:
       required:
         - status
         - maskedEmail
-    identityDeleteAccountIntentLinkResponse: &a14
+    identityDeleteAccountIntentLinkResponse: &a23
       type: object
       properties:
         status:
@@ -1947,7 +3492,7 @@ components:
         - deletionRequestedAt
         - deletionCoolingEndsAt
         - sessionImpact
-    identityCancelAccountDeletionIntentLinkResponse: *a14
+    identityCancelAccountDeletionIntentLinkResponse: *a23
     identityCancelAccountDeletionResponse:
       type: object
       properties:
@@ -1990,7 +3535,7 @@ components:
             - organizationId
             - name
             - role
-        navigationTargets: *a11
+        navigationTargets: *a20
       additionalProperties: false
       required:
         - organization
@@ -2015,13 +3560,13 @@ components:
                   - react
                   - vue
                   - other
-              status: &a15
+              status: &a24
                 type: string
                 enum:
                   - active
                   - archived
                   - trash
-              lifecycle: *a15
+              lifecycle: *a24
             additionalProperties: false
             required:
               - projectId
@@ -2029,7 +3574,7 @@ components:
               - frameworkType
               - status
               - lifecycle
-        allowedActions: &a22
+        allowedActions: &a31
           type: array
           items:
             type: string
@@ -2042,7 +3587,7 @@ components:
               - restore
               - transfer
               - revoke
-        navigationTargets: *a11
+        navigationTargets: *a20
       additionalProperties: false
       required:
         - projects
@@ -2066,7 +3611,7 @@ components:
             - not_started
             - in_progress
             - completed
-        navigationTargets: *a11
+        navigationTargets: *a20
       additionalProperties: false
       required:
         - projectId
@@ -2087,7 +3632,7 @@ components:
                 type: string
                 minLength: 3
                 maxLength: 320
-              orgRole: &a16
+              orgRole: &a25
                 type: string
                 enum:
                   - owner
@@ -2099,7 +3644,7 @@ components:
               - accountId
               - emailMasked
               - orgRole
-        navigationTargets: *a11
+        navigationTargets: *a20
       additionalProperties: false
       required:
         - members
@@ -2153,7 +3698,7 @@ components:
       type: object
       properties:
         accountId: *a4
-        orgRole: *a16
+        orgRole: *a25
         resourceVersion: *a5
       additionalProperties: false
       required:
@@ -2178,7 +3723,7 @@ components:
         organizationId: *a2
         ownerAccountId: *a4
         resourceVersion: *a5
-        navigationTargets: *a11
+        navigationTargets: *a20
       additionalProperties: false
       required:
         - organizationId
@@ -2233,7 +3778,7 @@ components:
               - trashedAt
               - recoverableUntil
               - lifecycle
-        navigationTargets: *a11
+        navigationTargets: *a20
       additionalProperties: false
       required:
         - projects
@@ -2250,7 +3795,7 @@ components:
           type: string
           enum:
             - active
-        navigationTargets: *a11
+        navigationTargets: *a20
       additionalProperties: false
       required:
         - projectId
@@ -2265,7 +3810,7 @@ components:
           items:
             type: object
             properties:
-              tokenId: *a17
+              tokenId: *a26
               name:
                 type: string
                 minLength: 1
@@ -2284,7 +3829,7 @@ components:
               - tokenId
               - name
               - scopes
-        navigationTargets: *a11
+        navigationTargets: *a20
       additionalProperties: false
       required:
         - tokens
@@ -2292,7 +3837,7 @@ components:
     credentialsCreatePrivateTokenResponse:
       type: object
       properties:
-        tokenId: *a17
+        tokenId: *a26
         tokenPlaintext:
           type: string
           minLength: 20
@@ -2316,7 +3861,7 @@ components:
           type: string
           enum:
             - succeeded
-        tokenId: *a17
+        tokenId: *a26
       additionalProperties: false
       required:
         - status
@@ -2329,7 +3874,7 @@ components:
           items:
             type: object
             properties:
-              eventId:
+              eventId: &a63
                 type: string
                 minLength: 3
                 maxLength: 64
@@ -2363,7 +3908,7 @@ components:
               - occurredAt
               - result
               - actorMasked
-        pagination: &a19
+        pagination: &a28
           type: object
           properties:
             cursor:
@@ -2403,7 +3948,7 @@ components:
                       type: string
                       enum:
                         - available
-                    data: &a18
+                    data: &a27
                       type: object
                       properties:
                         methods:
@@ -2486,7 +4031,7 @@ components:
                       type: string
                       enum:
                         - partial
-                    data: *a18
+                    data: *a27
                     missing:
                       type: string
                       minLength: 1
@@ -2502,7 +4047,7 @@ components:
                       type: string
                       enum:
                         - stale
-                    data: *a18
+                    data: *a27
                     freshAt:
                       type: string
                       minLength: 20
@@ -2548,7 +4093,7 @@ components:
                       type: string
                       enum:
                         - available
-                    data: &a20
+                    data: &a29
                       type: object
                       properties:
                         items:
@@ -2612,7 +4157,7 @@ components:
                               - outcomeCounts
                               - isPartial
                               - completeness
-                        pagination: *a19
+                        pagination: *a28
                       additionalProperties: false
                       required:
                         - items
@@ -2641,7 +4186,7 @@ components:
                       type: string
                       enum:
                         - partial
-                    data: *a20
+                    data: *a29
                     missing:
                       type: string
                       minLength: 1
@@ -2657,7 +4202,7 @@ components:
                       type: string
                       enum:
                         - stale
-                    data: *a20
+                    data: *a29
                     freshAt:
                       type: string
                       minLength: 20
@@ -2703,7 +4248,7 @@ components:
                       type: string
                       enum:
                         - available
-                    data: &a21
+                    data: &a30
                       type: object
                       properties: {}
                       additionalProperties: false
@@ -2731,7 +4276,7 @@ components:
                       type: string
                       enum:
                         - partial
-                    data: *a21
+                    data: *a30
                     missing:
                       type: string
                       minLength: 1
@@ -2747,7 +4292,7 @@ components:
                       type: string
                       enum:
                         - stale
-                    data: *a21
+                    data: *a30
                     freshAt:
                       type: string
                       minLength: 20
@@ -2790,7 +4335,7 @@ components:
             - summary
             - endpoints
             - percentiles
-        meta: &a31
+        meta: &a40
           type: object
           properties:
             requestId:
@@ -2808,8 +4353,8 @@ components:
           required:
             - requestId
             - readAt
-        allowedActions: *a22
-        navigationTargets: *a11
+        allowedActions: *a31
+        navigationTargets: *a20
       additionalProperties: false
       required:
         - data
@@ -2830,7 +4375,7 @@ components:
                       type: string
                       enum:
                         - available
-                    data: &a23
+                    data: &a32
                       type: object
                       properties:
                         status:
@@ -2877,7 +4422,7 @@ components:
                       type: string
                       enum:
                         - partial
-                    data: *a23
+                    data: *a32
                     missing:
                       type: string
                       minLength: 1
@@ -2893,7 +4438,7 @@ components:
                       type: string
                       enum:
                         - stale
-                    data: *a23
+                    data: *a32
                     freshAt:
                       type: string
                       minLength: 20
@@ -2939,10 +4484,10 @@ components:
                       type: string
                       enum:
                         - available
-                    data: &a25
+                    data: &a34
                       type: object
                       properties:
-                        received: &a24
+                        received: &a33
                           type: object
                           properties:
                             count:
@@ -2952,8 +4497,8 @@ components:
                           additionalProperties: false
                           required:
                             - count
-                        processing: *a24
-                        processed: *a24
+                        processing: *a33
+                        processed: *a33
                         deadLetter:
                           type: object
                           properties:
@@ -2998,7 +4543,7 @@ components:
                       type: string
                       enum:
                         - partial
-                    data: *a25
+                    data: *a34
                     missing:
                       type: string
                       minLength: 1
@@ -3014,7 +4559,7 @@ components:
                       type: string
                       enum:
                         - stale
-                    data: *a25
+                    data: *a34
                     freshAt:
                       type: string
                       minLength: 20
@@ -3060,7 +4605,7 @@ components:
                       type: string
                       enum:
                         - available
-                    data: &a27
+                    data: &a36
                       type: object
                       properties:
                         latestReceivedAt: *a7
@@ -3079,7 +4624,7 @@ components:
                                   type: string
                                   enum:
                                     - available
-                                data: &a26
+                                data: &a35
                                   type: object
                                   properties: {}
                                   additionalProperties: false
@@ -3107,7 +4652,7 @@ components:
                                   type: string
                                   enum:
                                     - partial
-                                data: *a26
+                                data: *a35
                                 missing:
                                   type: string
                                   minLength: 1
@@ -3123,7 +4668,7 @@ components:
                                   type: string
                                   enum:
                                     - stale
-                                data: *a26
+                                data: *a35
                                 freshAt:
                                   type: string
                                   minLength: 20
@@ -3190,7 +4735,7 @@ components:
                       type: string
                       enum:
                         - partial
-                    data: *a27
+                    data: *a36
                     missing:
                       type: string
                       minLength: 1
@@ -3206,7 +4751,7 @@ components:
                       type: string
                       enum:
                         - stale
-                    data: *a27
+                    data: *a36
                     freshAt:
                       type: string
                       minLength: 20
@@ -3252,7 +4797,7 @@ components:
                       type: string
                       enum:
                         - available
-                    data: &a28
+                    data: &a37
                       type: object
                       properties: {}
                       additionalProperties: false
@@ -3280,7 +4825,7 @@ components:
                       type: string
                       enum:
                         - partial
-                    data: *a28
+                    data: *a37
                     missing:
                       type: string
                       minLength: 1
@@ -3296,7 +4841,7 @@ components:
                       type: string
                       enum:
                         - stale
-                    data: *a28
+                    data: *a37
                     freshAt:
                       type: string
                       minLength: 20
@@ -3342,7 +4887,7 @@ components:
                       type: string
                       enum:
                         - available
-                    data: &a29
+                    data: &a38
                       type: object
                       properties:
                         activeCount:
@@ -3384,7 +4929,7 @@ components:
                       type: string
                       enum:
                         - partial
-                    data: *a29
+                    data: *a38
                     missing:
                       type: string
                       minLength: 1
@@ -3400,7 +4945,7 @@ components:
                       type: string
                       enum:
                         - stale
-                    data: *a29
+                    data: *a38
                     freshAt:
                       type: string
                       minLength: 20
@@ -3446,7 +4991,7 @@ components:
                       type: string
                       enum:
                         - available
-                    data: &a30
+                    data: &a39
                       type: object
                       properties:
                         errorOccurrences:
@@ -3488,7 +5033,7 @@ components:
                       type: string
                       enum:
                         - partial
-                    data: *a30
+                    data: *a39
                     missing:
                       type: string
                       minLength: 1
@@ -3504,7 +5049,7 @@ components:
                       type: string
                       enum:
                         - stale
-                    data: *a30
+                    data: *a39
                     freshAt:
                       type: string
                       minLength: 20
@@ -3544,7 +5089,7 @@ components:
                     - status
             actionTargets:
               type: array
-              items: *a12
+              items: *a21
           additionalProperties: false
           required:
             - summary
@@ -3554,9 +5099,9 @@ components:
             - credential
             - queryable
             - actionTargets
-        meta: *a31
-        allowedActions: *a22
-        navigationTargets: *a11
+        meta: *a40
+        allowedActions: *a31
+        navigationTargets: *a20
       additionalProperties: false
       required:
         - data
@@ -3577,7 +5122,7 @@ components:
                       type: string
                       enum:
                         - available
-                    data: &a32
+                    data: &a41
                       type: object
                       properties:
                         metrics:
@@ -3648,7 +5193,7 @@ components:
                       type: string
                       enum:
                         - partial
-                    data: *a32
+                    data: *a41
                     missing:
                       type: string
                       minLength: 1
@@ -3664,7 +5209,7 @@ components:
                       type: string
                       enum:
                         - stale
-                    data: *a32
+                    data: *a41
                     freshAt:
                       type: string
                       minLength: 20
@@ -3710,7 +5255,7 @@ components:
                       type: string
                       enum:
                         - available
-                    data: &a33
+                    data: &a42
                       type: object
                       properties: {}
                       additionalProperties: false
@@ -3738,7 +5283,7 @@ components:
                       type: string
                       enum:
                         - partial
-                    data: *a33
+                    data: *a42
                     missing:
                       type: string
                       minLength: 1
@@ -3754,7 +5299,7 @@ components:
                       type: string
                       enum:
                         - stale
-                    data: *a33
+                    data: *a42
                     freshAt:
                       type: string
                       minLength: 20
@@ -3800,7 +5345,7 @@ components:
                       type: string
                       enum:
                         - available
-                    data: &a34
+                    data: &a43
                       type: object
                       properties: {}
                       additionalProperties: false
@@ -3828,7 +5373,7 @@ components:
                       type: string
                       enum:
                         - partial
-                    data: *a34
+                    data: *a43
                     missing:
                       type: string
                       minLength: 1
@@ -3844,7 +5389,7 @@ components:
                       type: string
                       enum:
                         - stale
-                    data: *a34
+                    data: *a43
                     freshAt:
                       type: string
                       minLength: 20
@@ -3887,9 +5432,60 @@ components:
             - metrics
             - pages
             - percentiles
-        meta: *a31
-        allowedActions: *a22
-        navigationTargets: *a11
+        meta: *a40
+        allowedActions: *a31
+        navigationTargets: *a20
+      additionalProperties: false
+      required:
+        - data
+        - meta
+        - allowedActions
+        - navigationTargets
+    usageGetSummaryResponse:
+      type: object
+      properties:
+        data:
+          type: object
+          properties:
+            organizationId: *a2
+            periodStart: *a7
+            periodEnd: *a7
+            acceptedEvents:
+              type: number
+              minimum: 0
+            processedEvents:
+              type: number
+              minimum: 0
+            quotaAcceptedEvents:
+              type: number
+              minimum: 0
+            ratio:
+              type: number
+              minimum: 0
+            stage:
+              type: string
+              enum:
+                - normal
+                - near-limit
+                - degraded
+                - hard-limit
+            note:
+              type: string
+              minLength: 1
+              maxLength: 512
+          additionalProperties: false
+          required:
+            - organizationId
+            - periodStart
+            - periodEnd
+            - acceptedEvents
+            - processedEvents
+            - quotaAcceptedEvents
+            - ratio
+            - stage
+        meta: *a40
+        allowedActions: *a31
+        navigationTargets: *a20
       additionalProperties: false
       required:
         - data
@@ -3899,7 +5495,7 @@ components:
     issuesUpdateStateResponse:
       type: object
       properties:
-        data: &a35
+        data: &a44
           type: object
           properties:
             status:
@@ -3941,14 +5537,14 @@ components:
     issuesUpdateAssigneeResponse:
       type: object
       properties:
-        data: *a35
+        data: *a44
       additionalProperties: false
       required:
         - data
     issuesUpdatePriorityResponse:
       type: object
       properties:
-        data: *a35
+        data: *a44
       additionalProperties: false
       required:
         - data
@@ -3963,7 +5559,7 @@ components:
               minLength: 1
               maxLength: 16
             issueId: *a9
-            noteId: *a36
+            noteId: *a45
           additionalProperties: false
           required:
             - status
@@ -3983,7 +5579,7 @@ components:
               minLength: 1
               maxLength: 16
             issueId: *a9
-            noteId: *a36
+            noteId: *a45
           additionalProperties: false
           required:
             - status
@@ -4140,7 +5736,7 @@ components:
                 - status
                 - items
                 - pagination
-            filters: &a37
+            filters: &a46
               type: object
               properties:
                 status:
@@ -4154,9 +5750,9 @@ components:
               additionalProperties: false
               required:
                 - status
-            summary: *a37
-            environments: *a37
-            releases: *a37
+            summary: *a46
+            environments: *a46
+            releases: *a46
           additionalProperties: false
           required:
             - issues
@@ -4164,9 +5760,9 @@ components:
             - summary
             - environments
             - releases
-        meta: *a31
-        allowedActions: *a22
-        navigationTargets: *a11
+        meta: *a40
+        allowedActions: *a31
+        navigationTargets: *a20
       additionalProperties: false
       required:
         - data
@@ -4365,33 +5961,2369 @@ components:
             - issue
             - samples
             - activity
-        meta: *a31
-        allowedActions: *a22
-        navigationTargets: *a11
+        meta: *a40
+        allowedActions: *a31
+        navigationTargets: *a20
       additionalProperties: false
       required:
         - data
         - meta
         - allowedActions
         - navigationTargets
+    alertsGetCapabilityResponse:
+      type: object
+      properties:
+        data:
+          type: object
+          properties:
+            metrics:
+              type: array
+              items:
+                type: object
+                properties:
+                  metric:
+                    type: string
+                    enum: *a47
+                  displayName:
+                    type: string
+                    minLength: 1
+                    maxLength: 64
+                  unit:
+                    type: string
+                    enum:
+                      - count
+                      - percentage
+                  direction:
+                    type: string
+                    enum:
+                      - higher_is_worse
+                  isRatio:
+                    type: boolean
+                  minSamplesRequired:
+                    type: boolean
+                  filterDimensions:
+                    type: array
+                    items:
+                      type: string
+                      enum: &a48
+                        - environment
+                        - release
+                        - page_or_endpoint
+                        - error_severity
+                additionalProperties: false
+                required:
+                  - metric
+                  - displayName
+                  - unit
+                  - direction
+                  - isRatio
+                  - minSamplesRequired
+                  - filterDimensions
+            windowsMinutes:
+              type: array
+              items:
+                type: number
+                minimum: 1
+            triggerDurationsMinutes:
+              type: array
+              items:
+                type: number
+                minimum: 0
+            cooldownsMinutes:
+              type: array
+              items:
+                type: number
+                minimum: 1
+            filterDimensions:
+              type: array
+              items:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    enum: *a48
+                  available:
+                    type: boolean
+                  reason:
+                    type: string
+                    minLength: 1
+                    maxLength: 128
+                additionalProperties: false
+                required:
+                  - id
+                  - available
+            recipients:
+              type: array
+              items:
+                type: object
+                properties:
+                  accountId: *a4
+                  maskedEmail:
+                    type: string
+                    minLength: 1
+                    maxLength: 320
+                additionalProperties: false
+                required:
+                  - accountId
+                  - maskedEmail
+          additionalProperties: false
+          required:
+            - metrics
+            - windowsMinutes
+            - triggerDurationsMinutes
+            - cooldownsMinutes
+            - filterDimensions
+            - recipients
+        meta: *a40
+        allowedActions: *a31
+        navigationTargets: *a20
+      additionalProperties: false
+      required:
+        - data
+        - meta
+        - allowedActions
+        - navigationTargets
+    alertsListRulesAndInstancesResponse:
+      type: object
+      properties:
+        data:
+          type: object
+          properties:
+            rules:
+              anyOf:
+                - type: object
+                  properties:
+                    status:
+                      type: string
+                      enum:
+                        - available
+                    data: &a50
+                      type: object
+                      properties:
+                        items:
+                          type: array
+                          items:
+                            type: object
+                            properties:
+                              ruleId: *a49
+                              name:
+                                type: string
+                                minLength: 1
+                                maxLength: 120
+                              metric:
+                                type: string
+                                enum: *a47
+                              windowMinutes:
+                                type: number
+                                minimum: 1
+                              triggerThreshold:
+                                type: number
+                                minimum: 0
+                              recoveryThreshold:
+                                type: number
+                                minimum: 0
+                              recipientAccountIds:
+                                type: array
+                                items: *a4
+                              evaluation:
+                                type: object
+                                properties:
+                                  state:
+                                    type: string
+                                    enum:
+                                      - normal
+                                      - pending_trigger
+                                      - triggered
+                                      - pending_recovery
+                                      - evaluation_paused
+                                  observedValue:
+                                    type: number
+                                    minimum: 0
+                                  sinceAt: *a7
+                                  lastEvaluatedAt: *a7
+                                  pauseReason:
+                                    type: string
+                                    minLength: 1
+                                    maxLength: 64
+                                additionalProperties: false
+                                required:
+                                  - state
+                              version:
+                                type: number
+                                minimum: 1
+                            additionalProperties: false
+                            required:
+                              - ruleId
+                              - metric
+                              - windowMinutes
+                              - triggerThreshold
+                              - recoveryThreshold
+                              - recipientAccountIds
+                              - evaluation
+                              - version
+                      additionalProperties: false
+                      required:
+                        - items
+                  additionalProperties: false
+                  required:
+                    - status
+                    - data
+                - type: object
+                  properties:
+                    status:
+                      type: string
+                      enum:
+                        - empty
+                    reason:
+                      type: string
+                      minLength: 1
+                      maxLength: 256
+                  additionalProperties: false
+                  required:
+                    - status
+                    - reason
+                - type: object
+                  properties:
+                    status:
+                      type: string
+                      enum:
+                        - partial
+                    data: *a50
+                    missing:
+                      type: string
+                      minLength: 1
+                      maxLength: 256
+                  additionalProperties: false
+                  required:
+                    - status
+                    - data
+                    - missing
+                - type: object
+                  properties:
+                    status:
+                      type: string
+                      enum:
+                        - stale
+                    data: *a50
+                    freshAt:
+                      type: string
+                      minLength: 20
+                      maxLength: 24
+                    staleReason:
+                      type: string
+                      minLength: 1
+                      maxLength: 256
+                  additionalProperties: false
+                  required:
+                    - status
+                    - data
+                    - freshAt
+                    - staleReason
+                - type: object
+                  properties:
+                    status:
+                      type: string
+                      enum:
+                        - unavailable
+                    reason:
+                      type: string
+                      minLength: 1
+                      maxLength: 256
+                  additionalProperties: false
+                  required:
+                    - status
+                    - reason
+                - type: object
+                  properties:
+                    status:
+                      type: string
+                      enum:
+                        - forbidden
+                  additionalProperties: false
+                  required:
+                    - status
+            instances:
+              anyOf:
+                - type: object
+                  properties:
+                    status:
+                      type: string
+                      enum:
+                        - available
+                    data: &a52
+                      type: object
+                      properties:
+                        items:
+                          type: array
+                          items:
+                            type: object
+                            properties:
+                              instanceId: *a51
+                              ruleId: *a49
+                              ruleName:
+                                type: string
+                                minLength: 1
+                                maxLength: 120
+                              metric:
+                                type: string
+                                enum: *a47
+                              state:
+                                type: string
+                                enum: &a53
+                                  - triggered
+                                  - pending_recovery
+                                  - recovered
+                                  - evaluation_paused
+                              triggeredAt: *a7
+                              recoveredAt: *a7
+                              pauseReason:
+                                type: string
+                                minLength: 1
+                                maxLength: 64
+                            additionalProperties: false
+                            required:
+                              - instanceId
+                              - ruleId
+                              - metric
+                              - state
+                              - triggeredAt
+                        count:
+                          type: number
+                          minimum: 0
+                        totalCountStatus:
+                          type: string
+                          enum:
+                            - available
+                            - bounded
+                            - unknown
+                      additionalProperties: false
+                      required:
+                        - items
+                        - count
+                        - totalCountStatus
+                  additionalProperties: false
+                  required:
+                    - status
+                    - data
+                - type: object
+                  properties:
+                    status:
+                      type: string
+                      enum:
+                        - empty
+                    reason:
+                      type: string
+                      minLength: 1
+                      maxLength: 256
+                  additionalProperties: false
+                  required:
+                    - status
+                    - reason
+                - type: object
+                  properties:
+                    status:
+                      type: string
+                      enum:
+                        - partial
+                    data: *a52
+                    missing:
+                      type: string
+                      minLength: 1
+                      maxLength: 256
+                  additionalProperties: false
+                  required:
+                    - status
+                    - data
+                    - missing
+                - type: object
+                  properties:
+                    status:
+                      type: string
+                      enum:
+                        - stale
+                    data: *a52
+                    freshAt:
+                      type: string
+                      minLength: 20
+                      maxLength: 24
+                    staleReason:
+                      type: string
+                      minLength: 1
+                      maxLength: 256
+                  additionalProperties: false
+                  required:
+                    - status
+                    - data
+                    - freshAt
+                    - staleReason
+                - type: object
+                  properties:
+                    status:
+                      type: string
+                      enum:
+                        - unavailable
+                    reason:
+                      type: string
+                      minLength: 1
+                      maxLength: 256
+                  additionalProperties: false
+                  required:
+                    - status
+                    - reason
+                - type: object
+                  properties:
+                    status:
+                      type: string
+                      enum:
+                        - forbidden
+                  additionalProperties: false
+                  required:
+                    - status
+          additionalProperties: false
+          required:
+            - rules
+            - instances
+        meta: *a40
+        allowedActions: *a31
+        navigationTargets: *a20
+      additionalProperties: false
+      required:
+        - data
+        - meta
+        - allowedActions
+        - navigationTargets
+    alertsCreateRuleResponse:
+      type: object
+      properties:
+        data:
+          type: object
+          properties:
+            status:
+              type: string
+              minLength: 1
+              maxLength: 16
+            ruleId: *a49
+          additionalProperties: false
+          required:
+            - status
+            - ruleId
+      additionalProperties: false
+      required:
+        - data
+    alertsUpdateRuleResponse:
+      type: object
+      properties:
+        data:
+          type: object
+          properties:
+            status:
+              type: string
+              minLength: 1
+              maxLength: 16
+            ruleId: *a49
+            version:
+              type: number
+              minimum: 1
+          additionalProperties: false
+          required:
+            - status
+            - ruleId
+            - version
+      additionalProperties: false
+      required:
+        - data
+    alertsGetInstanceDetailResponse:
+      type: object
+      properties:
+        data:
+          type: object
+          properties:
+            instance:
+              type: object
+              properties:
+                instanceId: *a51
+                ruleId: *a49
+                ruleName:
+                  type: string
+                  minLength: 1
+                  maxLength: 120
+                metric:
+                  type: string
+                  enum: *a47
+                state:
+                  type: string
+                  enum: *a53
+                directReason:
+                  type: string
+                  minLength: 1
+                  maxLength: 64
+                triggeredAt: *a7
+                recoveredAt: *a7
+                pauseReason:
+                  type: string
+                  minLength: 1
+                  maxLength: 64
+              additionalProperties: false
+              required:
+                - instanceId
+                - ruleId
+                - metric
+                - state
+                - directReason
+                - triggeredAt
+            ruleSnapshot:
+              type: object
+              properties:
+                name:
+                  type: string
+                  minLength: 1
+                  maxLength: 120
+                metric:
+                  type: string
+                  enum: *a47
+                filters: *a54
+                windowMinutes:
+                  type: number
+                  minimum: 1
+                triggerThreshold:
+                  type: number
+                  minimum: 0
+                triggerDurationMinutes:
+                  type: number
+                  minimum: 0
+                recoveryThreshold:
+                  type: number
+                  minimum: 0
+                recoveryDurationMinutes:
+                  type: number
+                  minimum: 0
+                minSampleCount:
+                  type: number
+                  minimum: 1
+                cooldownMinutes:
+                  type: number
+                  minimum: 1
+              additionalProperties: false
+              required:
+                - metric
+                - filters
+                - windowMinutes
+                - triggerThreshold
+                - triggerDurationMinutes
+                - recoveryThreshold
+                - recoveryDurationMinutes
+                - cooldownMinutes
+            evidence:
+              type: object
+              properties:
+                evaluatedAt: *a7
+                windowStartAt: *a7
+                windowEndAt: *a7
+                observedValue:
+                  type: number
+                  minimum: 0
+                numerator:
+                  type: number
+                  minimum: 0
+                denominator:
+                  type: number
+                  minimum: 0
+                sampleCount:
+                  type: number
+                  minimum: 0
+                minSampleRequirement:
+                  type: number
+                  minimum: 1
+                watermarkAt: *a7
+                completeness:
+                  type: string
+                  enum:
+                    - complete
+                    - insufficient
+                    - missing
+                pauseReason:
+                  type: string
+                  minLength: 1
+                  maxLength: 64
+                appliedFilters: *a54
+              additionalProperties: false
+              required:
+                - evaluatedAt
+                - windowStartAt
+                - windowEndAt
+                - completeness
+                - appliedFilters
+            transitions:
+              type: array
+              items:
+                type: object
+                properties:
+                  from:
+                    type: string
+                    minLength: 1
+                    maxLength: 32
+                  to:
+                    type: string
+                    minLength: 1
+                    maxLength: 32
+                  reason:
+                    type: string
+                    minLength: 1
+                    maxLength: 64
+                  occurredAt: *a7
+                additionalProperties: false
+                required:
+                  - from
+                  - to
+                  - reason
+                  - occurredAt
+          additionalProperties: false
+          required:
+            - instance
+            - ruleSnapshot
+            - evidence
+            - transitions
+        meta: *a40
+        allowedActions: *a31
+        navigationTargets: *a20
+      additionalProperties: false
+      required:
+        - data
+        - meta
+        - allowedActions
+        - navigationTargets
+    releasesListReleasesResponse:
+      type: object
+      properties:
+        data:
+          anyOf:
+            - type: object
+              properties:
+                status:
+                  type: string
+                  enum:
+                    - available
+                data: &a55
+                  type: object
+                  properties:
+                    items:
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          releaseId: *a12
+                          version:
+                            type: string
+                            minLength: 1
+                            maxLength: 256
+                          source:
+                            type: string
+                            enum:
+                              - source_map_upload
+                          firstSeenAt: *a7
+                          sourceMapFileCount:
+                            type: number
+                            minimum: 0
+                        additionalProperties: false
+                        required:
+                          - releaseId
+                          - version
+                          - source
+                          - firstSeenAt
+                          - sourceMapFileCount
+                  additionalProperties: false
+                  required:
+                    - items
+              additionalProperties: false
+              required:
+                - status
+                - data
+            - type: object
+              properties:
+                status:
+                  type: string
+                  enum:
+                    - empty
+                reason:
+                  type: string
+                  minLength: 1
+                  maxLength: 256
+              additionalProperties: false
+              required:
+                - status
+                - reason
+            - type: object
+              properties:
+                status:
+                  type: string
+                  enum:
+                    - partial
+                data: *a55
+                missing:
+                  type: string
+                  minLength: 1
+                  maxLength: 256
+              additionalProperties: false
+              required:
+                - status
+                - data
+                - missing
+            - type: object
+              properties:
+                status:
+                  type: string
+                  enum:
+                    - stale
+                data: *a55
+                freshAt:
+                  type: string
+                  minLength: 20
+                  maxLength: 24
+                staleReason:
+                  type: string
+                  minLength: 1
+                  maxLength: 256
+              additionalProperties: false
+              required:
+                - status
+                - data
+                - freshAt
+                - staleReason
+            - type: object
+              properties:
+                status:
+                  type: string
+                  enum:
+                    - unavailable
+                reason:
+                  type: string
+                  minLength: 1
+                  maxLength: 256
+              additionalProperties: false
+              required:
+                - status
+                - reason
+            - type: object
+              properties:
+                status:
+                  type: string
+                  enum:
+                    - forbidden
+              additionalProperties: false
+              required:
+                - status
+        meta: *a40
+        allowedActions: *a31
+        navigationTargets: *a20
+      additionalProperties: false
+      required:
+        - data
+        - meta
+        - allowedActions
+        - navigationTargets
+    sourceMapsListFilesResponse:
+      type: object
+      properties:
+        data:
+          anyOf:
+            - type: object
+              properties:
+                status:
+                  type: string
+                  enum:
+                    - available
+                data: &a57
+                  type: object
+                  properties:
+                    items:
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          sourceMapFileId: *a56
+                          buildPath:
+                            type: string
+                            minLength: 1
+                            maxLength: 2048
+                          digestPrefix:
+                            type: string
+                            minLength: 8
+                            maxLength: 16
+                          status:
+                            type: string
+                            enum:
+                              - active
+                              - replaced
+                          reparse:
+                            type: object
+                            properties:
+                              state:
+                                type: string
+                                enum:
+                                  - queued
+                                  - processing
+                                  - completed
+                                  - failed
+                              processedCount:
+                                type: number
+                                minimum: 0
+                              totalCount:
+                                type: number
+                                minimum: 0
+                              updatedAt: *a7
+                            additionalProperties: false
+                            required:
+                              - state
+                          uploadedAt: *a7
+                          replacedAt: *a7
+                          version:
+                            type: number
+                            minimum: 1
+                        additionalProperties: false
+                        required:
+                          - sourceMapFileId
+                          - buildPath
+                          - digestPrefix
+                          - status
+                          - reparse
+                          - uploadedAt
+                          - version
+                  additionalProperties: false
+                  required:
+                    - items
+              additionalProperties: false
+              required:
+                - status
+                - data
+            - type: object
+              properties:
+                status:
+                  type: string
+                  enum:
+                    - empty
+                reason:
+                  type: string
+                  minLength: 1
+                  maxLength: 256
+              additionalProperties: false
+              required:
+                - status
+                - reason
+            - type: object
+              properties:
+                status:
+                  type: string
+                  enum:
+                    - partial
+                data: *a57
+                missing:
+                  type: string
+                  minLength: 1
+                  maxLength: 256
+              additionalProperties: false
+              required:
+                - status
+                - data
+                - missing
+            - type: object
+              properties:
+                status:
+                  type: string
+                  enum:
+                    - stale
+                data: *a57
+                freshAt:
+                  type: string
+                  minLength: 20
+                  maxLength: 24
+                staleReason:
+                  type: string
+                  minLength: 1
+                  maxLength: 256
+              additionalProperties: false
+              required:
+                - status
+                - data
+                - freshAt
+                - staleReason
+            - type: object
+              properties:
+                status:
+                  type: string
+                  enum:
+                    - unavailable
+                reason:
+                  type: string
+                  minLength: 1
+                  maxLength: 256
+              additionalProperties: false
+              required:
+                - status
+                - reason
+            - type: object
+              properties:
+                status:
+                  type: string
+                  enum:
+                    - forbidden
+              additionalProperties: false
+              required:
+                - status
+        meta: *a40
+        allowedActions: *a31
+        navigationTargets: *a20
+      additionalProperties: false
+      required:
+        - data
+        - meta
+        - allowedActions
+        - navigationTargets
+    sourceMapsUploadResponse:
+      type: object
+      properties:
+        data:
+          type: object
+          properties:
+            status:
+              type: string
+              enum:
+                - uploaded
+                - duplicate
+                - replace_conflict
+            releaseId: *a12
+            sourceMapFileId: *a56
+            currentDigest:
+              type: string
+              minLength: 64
+              maxLength: 64
+            version:
+              type: number
+              minimum: 1
+          additionalProperties: false
+          required:
+            - status
+            - releaseId
+      additionalProperties: false
+      required:
+        - data
+    sourceMapsReplaceResponse:
+      type: object
+      properties:
+        data:
+          type: object
+          properties:
+            status:
+              type: string
+              enum:
+                - replaced
+            sourceMapFileId: *a56
+            version:
+              type: number
+              minimum: 1
+          additionalProperties: false
+          required:
+            - status
+            - sourceMapFileId
+            - version
+      additionalProperties: false
+      required:
+        - data
+    sourceMapsReparseResponse:
+      type: object
+      properties:
+        data:
+          type: object
+          properties:
+            status:
+              type: string
+              enum:
+                - queued
+            releaseId: *a12
+            taskCount:
+              type: number
+              minimum: 1
+          additionalProperties: false
+          required:
+            - status
+            - releaseId
+            - taskCount
+      additionalProperties: false
+      required:
+        - data
+    accessListEffectiveMembersResponse:
+      type: object
+      properties:
+        data:
+          anyOf:
+            - type: object
+              properties:
+                status:
+                  type: string
+                  enum:
+                    - available
+                data: &a58
+                  type: object
+                  properties:
+                    items:
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          accountId: *a4
+                          maskedEmail:
+                            type: string
+                            minLength: 1
+                            maxLength: 320
+                          effectiveRole:
+                            type: string
+                            enum: *a13
+                          sources:
+                            type: array
+                            items:
+                              type: string
+                              enum:
+                                - org_inherited
+                                - project_member
+                          projectRole:
+                            type: string
+                            enum: *a13
+                          allowedActions:
+                            type: array
+                            items:
+                              type: string
+                              enum:
+                                - read
+                                - manage
+                        additionalProperties: false
+                        required:
+                          - accountId
+                          - maskedEmail
+                          - effectiveRole
+                          - sources
+                          - allowedActions
+                  additionalProperties: false
+                  required:
+                    - items
+              additionalProperties: false
+              required:
+                - status
+                - data
+            - type: object
+              properties:
+                status:
+                  type: string
+                  enum:
+                    - empty
+                reason:
+                  type: string
+                  minLength: 1
+                  maxLength: 256
+              additionalProperties: false
+              required:
+                - status
+                - reason
+            - type: object
+              properties:
+                status:
+                  type: string
+                  enum:
+                    - partial
+                data: *a58
+                missing:
+                  type: string
+                  minLength: 1
+                  maxLength: 256
+              additionalProperties: false
+              required:
+                - status
+                - data
+                - missing
+            - type: object
+              properties:
+                status:
+                  type: string
+                  enum:
+                    - stale
+                data: *a58
+                freshAt:
+                  type: string
+                  minLength: 20
+                  maxLength: 24
+                staleReason:
+                  type: string
+                  minLength: 1
+                  maxLength: 256
+              additionalProperties: false
+              required:
+                - status
+                - data
+                - freshAt
+                - staleReason
+            - type: object
+              properties:
+                status:
+                  type: string
+                  enum:
+                    - unavailable
+                reason:
+                  type: string
+                  minLength: 1
+                  maxLength: 256
+              additionalProperties: false
+              required:
+                - status
+                - reason
+            - type: object
+              properties:
+                status:
+                  type: string
+                  enum:
+                    - forbidden
+              additionalProperties: false
+              required:
+                - status
+        meta: *a40
+        allowedActions: *a31
+        navigationTargets: *a20
+      additionalProperties: false
+      required:
+        - data
+        - meta
+        - allowedActions
+        - navigationTargets
+    accessGrantProjectMembershipResponse:
+      type: object
+      properties:
+        data:
+          type: object
+          properties:
+            status:
+              type: string
+              enum:
+                - granted
+            accountId: *a4
+            role:
+              type: string
+              enum: *a13
+          additionalProperties: false
+          required:
+            - status
+            - accountId
+            - role
+      additionalProperties: false
+      required:
+        - data
+    accessChangeProjectRoleResponse:
+      type: object
+      properties:
+        data:
+          type: object
+          properties:
+            status:
+              type: string
+              enum:
+                - changed
+            accountId: *a4
+            role:
+              type: string
+              enum: *a13
+          additionalProperties: false
+          required:
+            - status
+            - accountId
+            - role
+      additionalProperties: false
+      required:
+        - data
+    accessRemoveProjectMembershipResponse:
+      type: object
+      properties:
+        data:
+          type: object
+          properties:
+            status:
+              type: string
+              enum:
+                - removed
+            accountId: *a4
+            remainingSources:
+              type: array
+              items:
+                type: string
+                enum:
+                  - org_inherited
+                  - project_member
+          additionalProperties: false
+          required:
+            - status
+            - accountId
+            - remainingSources
+      additionalProperties: false
+      required:
+        - data
+    credentialsListClientKeysResponse:
+      type: object
+      properties:
+        data:
+          anyOf:
+            - type: object
+              properties:
+                status:
+                  type: string
+                  enum:
+                    - available
+                data: &a59
+                  type: object
+                  properties:
+                    items:
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          credentialId:
+                            type: string
+                            minLength: 1
+                            maxLength: 64
+                          keyId:
+                            type: string
+                            minLength: 8
+                            maxLength: 128
+                          status:
+                            type: string
+                            enum:
+                              - active
+                              - disabled
+                              - revoked
+                          allowNonBrowser:
+                            type: boolean
+                          expiresAt: *a7
+                          origins:
+                            type: array
+                            items:
+                              type: string
+                              minLength: 1
+                              maxLength: 256
+                          environments:
+                            type: array
+                            items:
+                              type: string
+                              minLength: 1
+                              maxLength: 256
+                          createdAt: *a7
+                          updatedAt: *a7
+                        additionalProperties: false
+                        required:
+                          - credentialId
+                          - keyId
+                          - status
+                          - allowNonBrowser
+                          - origins
+                          - environments
+                          - createdAt
+                          - updatedAt
+                  additionalProperties: false
+                  required:
+                    - items
+              additionalProperties: false
+              required:
+                - status
+                - data
+            - type: object
+              properties:
+                status:
+                  type: string
+                  enum:
+                    - empty
+                reason:
+                  type: string
+                  minLength: 1
+                  maxLength: 256
+              additionalProperties: false
+              required:
+                - status
+                - reason
+            - type: object
+              properties:
+                status:
+                  type: string
+                  enum:
+                    - partial
+                data: *a59
+                missing:
+                  type: string
+                  minLength: 1
+                  maxLength: 256
+              additionalProperties: false
+              required:
+                - status
+                - data
+                - missing
+            - type: object
+              properties:
+                status:
+                  type: string
+                  enum:
+                    - stale
+                data: *a59
+                freshAt:
+                  type: string
+                  minLength: 20
+                  maxLength: 24
+                staleReason:
+                  type: string
+                  minLength: 1
+                  maxLength: 256
+              additionalProperties: false
+              required:
+                - status
+                - data
+                - freshAt
+                - staleReason
+            - type: object
+              properties:
+                status:
+                  type: string
+                  enum:
+                    - unavailable
+                reason:
+                  type: string
+                  minLength: 1
+                  maxLength: 256
+              additionalProperties: false
+              required:
+                - status
+                - reason
+            - type: object
+              properties:
+                status:
+                  type: string
+                  enum:
+                    - forbidden
+              additionalProperties: false
+              required:
+                - status
+        meta: *a40
+        allowedActions: *a31
+        navigationTargets: *a20
+      additionalProperties: false
+      required:
+        - data
+        - meta
+        - allowedActions
+        - navigationTargets
+    credentialsCreateClientKeyResponse:
+      type: object
+      properties:
+        data:
+          type: object
+          properties:
+            status:
+              type: string
+              enum:
+                - created
+            credentialId:
+              type: string
+              minLength: 1
+              maxLength: 64
+            keyId:
+              type: string
+              minLength: 8
+              maxLength: 128
+            clientKey:
+              type: string
+              minLength: 20
+              maxLength: 256
+            expiresAt: *a7
+            origins:
+              type: array
+              items:
+                type: string
+                minLength: 1
+                maxLength: 256
+            environments:
+              type: array
+              items:
+                type: string
+                minLength: 1
+                maxLength: 256
+          additionalProperties: false
+          required:
+            - status
+            - credentialId
+            - keyId
+            - clientKey
+            - origins
+            - environments
+      additionalProperties: false
+      required:
+        - data
+    credentialsDisableClientKeyResponse:
+      type: object
+      properties:
+        data:
+          type: object
+          properties:
+            status:
+              type: string
+              enum:
+                - disabled
+            credentialId:
+              type: string
+              minLength: 1
+              maxLength: 64
+            keyId:
+              type: string
+              minLength: 8
+              maxLength: 128
+          additionalProperties: false
+          required:
+            - status
+            - credentialId
+            - keyId
+      additionalProperties: false
+      required:
+        - data
+    credentialsEnableClientKeyResponse:
+      type: object
+      properties:
+        data:
+          type: object
+          properties:
+            status:
+              type: string
+              enum:
+                - enabled
+            credentialId:
+              type: string
+              minLength: 1
+              maxLength: 64
+            keyId:
+              type: string
+              minLength: 8
+              maxLength: 128
+          additionalProperties: false
+          required:
+            - status
+            - credentialId
+            - keyId
+      additionalProperties: false
+      required:
+        - data
+    credentialsRevokeClientKeyResponse:
+      type: object
+      properties:
+        data:
+          type: object
+          properties:
+            status:
+              type: string
+              enum:
+                - revoked
+            credentialId:
+              type: string
+              minLength: 1
+              maxLength: 64
+            keyId:
+              type: string
+              minLength: 8
+              maxLength: 128
+          additionalProperties: false
+          required:
+            - status
+            - credentialId
+            - keyId
+      additionalProperties: false
+      required:
+        - data
+    settingsGetProjectResponse:
+      type: object
+      properties:
+        data:
+          type: object
+          properties:
+            project:
+              type: object
+              properties:
+                projectId: *a6
+                name:
+                  type: string
+                  minLength: 2
+                  maxLength: 50
+                frameworkType:
+                  type: string
+                  enum:
+                    - javascript
+                    - react
+                    - vue
+                    - other
+                websiteUrl:
+                  type: string
+                  minLength: 8
+                  maxLength: 512
+                lifecycle:
+                  type: object
+                  properties:
+                    status:
+                      type: string
+                      enum:
+                        - active
+                        - archived
+                        - trash
+                        - deleting
+                    archivedAt: *a7
+                    trashedAt: *a7
+                    recoverableUntil: *a7
+                  additionalProperties: false
+                  required:
+                    - status
+                resourceVersion: *a5
+              additionalProperties: false
+              required:
+                - projectId
+                - name
+                - frameworkType
+                - lifecycle
+                - resourceVersion
+          additionalProperties: false
+          required:
+            - project
+        meta: *a40
+        allowedActions: *a31
+        navigationTargets: *a20
+      additionalProperties: false
+      required:
+        - data
+        - meta
+        - allowedActions
+        - navigationTargets
+    settingsUpdateProjectResponse:
+      type: object
+      properties:
+        data:
+          type: object
+          properties:
+            status:
+              type: string
+              enum:
+                - updated
+            projectId: *a6
+            name:
+              type: string
+              minLength: 2
+              maxLength: 50
+            websiteUrl:
+              type: string
+              minLength: 8
+              maxLength: 512
+            resourceVersion: *a5
+          additionalProperties: false
+          required:
+            - status
+            - projectId
+            - name
+            - resourceVersion
+      additionalProperties: false
+      required:
+        - data
+    settingsListEnvironmentsResponse:
+      type: object
+      properties:
+        data:
+          anyOf:
+            - type: object
+              properties:
+                status:
+                  type: string
+                  enum:
+                    - available
+                data: &a60
+                  type: object
+                  properties:
+                    items:
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          environmentId: &a61
+                            type: string
+                            minLength: 3
+                            maxLength: 64
+                            description: EnvironmentId
+                          name:
+                            type: string
+                            minLength: 1
+                            maxLength: 32
+                          isDefault:
+                            type: string
+                            minLength: 1
+                            maxLength: 16
+                          createdAt: *a7
+                        additionalProperties: false
+                        required:
+                          - environmentId
+                          - name
+                          - isDefault
+                          - createdAt
+                  additionalProperties: false
+                  required:
+                    - items
+              additionalProperties: false
+              required:
+                - status
+                - data
+            - type: object
+              properties:
+                status:
+                  type: string
+                  enum:
+                    - empty
+                reason:
+                  type: string
+                  minLength: 1
+                  maxLength: 256
+              additionalProperties: false
+              required:
+                - status
+                - reason
+            - type: object
+              properties:
+                status:
+                  type: string
+                  enum:
+                    - partial
+                data: *a60
+                missing:
+                  type: string
+                  minLength: 1
+                  maxLength: 256
+              additionalProperties: false
+              required:
+                - status
+                - data
+                - missing
+            - type: object
+              properties:
+                status:
+                  type: string
+                  enum:
+                    - stale
+                data: *a60
+                freshAt:
+                  type: string
+                  minLength: 20
+                  maxLength: 24
+                staleReason:
+                  type: string
+                  minLength: 1
+                  maxLength: 256
+              additionalProperties: false
+              required:
+                - status
+                - data
+                - freshAt
+                - staleReason
+            - type: object
+              properties:
+                status:
+                  type: string
+                  enum:
+                    - unavailable
+                reason:
+                  type: string
+                  minLength: 1
+                  maxLength: 256
+              additionalProperties: false
+              required:
+                - status
+                - reason
+            - type: object
+              properties:
+                status:
+                  type: string
+                  enum:
+                    - forbidden
+              additionalProperties: false
+              required:
+                - status
+        meta: *a40
+        allowedActions: *a31
+        navigationTargets: *a20
+      additionalProperties: false
+      required:
+        - data
+        - meta
+        - allowedActions
+        - navigationTargets
+    settingsCreateEnvironmentResponse:
+      type: object
+      properties:
+        data:
+          type: object
+          properties:
+            status:
+              type: string
+              enum:
+                - created
+            environmentId: *a61
+            name:
+              type: string
+              minLength: 1
+              maxLength: 32
+          additionalProperties: false
+          required:
+            - status
+            - environmentId
+            - name
+      additionalProperties: false
+      required:
+        - data
+    lifecycleArchiveProjectResponse:
+      type: object
+      properties:
+        data:
+          type: object
+          properties:
+            status:
+              type: string
+              enum:
+                - archived
+            projectId: *a6
+          additionalProperties: false
+          required:
+            - status
+            - projectId
+      additionalProperties: false
+      required:
+        - data
+    lifecycleRestoreProjectResponse:
+      type: object
+      properties:
+        data:
+          type: object
+          properties:
+            status:
+              type: string
+              enum:
+                - restored
+            projectId: *a6
+          additionalProperties: false
+          required:
+            - status
+            - projectId
+      additionalProperties: false
+      required:
+        - data
+    lifecycleMoveToTrashResponse:
+      type: object
+      properties:
+        data:
+          type: object
+          properties:
+            status:
+              type: string
+              enum:
+                - trashed
+            projectId: *a6
+            trashedAt: *a7
+            recoverableUntil: *a7
+          additionalProperties: false
+          required:
+            - status
+            - projectId
+            - trashedAt
+            - recoverableUntil
+      additionalProperties: false
+      required:
+        - data
+    notificationsListAndUnreadResponse:
+      type: object
+      properties:
+        data:
+          type: object
+          properties:
+            notifications:
+              type: object
+              properties:
+                status:
+                  type: string
+                  minLength: 1
+                  maxLength: 16
+                reason:
+                  type: string
+                  minLength: 1
+                  maxLength: 128
+                items:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      notificationId: *a62
+                      type:
+                        type: string
+                        enum:
+                          - alert_triggered
+                          - alert_recovered
+                          - new_issue
+                          - issue_reappeared
+                          - issue_assigned_to_me
+                      title:
+                        type: string
+                        minLength: 1
+                        maxLength: 256
+                      summary:
+                        type: string
+                        minLength: 1
+                        maxLength: 1024
+                      organizationId: *a2
+                      projectId: *a6
+                      occurredAt: *a7
+                      readAt: *a7
+                      target: *a21
+                    additionalProperties: false
+                    required:
+                      - notificationId
+                      - type
+                      - title
+                      - occurredAt
+                      - target
+                pagination: *a28
+              additionalProperties: false
+              required:
+                - status
+                - items
+                - pagination
+            unreadCount:
+              type: object
+              properties:
+                value:
+                  type: number
+                  minimum: 0
+                status:
+                  type: string
+                  enum:
+                    - available
+                    - unavailable
+              additionalProperties: false
+              required:
+                - status
+          additionalProperties: false
+          required:
+            - notifications
+            - unreadCount
+        meta: *a40
+        allowedActions: *a31
+        navigationTargets: *a20
+      additionalProperties: false
+      required:
+        - data
+        - meta
+        - allowedActions
+        - navigationTargets
+    notificationsMarkReadResponse:
+      type: object
+      properties:
+        data:
+          type: object
+          properties:
+            status:
+              type: string
+              enum:
+                - read
+            notificationId: *a62
+          additionalProperties: false
+          required:
+            - status
+            - notificationId
+      additionalProperties: false
+      required:
+        - data
+    platformAdminGetCapabilityResponse:
+      type: object
+      properties:
+        data:
+          type: object
+          properties:
+            hasCapability:
+              type: boolean
+          additionalProperties: false
+          required:
+            - hasCapability
+      additionalProperties: false
+      required:
+        - data
+    platformAdminListResponse:
+      type: object
+      properties:
+        data:
+          type: object
+          properties:
+            admins:
+              type: object
+              properties:
+                status:
+                  type: string
+                  minLength: 1
+                  maxLength: 16
+                reason:
+                  type: string
+                  minLength: 1
+                  maxLength: 128
+                items:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      accountId: *a4
+                      grantedBy: *a4
+                      grantedAt: *a7
+                    additionalProperties: false
+                    required:
+                      - accountId
+                      - grantedBy
+                      - grantedAt
+                pagination: *a28
+              additionalProperties: false
+              required:
+                - status
+                - items
+                - pagination
+          additionalProperties: false
+          required:
+            - admins
+        meta: *a40
+        allowedActions: *a31
+        navigationTargets: *a20
+      additionalProperties: false
+      required:
+        - data
+        - meta
+        - allowedActions
+        - navigationTargets
+    platformAdminGrantResponse:
+      type: object
+      properties:
+        data:
+          type: object
+          properties:
+            status:
+              type: string
+              minLength: 1
+              maxLength: 32
+            accountId: *a4
+          additionalProperties: false
+          required:
+            - status
+            - accountId
+      additionalProperties: false
+      required:
+        - data
+    platformAdminRevokeResponse:
+      type: object
+      properties:
+        data:
+          type: object
+          properties:
+            status:
+              type: string
+              minLength: 1
+              maxLength: 32
+            accountId: *a4
+          additionalProperties: false
+          required:
+            - status
+            - accountId
+      additionalProperties: false
+      required:
+        - data
+    platformAuditListEventsResponse:
+      type: object
+      properties:
+        data:
+          type: object
+          properties:
+            events:
+              type: object
+              properties:
+                status:
+                  type: string
+                  minLength: 1
+                  maxLength: 16
+                reason:
+                  type: string
+                  minLength: 1
+                  maxLength: 128
+                items:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      eventId: *a63
+                      action:
+                        type: string
+                        minLength: 1
+                        maxLength: 48
+                      actorAccountId: *a4
+                      target:
+                        type: object
+                        additionalProperties:
+                          type: string
+                          minLength: 1
+                          maxLength: 4096
+                      result:
+                        type: string
+                        minLength: 1
+                        maxLength: 16
+                      occurredAt: *a7
+                      requestId:
+                        type: string
+                        minLength: 1
+                        maxLength: 64
+                    additionalProperties: false
+                    required:
+                      - eventId
+                      - action
+                      - actorAccountId
+                      - target
+                      - result
+                      - occurredAt
+                pagination: *a28
+              additionalProperties: false
+              required:
+                - status
+                - items
+                - pagination
+          additionalProperties: false
+          required:
+            - events
+        meta: *a40
+        allowedActions: *a31
+        navigationTargets: *a20
+      additionalProperties: false
+      required:
+        - data
+        - meta
+        - allowedActions
+        - navigationTargets
+    policyTargetSearchResponse:
+      type: object
+      properties:
+        data:
+          type: object
+          properties:
+            organizations:
+              type: array
+              items:
+                type: object
+                properties:
+                  organizationId: *a2
+                  name:
+                    type: string
+                    minLength: 1
+                    maxLength: 128
+                additionalProperties: false
+                required:
+                  - organizationId
+                  - name
+            projects:
+              type: array
+              items:
+                type: object
+                properties:
+                  projectId: *a6
+                  organizationId: *a2
+                  name:
+                    type: string
+                    minLength: 1
+                    maxLength: 128
+                additionalProperties: false
+                required:
+                  - projectId
+                  - organizationId
+                  - name
+            pagination: *a28
+          additionalProperties: false
+          required:
+            - organizations
+            - projects
+            - pagination
+        meta: *a40
+        allowedActions: *a31
+        navigationTargets: *a20
+      additionalProperties: false
+      required:
+        - data
+        - meta
+        - allowedActions
+        - navigationTargets
+    policyGetDefaultResponse:
+      type: object
+      properties:
+        data:
+          type: object
+          properties:
+            data: &a65
+              type: object
+              properties:
+                configured: &a64
+                  type: object
+                  properties:
+                    defaultPeriodQuota: *a15
+                    warningRatio: *a16
+                    hardLimit: *a17
+                    degradationEnabled: *a18
+                    highValueRetentionDays: *a19
+                  additionalProperties: false
+                  required:
+                    - defaultPeriodQuota
+                    - warningRatio
+                    - hardLimit
+                    - degradationEnabled
+                    - highValueRetentionDays
+                source:
+                  type: string
+                  minLength: 1
+                  maxLength: 40
+                effective: *a64
+                version:
+                  type: number
+                  minimum: 0
+                updatedAt: *a7
+                updatedBy: *a4
+                propagation: &a66
+                  type: object
+                  properties:
+                    status:
+                      type: string
+                      enum:
+                        - unknown
+                    reason:
+                      type: string
+                      minLength: 1
+                      maxLength: 128
+                  additionalProperties: false
+                  required:
+                    - status
+                    - reason
+              additionalProperties: false
+              required:
+                - configured
+                - source
+                - effective
+                - version
+                - propagation
+          additionalProperties: false
+          required:
+            - data
+        meta: *a40
+        allowedActions: *a31
+        navigationTargets: *a20
+      additionalProperties: false
+      required:
+        - data
+        - meta
+        - allowedActions
+        - navigationTargets
+    policyGetOrganizationEffectiveResponse:
+      type: object
+      properties:
+        data:
+          type: object
+          properties:
+            data: *a65
+          additionalProperties: false
+          required:
+            - data
+        meta: *a40
+        allowedActions: *a31
+        navigationTargets: *a20
+      additionalProperties: false
+      required:
+        - data
+        - meta
+        - allowedActions
+        - navigationTargets
+    policyGetProjectEffectiveResponse:
+      type: object
+      properties:
+        data:
+          type: object
+          properties:
+            data:
+              type: object
+              properties:
+                configured:
+                  type: object
+                  properties:
+                    resourceLimit:
+                      type: number
+                      minimum: 1
+                  additionalProperties: false
+                source:
+                  type: string
+                  minLength: 1
+                  maxLength: 40
+                effective:
+                  type: object
+                  properties:
+                    defaultPeriodQuota: *a15
+                    warningRatio: *a16
+                    hardLimit: *a17
+                    degradationEnabled: *a18
+                    highValueRetentionDays: *a19
+                    resourceLimit:
+                      type: number
+                      minimum: 1
+                  additionalProperties: false
+                  required:
+                    - defaultPeriodQuota
+                    - warningRatio
+                    - hardLimit
+                    - degradationEnabled
+                    - highValueRetentionDays
+                version:
+                  type: number
+                  minimum: 0
+                updatedAt: *a7
+                updatedBy: *a4
+                propagation: *a66
+              additionalProperties: false
+              required:
+                - configured
+                - source
+                - effective
+                - version
+                - propagation
+          additionalProperties: false
+          required:
+            - data
+        meta: *a40
+        allowedActions: *a31
+        navigationTargets: *a20
+      additionalProperties: false
+      required:
+        - data
+        - meta
+        - allowedActions
+        - navigationTargets
+    policySetDefaultResponse:
+      type: object
+      properties:
+        data:
+          type: object
+          properties:
+            status:
+              type: string
+              enum:
+                - set
+            version:
+              type: number
+              minimum: 0
+          additionalProperties: false
+          required:
+            - status
+            - version
+      additionalProperties: false
+      required:
+        - data
+    policySetOrganizationResponse:
+      type: object
+      properties:
+        data:
+          type: object
+          properties:
+            status:
+              type: string
+              enum:
+                - set
+            version:
+              type: number
+              minimum: 0
+          additionalProperties: false
+          required:
+            - status
+            - version
+      additionalProperties: false
+      required:
+        - data
+    policyResetOrganizationResponse:
+      type: object
+      properties:
+        data:
+          type: object
+          properties:
+            status:
+              type: string
+              enum:
+                - reset
+          additionalProperties: false
+          required:
+            - status
+      additionalProperties: false
+      required:
+        - data
+    policySetProjectLimitResponse:
+      type: object
+      properties:
+        data:
+          type: object
+          properties:
+            status:
+              type: string
+              enum:
+                - set
+            version:
+              type: number
+              minimum: 0
+          additionalProperties: false
+          required:
+            - status
+            - version
+      additionalProperties: false
+      required:
+        - data
+    policyClearProjectLimitResponse:
+      type: object
+      properties:
+        data:
+          type: object
+          properties:
+            status:
+              type: string
+              enum:
+                - cleared
+          additionalProperties: false
+          required:
+            - status
+      additionalProperties: false
+      required:
+        - data
 tags:
+  - name: access
+  - name: alerts
   - name: audit
   - name: auth
+  - name: client-keys
   - name: credentials
   - name: diagnostics
   - name: identity
   - name: invitation
   - name: issues-and-alerts
+  - name: lifecycle
   - name: members
   - name: monitoring
   - name: navigation
+  - name: notifications
   - name: organization
   - name: performance
+  - name: platform-admin
   - name: project-governance
+  - name: releases
   - name: requests
   - name: security
   - name: session
   - name: settings
+  - name: source-maps
   - name: tokens
   - name: trash
+  - name: usage-and-policy
   - name: workspace

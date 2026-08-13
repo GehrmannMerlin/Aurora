@@ -66,11 +66,11 @@ describeDb('DAT-14 issue lifecycle Commands (real PostgreSQL 17 + Redis)', () =>
     await runAllMigrations();
     await truncateIdentityTables(pool);
     await pool.query(
-      `TRUNCATE issue_notes, issue_activities, issue_samples, issue_event_applications,
-        issues, request_metric_buckets, request_metric_event_applications,
-        request_event_samples, error_event_occurrences,
-        performance_metric_buckets, performance_metric_event_applications,
-        performance_event_samples CASCADE`,
+      `TRUNCATE notifications, issue_notes, issue_activities, issue_samples,
+        issue_event_applications, issues, request_metric_buckets,
+        request_metric_event_applications, request_event_samples,
+        error_event_occurrences, performance_metric_buckets,
+        performance_metric_event_applications, performance_event_samples CASCADE`,
     );
     keyPrefix = `test:issues-command:${randomUUID()}`;
     sessionStore = await createSessionStore({ url: redisUrl(), keyPrefix });
@@ -348,6 +348,74 @@ describeDb('DAT-14 issue lifecycle Commands (real PostgreSQL 17 + Redis)', () =>
       },
     );
     expect(deleted.status).toBe(200);
+    await app.close();
+  });
+
+  it('assigning an issue appends an assign-to-me notification (deduped)', async () => {
+    const app = buildApp();
+    const owner = await registerVerifiedActor(app, pool, `owner-${randomUUID()}@example.com`);
+    const assignee = await registerVerifiedActor(app, pool, `assignee-${randomUUID()}@example.com`);
+    await insertOrganizationMembership(pool, {
+      organizationId: owner.organizationId,
+      accountId: assignee.accountId,
+      role: 'member',
+    });
+    const projectId = await createProjectFor(pool, owner);
+    const issueId = await seedIssue(pool, projectId);
+
+    const first = await postIssue(
+      app,
+      owner,
+      owner.organizationId,
+      projectId,
+      `${issueId}/assignee`,
+      {
+        assigneeAccountId: assignee.accountId,
+        version: 1,
+        idempotencyKey: `idem-${randomUUID()}`,
+      },
+    );
+    expect(first.status).toBe(200);
+
+    const rows = await pool.query<{
+      business_key: string;
+      organization_id: string;
+      project_id: string;
+      target: { routeId: string };
+    }>(
+      `SELECT business_key, organization_id, project_id, target
+         FROM notifications WHERE account_id = $1 AND type = $2`,
+      [assignee.accountId, 'issue_assigned_to_me'],
+    );
+    expect(rows.rows).toHaveLength(1);
+    const row = rows.rows[0];
+    if (row === undefined) throw new Error('missing assignee notification row');
+    expect(row.business_key).toBe(`assignment:${issueId}:${assignee.accountId}`);
+    expect(row.organization_id).toBe(owner.organizationId);
+    expect(row.project_id).toBe(projectId);
+    expect(row.target.routeId).toBe('project.issue-detail');
+
+    // Re-assigning the same person is not a change → no duplicate notification.
+    const second = await postIssue(
+      app,
+      owner,
+      owner.organizationId,
+      projectId,
+      `${issueId}/assignee`,
+      {
+        assigneeAccountId: assignee.accountId,
+        version: 2,
+        idempotencyKey: `idem-${randomUUID()}`,
+      },
+    );
+    expect(second.status).toBe(200);
+    const count = await pool.query<{ n: string }>(
+      `SELECT count(*)::bigint AS n FROM notifications
+         WHERE account_id = $1 AND type = $2`,
+      [assignee.accountId, 'issue_assigned_to_me'],
+    );
+    expect(Number(count.rows[0]?.n ?? 0)).toBe(1);
+
     await app.close();
   });
 });

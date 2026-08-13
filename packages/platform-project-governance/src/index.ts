@@ -82,3 +82,33 @@ export {
   type TrashProjectInput,
   type TrashProjectResult,
 } from './repositories/trash.js';
+
+export {
+  changeProjectMemberRole,
+  listProjectEffectiveMembers,
+  removeProjectMember,
+  type ChangeProjectMemberRoleInput,
+  type ChangeProjectMemberRoleResult,
+  type EffectiveProjectMember,
+  type EffectiveMemberSource,
+  type ListProjectEffectiveMembersInput,
+  type RemoveProjectMemberInput,
+  type RemoveProjectMemberResult,
+} from './repositories/access.js';
+
+export {
+  createProjectEnvironment,
+  listProjectEnvironments,
+  updateProjectSettings,
+  type CreateProjectEnvironmentInput,
+  type CreateProjectEnvironmentResult,
+  type ProjectEnvironmentRow,
+  type UpdateProjectSettingsInput,
+  type UpdateProjectSettingsResult,
+} from './repositories/settings.js';
+
+export {
+  restoreFromArchive,
+  type RestoreFromArchiveInput,
+  type RestoreFromArchiveResult,
+} from './repositories/lifecycle.js';

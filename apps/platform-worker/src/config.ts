@@ -15,6 +15,18 @@ export interface PlatformWorkerConfig {
   readonly outboxBatchLimit: number;
   /** Delivery attempt budget before a row is dead-lettered. */
   readonly outboxMaxAttempts: number;
+  /** SEC-02 cleanup attempt budget before a handoff is dead-lettered. */
+  readonly cleanupMaxAttempts: number;
+  /** DAT-19 alert evaluation: enable the per-poll evaluation round. */
+  readonly alertsEnabled: boolean;
+  /** DAT-19 alert evaluation: maximum rules evaluated per round. */
+  readonly alertMaxRules: number;
+  /** DAT-18 Source Map reparse: enable the per-poll reparse round. */
+  readonly sourceMapsReparseEnabled: boolean;
+  /** DAT-18 Source Map reparse: max occurrences re-symbolized per task. */
+  readonly sourceMapsReparseMaxOccurrences: number;
+  /** DAT-18 Source Map reparse: max tasks claimed per round. */
+  readonly sourceMapsReparseMaxTasks: number;
   /** Graceful shutdown timeout in milliseconds (operational knob). */
   readonly gracefulShutdownTimeoutMs: number;
 }
@@ -53,6 +65,17 @@ export function loadPlatformWorkerConfig(env: NodeJS.ProcessEnv): PlatformWorker
     outboxPollIntervalMs: optionalPositiveInt(env, 'OUTBOX_POLL_INTERVAL_MS', 2000),
     outboxBatchLimit,
     outboxMaxAttempts: optionalPositiveInt(env, 'OUTBOX_MAX_ATTEMPTS', 5),
+    cleanupMaxAttempts: optionalPositiveInt(env, 'CLEANUP_MAX_ATTEMPTS', 5),
+    alertsEnabled: (env.ALERTS_EVALUATION_ENABLED ?? 'true').trim().toLowerCase() !== 'false',
+    alertMaxRules: optionalPositiveInt(env, 'ALERT_MAX_RULES', 100),
+    sourceMapsReparseEnabled:
+      (env.SOURCE_MAPS_REPARSE_ENABLED ?? 'true').trim().toLowerCase() !== 'false',
+    sourceMapsReparseMaxOccurrences: optionalPositiveInt(
+      env,
+      'SOURCE_MAPS_REPARSE_MAX_OCCURRENCES',
+      500,
+    ),
+    sourceMapsReparseMaxTasks: optionalPositiveInt(env, 'SOURCE_MAPS_REPARSE_MAX_TASKS', 10),
     gracefulShutdownTimeoutMs: optionalPositiveInt(env, 'GRACEFUL_SHUTDOWN_TIMEOUT_MS', 5000),
   };
   return Object.freeze(config);

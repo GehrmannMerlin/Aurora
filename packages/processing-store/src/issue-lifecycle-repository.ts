@@ -224,7 +224,13 @@ export async function updateIssueAssignee(
   await appendActivity(client, issue.id, record.projectId, record.actorAccountId, 'assignee_changed', {
     to: record.assigneeAccountId,
   });
-  return { status: 'succeeded', issueId: issue.id };
+  return {
+    status: 'succeeded',
+    issueId: issue.id,
+    // PLT-09: expose the previous assignee so the caller can notify only on a
+    // real assignment change (append-only; the command outcome is unchanged).
+    previousAssigneeAccountId: issue.assigneeAccountId,
+  };
 }
 
 export async function updateIssuePriority(

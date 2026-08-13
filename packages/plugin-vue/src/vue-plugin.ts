@@ -1,8 +1,4 @@
-import {
-  createAuroraSdk,
-  type AuroraSdkHandle,
-  type CreateAuroraSdkInput,
-} from '@aurora/browser';
+import { createAuroraSdk, type AuroraSdkHandle, type CreateAuroraSdkInput } from '@aurora/browser';
 import { EventType, type ErrorEventBody } from '@aurora/event-schema';
 import type { App } from 'vue';
 import { buildVueErrorDraft } from './vue-error-bridge.js';
@@ -95,11 +91,7 @@ export function createVueAuroraPlugin(input: CreateAuroraSdkInput): VueAuroraPlu
 
   function recordRouteChange(to: VueRouteLocationLike): void {
     const pathname =
-      typeof to.fullPath === 'string'
-        ? to.fullPath
-        : typeof to.path === 'string'
-          ? to.path
-          : null;
+      typeof to.fullPath === 'string' ? to.fullPath : typeof to.path === 'string' ? to.path : null;
     if (pathname === null || pathname === '') return;
     try {
       void sdk.control.recordActivity({

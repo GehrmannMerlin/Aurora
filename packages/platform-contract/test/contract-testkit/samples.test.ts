@@ -19,6 +19,28 @@ import { projectGovernanceRestoreProjectResponse } from '../../src/project-gover
 import { credentialsListPrivateTokensResponse } from '../../src/credentials/private-tokens.js';
 import { credentialsCreatePrivateTokenResponse } from '../../src/credentials/private-tokens.js';
 import { auditListSecurityAuditResponse } from '../../src/audit/security-audit.js';
+import {
+  notificationsListAndUnreadResponse,
+  notificationsMarkReadResponse,
+} from '../../src/notifications/notifications.js';
+import {
+  platformAdminGetCapabilityResponse,
+  platformAdminGrantResponse,
+  platformAdminListResponse,
+  platformAdminRevokeResponse,
+  platformAuditListEventsResponse,
+} from '../../src/platform-admin/platform-admin.js';
+import {
+  policyClearProjectLimitResponse,
+  policyGetDefaultResponse,
+  policyGetOrganizationEffectiveResponse,
+  policyGetProjectEffectiveResponse,
+  policyResetOrganizationResponse,
+  policySetDefaultResponse,
+  policySetOrganizationResponse,
+  policySetProjectLimitResponse,
+  policyTargetSearchResponse,
+} from '../../src/resource-policy/resource-policy.js';
 import { auroraProblem } from '../../src/common/problem-details.js';
 import {
   validSessionSamples,
@@ -43,6 +65,22 @@ import {
   validListPrivateTokensSamples,
   validCreatePrivateTokenSamples,
   validListSecurityAuditSamples,
+  validListNotificationsSamples,
+  validMarkNotificationReadSamples,
+  validPlatformAdminGetCapabilitySamples,
+  validPlatformAdminListSamples,
+  validPlatformAdminGrantSamples,
+  validPlatformAdminRevokeSamples,
+  validPlatformAuditListEventsSamples,
+  validPolicyTargetSearchSamples,
+  validPolicyGetDefaultSamples,
+  validPolicyGetOrganizationEffectiveSamples,
+  validPolicyGetProjectEffectiveSamples,
+  validPolicySetDefaultSamples,
+  validPolicySetOrganizationSamples,
+  validPolicyResetOrganizationSamples,
+  validPolicySetProjectLimitSamples,
+  validPolicyClearProjectLimitSamples,
 } from '../../src/contract-testkit/index.js';
 
 describe('contract testkit', () => {
@@ -86,6 +124,38 @@ describe('contract testkit', () => {
       expect(credentialsCreatePrivateTokenResponse.zod.safeParse(s).success).toBe(true);
     for (const s of validListSecurityAuditSamples)
       expect(auditListSecurityAuditResponse.zod.safeParse(s).success).toBe(true);
+    for (const s of validListNotificationsSamples)
+      expect(notificationsListAndUnreadResponse.zod.safeParse(s).success).toBe(true);
+    for (const s of validMarkNotificationReadSamples)
+      expect(notificationsMarkReadResponse.zod.safeParse(s).success).toBe(true);
+    for (const s of validPlatformAdminGetCapabilitySamples)
+      expect(platformAdminGetCapabilityResponse.zod.safeParse(s).success).toBe(true);
+    for (const s of validPlatformAdminListSamples)
+      expect(platformAdminListResponse.zod.safeParse(s).success).toBe(true);
+    for (const s of validPlatformAdminGrantSamples)
+      expect(platformAdminGrantResponse.zod.safeParse(s).success).toBe(true);
+    for (const s of validPlatformAdminRevokeSamples)
+      expect(platformAdminRevokeResponse.zod.safeParse(s).success).toBe(true);
+    for (const s of validPlatformAuditListEventsSamples)
+      expect(platformAuditListEventsResponse.zod.safeParse(s).success).toBe(true);
+    for (const s of validPolicyTargetSearchSamples)
+      expect(policyTargetSearchResponse.zod.safeParse(s).success).toBe(true);
+    for (const s of validPolicyGetDefaultSamples)
+      expect(policyGetDefaultResponse.zod.safeParse(s).success).toBe(true);
+    for (const s of validPolicyGetOrganizationEffectiveSamples)
+      expect(policyGetOrganizationEffectiveResponse.zod.safeParse(s).success).toBe(true);
+    for (const s of validPolicyGetProjectEffectiveSamples)
+      expect(policyGetProjectEffectiveResponse.zod.safeParse(s).success).toBe(true);
+    for (const s of validPolicySetDefaultSamples)
+      expect(policySetDefaultResponse.zod.safeParse(s).success).toBe(true);
+    for (const s of validPolicySetOrganizationSamples)
+      expect(policySetOrganizationResponse.zod.safeParse(s).success).toBe(true);
+    for (const s of validPolicyResetOrganizationSamples)
+      expect(policyResetOrganizationResponse.zod.safeParse(s).success).toBe(true);
+    for (const s of validPolicySetProjectLimitSamples)
+      expect(policySetProjectLimitResponse.zod.safeParse(s).success).toBe(true);
+    for (const s of validPolicyClearProjectLimitSamples)
+      expect(policyClearProjectLimitResponse.zod.safeParse(s).success).toBe(true);
   });
 
   it('invalid samples fail their schemas', () => {
@@ -117,6 +187,22 @@ describe('contract testkit', () => {
       ...validRestoreProjectSamples,
       ...validListPrivateTokensSamples,
       ...validListSecurityAuditSamples,
+      ...validListNotificationsSamples,
+      ...validMarkNotificationReadSamples,
+      ...validPlatformAdminGetCapabilitySamples,
+      ...validPlatformAdminListSamples,
+      ...validPlatformAdminGrantSamples,
+      ...validPlatformAdminRevokeSamples,
+      ...validPlatformAuditListEventsSamples,
+      ...validPolicyTargetSearchSamples,
+      ...validPolicyGetDefaultSamples,
+      ...validPolicyGetOrganizationEffectiveSamples,
+      ...validPolicyGetProjectEffectiveSamples,
+      ...validPolicySetDefaultSamples,
+      ...validPolicySetOrganizationSamples,
+      ...validPolicyResetOrganizationSamples,
+      ...validPolicySetProjectLimitSamples,
+      ...validPolicyClearProjectLimitSamples,
     ]);
     expect(all).not.toMatch(/aurora_ingest_|Bearer |secret|password|sessionId/i);
     // The list tokens response is metadata-only: never a plaintext or digest.

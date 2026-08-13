@@ -1,11 +1,11 @@
 ---
 title: ADR-023：托管计算与托管数据服务（ECS/Fargate、RDS PostgreSQL、Redis 边界）
-status: accepted
+status: superseded
 implementation-status: in-progress
 approval-status: approved
 owner: cloud/operations
 date: 2026-08-07
-last-reviewed: 2026-08-07
+last-reviewed: 2026-08-13
 applies-to: Aurora 第一版托管计算（ECS/Fargate）与托管数据服务（RDS PostgreSQL、ElastiCache Redis 提供边界）的基础资源决策
 related:
   - ../../AGENTS.md
@@ -19,7 +19,7 @@ related:
   - '../adr/ADR-012-ingestion-worker-runtime.md'
   - '../superpowers/specs/2026-07-28-aurora-platform-backend-design.md'
 supersedes: none
-superseded-by: none
+superseded-by: ADR-036
 ---
 
 # ADR-023：托管计算与托管数据服务（ECS/Fargate、RDS PostgreSQL、Redis 边界）
@@ -42,6 +42,8 @@ superseded-by: none
 - **评审域**：infra compute/data（cloud/operations）+ database（ADR-010 复用边界）。本 ADR 把托管计算（ECS/Fargate）与托管数据服务（RDS/ElastiCache）合为一份，对应已批准 TDR 候选 5。**评审门禁要求 cloud/operations 与 data 评审者均批准；若任一方无法联合批准，本 ADR 必须按 ADR 规范 7.2/7.7 拆分**（架构评审 Major #3）。本 ADR 只冻结 engine family 与 RDS 基础资源边界，**不预决管理平台数据库访问层**（架构评审 Major #1）。
 
 ## 状态说明
+
+> **superseded by [ADR-036](ADR-036-provider-neutral-single-host-deployment.md)（2026-08-13）**：用户批准 provider-neutral 单主机部署方向，本 ADR 的 AWS-first 最终决策（ECS/Fargate、RDS PostgreSQL Multi-AZ、ElastiCache 边界）被 ADR-036 替代。本 ADR 保留为历史记录，不再作为第一版生产部署的实施依据。
 
 本 ADR 于 2026-08-07 由 G16/OPS-04 前置门禁创建为 `proposed / not-started / awaiting-user-approval`。门禁确认：托管容器与托管数据服务方向已 approved（TDR §3.1 方案 A），但精确服务形态（ECS/Fargate、RDS、ElastiCache）、提供边界与生产资源授权均无 accepted 决策。本 ADR 只记录候选与推荐，**在用户批准前不得创建任何计算或数据资源**；不创建 ECS/RDS/ECR、不运行 `writing-plans`。
 

@@ -19,6 +19,13 @@ export interface PlatformApiConfig {
   /** Explicitly allowed browser Origin values (CSRF Origin check). */
   readonly appOrigins: readonly string[];
   /**
+   * Account IDs eligible for the controlled platform-admin bootstrap
+   * (`PLATFORM_ADMIN_BOOTSTRAP_ACCOUNT_IDS`, comma-separated canonical UUIDs).
+   * Empty when unset — startup then skips bootstrap entirely. Non-UUID entries
+   * are skipped with a warning so a misconfigured value cannot block startup.
+   */
+  readonly platformAdminBootstrapAccountIds: readonly string[];
+  /**
    * Public console (SPA) origin used to build the emailed intent-link URLs
    * (`/verify-email/confirm?token=…`, `/reset-password?token=…`,
    * `/invitations/accept?token=…`). The SPA pages then call the API intent-link
@@ -79,6 +86,33 @@ function optionalOriginList(env: NodeJS.ProcessEnv, key: string): readonly strin
     .filter((item) => item.length > 0);
 }
 
+/** Canonical UUID shape (mirrors `routes/_shared.ts` UUID_PATTERN). */
+const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/**
+ * Parse a comma-separated env list into canonical UUIDs only. Non-UUID entries
+ * are skipped with a warning (never echoed) so a misconfigured value cannot
+ * block startup.
+ */
+function optionalUuidList(env: NodeJS.ProcessEnv, key: string): readonly string[] {
+  const value = env[key];
+  if (value === undefined || value === '') return [];
+  const entries = value
+    .split(',')
+    .map((item) => item.trim())
+    .filter((item) => item.length > 0);
+  const valid = entries.filter((item) => UUID_PATTERN.test(item));
+  const skipped = entries.length - valid.length;
+  if (skipped > 0) {
+    console.warn(
+      `[platform-api-config] ${key}: skipping ${String(skipped)} non-UUID ${
+        skipped === 1 ? 'entry' : 'entries'
+      }`,
+    );
+  }
+  return valid;
+}
+
 /**
  * First truthy string among the arguments, or `''` when none is set. Empty
  * strings are treated as absent so the console origin falls back to the first
@@ -105,6 +139,7 @@ export function loadPlatformApiConfig(env: NodeJS.ProcessEnv): PlatformApiConfig
     cookieSecure: optionalBoolean(env, 'COOKIE_SECURE', false),
     emailDeliveryMode: env.EMAIL_DELIVERY_MODE ?? 'console',
     appOrigins: optionalOriginList(env, 'APP_ORIGIN'),
+    platformAdminBootstrapAccountIds: optionalUuidList(env, 'PLATFORM_ADMIN_BOOTSTRAP_ACCOUNT_IDS'),
     consoleOrigin: firstDefined(
       env.CONSOLE_ORIGIN?.trim(),
       optionalOriginList(env, 'APP_ORIGIN')[0],

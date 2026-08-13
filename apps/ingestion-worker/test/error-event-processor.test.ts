@@ -299,4 +299,87 @@ describe('mapPersistResultToWorkerResult', () => {
     expect(result).toEqual({ outcome: 'processed' });
     expect(contribute).toHaveBeenCalledTimes(1);
   });
+
+  it('notifies a new_issue on an inserted Issue contribution', async () => {
+    const store: PersistErrorEventOccurrenceFn = vi.fn().mockResolvedValue({
+      status: 'inserted',
+      occurrenceId: '7',
+    });
+    const notifyIssue = vi.fn().mockResolvedValue(undefined);
+    const processor = createErrorEventProcessor({
+      persist: store,
+      backoff,
+      entropyProvider: zeroEntropy(),
+      now: () => NOW,
+      contributeIssue: vi.fn().mockResolvedValue({ status: 'inserted', issueId: '42' }),
+      notifyIssue,
+    });
+    const result = await processor.process(validInput(), new AbortController().signal);
+    expect(result).toEqual({ outcome: 'processed' });
+    expect(notifyIssue).toHaveBeenCalledTimes(1);
+    expect(notifyIssue).toHaveBeenCalledWith({
+      projectId: validInput().projectId,
+      issueId: '42',
+      kind: 'new_issue',
+    });
+  });
+
+  it('notifies an issue_reappeared on a reopened Issue contribution', async () => {
+    const store: PersistErrorEventOccurrenceFn = vi.fn().mockResolvedValue({
+      status: 'inserted',
+      occurrenceId: '7',
+    });
+    const notifyIssue = vi.fn().mockResolvedValue(undefined);
+    const processor = createErrorEventProcessor({
+      persist: store,
+      backoff,
+      entropyProvider: zeroEntropy(),
+      now: () => NOW,
+      contributeIssue: vi.fn().mockResolvedValue({ status: 'reopened', issueId: '42' }),
+      notifyIssue,
+    });
+    const result = await processor.process(validInput(), new AbortController().signal);
+    expect(result).toEqual({ outcome: 'processed' });
+    expect(notifyIssue).toHaveBeenCalledTimes(1);
+    expect(notifyIssue).toHaveBeenCalledWith({
+      projectId: validInput().projectId,
+      issueId: '42',
+      kind: 'issue_reappeared',
+    });
+  });
+
+  it('does not notify on a plain applied Issue contribution', async () => {
+    const store: PersistErrorEventOccurrenceFn = vi.fn().mockResolvedValue({
+      status: 'inserted',
+      occurrenceId: '7',
+    });
+    const notifyIssue = vi.fn().mockResolvedValue(undefined);
+    const processor = createErrorEventProcessor({
+      persist: store,
+      backoff,
+      entropyProvider: zeroEntropy(),
+      now: () => NOW,
+      contributeIssue: vi.fn().mockResolvedValue({ status: 'applied' }),
+      notifyIssue,
+    });
+    const result = await processor.process(validInput(), new AbortController().signal);
+    expect(result).toEqual({ outcome: 'processed' });
+    expect(notifyIssue).not.toHaveBeenCalled();
+  });
+
+  it('runs without a notifyIssue port (backward-compatible no-op)', async () => {
+    const store: PersistErrorEventOccurrenceFn = vi.fn().mockResolvedValue({
+      status: 'inserted',
+      occurrenceId: '7',
+    });
+    const processor = createErrorEventProcessor({
+      persist: store,
+      backoff,
+      entropyProvider: zeroEntropy(),
+      now: () => NOW,
+      contributeIssue: vi.fn().mockResolvedValue({ status: 'inserted', issueId: '42' }),
+    });
+    const result = await processor.process(validInput(), new AbortController().signal);
+    expect(result).toEqual({ outcome: 'processed' });
+  });
 });

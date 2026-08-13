@@ -352,6 +352,529 @@ function mockPerformancePages() {
   };
 }
 
+// PLT-07 (C8—C12) mock projections — DAT-18 releases/source-maps and DAT-19
+// alerts. Test-mode MSW only (unit + browser smoke); never production data and
+// never completion evidence for the real Platform API.
+
+function mockReleases() {
+  return {
+    data: {
+      status: 'available',
+      data: {
+        items: [
+          {
+            releaseId: 'release_test_1',
+            version: 'shop-web@1.4.3',
+            source: 'source_map_upload',
+            firstSeenAt: '2026-08-10T08:00:00.000Z',
+            sourceMapFileCount: 1,
+          },
+          {
+            releaseId: 'release_test_2',
+            version: 'shop-web@1.4.2',
+            source: 'source_map_upload',
+            firstSeenAt: '2026-08-09T08:00:00.000Z',
+            sourceMapFileCount: 0,
+          },
+        ],
+      },
+    },
+    meta: { requestId: 'req_test_releases', readAt: MONITORING_READ_AT, normalizedQuery: {} },
+    allowedActions: ['read'],
+    navigationTargets: [],
+  };
+}
+
+function mockSourceMapFiles() {
+  return {
+    data: {
+      status: 'available',
+      data: {
+        items: [
+          {
+            sourceMapFileId: 'sm_test_1',
+            buildPath: '/assets/app.js',
+            digestPrefix: 'a1b2c3d4',
+            status: 'active',
+            reparse: {
+              state: 'completed',
+              processedCount: 2,
+              totalCount: 2,
+              updatedAt: '2026-08-10T08:10:00.000Z',
+            },
+            uploadedAt: '2026-08-10T08:00:00.000Z',
+            version: 1,
+          },
+        ],
+      },
+    },
+    meta: { requestId: 'req_test_source_maps', readAt: MONITORING_READ_AT, normalizedQuery: {} },
+    allowedActions: ['read'],
+    navigationTargets: [],
+  };
+}
+
+function mockAlerts() {
+  return {
+    data: {
+      rules: {
+        status: 'available',
+        data: {
+          items: [
+            {
+              ruleId: 'rule_test_1',
+              name: '错误数量过高',
+              metric: 'error_count',
+              windowMinutes: 5,
+              triggerThreshold: 100,
+              recoveryThreshold: 60,
+              recipientAccountIds: ['account_test_1'],
+              evaluation: {
+                state: 'normal',
+                observedValue: 12,
+                sinceAt: '2026-08-10T08:00:00.000Z',
+                lastEvaluatedAt: '2026-08-10T08:59:00.000Z',
+              },
+              version: 1,
+            },
+          ],
+        },
+      },
+      instances: {
+        status: 'available',
+        data: {
+          items: [
+            {
+              instanceId: 'instance_test_1',
+              ruleId: 'rule_test_1',
+              ruleName: '错误数量过高',
+              metric: 'error_count',
+              state: 'triggered',
+              triggeredAt: '2026-08-10T08:30:00.000Z',
+            },
+          ],
+          count: 1,
+          totalCountStatus: 'bounded',
+        },
+      },
+    },
+    meta: { requestId: 'req_test_alerts', readAt: MONITORING_READ_AT, normalizedQuery: {} },
+    allowedActions: ['read'],
+    navigationTargets: [],
+  };
+}
+
+function mockAlertCapability() {
+  return {
+    data: {
+      metrics: [
+        {
+          metric: 'error_count',
+          displayName: 'Error count',
+          unit: 'count',
+          direction: 'higher_is_worse',
+          isRatio: false,
+          minSamplesRequired: false,
+          filterDimensions: ['environment', 'release', 'page_or_endpoint', 'error_severity'],
+        },
+        {
+          metric: 'new_issue_count',
+          displayName: 'New issue count',
+          unit: 'count',
+          direction: 'higher_is_worse',
+          isRatio: false,
+          minSamplesRequired: false,
+          filterDimensions: ['environment', 'release', 'page_or_endpoint', 'error_severity'],
+        },
+        {
+          metric: 'issue_reappearance_count',
+          displayName: 'Issue reappearance count',
+          unit: 'count',
+          direction: 'higher_is_worse',
+          isRatio: false,
+          minSamplesRequired: false,
+          filterDimensions: ['environment', 'release', 'page_or_endpoint', 'error_severity'],
+        },
+        {
+          metric: 'request_failure_rate',
+          displayName: 'Request failure rate',
+          unit: 'percentage',
+          direction: 'higher_is_worse',
+          isRatio: true,
+          minSamplesRequired: true,
+          filterDimensions: ['environment', 'release', 'page_or_endpoint'],
+        },
+        {
+          metric: 'slow_request_count',
+          displayName: 'Slow request count',
+          unit: 'count',
+          direction: 'higher_is_worse',
+          isRatio: false,
+          minSamplesRequired: false,
+          filterDimensions: ['environment', 'release', 'page_or_endpoint'],
+        },
+        {
+          metric: 'lcp_ratio',
+          displayName: 'LCP exceeded ratio',
+          unit: 'percentage',
+          direction: 'higher_is_worse',
+          isRatio: true,
+          minSamplesRequired: true,
+          filterDimensions: ['environment', 'release', 'page_or_endpoint'],
+        },
+        {
+          metric: 'inp_ratio',
+          displayName: 'INP exceeded ratio',
+          unit: 'percentage',
+          direction: 'higher_is_worse',
+          isRatio: true,
+          minSamplesRequired: true,
+          filterDimensions: ['environment', 'release', 'page_or_endpoint'],
+        },
+        {
+          metric: 'cls_ratio',
+          displayName: 'CLS exceeded ratio',
+          unit: 'percentage',
+          direction: 'higher_is_worse',
+          isRatio: true,
+          minSamplesRequired: true,
+          filterDimensions: ['environment', 'release', 'page_or_endpoint'],
+        },
+      ],
+      windowsMinutes: [1, 5, 10, 30, 60],
+      triggerDurationsMinutes: [0, 1, 2, 5, 10],
+      cooldownsMinutes: [5, 10, 30, 60],
+      filterDimensions: [
+        { id: 'environment', available: false, reason: 'no event-side data source yet' },
+        { id: 'release', available: false, reason: 'no event-side data source yet' },
+        { id: 'page_or_endpoint', available: false, reason: 'no event-side data source yet' },
+        { id: 'error_severity', available: false, reason: 'no event-side data source yet' },
+      ],
+      recipients: [{ accountId: 'account_test_1', maskedEmail: 'a***@example.com' }],
+    },
+    meta: {
+      requestId: 'req_test_alert_capability',
+      readAt: MONITORING_READ_AT,
+      normalizedQuery: {},
+    },
+    allowedActions: ['read'],
+    navigationTargets: [],
+  };
+}
+
+function mockAlertInstanceDetail(instanceId: string) {
+  return {
+    data: {
+      instance: {
+        instanceId,
+        ruleId: 'rule_test_1',
+        ruleName: '错误数量过高',
+        metric: 'error_count',
+        state: 'triggered',
+        directReason: 'triggered',
+        triggeredAt: '2026-08-10T08:30:00.000Z',
+      },
+      ruleSnapshot: {
+        name: '错误数量过高',
+        metric: 'error_count',
+        filters: { environment: [], release: [], pageOrEndpoint: [], errorSeverity: [] },
+        windowMinutes: 5,
+        triggerThreshold: 100,
+        triggerDurationMinutes: 2,
+        recoveryThreshold: 60,
+        recoveryDurationMinutes: 2,
+        minSampleCount: 0,
+        cooldownMinutes: 10,
+      },
+      evidence: {
+        evaluatedAt: '2026-08-10T08:30:00.000Z',
+        windowStartAt: '2026-08-10T08:25:00.000Z',
+        windowEndAt: '2026-08-10T08:30:00.000Z',
+        observedValue: 120,
+        numerator: 120,
+        denominator: 1,
+        sampleCount: 120,
+        minSampleRequirement: 0,
+        watermarkAt: '2026-08-10T08:30:00.000Z',
+        completeness: 'complete',
+        appliedFilters: { environment: [], release: [], pageOrEndpoint: [], errorSeverity: [] },
+      },
+      transitions: [
+        {
+          from: 'pending_trigger',
+          to: 'triggered',
+          reason: 'triggered',
+          occurredAt: '2026-08-10T08:30:00.000Z',
+        },
+      ],
+    },
+    meta: { requestId: 'req_test_alert_instance', readAt: MONITORING_READ_AT, normalizedQuery: {} },
+    allowedActions: ['read'],
+    navigationTargets: [],
+  };
+}
+
+// PLT-08 (C13—C16) mock projections — access / client-keys / settings / lifecycle.
+// Test-mode MSW only (unit + browser smoke); never production data.
+
+function mockEffectiveMembers() {
+  return {
+    data: {
+      status: 'available',
+      data: {
+        items: [
+          {
+            accountId: 'account_test_1',
+            maskedEmail: 'o***@example.com',
+            effectiveRole: 'project_admin',
+            sources: ['org_inherited'],
+            allowedActions: ['read'],
+          },
+          {
+            accountId: 'account_test_2',
+            maskedEmail: 'd***@example.com',
+            effectiveRole: 'developer',
+            sources: ['project_member'],
+            projectRole: 'developer',
+            allowedActions: ['read', 'manage'],
+          },
+        ],
+      },
+    },
+    meta: { requestId: 'req_test_members', readAt: MONITORING_READ_AT, normalizedQuery: {} },
+    allowedActions: ['read'],
+    navigationTargets: [],
+  };
+}
+
+function mockClientKeys() {
+  return {
+    data: {
+      status: 'available',
+      data: {
+        items: [
+          {
+            credentialId: 'cred_test_1',
+            keyId: 'ck_abcdefgh',
+            status: 'active',
+            allowNonBrowser: false,
+            origins: ['https://app.example.invalid'],
+            environments: ['production'],
+            createdAt: '2026-08-12T00:00:00.000Z',
+            updatedAt: '2026-08-12T00:00:00.000Z',
+          },
+        ],
+      },
+    },
+    meta: { requestId: 'req_test_client_keys', readAt: MONITORING_READ_AT, normalizedQuery: {} },
+    allowedActions: ['read'],
+    navigationTargets: [],
+  };
+}
+
+/** PLT-09 D1 mock notifications list + unread count (account-scoped, test fixture only). */
+function mockNotifications() {
+  return {
+    data: {
+      notifications: {
+        status: 'available',
+        items: [
+          {
+            notificationId: 'notif_test_1',
+            type: 'new_issue',
+            title: '新问题出现',
+            summary: 'TypeError: boom',
+            organizationId: 'org_test_1',
+            projectId: 'prj_test_1',
+            occurredAt: '2026-08-12T08:00:00.000Z',
+            readAt: '2026-08-12T08:05:00.000Z',
+            target: {
+              routeId: 'project.issue-detail',
+              pathParams: {
+                organizationId: 'org_test_1',
+                projectId: 'prj_test_1',
+                issueId: '7',
+              },
+              query: {},
+            },
+          },
+          {
+            notificationId: 'notif_test_2',
+            type: 'alert_triggered',
+            title: '错误数量过高 已触发',
+            organizationId: 'org_test_1',
+            projectId: 'prj_test_1',
+            occurredAt: '2026-08-12T09:00:00.000Z',
+            target: {
+              routeId: 'project.alert-instance-detail',
+              pathParams: {
+                organizationId: 'org_test_1',
+                projectId: 'prj_test_1',
+                instanceId: '3',
+              },
+              query: {},
+            },
+          },
+        ],
+        pagination: { totalCount: 2, totalCountStatus: 'available' },
+      },
+      unreadCount: { value: 1, status: 'available' },
+    },
+    meta: { requestId: 'req_test_notifications', readAt: MONITORING_READ_AT, normalizedQuery: {} },
+    allowedActions: ['read'],
+    navigationTargets: [],
+  };
+}
+
+// PLT-10c (D2) platform resource-policy mock projections — capability probe,
+// target search, and the three effective-policy GETs. Test-mode MSW only (unit
+// + browser smoke); never production data and never completion evidence for the
+// real Platform API (D2 runs against platform-api + @aurora/platform-admin in
+// the real stack).
+
+const POLICY_READ_AT = '2026-08-12T00:00:00.000Z';
+
+/** PRD §15.8 five protective fields (platform default / organization override). */
+const MOCK_POLICY_FIELDS = {
+  defaultPeriodQuota: 100000,
+  warningRatio: 80,
+  hardLimit: 100,
+  degradationEnabled: true,
+  highValueRetentionDays: 90,
+} as const;
+
+const MOCK_POLICY_TARGETS = {
+  organizations: [
+    { organizationId: 'org_test_1', name: 'Acme' },
+    { organizationId: 'org_test_2', name: 'Globex' },
+  ],
+  projects: [
+    { projectId: 'prj_test_1', organizationId: 'org_test_1', name: 'Web shop' },
+    { projectId: 'prj_test_2', organizationId: 'org_test_1', name: 'Mobile app' },
+    { projectId: 'prj_test_3', organizationId: 'org_test_2', name: 'Inventory' },
+  ],
+} as const;
+
+/** Test-mode default is a platform admin so the D2 page is reachable in tests. */
+function mockPlatformAdminCapability() {
+  return { data: { hasCapability: true } };
+}
+
+/** Target search filtered by `q` (case-insensitive name prefix; ILIKE-ish). */
+function mockPolicyTargetSearch(q: string | null) {
+  const needle = (q ?? '').trim().toLowerCase();
+  const matches = (name: string) => needle === '' || name.toLowerCase().startsWith(needle);
+  return {
+    data: {
+      organizations: MOCK_POLICY_TARGETS.organizations.filter((org) => matches(org.name)),
+      projects: MOCK_POLICY_TARGETS.projects.filter((prj) => matches(prj.name)),
+      pagination: { totalCountStatus: 'available' },
+    },
+    meta: { requestId: 'req_test_policy_targets', readAt: POLICY_READ_AT, normalizedQuery: {} },
+    allowedActions: ['read', 'manage'],
+    navigationTargets: [],
+  };
+}
+
+/** Platform default / organization effective projection (five-field shape). */
+function mockPolicyDefaultProjection() {
+  return {
+    data: {
+      data: {
+        configured: { ...MOCK_POLICY_FIELDS },
+        source: 'platform_admin',
+        effective: { ...MOCK_POLICY_FIELDS },
+        version: 1,
+        updatedAt: '2026-08-12T00:00:00.000Z',
+        updatedBy: 'account_test_1',
+        propagation: { status: 'unknown', reason: 'no data-plane consumer yet' },
+      },
+    },
+    meta: { requestId: 'req_test_policy_default', readAt: POLICY_READ_AT, normalizedQuery: {} },
+    allowedActions: ['read', 'manage'],
+    navigationTargets: [],
+  };
+}
+
+/** Organization effective projection with its own override row (five-field shape). */
+function mockPolicyOrganizationProjection() {
+  return {
+    data: {
+      data: {
+        configured: { ...MOCK_POLICY_FIELDS },
+        source: 'platform_admin',
+        effective: { ...MOCK_POLICY_FIELDS },
+        version: 2,
+        updatedAt: '2026-08-12T00:00:00.000Z',
+        updatedBy: 'account_test_1',
+        propagation: { status: 'unknown', reason: 'no data-plane consumer yet' },
+      },
+    },
+    meta: { requestId: 'req_test_policy_org', readAt: POLICY_READ_AT, normalizedQuery: {} },
+    allowedActions: ['read', 'manage'],
+    navigationTargets: [],
+  };
+}
+
+/** Project effective projection: own resourceLimit override + inherited five fields. */
+function mockPolicyProjectProjection() {
+  return {
+    data: {
+      data: {
+        configured: { resourceLimit: 5000 },
+        source: 'inherited_from_organization',
+        effective: { ...MOCK_POLICY_FIELDS, resourceLimit: 5000 },
+        version: 1,
+        updatedAt: '2026-08-12T00:00:00.000Z',
+        updatedBy: 'account_test_1',
+        propagation: { status: 'unknown', reason: 'no data-plane consumer yet' },
+      },
+    },
+    meta: { requestId: 'req_test_policy_project', readAt: POLICY_READ_AT, normalizedQuery: {} },
+    allowedActions: ['read', 'manage'],
+    navigationTargets: [],
+  };
+}
+
+function mockProjectSettings() {
+  return {
+    data: {
+      project: {
+        projectId: 'prj_test_1',
+        name: 'Web shop',
+        frameworkType: 'vue',
+        websiteUrl: 'https://example.invalid',
+        lifecycle: { status: 'active' },
+        resourceVersion: '2026-08-12T00:00:00.000Z',
+      },
+    },
+    meta: { requestId: 'req_test_settings', readAt: MONITORING_READ_AT, normalizedQuery: {} },
+    allowedActions: ['read', 'update'],
+    navigationTargets: [],
+  };
+}
+
+function mockProjectEnvironments() {
+  return {
+    data: {
+      status: 'available',
+      data: {
+        items: [
+          {
+            environmentId: 'env_test_1',
+            name: 'production',
+            isDefault: 'true',
+            createdAt: '2026-08-12T00:00:00.000Z',
+          },
+        ],
+      },
+    },
+    meta: { requestId: 'req_test_environments', readAt: MONITORING_READ_AT, normalizedQuery: {} },
+    allowedActions: ['read'],
+    navigationTargets: [],
+  };
+}
+
 export const handlerControls = {
   delayMs: 0,
   sessionRequests: 0,
@@ -389,6 +912,32 @@ export const handlerControls = {
   getIssueDetailRequests: 0,
   listRequestEndpointsRequests: 0,
   listPerformancePagesRequests: 0,
+  listReleasesRequests: 0,
+  listSourceMapFilesRequests: 0,
+  uploadSourceMapRequests: 0,
+  replaceSourceMapRequests: 0,
+  reparseSourceMapRequests: 0,
+  listAlertsRequests: 0,
+  getAlertCapabilityRequests: 0,
+  getAlertInstanceDetailRequests: 0,
+  createAlertRuleRequests: 0,
+  updateAlertRuleRequests: 0,
+  listEffectiveMembersRequests: 0,
+  grantMembershipRequests: 0,
+  projectChangeRoleRequests: 0,
+  removeMembershipRequests: 0,
+  listClientKeysRequests: 0,
+  createClientKeyRequests: 0,
+  disableClientKeyRequests: 0,
+  enableClientKeyRequests: 0,
+  revokeClientKeyRequests: 0,
+  getProjectSettingsRequests: 0,
+  updateProjectSettingsRequests: 0,
+  listEnvironmentsRequests: 0,
+  createEnvironmentRequests: 0,
+  archiveLifecycleRequests: 0,
+  restoreLifecycleRequests: 0,
+  moveToTrashRequests: 0,
   /** Toggle for the session projection: true = authenticated, false = 401. */
   sessionAuthenticated: readStoredSessionAuthenticated(),
   /** Toggle for the A5 deletion preflight projection: ready = no blocker. */
@@ -857,6 +1406,314 @@ export function createPlatformHandlers() {
         return HttpResponse.json(mockPerformancePages() as JsonBodyType, { status: 200 });
       },
     ),
+    http.get(
+      '/api/platform/v1/organizations/:organizationId/projects/:projectId/releases',
+      async () => {
+        handlerControls.listReleasesRequests += 1;
+        await maybeDelay();
+        return HttpResponse.json(mockReleases() as JsonBodyType, { status: 200 });
+      },
+    ),
+    http.get(
+      '/api/platform/v1/organizations/:organizationId/projects/:projectId/releases/:releaseId/source-maps',
+      async () => {
+        handlerControls.listSourceMapFilesRequests += 1;
+        await maybeDelay();
+        return HttpResponse.json(mockSourceMapFiles() as JsonBodyType, { status: 200 });
+      },
+    ),
+    http.post(
+      '/api/platform/v1/organizations/:organizationId/projects/:projectId/source-maps',
+      async () => {
+        handlerControls.uploadSourceMapRequests += 1;
+        await maybeDelay();
+        return HttpResponse.json(
+          {
+            data: {
+              status: 'uploaded',
+              releaseId: 'release_test_1',
+              sourceMapFileId: 'sm_test_1',
+              version: 1,
+            },
+          } as JsonBodyType,
+          { status: 200 },
+        );
+      },
+    ),
+    http.post(
+      '/api/platform/v1/organizations/:organizationId/projects/:projectId/releases/:releaseId/source-maps/:sourceMapFileId/replace',
+      async () => {
+        handlerControls.replaceSourceMapRequests += 1;
+        await maybeDelay();
+        return HttpResponse.json(
+          {
+            data: { status: 'replaced', sourceMapFileId: 'sm_test_1', version: 2 },
+          } as JsonBodyType,
+          { status: 200 },
+        );
+      },
+    ),
+    http.post(
+      '/api/platform/v1/organizations/:organizationId/projects/:projectId/releases/:releaseId/reparse',
+      async () => {
+        handlerControls.reparseSourceMapRequests += 1;
+        await maybeDelay();
+        return HttpResponse.json(
+          { data: { status: 'queued', releaseId: 'release_test_1', taskCount: 1 } } as JsonBodyType,
+          { status: 200 },
+        );
+      },
+    ),
+    http.get(
+      '/api/platform/v1/organizations/:organizationId/projects/:projectId/alerts/capability',
+      async () => {
+        handlerControls.getAlertCapabilityRequests += 1;
+        await maybeDelay();
+        return HttpResponse.json(mockAlertCapability() as JsonBodyType, { status: 200 });
+      },
+    ),
+    http.get(
+      '/api/platform/v1/organizations/:organizationId/projects/:projectId/alerts',
+      async () => {
+        handlerControls.listAlertsRequests += 1;
+        await maybeDelay();
+        return HttpResponse.json(mockAlerts() as JsonBodyType, { status: 200 });
+      },
+    ),
+    http.get(
+      '/api/platform/v1/organizations/:organizationId/projects/:projectId/alerts/instances/:instanceId',
+      async ({ params }) => {
+        handlerControls.getAlertInstanceDetailRequests += 1;
+        await maybeDelay();
+        return HttpResponse.json(
+          mockAlertInstanceDetail(String(params.instanceId)) as JsonBodyType,
+          { status: 200 },
+        );
+      },
+    ),
+    http.post(
+      '/api/platform/v1/organizations/:organizationId/projects/:projectId/alerts/rules',
+      async () => {
+        handlerControls.createAlertRuleRequests += 1;
+        await maybeDelay();
+        return HttpResponse.json(
+          { data: { status: 'succeeded', ruleId: 'rule_test_1' } } as JsonBodyType,
+          { status: 200 },
+        );
+      },
+    ),
+    http.post(
+      '/api/platform/v1/organizations/:organizationId/projects/:projectId/alerts/rules/:ruleId',
+      async () => {
+        handlerControls.updateAlertRuleRequests += 1;
+        await maybeDelay();
+        return HttpResponse.json(
+          { data: { status: 'succeeded', ruleId: 'rule_test_1', version: 2 } } as JsonBodyType,
+          { status: 200 },
+        );
+      },
+    ),
+    http.get(
+      '/api/platform/v1/organizations/:organizationId/projects/:projectId/access',
+      async () => {
+        handlerControls.listEffectiveMembersRequests += 1;
+        await maybeDelay();
+        return HttpResponse.json(mockEffectiveMembers() as JsonBodyType, { status: 200 });
+      },
+    ),
+    http.post(
+      '/api/platform/v1/organizations/:organizationId/projects/:projectId/access/members',
+      async () => {
+        handlerControls.grantMembershipRequests += 1;
+        await maybeDelay();
+        return HttpResponse.json(
+          {
+            data: { status: 'granted', accountId: 'account_test_2', role: 'developer' },
+          } as JsonBodyType,
+          { status: 200 },
+        );
+      },
+    ),
+    http.post(
+      '/api/platform/v1/organizations/:organizationId/projects/:projectId/access/members/:accountId/role',
+      async () => {
+        handlerControls.projectChangeRoleRequests += 1;
+        await maybeDelay();
+        return HttpResponse.json(
+          {
+            data: { status: 'changed', accountId: 'account_test_2', role: 'project_admin' },
+          } as JsonBodyType,
+          { status: 200 },
+        );
+      },
+    ),
+    http.post(
+      '/api/platform/v1/organizations/:organizationId/projects/:projectId/access/members/:accountId/remove',
+      async () => {
+        handlerControls.removeMembershipRequests += 1;
+        await maybeDelay();
+        return HttpResponse.json(
+          {
+            data: { status: 'removed', accountId: 'account_test_2', remainingSources: [] },
+          } as JsonBodyType,
+          { status: 200 },
+        );
+      },
+    ),
+    http.get(
+      '/api/platform/v1/organizations/:organizationId/projects/:projectId/client-keys',
+      async () => {
+        handlerControls.listClientKeysRequests += 1;
+        await maybeDelay();
+        return HttpResponse.json(mockClientKeys() as JsonBodyType, { status: 200 });
+      },
+    ),
+    http.post(
+      '/api/platform/v1/organizations/:organizationId/projects/:projectId/client-keys',
+      async () => {
+        handlerControls.createClientKeyRequests += 1;
+        await maybeDelay();
+        return HttpResponse.json(
+          {
+            data: {
+              status: 'created',
+              credentialId: 'cred_test_2',
+              keyId: 'ck_ijklmnop',
+              clientKey: 'aurora_ingest_ijklmnop_testsecret',
+              origins: [],
+              environments: ['production'],
+            },
+          } as JsonBodyType,
+          { status: 200 },
+        );
+      },
+    ),
+    http.post(
+      '/api/platform/v1/organizations/:organizationId/projects/:projectId/client-keys/:keyId/disable',
+      async () => {
+        handlerControls.disableClientKeyRequests += 1;
+        await maybeDelay();
+        return HttpResponse.json(
+          {
+            data: { status: 'disabled', credentialId: 'cred_test_1', keyId: 'ck_abcdefgh' },
+          } as JsonBodyType,
+          { status: 200 },
+        );
+      },
+    ),
+    http.post(
+      '/api/platform/v1/organizations/:organizationId/projects/:projectId/client-keys/:keyId/enable',
+      async () => {
+        handlerControls.enableClientKeyRequests += 1;
+        await maybeDelay();
+        return HttpResponse.json(
+          {
+            data: { status: 'enabled', credentialId: 'cred_test_1', keyId: 'ck_abcdefgh' },
+          } as JsonBodyType,
+          { status: 200 },
+        );
+      },
+    ),
+    http.post(
+      '/api/platform/v1/organizations/:organizationId/projects/:projectId/client-keys/:keyId/revoke',
+      async () => {
+        handlerControls.revokeClientKeyRequests += 1;
+        await maybeDelay();
+        return HttpResponse.json(
+          {
+            data: { status: 'revoked', credentialId: 'cred_test_1', keyId: 'ck_abcdefgh' },
+          } as JsonBodyType,
+          { status: 200 },
+        );
+      },
+    ),
+    http.get(
+      '/api/platform/v1/organizations/:organizationId/projects/:projectId/settings',
+      async () => {
+        handlerControls.getProjectSettingsRequests += 1;
+        await maybeDelay();
+        return HttpResponse.json(mockProjectSettings() as JsonBodyType, { status: 200 });
+      },
+    ),
+    http.patch(
+      '/api/platform/v1/organizations/:organizationId/projects/:projectId/settings',
+      async () => {
+        handlerControls.updateProjectSettingsRequests += 1;
+        await maybeDelay();
+        return HttpResponse.json(
+          {
+            data: {
+              status: 'updated',
+              projectId: 'prj_test_1',
+              name: 'Web shop',
+              resourceVersion: '2026-08-12T00:01:00.000Z',
+            },
+          } as JsonBodyType,
+          { status: 200 },
+        );
+      },
+    ),
+    http.get(
+      '/api/platform/v1/organizations/:organizationId/projects/:projectId/settings/environments',
+      async () => {
+        handlerControls.listEnvironmentsRequests += 1;
+        await maybeDelay();
+        return HttpResponse.json(mockProjectEnvironments() as JsonBodyType, { status: 200 });
+      },
+    ),
+    http.post(
+      '/api/platform/v1/organizations/:organizationId/projects/:projectId/settings/environments',
+      async () => {
+        handlerControls.createEnvironmentRequests += 1;
+        await maybeDelay();
+        return HttpResponse.json(
+          {
+            data: { status: 'created', environmentId: 'env_test_2', name: 'staging' },
+          } as JsonBodyType,
+          { status: 200 },
+        );
+      },
+    ),
+    http.post(
+      '/api/platform/v1/organizations/:organizationId/projects/:projectId/lifecycle/archive',
+      async () => {
+        handlerControls.archiveLifecycleRequests += 1;
+        await maybeDelay();
+        return HttpResponse.json(
+          { data: { status: 'archived', projectId: 'prj_test_1' } } as JsonBodyType,
+          { status: 200 },
+        );
+      },
+    ),
+    http.post(
+      '/api/platform/v1/organizations/:organizationId/projects/:projectId/lifecycle/restore',
+      async () => {
+        handlerControls.restoreLifecycleRequests += 1;
+        await maybeDelay();
+        return HttpResponse.json(
+          { data: { status: 'restored', projectId: 'prj_test_1' } } as JsonBodyType,
+          { status: 200 },
+        );
+      },
+    ),
+    http.post(
+      '/api/platform/v1/organizations/:organizationId/projects/:projectId/lifecycle/move-to-trash',
+      async () => {
+        handlerControls.moveToTrashRequests += 1;
+        await maybeDelay();
+        return HttpResponse.json(
+          {
+            data: {
+              status: 'trashed',
+              projectId: 'prj_test_1',
+              trashedAt: '2026-08-12T00:00:00.000Z',
+              recoverableUntil: '2026-08-19T00:00:00.000Z',
+            },
+          } as JsonBodyType,
+          { status: 200 },
+        );
+      },
+    ),
     http.post('/__mock/scope', async ({ request }) => {
       const body = (await request.json()) as MockScope;
       setMockScope(
@@ -866,6 +1723,75 @@ export function createPlatformHandlers() {
       );
       return new HttpResponse(null, { status: 204 });
     }),
+    http.get('/api/platform/v1/notifications', async () => {
+      await maybeDelay();
+      return HttpResponse.json(mockNotifications() as JsonBodyType, { status: 200 });
+    }),
+    http.post('/api/platform/v1/notifications/:notificationId/read', async ({ params }) => {
+      await maybeDelay();
+      const notificationId = String(params.notificationId ?? 'notif_test_2');
+      return HttpResponse.json({ data: { status: 'read', notificationId } } as JsonBodyType, {
+        status: 200,
+      });
+    }),
+    http.get('/api/platform/v1/platform-admin/capability', async () => {
+      await maybeDelay();
+      return HttpResponse.json(mockPlatformAdminCapability() as JsonBodyType, { status: 200 });
+    }),
+    http.get('/api/platform/v1/platform-admin/policy/targets', async ({ request }) => {
+      await maybeDelay();
+      const q = new URL(request.url).searchParams.get('q');
+      return HttpResponse.json(mockPolicyTargetSearch(q) as JsonBodyType, { status: 200 });
+    }),
+    http.get('/api/platform/v1/platform-admin/policy/default', async () => {
+      await maybeDelay();
+      return HttpResponse.json(mockPolicyDefaultProjection() as JsonBodyType, { status: 200 });
+    }),
+    http.get(
+      '/api/platform/v1/platform-admin/policy/organizations/:organizationId/effective',
+      async () => {
+        await maybeDelay();
+        return HttpResponse.json(mockPolicyOrganizationProjection() as JsonBodyType, {
+          status: 200,
+        });
+      },
+    ),
+    http.get('/api/platform/v1/platform-admin/policy/projects/:projectId/effective', async () => {
+      await maybeDelay();
+      return HttpResponse.json(mockPolicyProjectProjection() as JsonBodyType, { status: 200 });
+    }),
+    http.post('/api/platform/v1/platform-admin/policy/default', async () => {
+      await maybeDelay();
+      return HttpResponse.json({ data: { status: 'set', version: 2 } } as JsonBodyType, {
+        status: 200,
+      });
+    }),
+    http.post('/api/platform/v1/platform-admin/policy/organizations/:organizationId', async () => {
+      await maybeDelay();
+      return HttpResponse.json({ data: { status: 'set', version: 2 } } as JsonBodyType, {
+        status: 200,
+      });
+    }),
+    http.post(
+      '/api/platform/v1/platform-admin/policy/organizations/:organizationId/reset',
+      async () => {
+        await maybeDelay();
+        return HttpResponse.json({ data: { status: 'reset' } } as JsonBodyType, { status: 200 });
+      },
+    ),
+    http.post('/api/platform/v1/platform-admin/policy/projects/:projectId/limit', async () => {
+      await maybeDelay();
+      return HttpResponse.json({ data: { status: 'set', version: 2 } } as JsonBodyType, {
+        status: 200,
+      });
+    }),
+    http.post(
+      '/api/platform/v1/platform-admin/policy/projects/:projectId/limit/clear',
+      async () => {
+        await maybeDelay();
+        return HttpResponse.json({ data: { status: 'cleared' } } as JsonBodyType, { status: 200 });
+      },
+    ),
     http.post('/__mock/session', async ({ request }) => {
       const body = (await request.json()) as { authenticated?: boolean };
       persistSessionAuthenticated(body.authenticated ?? true);

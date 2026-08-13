@@ -18,7 +18,10 @@ function makeApp(): App {
   return createApp({});
 }
 
-function fakeRouter(): { router: VueRouterLike; emit: (to: { path: string; fullPath: string }) => void } {
+function fakeRouter(): {
+  router: VueRouterLike;
+  emit: (to: { path: string; fullPath: string }) => void;
+} {
   let hook: ((to: { path: string; fullPath: string }) => void) | undefined;
   return {
     router: {
@@ -116,12 +119,13 @@ describe('Vue adapter lifecycle', () => {
     emit({ path: '/dashboard', fullPath: '/dashboard' });
     await waitTick();
     const trail = plugin.sdk.getActivityTrail();
-    expect(trail.some((entry) => entry.kind === 'route_change' && entry.pathname === '/dashboard')).toBe(
-      true,
-    );
+    expect(
+      trail.some((entry) => entry.kind === 'route_change' && entry.pathname === '/dashboard'),
+    ).toBe(true);
     plugin.uninstall(app);
-    const countAfterUninstall = plugin.sdk.getActivityTrail().filter((e) => e.kind === 'route_change')
-      .length;
+    const countAfterUninstall = plugin.sdk
+      .getActivityTrail()
+      .filter((e) => e.kind === 'route_change').length;
     emit({ path: '/other', fullPath: '/other' });
     await waitTick();
     expect(plugin.sdk.getActivityTrail().filter((e) => e.kind === 'route_change').length).toBe(

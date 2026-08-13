@@ -16,7 +16,6 @@ const ruleParams = projectParams.extend({ ruleId: z.string().min(1) });
 const instanceParams = projectParams.extend({ instanceId: z.string().min(1) });
 const anyQuery = z.record(z.string(), z.string());
 
-const unavailable = (): Promise<Component> => import('../components/pages/UnavailableView.vue');
 const workspaceHome = (): Promise<Component> => import('../views/workspace/WorkspaceHomeView.vue');
 const projectOnboardingView = (): Promise<Component> =>
   import('../views/project/ProjectOnboardingView.vue');
@@ -32,6 +31,26 @@ const projectRequestsView = (): Promise<Component> =>
   import('../views/project/ProjectRequestsView.vue');
 const projectPerformanceView = (): Promise<Component> =>
   import('../views/project/ProjectPerformanceView.vue');
+const projectReleasesView = (): Promise<Component> =>
+  import('../views/project/ProjectReleasesView.vue');
+const projectReleaseDetailView = (): Promise<Component> =>
+  import('../views/project/ProjectReleaseDetailView.vue');
+const projectSourceMapsView = (): Promise<Component> =>
+  import('../views/project/ProjectSourceMapsView.vue');
+const projectAlertsView = (): Promise<Component> =>
+  import('../views/project/ProjectAlertsView.vue');
+const projectAlertRuleFormView = (): Promise<Component> =>
+  import('../views/project/ProjectAlertRuleFormView.vue');
+const projectAlertInstanceDetailView = (): Promise<Component> =>
+  import('../views/project/ProjectAlertInstanceDetailView.vue');
+const projectAccessView = (): Promise<Component> =>
+  import('../views/project/ProjectAccessView.vue');
+const projectClientKeysView = (): Promise<Component> =>
+  import('../views/project/ProjectClientKeysView.vue');
+const projectSettingsView = (): Promise<Component> =>
+  import('../views/project/ProjectSettingsView.vue');
+const projectLifecycleView = (): Promise<Component> =>
+  import('../views/project/ProjectLifecycleView.vue');
 const usageView = (): Promise<Component> => import('../views/organization/UsageView.vue');
 const projectCreateView = (): Promise<Component> =>
   import('../views/organization/ProjectCreateView.vue');
@@ -51,6 +70,10 @@ const invitationAcceptView = (): Promise<Component> =>
   import('../views/auth/InvitationAcceptView.vue');
 const accountSecurityView = (): Promise<Component> =>
   import('../views/account/AccountSecurityView.vue');
+const accountNotificationsView = (): Promise<Component> =>
+  import('../views/account/NotificationsView.vue');
+const resourcePolicyView = (): Promise<Component> =>
+  import('../views/platform/ResourcePolicyView.vue');
 const deletionCancelView = (): Promise<Component> =>
   import('../views/account/DeletionCancelView.vue');
 const deletionConfirmView = (): Promise<Component> =>
@@ -341,9 +364,9 @@ export const ROUTE_REGISTRY: readonly RouteEntry[] = [
     label: '发布',
     paramsSchema: projectParams,
     querySchema: anyQuery,
-    lazy: unavailable,
+    lazy: projectReleasesView,
     menu: true,
-    unavailableReason: 'capability-not-provided',
+    unavailableReason: null,
   },
   {
     routeId: 'project.release-detail',
@@ -353,9 +376,9 @@ export const ROUTE_REGISTRY: readonly RouteEntry[] = [
     parent: 'project.releases',
     paramsSchema: releaseParams,
     querySchema: anyQuery,
-    lazy: unavailable,
+    lazy: projectReleaseDetailView,
     menu: false,
-    unavailableReason: 'capability-not-provided',
+    unavailableReason: null,
   },
   {
     routeId: 'project.source-maps',
@@ -365,9 +388,9 @@ export const ROUTE_REGISTRY: readonly RouteEntry[] = [
     parent: 'project.release-detail',
     paramsSchema: sourceMapParams,
     querySchema: anyQuery,
-    lazy: unavailable,
+    lazy: projectSourceMapsView,
     menu: false,
-    unavailableReason: 'capability-not-provided',
+    unavailableReason: null,
   },
   {
     routeId: 'project.alerts',
@@ -376,9 +399,9 @@ export const ROUTE_REGISTRY: readonly RouteEntry[] = [
     label: '告警',
     paramsSchema: projectParams,
     querySchema: anyQuery,
-    lazy: unavailable,
+    lazy: projectAlertsView,
     menu: true,
-    unavailableReason: 'capability-not-provided',
+    unavailableReason: null,
   },
   {
     routeId: 'project.alert-rule-create',
@@ -388,9 +411,9 @@ export const ROUTE_REGISTRY: readonly RouteEntry[] = [
     parent: 'project.alerts',
     paramsSchema: projectParams,
     querySchema: anyQuery,
-    lazy: unavailable,
+    lazy: projectAlertRuleFormView,
     menu: false,
-    unavailableReason: 'capability-not-provided',
+    unavailableReason: null,
   },
   {
     routeId: 'project.alert-rule-edit',
@@ -400,9 +423,9 @@ export const ROUTE_REGISTRY: readonly RouteEntry[] = [
     parent: 'project.alerts',
     paramsSchema: ruleParams,
     querySchema: anyQuery,
-    lazy: unavailable,
+    lazy: projectAlertRuleFormView,
     menu: false,
-    unavailableReason: 'capability-not-provided',
+    unavailableReason: null,
   },
   {
     routeId: 'project.alert-instance-detail',
@@ -412,9 +435,9 @@ export const ROUTE_REGISTRY: readonly RouteEntry[] = [
     parent: 'project.alerts',
     paramsSchema: instanceParams,
     querySchema: anyQuery,
-    lazy: unavailable,
+    lazy: projectAlertInstanceDetailView,
     menu: false,
-    unavailableReason: 'capability-not-provided',
+    unavailableReason: null,
   },
   {
     routeId: 'project.access',
@@ -423,9 +446,9 @@ export const ROUTE_REGISTRY: readonly RouteEntry[] = [
     label: '访问',
     paramsSchema: projectParams,
     querySchema: anyQuery,
-    lazy: unavailable,
+    lazy: projectAccessView,
     menu: true,
-    unavailableReason: 'capability-not-provided',
+    unavailableReason: null,
   },
   {
     routeId: 'project.client-keys',
@@ -434,9 +457,9 @@ export const ROUTE_REGISTRY: readonly RouteEntry[] = [
     label: '客户端密钥',
     paramsSchema: projectParams,
     querySchema: anyQuery,
-    lazy: unavailable,
+    lazy: projectClientKeysView,
     menu: true,
-    unavailableReason: 'capability-not-provided',
+    unavailableReason: null,
   },
   {
     routeId: 'project.settings',
@@ -445,9 +468,9 @@ export const ROUTE_REGISTRY: readonly RouteEntry[] = [
     label: '设置',
     paramsSchema: projectParams,
     querySchema: anyQuery,
-    lazy: unavailable,
+    lazy: projectSettingsView,
     menu: true,
-    unavailableReason: 'capability-not-provided',
+    unavailableReason: null,
   },
   {
     routeId: 'project.lifecycle',
@@ -457,9 +480,9 @@ export const ROUTE_REGISTRY: readonly RouteEntry[] = [
     parent: 'project.settings',
     paramsSchema: projectParams,
     querySchema: anyQuery,
-    lazy: unavailable,
+    lazy: projectLifecycleView,
     menu: false,
-    unavailableReason: 'capability-not-provided',
+    unavailableReason: null,
   },
   {
     routeId: 'account.notifications',
@@ -468,9 +491,9 @@ export const ROUTE_REGISTRY: readonly RouteEntry[] = [
     label: '通知',
     paramsSchema: emptyParams,
     querySchema: anyQuery,
-    lazy: unavailable,
+    lazy: accountNotificationsView,
     menu: true,
-    unavailableReason: 'capability-not-provided',
+    unavailableReason: null,
   },
   {
     routeId: 'platform.resource-policies',
@@ -479,9 +502,9 @@ export const ROUTE_REGISTRY: readonly RouteEntry[] = [
     label: '资源策略',
     paramsSchema: emptyParams,
     querySchema: anyQuery,
-    lazy: unavailable,
+    lazy: resourcePolicyView,
     menu: false,
-    unavailableReason: 'permission-unavailable',
+    unavailableReason: null,
   },
 ];
 

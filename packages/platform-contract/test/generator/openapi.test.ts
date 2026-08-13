@@ -69,7 +69,6 @@ describe('openapi generator', () => {
   it('does not emit blocked operations as empty schemas', () => {
     const doc = generateOpenApiDocument();
     const json = JSON.stringify(doc);
-    expect(json).not.toContain('usageGetSummary');
     expect(json).not.toContain('onboardingGetProgress');
     // The newly unblocked request metric projection is emitted as a stable path.
     expect(
@@ -83,6 +82,8 @@ describe('openapi generator', () => {
     expect(
       doc.paths['/organizations/{organizationId}/projects/{projectId}/performance'],
     ).toBeDefined();
+    // DAT-21 unblocks the org usage projection as a stable path.
+    expect(doc.paths['/organizations/{organizationId}/usage']).toBeDefined();
   });
 
   it('names response schemas stably', () => {

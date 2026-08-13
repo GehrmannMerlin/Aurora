@@ -1,9 +1,31 @@
 import type { Pool } from 'pg';
 import { consumeOutboxEmails, type OutboxRepository } from '@aurora/platform-email';
 import type { EmailDeliveryPort } from '@aurora/platform-email';
+import { persistAlertRoundNotifications, runAlertEvaluationRound } from '@aurora/processing-store';
+import type { SourceMapObjectStoragePort } from '@aurora/platform-releases';
+import { runSourceMapReparseRound } from './source-maps/reparse-round.js';
 import { defaultSleeper, type SleeperPort } from './timers.js';
+import type { CleanupAdapter } from './retention/cleanup-adapters.js';
+import { runCleanupRound } from './retention/cleanup-orchestrator.js';
 
 export type PlatformWorkerStatus = 'created' | 'running' | 'stopping' | 'stopped';
+
+export interface CleanupWorkerSettings {
+  readonly adapters: readonly CleanupAdapter[];
+  readonly maxAttempts: number;
+}
+
+/** DAT-19 alert evaluation worker section (bounded rules per poll). */
+export interface AlertWorkerSettings {
+  readonly maxRules: number;
+}
+
+/** DAT-18 Source Map reparse worker section (bounded tasks/occurrences per poll). */
+export interface SourceMapWorkerSettings {
+  readonly objectStorage: SourceMapObjectStoragePort;
+  readonly maxOccurrences: number;
+  readonly maxTasks: number;
+}
 
 export interface PlatformWorker {
   readonly status: PlatformWorkerStatus;
@@ -18,6 +40,12 @@ export interface BuildPlatformWorkerInput {
   readonly pollIntervalMs: number;
   readonly batchLimit: number;
   readonly maxAttempts: number;
+  /** Optional SEC-02 cross-store cleanup loop (retention worker). */
+  readonly cleanup?: CleanupWorkerSettings;
+  /** Optional DAT-19 product-alert evaluation loop. */
+  readonly alerts?: AlertWorkerSettings;
+  /** Optional DAT-18 Source Map reparse loop. */
+  readonly sourceMaps?: SourceMapWorkerSettings;
   /** Injectable sleeper for tests; production uses the real setTimeout sleeper. */
   readonly sleeper?: SleeperPort;
 }
@@ -54,6 +82,39 @@ export function buildPlatformWorker(input: BuildPlatformWorkerInput): PlatformWo
       limit: input.batchLimit,
       maxAttempts: input.maxAttempts,
     });
+    if (input.cleanup !== undefined) {
+      await runCleanupRound({
+        pool: input.pool,
+        adapters: input.cleanup.adapters,
+        maxAttempts: input.cleanup.maxAttempts,
+      });
+    }
+    if (input.alerts !== undefined) {
+      // Product alert evaluation (PRD §11). Bounded per poll; a single rule
+      // failure never blocks the round or the rest of the worker. PLT-09:
+      // append in-app notifications for triggered/recovered decisions after the
+      // round (append-only; the evaluation outcome is unchanged).
+      const round = await runAlertEvaluationRound({
+        pool: input.pool,
+        now: new Date(),
+        maxRules: input.alerts.maxRules,
+      });
+      if (round.notifications.length > 0) {
+        await persistAlertRoundNotifications(input.pool, {
+          notifications: round.notifications,
+        });
+      }
+    }
+    if (input.sourceMaps !== undefined) {
+      // Source Map reparse (PRD §8.3.8). Bounded per poll; a single task
+      // failure never blocks the round or the rest of the worker.
+      await runSourceMapReparseRound({
+        pool: input.pool,
+        objectStorage: input.sourceMaps.objectStorage,
+        maxTasks: input.sourceMaps.maxTasks,
+        maxOccurrences: input.sourceMaps.maxOccurrences,
+      });
+    }
   };
 
   const runLoop = async (): Promise<void> => {

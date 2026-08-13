@@ -1,6 +1,7 @@
 import { parseErrorEventEnvelope, type IngestionErrorCode } from '@aurora/event-schema';
 import {
   computeErrorFingerprint,
+  type IssueNotificationSender,
   type PersistErrorEventOccurrenceResult,
   type PersistIssueContributionInput,
   type PersistIssueContributionResult,
@@ -52,6 +53,14 @@ export interface CreateErrorEventProcessorInput {
   readonly contributeIssue?: (
     input: PersistIssueContributionInput,
   ) => Promise<PersistIssueContributionResult>;
+  /**
+   * PLT-09 issue-trigger notification sender, injectable. Default no-op keeps
+   * the processor DB-free and backward-compatible; the real
+   * `@aurora/processing-store` `createIssueNotificationSender` is injected when
+   * wired. Called only after a contribution reports `inserted` (new issue) or
+   * `reopened` (issue reappeared) — append-only, never changes the outcome.
+   */
+  readonly notifyIssue?: IssueNotificationSender;
 }
 
 const NOOP_DIAGNOSTICS: ErrorEventProcessorDiagnostics = {
@@ -99,6 +108,9 @@ export function createErrorEventProcessor(
   const contributeIssue =
     input.contributeIssue ??
     ((): Promise<PersistIssueContributionResult> => Promise.resolve({ status: 'duplicate' }));
+  // PLT-09: default no-op keeps the processor DB-free; the real
+  // createIssueNotificationSender is injected when wired.
+  const notifyIssue = input.notifyIssue ?? (async (): Promise<void> => undefined);
 
   const process = async (
     processorInput: ProcessIngestionEventInput,
@@ -211,6 +223,22 @@ export function createErrorEventProcessor(
       }
       if (contribution.status === 'temporarily_unavailable') {
         return await retryWithBackoff();
+      }
+      // PLT-09: append a new_issue / issue_reappeared notification for project
+      // admins (append-only; the processor outcome is unchanged). The injected
+      // sender owns recipient resolution and dedupe.
+      if (contribution.status === 'inserted') {
+        await notifyIssue({
+          projectId: processorInput.projectId,
+          issueId: contribution.issueId,
+          kind: 'new_issue',
+        });
+      } else if (contribution.status === 'reopened') {
+        await notifyIssue({
+          projectId: processorInput.projectId,
+          issueId: contribution.issueId,
+          kind: 'issue_reappeared',
+        });
       }
     }
 

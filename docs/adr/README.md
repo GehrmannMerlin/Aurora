@@ -50,9 +50,9 @@ ADR-001—ADR-006 从已批准架构规范中的 ARCH-001—ARCH-006 提取，AD
 | [ADR-019](ADR-019-request-event-aggregation-and-bounded-diagnostic-sample-storage.md) | 请求事件聚合与有界诊断样本存储                         | accepted | in-progress | processing-store request sample               |
 | [ADR-020](ADR-020-idempotent-request-metric-bucket-aggregation.md)                    | 幂等请求指标桶聚合                                     | accepted | implemented | processing-store request metric               |
 | [ADR-021](ADR-021-performance-aggregate-and-bounded-sample-storage.md)                | 性能指标聚合与有界诊断样本存储                         | accepted | implemented | processing-store performance aggregate/sample |
-| [ADR-022](ADR-022-aws-account-region-network-and-iac.md)                              | AWS 账号、区域、网络与 IaC 基础设施基础                | accepted | in-progress | OPS-04 云基础设施基础                         |
-| [ADR-023](ADR-023-managed-compute-and-managed-data-services.md)                       | 托管计算与托管数据服务（ECS/Fargate、RDS、Redis 边界） | accepted | in-progress | OPS-04 托管计算/数据服务                      |
-| [ADR-024](ADR-024-edge-dns-tls-secrets-and-encryption.md)                             | 边缘、DNS、TLS、秘密与加密                             | accepted | in-progress | OPS-04 边缘/安全基础                          |
+| [ADR-022](ADR-022-aws-account-region-network-and-iac.md)                              | AWS 账号、区域、网络与 IaC 基础设施基础                | superseded | in-progress | OPS-04 云基础设施基础（superseded by ADR-036）  |
+| [ADR-023](ADR-023-managed-compute-and-managed-data-services.md)                       | 托管计算与托管数据服务（ECS/Fargate、RDS、Redis 边界） | superseded | in-progress | OPS-04 托管计算/数据服务（superseded by ADR-036） |
+| [ADR-024](ADR-024-edge-dns-tls-secrets-and-encryption.md)                             | 边缘、DNS、TLS、秘密与加密                             | superseded | in-progress | OPS-04 边缘/安全基础（superseded by ADR-036）  |
 | [ADR-025](ADR-025-platform-frontend-technology-stack.md)                              | 管理平台前端技术栈                                     | accepted | not-started | PLT-02 前端工程基线                           |
 | [ADR-026](ADR-026-platform-backend-runtime-and-contract-chain.md)                     | 管理平台后端运行时与契约链                             | accepted | not-started | PLT-01/后续平台后端基线                       |
 | [ADR-027](ADR-027-platform-contract-codegen-tooling.md)                               | 管理平台契约生成工具链                                 | accepted | not-started | PLT-01 契约生成/漂移/兼容门禁                 |
@@ -62,6 +62,11 @@ ADR-001—ADR-006 从已批准架构规范中的 ARCH-001—ARCH-006 提取，AD
 | [ADR-031](ADR-031-platform-email-delivery.md)                                         | 管理平台邮件发送责任、端口与供应商                    | accepted | not-started | G10 邮箱验证/密码重置/邀请                    |
 | [ADR-032](ADR-032-platform-outbox-tasks-cache-objects.md)                             | 管理平台 Outbox、任务、缓存与对象存储基础设施         | accepted | not-started | G10 异步边界（邮件/删除交接）                 |
 | [ADR-033](ADR-033-issue-aggregate-data-model.md)                                      | Issue 聚合与有界代表样本数据模型                     | accepted | not-started | G03 Issue 主链（DAT-13 数据模型）             |
+| [ADR-034](ADR-034-platform-admin-and-platform-audit.md)                              | 平台管理员身份、授权与平台级审计                    | accepted | not-started | G13 PLT-10（D2 前置身份/审计）                 |
+| [ADR-035](ADR-035-platform-resource-policy-data-model.md)                           | 平台资源策略数据模型（最小分层策略）               | accepted | not-started | G13 PLT-10（D2 策略数据模型）                  |
+| [ADR-036](ADR-036-provider-neutral-single-host-deployment.md)                        | Provider-Neutral 单主机部署（Docker Compose）         | accepted | not-started | G16 部署方向；supersedes ADR-022/023/024         |
+
+> 状态说明：ADR-034/035 于 2026-08-12 由 G13 PLT-10 正式化创建为 `proposed / not-started / awaiting-user-approval`；同日用户对 `G13_PLT10_APPROVAL_PACKAGE` 六项推荐整体批准并直接批准两份 ADR，转为 `accepted / not-started / approved`（未另派 reviewer subagent）。`implementation-status` 保持 not-started，直到 PLT-10 正式实施开始。
 
 > 状态说明：ADR-029—032 于 2026-08-08 由 G10（PLT-03/PLT-04/SEC-01）实施门禁创建为 `proposed / not-started / awaiting-review`；2026-08-09 完成独立评审（security/backend-ops/architecture 三路，ADR-030 初审 REJECT 后修复为最终 ACCEPT 版本）并由用户明确正式批准（`accepted / not-started / approved`）。ADR-032 附带用户 YAGNI 实施约束：只有当前 approved 叶子规格确实需要、存在真实 consumer、且 ADR 明确要求该资源时才实际 provision Redis/cache/object storage/background infrastructure；不得因 ADR 定义了未来基础设施边界就提前创建没有 consumer 的付费资源。批准仅覆盖各 ADR 已记录并经过评审修订的决策内容；`implementation-status` 保持 `not-started`，对应代码实施开始前不得标记 implemented。
 >
@@ -401,3 +406,12 @@ ADR 从 proposed 变为 accepted 前必须：
 - 关联：[ADR-025](ADR-025-platform-frontend-technology-stack.md)、[ADR-026](ADR-026-platform-backend-runtime-and-contract-chain.md)、[ADR-027](ADR-027-platform-contract-codegen-tooling.md)、[ADR-028](ADR-028-platform-session-csrf-security.md)、[PLT-01 正式规格](../architecture/platform-contract-foundation.md)、[PLT-02 正式规格](../architecture/platform-frontend-shell.md)
 - 当前解释：ADR-025/026/027/028 于 2026-08-08 由 G09 实施门禁创建为 `proposed`，完成独立非作者评审（架构/前端/后端/安全/测试兼容）并写回全部修订后，于 2026-08-08 经用户明确正式批准，决策状态由 `proposed` 更新为 `accepted`，审批状态 `approved`，实施状态保持 `not-started`。批准仅覆盖各 ADR 已记录并经过评审修订的决策内容；不得借批准扩大 Platform Admin 权限模型、提前实现 G13、发明未批准 Query/Command、改变 G10 范围、修改 event-schema、绕过 Session/CSRF 安全约束或修改已批准 ADR 核心决策。两份 PLT-01/PLT-02 正式规格同步由用户批准（`status: approved`、`implementation-status: not-started`）。
 - 决策边界：批准不代表 `@aurora/platform-contract`、机器 Platform OpenAPI、生成 Client/Server 适配、漂移门禁、`apps/console`、平台前后端实现、数据库/Redis/BullMQ 或任何代码已经存在；`implementation-status` 全部保持 `not-started`，实现开始后按各自追加记录更新。各既有 ADR（001—024）决策状态与实施状态不变。
+
+### ADR-INDEX-G16-PROVIDER-NEUTRAL-20260813：ADR-036 创建并批准，ADR-022/023/024 superseded
+
+- 状态：approved
+- 生效日期：2026-08-13
+- Owner：cloud/operations
+- 关联：[ADR-036](ADR-036-provider-neutral-single-host-deployment.md)、[ADR-022](ADR-022-aws-account-region-network-and-iac.md)、[ADR-023](ADR-023-managed-compute-and-managed-data-services.md)、[ADR-024](ADR-024-edge-dns-tls-secrets-and-encryption.md)
+- 当前解释：用户 2026-08-13 批准 "Provider-Neutral Single-Host MVP" 架构方向，创建 [ADR-036](ADR-036-provider-neutral-single-host-deployment.md)（`proposed / not-started / awaiting-review`）并完成一名非作者 lightweight 评审（结论 ACCEPT，无 blocking，两条非阻塞建议并入实施约束）。ADR-036 决策状态由 `proposed` 更新为 `accepted`、审批状态 `approved`、实施状态 `not-started`。据此把 ADR-022/023/024 决策状态由 `accepted` 更新为 `superseded`（`superseded-by: ADR-036`），实施状态保持 `in-progress`（其 AWS IaC 历史实现保留，不再作为 v1 部署路径）。ADR-036 替代 AWS-first 部署方向，不修改任何业务规则（可靠接收、Inbox、Worker lease/fencing、事件协议、权限/隐私、账号删除语义、SEC-02 durable deletion intent、Source Map 私密语义、credential one-time secret、Issue/Alert/Notification）。
+- 决策边界：accepted ≠ implemented；ADR-036 实施状态保持 `not-started`，由 G16 OPS-04/05/06/07 与 G08 门禁迁移与最小真实验收承载。

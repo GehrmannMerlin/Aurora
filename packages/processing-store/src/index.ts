@@ -1,3 +1,76 @@
+export {
+  ALERT_METRIC_VALUES,
+  ALERT_RATIO_METRICS,
+  ALERT_WINDOWS_MINUTES,
+  ALERT_TRIGGER_DURATIONS_MINUTES,
+  ALERT_COOLDOWN_MINUTES,
+  ALERT_RULE_EVALUATION_STATES,
+  ALERT_INSTANCE_STATES,
+  ALERT_FILTER_DIMENSIONS,
+  EMPTY_ALERT_FILTERS,
+  EMPTY_ALERT_RULE_EVALUATION,
+  type AlertMetric,
+  type AlertRuleEvaluationState,
+  type AlertInstanceState,
+  type AlertFilterDimension,
+  type AlertFilterValues,
+  type AlertRuleConfig,
+  type AlertRuleEvaluation,
+  type AlertObservation,
+  type ActiveAlertInstance,
+  type AlertEvidenceRecord,
+  type AlertTransition,
+  type AlertInstanceAction,
+  type AlertNotificationDecision,
+  type EvaluateAlertRoundInput,
+  type EvaluateAlertRoundResult,
+} from './alert-evaluator-types.js';
+export {
+  classifyAlertObservation,
+  evaluateAlertRule,
+  isRatioMetric,
+  type AlertObservationClass,
+} from './alert-evaluator.js';
+export type {
+  AlertRuleRow,
+  AlertInstanceRow,
+  AlertInstanceSummary,
+  AlertEvidenceRow,
+  AlertTransitionRow,
+  CreateAlertRuleInput,
+  CreateAlertRuleResult,
+  UpdateAlertRuleInput,
+  UpdateAlertRuleResult,
+} from './alert-types.js';
+export {
+  createAlertRule,
+  updateAlertRule,
+  listAlertRules,
+  getAlertRule,
+  listAlertRulesForEvaluation,
+} from './alert-rule-repository.js';
+export {
+  getActiveAlertInstance,
+  persistAlertEvaluation,
+  queryAlertInstances,
+  queryAlertInstanceDetail,
+  type ActiveAlertInstanceRow,
+  type AlertInstanceDetail,
+} from './alert-instance-repository.js';
+export { computeAlertObservation } from './alert-observation-query.js';
+export {
+  runAlertEvaluationRound,
+  type AlertEvaluationRoundInput,
+  type AlertEvaluationRoundResult,
+  type AlertRoundNotificationDecision,
+} from './alert-evaluation-round.js';
+export type {
+  SymbolizationStatus,
+  PersistSymbolizationInput,
+  ReparseCandidate,
+} from './symbolization-types.js';
+export { persistSymbolization, queryReparseCandidates } from './symbolization-repository.js';
+export { extractStackFrames, type StackFrame } from './stack-frames.js';
 export { ProcessingStoreError, type ProcessingStoreErrorKind } from './errors.js';
 export type {
   PersistErrorEventOccurrenceInput,
@@ -105,3 +178,30 @@ export type {
   IssueActivityEntry,
   IssueNoteProjection,
 } from './issue-query-types.js';
+
+export {
+  NOTIFICATION_TYPES,
+  type NotificationTarget,
+  type NotificationRow,
+  type NotificationType,
+} from './notification-types.js';
+export {
+  markNotificationRead,
+  persistNotification,
+  queryNotifications,
+  queryUnreadCount,
+  type MarkNotificationReadResult,
+  type NotificationListInput,
+  type NotificationPage,
+  type PersistNotificationInput,
+  type PersistNotificationResult,
+} from './notification-repository.js';
+export {
+  createIssueNotificationSender,
+  persistAlertRoundNotifications,
+  resolveProjectNotificationContext,
+  type AlertRoundNotification,
+  type IssueNotificationSender,
+  type IssueNotificationSenderInput,
+  type ProjectNotificationContext,
+} from './notification-triggers.js';

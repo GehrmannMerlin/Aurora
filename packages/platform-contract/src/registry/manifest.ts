@@ -46,10 +46,7 @@ function buildRouteTargetCoverage(): Record<RouteTargetId, CoverageKind> {
   }
   for (const op of BLOCKED_OPERATIONS) {
     const page = pageForOperation(op.operationId);
-    // D2 gate: platform.resource-policies is the PlatformAdmin page; PlatformAdmin authority is
-    // not approved (G13), so the page stays 'unavailable' even though policySetPlatformDefault is
-    // registered as metadata-only blocked. Its pageForOperation entry is retained for tracing.
-    if (page && coverage[page] === 'unavailable' && page !== 'platform.resource-policies') {
+    if (page && coverage[page] === 'unavailable') {
       coverage[page] = 'blocked';
     }
   }
@@ -102,7 +99,6 @@ function pageForOperation(operationId: string): RouteTargetId | undefined {
     settingsGetProject: 'project.settings',
     lifecycleArchiveProject: 'project.lifecycle',
     notificationsListAndUnread: 'account.notifications',
-    policySetPlatformDefault: 'platform.resource-policies',
   };
   return map[operationId];
 }

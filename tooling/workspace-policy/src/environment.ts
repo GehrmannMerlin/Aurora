@@ -196,12 +196,7 @@ function inspectSource(
   workspacePackage: WorkspacePackage,
   file: string,
   sourceText: string,
-  layer:
-    | 'protocol'
-    | 'sdk-core'
-    | 'sdk-browser'
-    | 'sdk-plugin'
-    | 'sdk-framework',
+  layer: 'protocol' | 'sdk-core' | 'sdk-browser' | 'sdk-plugin' | 'sdk-framework',
 ): readonly WorkspaceViolation[] {
   const source = ts.createSourceFile(file, sourceText, ts.ScriptTarget.Latest, true);
   const violations: WorkspaceViolation[] = [];

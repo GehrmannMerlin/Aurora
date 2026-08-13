@@ -48,18 +48,39 @@ describe('console router', () => {
     // (PLT-05) add imports, so this legitimately exceeds the default 5s timeout.
   }, 30_000);
 
-  it('projects unavailable-route metadata onto the status view props', () => {
+  it('projects unavailable-route metadata onto the status view props (no target is unavailable now)', () => {
     const root = rootRoute();
-    // account.notifications stays an honest unavailable stub (all 7C org
-    // business targets — tokens/audit/trash — became real views).
-    const child = (root.children ?? []).find((c) => c.name === 'account.notifications');
-    const props = child?.props as unknown as (route: { meta: { label: string } }) => {
-      title: string;
-      reason: string;
-    };
-    expect(props({ meta: { label: '通知' } })).toEqual({
-      title: '通知',
-      reason: 'capability-not-provided',
-    });
+    const children = new Map((root.children ?? []).map((child) => [child.name, child]));
+    // PLT-10c (this task) makes platform.resource-policies a real view: no
+    // unavailable status-view props override is applied.
+    const resourcePolicies = children.get('platform.resource-policies');
+    expect(resourcePolicies).toBeDefined();
+    expect(resourcePolicies?.props).toBeUndefined();
+
+    // Guard the status-view props projection for any future route that carries
+    // an unavailableReason: `appRoutes` must give it a props function projecting
+    // title + a stable reason onto the status view.
+    const unavailableTargets: string[] = [];
+    for (const routeId of ROUTE_TARGET_IDS) {
+      const child = children.get(routeId);
+      expect(child, routeId).toBeDefined();
+      if (child === undefined) continue;
+      const props = child.props as unknown;
+      if (typeof props !== 'function') continue;
+      const fn = props as (route: { meta: { label: string } }) => {
+        title: string;
+        reason: string;
+      };
+      expect(fn({ meta: { label: '占位' } })).toEqual({
+        title: '占位',
+        reason: expect.stringMatching(
+          /^(capability-not-provided|dependency-unavailable|permission-unavailable)$/,
+        ),
+      });
+      unavailableTargets.push(routeId);
+    }
+    // PLT-03…PLT-10c progressively replaced every business-target unavailable
+    // stub with a real view, so the current invariant is: none remains.
+    expect(unavailableTargets).toEqual([]);
   });
 });

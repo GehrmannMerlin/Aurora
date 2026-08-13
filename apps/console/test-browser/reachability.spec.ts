@@ -82,14 +82,32 @@ const REAL_PROJECT_ENTRIES: ReadonlyArray<{ name: string; path: string; view: st
     path: '/organizations/org_test_1/projects/prj_test_1/performance',
     view: 'project-performance-view',
   },
-];
-
-const UNAVAILABLE_PROJECT_ENTRIES: ReadonlyArray<{ name: string; path: string }> = [
-  { name: '发布', path: '/organizations/org_test_1/projects/prj_test_1/releases' },
-  { name: '告警', path: '/organizations/org_test_1/projects/prj_test_1/alerts' },
-  { name: '访问', path: '/organizations/org_test_1/projects/prj_test_1/access' },
-  { name: '客户端密钥', path: '/organizations/org_test_1/projects/prj_test_1/client-keys' },
-  { name: '设置', path: '/organizations/org_test_1/projects/prj_test_1/settings' },
+  // PLT-07/08 flip the release/alert/access/settings entries to real views.
+  {
+    name: '发布',
+    path: '/organizations/org_test_1/projects/prj_test_1/releases',
+    view: 'project-releases-view',
+  },
+  {
+    name: '告警',
+    path: '/organizations/org_test_1/projects/prj_test_1/alerts',
+    view: 'project-alerts-view',
+  },
+  {
+    name: '访问',
+    path: '/organizations/org_test_1/projects/prj_test_1/access',
+    view: 'project-access-view',
+  },
+  {
+    name: '客户端密钥',
+    path: '/organizations/org_test_1/projects/prj_test_1/client-keys',
+    view: 'project-client-keys-view',
+  },
+  {
+    name: '设置',
+    path: '/organizations/org_test_1/projects/prj_test_1/settings',
+    view: 'project-settings-view',
+  },
 ];
 
 const ORG_ENTRIES: ReadonlyArray<{ name: string; path: string; view: string }> = [
@@ -101,7 +119,7 @@ const ORG_ENTRIES: ReadonlyArray<{ name: string; path: string; view: string }> =
   { name: '回收站', path: '/organizations/org_test_1/trash', view: 'trash-view' },
 ];
 
-test('every project sidebar entry is reachable by real click — PLT-05 views render, others stay honest unavailable', async ({
+test('every project sidebar entry is reachable by real click — PLT-05/06/07/08 real views render', async ({
   page,
 }) => {
   await page.goto(`${server!.origin}/`);
@@ -119,12 +137,6 @@ test('every project sidebar entry is reachable by real click — PLT-05 views re
     `${server!.origin}/organizations/org_test_1/projects/prj_test_1/issues/issue_test_1`,
   );
   await expect(page.getByTestId('project-issue-detail-view')).toBeVisible();
-  for (const entry of UNAVAILABLE_PROJECT_ENTRIES) {
-    await page.getByRole('link', { name: entry.name, exact: true }).click();
-    await expect(page).toHaveURL(new RegExp(escapeRegExp(entry.path)));
-    await expect(page.getByTestId('unavailable-view')).toBeVisible();
-    await expect(page.getByText('功能未提供')).toBeVisible();
-  }
 });
 
 test('top bar workspace, notifications and account entries are reachable by real click', async ({
@@ -137,9 +149,10 @@ test('top bar workspace, notifications and account entries are reachable by real
   await expect(page.getByRole('link', { name: '工作空间' })).toBeVisible();
   await page.getByRole('link', { name: '工作空间', exact: true }).click();
   await expect(page).toHaveURL(/\/workspace$/);
+  // PLT-09: 通知 now renders the real D1 notification center (not an unavailable stub).
   await page.getByRole('link', { name: '通知', exact: true }).click();
   await expect(page).toHaveURL(/\/notifications$/);
-  await expect(page.getByTestId('unavailable-view')).toBeVisible();
+  await expect(page.getByTestId('notifications-view')).toBeVisible();
   await page.getByRole('link', { name: '账号安全', exact: true }).click();
   await expect(page).toHaveURL(/\/account\/security$/);
   await expect(page.getByTestId('account-security-view')).toBeVisible();
@@ -184,21 +197,18 @@ test('a nav entry is reachable by keyboard (focus + Enter)', async ({ page }) =>
   await expect(page).toHaveURL(/\/organizations\/org_test_1\/projects\/prj_test_1\/overview$/);
   await expect(page.getByTestId('project-overview-view')).toBeVisible();
 });
-test('blocked G10-G13 targets parse, protect and represent unavailable (no fake data)', async ({
+test('platform G13 resource-policy target renders the real D2 view (not an unavailable stub)', async ({
   page,
 }) => {
-  const targets: ReadonlyArray<{ path: string; testId: string }> = [
-    { path: '/platform/resource-policies', testId: 'unavailable-view' },
-    {
-      path: '/organizations/org_test_1/projects/prj_test_1/releases/r_1/source-maps',
-      testId: 'unavailable-view',
-    },
-  ];
-  for (const target of targets) {
-    await page.goto(`${server!.origin}${target.path}`);
-    await expect(page.getByTestId(target.testId), target.path).toBeVisible();
-    await expect(page.getByRole('table'), target.path).toHaveCount(0);
-  }
+  await primeApp(page);
+  await setSessionAuthenticated(page, true);
+  await page.goto(`${server!.origin}/platform/resource-policies`);
+  // PLT-10c makes platform.resource-policies a real D2 view; the test-mode
+  // capability probe resolves to a platform admin, so the real effective-policy
+  // table renders (never an unavailable stub and never fabricated data).
+  await expect(page.getByTestId('resource-policy-view')).toBeVisible();
+  await expect(page.getByTestId('rp-effective-policy')).toBeVisible();
+  await expect(page.getByRole('table')).toHaveCount(1);
 });
 
 test('auth routes render the real PLT-03 views (not unavailable stubs) when signed out', async ({

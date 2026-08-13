@@ -26,12 +26,15 @@
   "dependencies": {
     "@aurora/platform-email": "workspace:*",
     "@aurora/platform-identity": "workspace:*",
+    "@aurora/platform-releases": "workspace:*",
+    "@aurora/processing-store": "workspace:*",
     "pg": "8.22.0"
   },
   "devDependencies": {
     "@types/node": "24.13.3",
     "@types/pg": "8.20.0",
     "@vitest/coverage-v8": "4.1.10",
+    "node-pg-migrate": "9.0.0",
     "typescript": "6.0.3",
     "vitest": "4.1.10"
   },

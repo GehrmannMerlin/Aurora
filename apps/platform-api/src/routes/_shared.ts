@@ -2,6 +2,7 @@ import type { FastifyReply, FastifyRequest } from 'fastify';
 import type { PoolClient } from 'pg';
 import type { SessionPayload } from '@aurora/platform-session';
 import type { RouteTargetId } from '@aurora/platform-contract';
+import { isPlatformAdmin } from '@aurora/platform-admin';
 import { checkProjectAccess, getProjectAccessRole } from '@aurora/platform-project-governance';
 import { effectivePermissions, type EffectivePermissions } from '../authorization.js';
 import { sendProblem } from '../error-mapper.js';
@@ -55,6 +56,43 @@ export async function requireSession(
     return null;
   }
   return request.sessionPayload;
+}
+
+/**
+ * Require platform admin capability (PLT-10a, ADR-034) for a D2 platform-level
+ * route handler. Session authentication first (401), then re-reads
+ * `platform_admins` for the CURRENT session account (never cached): a non-admin
+ * gets a closed `403 authorization` with no platform data leaked; a data-layer
+ * failure fails closed with `503 authority_unavailable` (never a degraded
+ * allow). Returns the resolved session payload, or null when a problem was
+ * already sent.
+ */
+export async function requirePlatformAdmin(
+  request: FastifyRequest,
+  reply: FastifyReply,
+  deps: PlatformApiRouteDependencies,
+  requestId: string,
+): Promise<SessionPayload | null> {
+  const session = await requireSession(request, reply, requestId);
+  if (session === null) return null;
+  let isAdmin;
+  try {
+    isAdmin = await isPlatformAdmin(deps.pool, { accountId: session.accountId });
+  } catch (error) {
+    if (await sendMappedError(reply, requestId, error)) return null;
+    throw error;
+  }
+  if (!isAdmin) {
+    await sendProblem(
+      reply,
+      requestId,
+      403,
+      'authorization',
+      'You do not have platform admin permission.',
+    );
+    return null;
+  }
+  return session;
 }
 
 /**
@@ -245,6 +283,66 @@ export async function requireProjectHandleAccess(
 }
 
 /**
+ * Require project-scoped administrative capability (C13/C14/C15/C16): an org
+ * manager (owner/admin) or a `project_members` row with role `project_admin`
+ * may administer project access, client keys, settings and lifecycle.
+ * `developer`/`read_only` and non-members get a closed 403. Cross-org / absent
+ * project -> closed 404 (no existence leak). Mirrors the alert-manage gate.
+ */
+export async function requireProjectAdminAccess(
+  accountId: string,
+  organizationId: string,
+  projectId: string,
+  deps: PlatformApiRouteDependencies,
+  reply: FastifyReply,
+  requestId: string,
+): Promise<boolean> {
+  let result;
+  try {
+    result = await getProjectAccessRole(deps.pool, { organizationId, projectId, accountId });
+  } catch (error) {
+    if (await sendMappedError(reply, requestId, error)) return false;
+    throw error;
+  }
+  if (result.outcome === 'not_found') {
+    await sendProblem(reply, requestId, 404, 'not_found', 'Project not found.');
+    return false;
+  }
+  if (result.outcome === 'forbidden' || result.role !== 'project_admin') {
+    await sendProblem(
+      reply,
+      requestId,
+      403,
+      'authorization',
+      'You do not have permission to administer this project.',
+    );
+    return false;
+  }
+  return true;
+}
+
+/**
+ * Fresh project-admin role re-read on the command transaction (TOCTOU closure,
+ * same pattern as `requireProjectAlertManageOnTransaction`). Throws a
+ * ServiceError so the whole command transaction rolls back.
+ */
+export async function requireProjectAdminAccessOnTransaction(
+  client: PoolClient,
+  accountId: string,
+  organizationId: string,
+  projectId: string,
+): Promise<void> {
+  const result = await getProjectAccessRole(client, { organizationId, projectId, accountId });
+  if (result.outcome !== 'allowed' || result.role !== 'project_admin') {
+    throw new ServiceError(
+      403,
+      'authorization',
+      'You do not have permission to administer this project.',
+    );
+  }
+}
+
+/**
  * Fresh project handle-role re-read on the command transaction (DAT-14 spec §4:
  * org manager or project_admin/developer may handle; read_only/forbidden 403).
  * Closes the TOCTOU window between the handler's outer `requireProjectHandleAccess`
@@ -263,6 +361,65 @@ export async function requireProjectHandleAccessOnTransaction(
       403,
       'authorization',
       'You do not have permission to handle issues in this project.',
+    );
+  }
+}
+
+/**
+ * Require project-scoped alert management capability (PRD §13.1: 项目管理员
+ * 管理告警). An org manager (owner/admin) or a `project_members` row with role
+ * `project_admin` may manage alert rules; `developer`/`read_only` and
+ * non-members get a closed 403. Cross-org / absent project -> closed 404.
+ */
+export async function requireProjectAlertManageAccess(
+  accountId: string,
+  organizationId: string,
+  projectId: string,
+  deps: PlatformApiRouteDependencies,
+  reply: FastifyReply,
+  requestId: string,
+): Promise<boolean> {
+  let result;
+  try {
+    result = await getProjectAccessRole(deps.pool, { organizationId, projectId, accountId });
+  } catch (error) {
+    if (await sendMappedError(reply, requestId, error)) return false;
+    throw error;
+  }
+  if (result.outcome === 'not_found') {
+    await sendProblem(reply, requestId, 404, 'not_found', 'Project not found.');
+    return false;
+  }
+  if (result.outcome === 'forbidden' || result.role !== 'project_admin') {
+    await sendProblem(
+      reply,
+      requestId,
+      403,
+      'authorization',
+      'You do not have permission to manage alert rules in this project.',
+    );
+    return false;
+  }
+  return true;
+}
+
+/**
+ * Fresh project alert-manage role re-read on the command transaction (same
+ * TOCTOU closure as `requireProjectHandleAccessOnTransaction`). Throws a
+ * ServiceError so the whole command transaction rolls back.
+ */
+export async function requireProjectAlertManageOnTransaction(
+  client: PoolClient,
+  accountId: string,
+  organizationId: string,
+  projectId: string,
+): Promise<void> {
+  const result = await getProjectAccessRole(client, { organizationId, projectId, accountId });
+  if (result.outcome !== 'allowed' || result.role !== 'project_admin') {
+    throw new ServiceError(
+      403,
+      'authorization',
+      'You do not have permission to manage alert rules in this project.',
     );
   }
 }

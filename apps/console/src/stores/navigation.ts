@@ -43,6 +43,15 @@ interface NavigationContextResponse {
   readonly currentScope: ScopeState;
   readonly defaultTarget: RouteTargetRef;
   readonly safeExitTarget: RouteTargetRef;
+  readonly unreadCount: {
+    readonly value?: number;
+    readonly status: 'available' | 'unavailable';
+  };
+}
+
+export interface UnreadCountProjection {
+  readonly value?: number;
+  readonly status: 'available' | 'unavailable';
 }
 
 export const useNavigationStore = defineStore('navigation', () => {
@@ -55,6 +64,7 @@ export const useNavigationStore = defineStore('navigation', () => {
   const currentScope = ref<ScopeState>(null);
   const defaultTarget = ref<RouteTargetRef | null>(null);
   const safeExitTarget = ref<RouteTargetRef | null>(null);
+  const unreadCount = ref<UnreadCountProjection>({ status: 'unavailable' });
 
   const currentOrganizationId = computed<string | null>(() => {
     if (currentScope.value?.type === 'organization') return currentScope.value.id ?? null;
@@ -84,6 +94,7 @@ export const useNavigationStore = defineStore('navigation', () => {
       currentScope.value = data.currentScope;
       defaultTarget.value = data.defaultTarget;
       safeExitTarget.value = data.safeExitTarget;
+      unreadCount.value = data.unreadCount ?? { status: 'unavailable' };
       status.value = 'ready';
     } catch (caught) {
       if (startedEpoch !== epoch) return; // do not overwrite a post-clear state with 'unavailable'
@@ -93,6 +104,7 @@ export const useNavigationStore = defineStore('navigation', () => {
       currentScope.value = null;
       defaultTarget.value = null;
       safeExitTarget.value = null;
+      unreadCount.value = { status: 'unavailable' };
       if (caught instanceof ApiError) {
         // safe empty state; error code is intentionally not surfaced to the UI
       }
@@ -108,6 +120,22 @@ export const useNavigationStore = defineStore('navigation', () => {
     currentScope.value = null;
     defaultTarget.value = null;
     safeExitTarget.value = null;
+    unreadCount.value = { status: 'unavailable' };
+  }
+
+  /**
+   * PLT-09: sync the account-level unread badge from an authoritative source
+   * (e.g. the D1 notifications list response after a successful mark-read).
+   * Only accepts server-confirmed values; never fabricates a count.
+   */
+  function applyUnreadCount(
+    value: number | undefined,
+    countStatus: 'available' | 'unavailable',
+  ): void {
+    unreadCount.value =
+      countStatus === 'available' && value !== undefined
+        ? { value, status: 'available' }
+        : { status: 'unavailable' };
   }
 
   return {
@@ -117,8 +145,10 @@ export const useNavigationStore = defineStore('navigation', () => {
     currentScope,
     defaultTarget,
     safeExitTarget,
+    unreadCount,
     currentOrganizationId,
     load,
     clear,
+    applyUnreadCount,
   };
 });

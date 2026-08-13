@@ -15,6 +15,7 @@ import {
   createIssueNote,
   deleteIssueNote,
   mergeIssues,
+  persistNotification,
   updateIssueAssignee,
   updateIssuePriority,
   updateIssueState,
@@ -314,6 +315,34 @@ export async function handleUpdateIssueAssignee(
           throw new ServiceError(409, 'conflict', 'The issue was updated by another member.');
         if (result.status === 'not_found')
           throw new ServiceError(404, 'not_found', 'The issue was not found.');
+        // PLT-09: append an assign-to-me notification when a real new assignee
+        // is set (append-only inside the idempotent transaction; replay is
+        // served from the cached result and never re-writes). The recipient is
+        // the new assignee; the target is the constrained issue-detail route.
+        if (
+          result.status === 'succeeded' &&
+          body.assigneeAccountId !== undefined &&
+          body.assigneeAccountId !== '' &&
+          body.assigneeAccountId !== (result.previousAssigneeAccountId ?? undefined)
+        ) {
+          await persistNotification(client, {
+            accountId: body.assigneeAccountId,
+            type: 'issue_assigned_to_me',
+            businessKey: `assignment:${auth.issueId}:${body.assigneeAccountId}`,
+            organizationId: auth.organizationId,
+            projectId: auth.projectId,
+            title: '分配给我',
+            target: {
+              routeId: 'project.issue-detail',
+              pathParams: {
+                organizationId: auth.organizationId,
+                projectId: auth.projectId,
+                issueId: auth.issueId,
+              },
+              query: {},
+            },
+          });
+        }
         await insertAuditEvent(client, {
           organizationId: auth.organizationId,
           ...actorField(session?.accountId),

@@ -1,11 +1,11 @@
 ---
 title: ADR-022：AWS 账号、区域、网络与 IaC 基础设施基础
-status: accepted
+status: superseded
 implementation-status: in-progress
 approval-status: approved
 owner: cloud/operations
 date: 2026-08-07
-last-reviewed: 2026-08-07
+last-reviewed: 2026-08-13
 applies-to: Aurora 第一版云基础设施的账号/环境模型、主区域、网络模型与 IaC 工具选择
 related:
   - ../../AGENTS.md
@@ -21,7 +21,7 @@ related:
   - ../../Auroa-PRD-业务逻辑汇总-v2.1-核心业务定稿版.md
   - ../superpowers/specs/2026-07-28-aurora-testing-deployment-release-design.md
 supersedes: none
-superseded-by: none
+superseded-by: ADR-036
 ---
 
 # ADR-022：AWS 账号、区域、网络与 IaC 基础设施基础
@@ -43,6 +43,8 @@ superseded-by: none
 - 被替代 ADR：none
 
 ## 状态说明
+
+> **superseded by [ADR-036](ADR-036-provider-neutral-single-host-deployment.md)（2026-08-13）**：用户批准 provider-neutral 单主机部署方向，本 ADR 的 AWS-first 最终决策（双账号、`ap-southeast-1`、CDK TypeScript）被 ADR-036 替代。本 ADR 保留为历史记录，不再作为第一版生产部署的实施依据。
 
 本 ADR 于 2026-08-07 由 G16/OPS-04 前置门禁创建为 `proposed / not-started / awaiting-user-approval`。门禁确认：AWS 主云方向已 approved（TDR §3.1 方案 A），但主区域（TDR-GAP-01）、账号/环境细化、网络模型与 IaC 工具均无 accepted 决策；deployment.md 明确这些增量为 `deferred`/`requires-accepted-adr`。本 ADR 只记录决策候选与推荐，**在用户批准前不得约束任何正式实现**；不创建 IaC、不运行 `writing-plans`。
 

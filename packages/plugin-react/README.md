@@ -52,11 +52,11 @@ const App = () => (
 createReactAuroraPlugin(input: CreateAuroraSdkInput): ReactAuroraPlugin
 ```
 
-| 成员 | 类型 | 说明 |
-|---|---|---|
+| 成员                  | 类型                                      | 说明                                                                             |
+| --------------------- | ----------------------------------------- | -------------------------------------------------------------------------------- |
 | `AuroraErrorBoundary` | `ComponentType<AuroraErrorBoundaryProps>` | class Error Boundary；捕获子树错误，`fallback` 可选渲染降级 UI，默认错误后渲染空 |
-| `sdk` | `AuroraSdkHandle` | 底层 SDK 句柄（`start/stop/destroy/config/control/delivery/getActivityTrail`） |
-| `destroy()` | `() => Promise<void>` | 释放全部资源；幂等；destroy 后边界提交为 no-op |
+| `sdk`                 | `AuroraSdkHandle`                         | 底层 SDK 句柄（`start/stop/destroy/config/control/delivery/getActivityTrail`）   |
+| `destroy()`           | `() => Promise<void>`                     | 释放全部资源；幂等；destroy 后边界提交为 no-op                                   |
 
 ```ts
 interface AuroraErrorBoundaryProps {

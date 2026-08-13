@@ -8,7 +8,7 @@ import { BLOCKED_OPERATIONS, PLATFORM_OPERATIONS } from '../../src/registry/oper
 import { ROUTE_TARGET_IDS, type RouteTargetId } from '../../src/common/navigation.js';
 
 describe('operation registry and manifest', () => {
-  it('exposes the thirty-five stable operations', () => {
+  it('exposes the stable operations in registry order', () => {
     expect(PLATFORM_OPERATIONS.map((o) => o.operationId)).toEqual([
       'identityGetSession',
       'navigationGetContext',
@@ -45,6 +45,7 @@ describe('operation registry and manifest', () => {
       'requestsListEndpoints',
       'diagnosticsGetDataStatus',
       'performanceListPages',
+      'usageGetSummary',
       'issuesUpdateState',
       'issuesUpdateAssignee',
       'issuesUpdatePriority',
@@ -54,11 +55,56 @@ describe('operation registry and manifest', () => {
       'issuesBatchUpdate',
       'issuesListIssues',
       'issuesGetIssueDetail',
+      'alertsGetCapability',
+      'alertsListRulesAndInstances',
+      'alertsCreateRule',
+      'alertsUpdateRule',
+      'alertsGetInstanceDetail',
+      'releasesListReleases',
+      'sourceMapsListFiles',
+      'sourceMapsUpload',
+      'sourceMapsReplace',
+      'sourceMapsReparse',
+      'accessListEffectiveMembers',
+      'accessGrantProjectMembership',
+      'accessChangeProjectRole',
+      'accessRemoveProjectMembership',
+      'credentialsListClientKeys',
+      'credentialsCreateClientKey',
+      'credentialsDisableClientKey',
+      'credentialsEnableClientKey',
+      'credentialsRevokeClientKey',
+      'settingsGetProject',
+      'settingsUpdateProject',
+      'settingsListEnvironments',
+      'settingsCreateEnvironment',
+      'lifecycleArchiveProject',
+      'lifecycleRestoreProject',
+      'lifecycleMoveToTrash',
+      'notificationsListAndUnread',
+      'notificationsMarkRead',
+      'platformAdminGetCapability',
+      'platformAdminList',
+      'platformAdminGrant',
+      'platformAdminRevoke',
+      'platformAuditListEvents',
+      'policyTargetSearch',
+      'policyGetDefault',
+      'policyGetOrganizationEffective',
+      'policyGetProjectEffective',
+      'policySetDefault',
+      'policySetOrganization',
+      'policyResetOrganization',
+      'policySetProjectLimit',
+      'policyClearProjectLimit',
     ]);
   });
 
   it('registers blocked downstream operations without schemas', () => {
-    expect(BLOCKED_OPERATIONS.length).toBeGreaterThan(12);
+    expect(BLOCKED_OPERATIONS.map((op) => op.operationId)).toEqual([
+      'onboardingGetProgress',
+      'overviewGetProjectStatus',
+    ]);
     for (const op of BLOCKED_OPERATIONS) {
       expect(op.reason.length).toBeGreaterThan(10);
       expect('responses' in op).toBe(false);
@@ -81,10 +127,8 @@ describe('operation registry and manifest', () => {
     }
   });
 
-  it('marks platform.resource-policies unavailable (D2 gate)', () => {
-    expect(OPERATION_MANIFEST.routeTargetCoverage['platform.resource-policies']).toBe(
-      'unavailable',
-    );
+  it('marks platform.resource-policies stable (D2 resource-policy page)', () => {
+    expect(OPERATION_MANIFEST.routeTargetCoverage['platform.resource-policies']).toBe('stable');
   });
 
   it('throws when a blocked operation carries a schema', () => {
@@ -122,7 +166,7 @@ describe('operation registry and manifest', () => {
   it('throws when a route target is marked stable without an emittable operation', () => {
     const bad: Readonly<Record<RouteTargetId, CoverageKind>> = {
       ...OPERATION_MANIFEST.routeTargetCoverage,
-      'organization.usage': 'stable',
+      'project.release-detail': 'stable',
     };
     expect(() => {
       validateManifest({ coverage: bad });
@@ -157,7 +201,7 @@ describe('operation registry and manifest', () => {
       'organization.project-create': 'stable',
       'organization.members': 'stable',
       'organization.settings': 'stable',
-      'organization.usage': 'blocked',
+      'organization.usage': 'stable',
       'organization.tokens': 'stable',
       'organization.audit': 'stable',
       'organization.trash': 'stable',
@@ -168,19 +212,19 @@ describe('operation registry and manifest', () => {
       'project.requests': 'stable',
       'project.performance': 'stable',
       'project.data-status': 'stable',
-      'project.releases': 'blocked',
+      'project.releases': 'stable',
       'project.release-detail': 'unavailable',
-      'project.source-maps': 'blocked',
-      'project.alerts': 'blocked',
-      'project.alert-rule-create': 'blocked',
-      'project.alert-rule-edit': 'unavailable',
-      'project.alert-instance-detail': 'blocked',
-      'project.access': 'blocked',
-      'project.client-keys': 'blocked',
-      'project.settings': 'blocked',
-      'project.lifecycle': 'blocked',
-      'account.notifications': 'blocked',
-      'platform.resource-policies': 'unavailable',
+      'project.source-maps': 'stable',
+      'project.alerts': 'stable',
+      'project.alert-rule-create': 'stable',
+      'project.alert-rule-edit': 'stable',
+      'project.alert-instance-detail': 'stable',
+      'project.access': 'stable',
+      'project.client-keys': 'stable',
+      'project.settings': 'stable',
+      'project.lifecycle': 'stable',
+      'account.notifications': 'stable',
+      'platform.resource-policies': 'stable',
     };
     expect(Object.keys(expected)).toHaveLength(ROUTE_TARGET_IDS.length);
     for (const rt of ROUTE_TARGET_IDS) {

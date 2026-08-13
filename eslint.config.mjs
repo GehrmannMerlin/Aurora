@@ -30,6 +30,7 @@ export default tseslint.config(
       'packages/platform-project-governance/**/*.ts',
       'packages/platform-credentials/**/*.ts',
       'packages/platform-audit/**/*.ts',
+      'packages/platform-releases/**/*.ts',
       'packages/platform-session/**/*.ts',
       'packages/platform-email/**/*.ts',
       'apps/ingestion-api/**/*.ts',

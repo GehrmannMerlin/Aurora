@@ -14,7 +14,8 @@ export interface ProtocolNegotiationUnsupported {
   readonly requestedVersion: unknown;
 }
 
-export type ProtocolNegotiationResult = ProtocolNegotiationSupported | ProtocolNegotiationUnsupported;
+export type ProtocolNegotiationResult =
+  ProtocolNegotiationSupported | ProtocolNegotiationUnsupported;
 
 export function negotiateProtocolVersion(input: unknown): ProtocolNegotiationResult {
   if (isSupportedProtocolVersion(input)) {

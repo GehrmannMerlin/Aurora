@@ -45,3 +45,8 @@ export {
 } from './errors.js';
 export { queryProjectCredentialSafeStatus } from './credential-status-query.js';
 export type { ProjectCredentialSafeStatus } from './credential-status-query.js';
+export { listIngestionClientCredentials } from './credential-list.js';
+export type {
+  ListIngestionClientCredentialsInput,
+  ListedClientCredential,
+} from './credential-list.js';

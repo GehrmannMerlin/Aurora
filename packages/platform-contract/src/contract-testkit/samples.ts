@@ -71,6 +71,7 @@ export const validNavigationSamples: readonly unknown[] = [
       query: {},
     },
     safeExitTarget: { routeId: 'workspace.home', pathParams: {}, query: {} },
+    unreadCount: { value: 0, status: 'available' },
   },
 ];
 
@@ -82,6 +83,7 @@ export const invalidNavigationSamples: readonly unknown[] = [
     currentScope: { type: 'workspace', lifecycle: 'active' },
     defaultTarget: { routeId: 'anything.goes', pathParams: {}, query: {} },
     safeExitTarget: { routeId: 'workspace.home', pathParams: {}, query: {} },
+    unreadCount: { status: 'unavailable' },
   },
 ];
 
@@ -283,4 +285,230 @@ export const validListSecurityAuditSamples: readonly unknown[] = [
     ],
     pagination: { totalCountStatus: 'available' },
   },
+];
+
+export const validListNotificationsSamples: readonly unknown[] = [
+  {
+    data: {
+      notifications: {
+        status: 'available',
+        items: [
+          {
+            notificationId: 'notif_test_1',
+            type: 'new_issue',
+            title: '新问题出现',
+            summary: 'TypeError: boom',
+            organizationId: 'org_test_1',
+            projectId: 'prj_test_1',
+            occurredAt: '2026-08-10T12:00:00.000Z',
+            readAt: '2026-08-10T12:05:00.000Z',
+            target: {
+              routeId: 'project.issue-detail',
+              pathParams: {
+                organizationId: 'org_test_1',
+                projectId: 'prj_test_1',
+                issueId: '7',
+              },
+              query: {},
+            },
+          },
+        ],
+        pagination: { nextCursor: 'cGFnZS0y', totalCount: 1, totalCountStatus: 'available' },
+      },
+      unreadCount: { value: 0, status: 'available' },
+    },
+    meta: { requestId: 'req_test_1', readAt: '2026-08-10T12:06:00.000Z' },
+    allowedActions: ['read'],
+    navigationTargets: [],
+  },
+];
+
+export const validMarkNotificationReadSamples: readonly unknown[] = [
+  {
+    data: { status: 'read', notificationId: 'notif_test_1' },
+  },
+];
+
+export const validPlatformAdminGetCapabilitySamples: readonly unknown[] = [
+  { data: { hasCapability: true } },
+  { data: { hasCapability: false } },
+];
+
+export const validPlatformAdminListSamples: readonly unknown[] = [
+  {
+    data: {
+      admins: {
+        status: 'available',
+        items: [
+          {
+            accountId: 'acct_test_1',
+            grantedBy: 'acct_test_2',
+            grantedAt: '2026-08-12T01:00:00.000Z',
+          },
+        ],
+        pagination: { nextCursor: 'cGFnZS0y', totalCount: 1, totalCountStatus: 'available' },
+      },
+    },
+    meta: { requestId: 'req_test_1', readAt: '2026-08-12T01:05:00.000Z' },
+    allowedActions: ['read'],
+    navigationTargets: [{ routeId: 'platform.resource-policies', pathParams: {}, query: {} }],
+  },
+];
+
+export const validPlatformAdminGrantSamples: readonly unknown[] = [
+  { data: { status: 'granted', accountId: 'acct_test_3' } },
+];
+
+export const validPlatformAdminRevokeSamples: readonly unknown[] = [
+  { data: { status: 'revoked', accountId: 'acct_test_3' } },
+];
+
+export const validPlatformAuditListEventsSamples: readonly unknown[] = [
+  {
+    data: {
+      events: {
+        status: 'available',
+        items: [
+          {
+            eventId: 'aud_test_2',
+            action: 'admin_granted',
+            actorAccountId: 'acct_test_2',
+            target: { accountId: 'acct_test_3' },
+            result: 'succeeded',
+            occurredAt: '2026-08-12T01:00:00.000Z',
+            requestId: 'req_test_1',
+          },
+        ],
+        pagination: { nextCursor: 'cGFnZS0y', totalCount: 1, totalCountStatus: 'available' },
+      },
+    },
+    meta: { requestId: 'req_test_1', readAt: '2026-08-12T01:05:00.000Z' },
+    allowedActions: ['read'],
+    navigationTargets: [],
+  },
+];
+
+// ---------------------------------------------------------------------------
+// D2 platform resource policy (PLT-10b) samples
+// ---------------------------------------------------------------------------
+
+const validDefaultPolicyProjection = {
+  configured: {
+    defaultPeriodQuota: 1000000,
+    warningRatio: 80,
+    hardLimit: 100,
+    degradationEnabled: true,
+    highValueRetentionDays: 90,
+  },
+  source: 'system_default',
+  effective: {
+    defaultPeriodQuota: 1000000,
+    warningRatio: 80,
+    hardLimit: 100,
+    degradationEnabled: true,
+    highValueRetentionDays: 90,
+  },
+  version: 1,
+  updatedAt: '2026-08-12T01:00:00.000Z',
+  updatedBy: 'acct_test_1',
+  propagation: { status: 'unknown', reason: 'no data-plane consumer yet' },
+};
+
+const validOrgOverrideProjection = {
+  configured: {
+    defaultPeriodQuota: 500000,
+    warningRatio: 85,
+    hardLimit: 100,
+    degradationEnabled: true,
+    highValueRetentionDays: 60,
+  },
+  source: 'platform_admin',
+  effective: {
+    defaultPeriodQuota: 500000,
+    warningRatio: 85,
+    hardLimit: 100,
+    degradationEnabled: true,
+    highValueRetentionDays: 60,
+  },
+  version: 3,
+  updatedAt: '2026-08-12T01:00:00.000Z',
+  updatedBy: 'acct_test_1',
+  propagation: { status: 'unknown', reason: 'no data-plane consumer yet' },
+};
+
+const validProjectPolicyProjection = {
+  configured: { resourceLimit: 50000 },
+  source: 'platform_admin',
+  effective: {
+    defaultPeriodQuota: 500000,
+    warningRatio: 85,
+    hardLimit: 100,
+    degradationEnabled: true,
+    highValueRetentionDays: 60,
+    resourceLimit: 50000,
+  },
+  version: 2,
+  updatedAt: '2026-08-12T01:00:00.000Z',
+  updatedBy: 'acct_test_1',
+  propagation: { status: 'unknown', reason: 'no data-plane consumer yet' },
+};
+
+export const validPolicyTargetSearchSamples: readonly unknown[] = [
+  {
+    data: {
+      organizations: [{ organizationId: 'org_test_1', name: 'Acme' }],
+      projects: [{ projectId: 'prj_test_1', organizationId: 'org_test_1', name: 'Web' }],
+      pagination: { totalCount: 2, totalCountStatus: 'available' },
+    },
+    meta: { requestId: 'req_test_1', readAt: '2026-08-12T01:05:00.000Z' },
+    allowedActions: ['read'],
+    navigationTargets: [],
+  },
+];
+
+export const validPolicyGetDefaultSamples: readonly unknown[] = [
+  {
+    data: { data: validDefaultPolicyProjection },
+    meta: { requestId: 'req_test_1', readAt: '2026-08-12T01:05:00.000Z' },
+    allowedActions: ['read'],
+    navigationTargets: [{ routeId: 'platform.resource-policies', pathParams: {}, query: {} }],
+  },
+];
+
+export const validPolicyGetOrganizationEffectiveSamples: readonly unknown[] = [
+  {
+    data: { data: validOrgOverrideProjection },
+    meta: { requestId: 'req_test_1', readAt: '2026-08-12T01:05:00.000Z' },
+    allowedActions: ['read'],
+    navigationTargets: [{ routeId: 'platform.resource-policies', pathParams: {}, query: {} }],
+  },
+];
+
+export const validPolicyGetProjectEffectiveSamples: readonly unknown[] = [
+  {
+    data: { data: validProjectPolicyProjection },
+    meta: { requestId: 'req_test_1', readAt: '2026-08-12T01:05:00.000Z' },
+    allowedActions: ['read'],
+    navigationTargets: [],
+  },
+];
+
+export const validPolicySetDefaultSamples: readonly unknown[] = [
+  { data: { status: 'set', version: 4 } },
+];
+
+export const validPolicySetOrganizationSamples: readonly unknown[] = [
+  { data: { status: 'set', version: 3 } },
+];
+
+export const validPolicyResetOrganizationSamples: readonly unknown[] = [
+  { data: { status: 'reset' } },
+];
+
+export const validPolicySetProjectLimitSamples: readonly unknown[] = [
+  { data: { status: 'set', version: 2 } },
+];
+
+export const validPolicyClearProjectLimitSamples: readonly unknown[] = [
+  { data: { status: 'cleared' } },
 ];

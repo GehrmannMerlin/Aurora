@@ -1,4 +1,4 @@
-import { arr, bool, enum_, nullable, obj, optional, str } from '../common/schema.js';
+import { arr, bool, enum_, nullable, num, obj, optional, str } from '../common/schema.js';
 import { AccountId, OrganizationId, ProjectId } from '../common/identifiers.js';
 import { navigationTargets, routeTarget } from '../common/navigation.js';
 
@@ -30,6 +30,12 @@ const scopeState = obj({
   lifecycle: enum_(['active', 'archived', 'trash']),
 });
 
+/** Account-level unread notification count (PLT-09). Honest `unavailable`. */
+const unreadCount = obj({
+  value: optional(num(0)),
+  status: enum_(['available', 'unavailable']),
+});
+
 export const navigationGetContextResponse = obj({
   account: accountSummary,
   workspace: navigationTargets,
@@ -37,4 +43,5 @@ export const navigationGetContextResponse = obj({
   currentScope: nullable(scopeState),
   defaultTarget: routeTarget,
   safeExitTarget: routeTarget,
+  unreadCount,
 });

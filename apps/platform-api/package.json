@@ -26,13 +26,16 @@
   "dependencies": {
     "@aurora/ingestion-credentials": "workspace:*",
     "@aurora/ingestion-inbox": "workspace:*",
+    "@aurora/platform-admin": "workspace:*",
     "@aurora/platform-audit": "workspace:*",
     "@aurora/platform-contract": "workspace:*",
     "@aurora/platform-credentials": "workspace:*",
     "@aurora/platform-email": "workspace:*",
     "@aurora/platform-identity": "workspace:*",
     "@aurora/platform-organization": "workspace:*",
+    "@aurora/platform-policy": "workspace:*",
     "@aurora/platform-project-governance": "workspace:*",
+    "@aurora/platform-releases": "workspace:*",
     "@aurora/platform-session": "workspace:*",
     "@aurora/processing-store": "workspace:*",
     "fastify": "5.10.0",
@@ -44,7 +47,8 @@
     "@vitest/coverage-v8": "4.1.10",
     "node-pg-migrate": "9.0.0",
     "typescript": "6.0.3",
-    "vitest": "4.1.10"
+    "vitest": "4.1.10",
+    "@aurora/event-schema": "workspace:*"
   },
   "aurora": {
     "layer": "service"

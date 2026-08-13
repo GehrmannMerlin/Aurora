@@ -1,6 +1,12 @@
 import { Pool } from 'pg';
 import { buildPlatformWorkerComposition } from './index.js';
 import type { PlatformWorkerConfig } from './config.js';
+import { InMemorySourceMapObjectStorage } from '@aurora/platform-releases';
+import { PostgresCleanupAdapter } from './retention/postgres-cleanup-adapter.js';
+import { RedisSessionCleanupAdapter } from './retention/redis-session-cleanup-adapter.js';
+import { ObjectStorageCleanupAdapter } from './retention/object-storage-cleanup-adapter.js';
+import { BackupLifecycleCleanupAdapter } from './retention/backup-lifecycle-cleanup-adapter.js';
+import { AuditCleanupAdapter } from './retention/audit-cleanup-adapter.js';
 
 export interface StartPlatformWorkerOptions {
   readonly config: PlatformWorkerConfig;
@@ -34,6 +40,20 @@ export async function startPlatformWorker(
       pollIntervalMs: options.config.outboxPollIntervalMs,
       batchLimit: options.config.outboxBatchLimit,
       maxAttempts: options.config.outboxMaxAttempts,
+      cleanupMaxAttempts: options.config.cleanupMaxAttempts,
+      cleanupAdapters: [
+        new PostgresCleanupAdapter(pool),
+        new RedisSessionCleanupAdapter(),
+        new ObjectStorageCleanupAdapter(),
+        new BackupLifecycleCleanupAdapter(),
+        new AuditCleanupAdapter(pool),
+      ],
+      alertsEnabled: options.config.alertsEnabled,
+      alertMaxRules: options.config.alertMaxRules,
+      sourceMapsReparseEnabled: options.config.sourceMapsReparseEnabled,
+      sourceMapsReparseMaxOccurrences: options.config.sourceMapsReparseMaxOccurrences,
+      sourceMapsReparseMaxTasks: options.config.sourceMapsReparseMaxTasks,
+      sourceMapsObjectStorage: new InMemorySourceMapObjectStorage(),
     });
     await worker.start();
 

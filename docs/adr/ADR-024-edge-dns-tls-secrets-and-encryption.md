@@ -1,11 +1,11 @@
 ---
 title: ADR-024：边缘、DNS、TLS、秘密与加密（CloudFront/Route 53/ACM、KMS/Secrets Manager/GitHub OIDC）
-status: accepted
+status: superseded
 implementation-status: in-progress
 approval-status: approved
 owner: cloud/operations
 date: 2026-08-07
-last-reviewed: 2026-08-07
+last-reviewed: 2026-08-13
 applies-to: Aurora 第一版边缘入口（CloudFront/ALB）、DNS 与 TLS（Route 53/ACM）、秘密与加密（KMS/Secrets Manager）以及跨账号部署身份（GitHub OIDC）的基础资源决策
 related:
   - ../../AGENTS.md
@@ -20,7 +20,7 @@ related:
   - '../superpowers/specs/2026-07-28-aurora-testing-deployment-release-design.md'
   - '../superpowers/specs/2026-07-28-aurora-platform-backend-design.md'
 supersedes: none
-superseded-by: none
+superseded-by: ADR-036
 ---
 
 # ADR-024：边缘、DNS、TLS、秘密与加密（CloudFront/Route 53/ACM、KMS/Secrets Manager/GitHub OIDC）
@@ -43,6 +43,8 @@ superseded-by: none
 - **评审域**：infra topology（cloud/operations）+ security（KMS/Secrets/OIDC）。本 ADR 把边缘/DNS/TLS（基础设施）与秘密/加密（安全）合为一份，对应已批准 TDR 候选 5（"AWS 运行与 IaC：账号/环境、CloudFront/S3、ECS/Fargate、RDS、ElastiCache、S3、网络与 CDK"是单一候选）。**评审门禁要求 cloud/operations 与 security 两域评审者均批准；若任一方无法联合批准，本 ADR 必须按 ADR 规范 7.2/7.7 拆分为边缘/DNS/TLS 与秘密/加密两份**（架构评审 Major #3；formalization-readiness §7"Owner、评审者、迁移/回滚边界不同的安全、数据、基础设施…决定必须拆分"）。
 
 ## 状态说明
+
+> **superseded by [ADR-036](ADR-036-provider-neutral-single-host-deployment.md)（2026-08-13）**：用户批准 provider-neutral 单主机部署方向，本 ADR 的 AWS-first 最终决策（CloudFront/ALB + Route 53 + ACM + KMS/Secrets Manager + GitHub OIDC）被 ADR-036 替代；其边缘/传输安全底线（HTTPS/HSTS/TLS 最低版本/限流/日志脱敏+秘密扫描）已在 ADR-036 实施约束中以 provider-neutral 形式承接。本 ADR 保留为历史记录，不再作为第一版生产部署的实施依据。
 
 本 ADR 于 2026-08-07 由 G16/OPS-04 前置门禁创建为 `proposed / not-started / awaiting-user-approval`。门禁确认：边缘拓扑、DNS/TLS、秘密与加密边界均有 approved 设计方向（CloudFront/ALB、Route 53/ACM、KMS/Secrets Manager/OIDC），但无 accepted 决策、无真实域名/证书/资源。本 ADR 只记录候选与推荐，**在用户批准前不得创建 CloudFront/ACM/Route 53 记录/KMS/Secrets，不得购买域名、不得申请真实生产证书**。
 
