@@ -104,6 +104,8 @@
 
 30. **G14/G16 最终收尾（2026-08-13，分支 feature/g14-compatibility-reference-matrix-rebased）**：**OPS-05 与 OPS-06 正式关闭**（ADR-036 已在 main、provider-neutral v1 退出条件满足：`deploy/preview/` + `pnpm deploy:preview`/`rollback` + 服务器只读 health smoke 6 服务 healthy），`completed` 74→76、`remaining` 4→2，**G16 = COMPLETED（OPS-04/05/06/07 全部完成）**；**OPS-02 关闭**（`examples/sdk-reference` reference fixture + matrix 契约 + Chromium smoke + axe + performance 一致性 + CI matrix 最小验收通过），`completed` 76→77、`remaining` 2→1，**G14 = COMPLETED**。剩余唯一叶子 OPS-03（G15 SDK release engineering）。
 
+31. **G08 数据接入生产容量与准入（2026-08-13，分支 feature/g08-ingestion-capacity-admission，G08 = COMPLETED）**：ING-13 与 ING-12 各自独立验收。**ING-13**：在 TARGET_POSTGRESQL_ENVIRONMENT（47.238.145.24 真实 PG 17.10，8 vCPU/15.8GiB/shared_buffers=128MB）复用 `tooling/ingestion-benchmark` 有界基准（local-baseline 三场景 42/42 正确性 PASS、隔离 schema 残留 0、preview 未受影响），事件吞吐 422.7（batch 10）/685.1（batch 50）ev/s，产出 APPROVED_INGESTION_PARAMETERS（maxEventsPerBatch=50 / sustainable=400 ev/s / maxHttpConcurrency=8），证据 [2026-08-13-ing-13-target-postgresql-baseline.md](docs/testing/evidence/2026-08-13-ing-13-target-postgresql-baseline.md)。**ING-12**：`@aurora/ingestion-api` 新增 `createIngestionAdmissionPolicy`（内存 token-bucket 按事件速率限流，ING-13 追踪 `DEFAULT_INGESTION_ADMISSION_POLICY_CONFIG`）＋ `CheckIngestionAdmissionInput.eventCount` ＋ preview composition root 接线；不修改公共事件协议/credential/Origin/CORS、不新增 body/secret/query 采集；targeted tests 全绿（admission-policy 7 + routes-inject 18 + security-negative 6 + package-entry 3 + typecheck）。**completed 77 / remaining 1（ING-13 + ING-12 已计入 77，不重复计数）**。
+
 每项未决内容必须留在有顺序的决策清单中；不得为了“尽快”而把未确认方案写成事实。
 
 ## 4. 范围与架构门禁
