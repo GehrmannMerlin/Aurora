@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
-import { Pool } from 'pg';
+import type { Pool } from 'pg';
 import { runner } from 'node-pg-migrate';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import {
@@ -241,6 +241,6 @@ describeDb('DAT-18 source-map reparse round (real PostgreSQL 17)', () => {
       'SELECT map_version FROM error_occurrence_symbolizations WHERE project_id = $1',
       [OTHER_PROJECT],
     );
-    expect(Number(fresh.rows[0]?.map_version ?? 0)).toBeGreaterThanOrEqual(2);
+    expect(fresh.rows[0]?.map_version ?? 0).toBeGreaterThanOrEqual(2);
   });
 });

@@ -54,7 +54,7 @@ describe('C14 client-key Command client', () => {
     expect(result.clientKey).toBe('aurora_ingest_x');
     const call = lastCall();
     expect(call.operationId).toBe('credentialsCreateClientKey');
-    expect(call.input!.body).toMatchObject({
+    expect(call.input?.body).toMatchObject({
       origins: ['https://app.example.invalid'],
       environments: ['production'],
       allowNonBrowser: false,
@@ -65,7 +65,7 @@ describe('C14 client-key Command client', () => {
   it('disable/enable/revoke target the keyId path param', async () => {
     await disableClientKey(SCOPE, 'ck_abcdefgh', { csrf: CSRF, idempotencyKey: FIXED_KEY });
     expect(lastCall().operationId).toBe('credentialsDisableClientKey');
-    expect(lastCall().input!.pathParams).toMatchObject({ keyId: 'ck_abcdefgh' });
+    expect(lastCall().input?.pathParams).toMatchObject({ keyId: 'ck_abcdefgh' });
 
     await enableClientKey(SCOPE, 'ck_abcdefgh', { csrf: CSRF, idempotencyKey: FIXED_KEY });
     expect(lastCall().operationId).toBe('credentialsEnableClientKey');

@@ -71,12 +71,11 @@ describe('console router', () => {
         title: string;
         reason: string;
       };
-      expect(fn({ meta: { label: '占位' } })).toEqual({
-        title: '占位',
-        reason: expect.stringMatching(
-          /^(capability-not-provided|dependency-unavailable|permission-unavailable)$/,
-        ),
-      });
+      const projected = fn({ meta: { label: '占位' } });
+      expect(projected.title).toBe('占位');
+      expect(projected.reason).toMatch(
+        /^(capability-not-provided|dependency-unavailable|permission-unavailable)$/,
+      );
       unavailableTargets.push(routeId);
     }
     // PLT-03…PLT-10c progressively replaced every business-target unavailable

@@ -47,6 +47,6 @@ describe('C16 lifecycle Command client', () => {
     );
     const call = lastCall();
     expect(call.operationId).toBe('lifecycleMoveToTrash');
-    expect(call.input!.body).toMatchObject({ resourceVersion: '1', idempotencyKey: FIXED_KEY });
+    expect(call.input?.body).toMatchObject({ resourceVersion: '1', idempotencyKey: FIXED_KEY });
   });
 });

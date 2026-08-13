@@ -36,8 +36,8 @@ describe('PLT-09 notification Command client', () => {
     expect(result).toEqual({ status: 'read', notificationId: 'notif_1' });
     const call = lastCall();
     expect(call.operationId).toBe('notificationsMarkRead');
-    expect(call.input!.pathParams).toEqual({ notificationId: 'notif_1' });
-    expect(call.input!.body).toEqual({ idempotencyKey: FIXED_KEY });
+    expect(call.input?.pathParams).toEqual({ notificationId: 'notif_1' });
+    expect(call.input?.body).toEqual({ idempotencyKey: FIXED_KEY });
     expect(call.scope).toEqual({ type: 'account' });
     expect(call.csrf).toBe(CSRF);
   });

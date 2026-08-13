@@ -332,8 +332,27 @@ export async function queryAlertInstanceDetail(
   const instanceRow = instanceResult.rows[0];
   if (instanceRow === undefined) return null;
   const [evidenceResult, transitionsResult] = await Promise.all([
-    pool.query(EVIDENCE_SQL, [input.instanceId]),
-    pool.query(TRANSITIONS_SQL, [input.instanceId]),
+    pool.query<{
+      evaluated_at: Date;
+      state_after: string;
+      window_start_at: Date;
+      window_end_at: Date;
+      observed_value: string | null;
+      numerator: string | null;
+      denominator: string | null;
+      sample_count: number | null;
+      min_sample_requirement: number | null;
+      watermark_at: Date | null;
+      completeness: string;
+      pause_reason: string | null;
+      applied_filters: unknown;
+    }>(EVIDENCE_SQL, [input.instanceId]),
+    pool.query<{
+      from_state: string;
+      to_state: string;
+      reason: string;
+      occurred_at: Date;
+    }>(TRANSITIONS_SQL, [input.instanceId]),
   ]);
   const instance: AlertInstanceDetail['instance'] = {
     id: instanceRow.id,

@@ -140,11 +140,11 @@ describe('RouteTarget registry', () => {
   });
 
   it('resolves the PLT-07 release/source-map/alert routes with real lazy views', async () => {
-    const cases: ReadonlyArray<{
+    const cases: readonly {
       routeId: RouteTargetId;
       pathParams: Record<string, string>;
       parent?: RouteTargetId;
-    }> = [
+    }[] = [
       {
         routeId: 'project.releases',
         pathParams: { organizationId: 'org_1', projectId: 'prj_1' },
@@ -197,7 +197,7 @@ describe('RouteTarget registry', () => {
   });
 
   it('resolves the PLT-08 access/client-keys/settings/lifecycle routes with real lazy views', async () => {
-    const cases: ReadonlyArray<{ routeId: RouteTargetId; pathParams: Record<string, string> }> = [
+    const cases: readonly { routeId: RouteTargetId; pathParams: Record<string, string> }[] = [
       {
         routeId: 'project.access',
         pathParams: { organizationId: 'org_1', projectId: 'prj_1' },

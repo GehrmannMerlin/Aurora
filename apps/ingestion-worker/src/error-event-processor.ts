@@ -110,7 +110,7 @@ export function createErrorEventProcessor(
     ((): Promise<PersistIssueContributionResult> => Promise.resolve({ status: 'duplicate' }));
   // PLT-09: default no-op keeps the processor DB-free; the real
   // createIssueNotificationSender is injected when wired.
-  const notifyIssue = input.notifyIssue ?? (async (): Promise<void> => undefined);
+  const notifyIssue = input.notifyIssue ?? ((): Promise<void> => Promise.resolve(undefined));
 
   const process = async (
     processorInput: ProcessIngestionEventInput,

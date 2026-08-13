@@ -202,7 +202,7 @@ describeDb('DAT-19 alert evaluation flow (real PostgreSQL 17 + Redis)', () => {
       alertRuleBody(owner),
     );
     expect(create.status).toBe(200);
-    const ruleId = ((create.body.data as { ruleId?: string }).ruleId ?? '').toString();
+    const ruleId = (create.body.data as { ruleId?: string }).ruleId ?? '';
 
     // High failure rate in the window → first round pending_trigger, second round triggered.
     await seedRequestBucket(pool, projectId, FIXED_NOW.getTime() - 3 * MINUTE, 60, 100);

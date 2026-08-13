@@ -50,7 +50,7 @@ export async function resolveProjectNotificationContext(
       [input.projectId],
     );
     const row = result.rows[0];
-    if (row === undefined || row.organization_id === null) return null;
+    if (row?.organization_id == null) return null;
     const adminAccountIds = Array.isArray(row.admin_account_ids)
       ? row.admin_account_ids.filter(
           (value: unknown): value is string => typeof value === 'string',

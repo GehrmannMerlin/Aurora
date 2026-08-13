@@ -72,6 +72,7 @@ describe('DAT-19 Alert rule Command client', () => {
 
   it('omits optional fields (name/recoveryDuration/minSampleCount) when absent', async () => {
     const { name: _name, ...withoutName } = RULE_INPUT;
+    void _name;
     await createAlertRule(SCOPE, withoutName, { csrf: CSRF, idempotencyKey: FIXED_KEY });
     const body = lastCall().input?.body as Record<string, unknown>;
     expect(body.name).toBeUndefined();

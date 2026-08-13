@@ -40,7 +40,7 @@ describe('C13 project access Command client', () => {
     const call = lastCall();
     expect(call.operationId).toBe('accessGrantProjectMembership');
     expect(call.csrf).toBe(CSRF);
-    expect(call.input!).toMatchObject({
+    expect(call.input).toMatchObject({
       pathParams: { organizationId: 'org_1', projectId: 'prj_1' },
       body: { accountId: 'acc_1', role: 'developer', idempotencyKey: FIXED_KEY },
     });
@@ -54,10 +54,10 @@ describe('C13 project access Command client', () => {
       { csrf: CSRF, idempotencyKey: FIXED_KEY },
     );
     expect(lastCall().operationId).toBe('accessChangeProjectRole');
-    expect(lastCall().input!.pathParams).toMatchObject({ accountId: 'acc_1' });
+    expect(lastCall().input?.pathParams).toMatchObject({ accountId: 'acc_1' });
 
     await removeProjectMembership(SCOPE, 'acc_1', { csrf: CSRF, idempotencyKey: FIXED_KEY });
     expect(lastCall().operationId).toBe('accessRemoveProjectMembership');
-    expect(lastCall().input!.pathParams).toMatchObject({ accountId: 'acc_1' });
+    expect(lastCall().input?.pathParams).toMatchObject({ accountId: 'acc_1' });
   });
 });

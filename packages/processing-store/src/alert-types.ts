@@ -74,7 +74,7 @@ export function toAlertRuleConfig(rule: AlertRuleRow): AlertRuleConfig {
 
 /** Safe rule snapshot frozen into an instance at creation (C12, rule/instance separation). */
 export function buildAlertRuleSnapshot(rule: AlertRuleRow): Record<string, unknown> {
-  const undef = <T>(value: T | null): T | undefined => (value === null ? undefined : value);
+  const undef = <T>(value: T | null): T | undefined => value ?? undefined;
   return {
     name: undef(rule.name),
     metric: rule.metric,
