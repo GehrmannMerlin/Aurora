@@ -23,6 +23,16 @@
  * → credentials → audit → platform-admins → platform-audit-events →
  * resource-policies/overrides/limits → releases), and the notifications
  * migration (1897000000001) sorts last. No filename prefixing is required.
+ *
+ * Incremental-update note: `checkOrder: false` below. The target database was
+ * migrated up to the 2026-08-09 platform set (timestamps 1786…/1787…), while
+ * the processing-store fingerprint/issue/alert/symbolization migrations
+ * (1722500000007–0011) were added to the repo afterwards with smaller
+ * timestamps. Their physical order is still correct (none of them has a
+ * foreign key to a platform table), but node-pg-migrate's default order check
+ * rejects any not-yet-run migration that sorts before an already-run one. For
+ * an incremental deploy we intentionally disable that check and let it apply
+ * only the not-yet-run migrations in filename order.
  */
 import { copyFile, mkdir, readdir, rm } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
@@ -83,6 +93,9 @@ async function main() {
     migrationsTable: 'pgmigrations',
     count: Infinity,
     log: () => undefined,
+    // See header note: allow not-yet-run migrations that sort before an
+    // already-run migration (physically correct, FK-free) on incremental deploys.
+    checkOrder: false,
   });
   console.log(`preview migrations up: ${String(executed.length)} executed`);
 }
