@@ -21,7 +21,7 @@ describe('core package contract', () => {
     expect(manifest).toMatchObject({
       name: '@aurora/core',
       version: '0.0.0',
-      private: true,
+      publishConfig: { access: 'public' },
       type: 'module',
       sideEffects: false,
       engines: { node: '>=24.18.0 <25' },
