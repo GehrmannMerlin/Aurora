@@ -405,13 +405,13 @@ importers:
 
   packages/ingestion-inbox:
     dependencies:
+      '@aurora/event-schema':
+        specifier: workspace:*
+        version: link:../event-schema
       pg:
         specifier: 8.22.0
         version: 8.22.0
     devDependencies:
-      '@aurora/event-schema':
-        specifier: workspace:*
-        version: link:../event-schema
       '@types/node':
         specifier: 24.13.3
         version: 24.13.3
@@ -887,13 +887,13 @@ importers:
 
   packages/processing-store:
     dependencies:
+      '@aurora/event-schema':
+        specifier: workspace:*
+        version: link:../event-schema
       pg:
         specifier: 8.22.0
         version: 8.22.0
     devDependencies:
-      '@aurora/event-schema':
-        specifier: workspace:*
-        version: link:../event-schema
       '@types/node':
         specifier: 24.13.3
         version: 24.13.3
