@@ -1,16 +1,21 @@
 import type { Pool } from 'pg';
 import {
   persistErrorEventOccurrence,
+  persistIssueContribution,
   persistPerformanceMetricContribution,
   persistRequestEventSample,
   persistRequestMetricContribution,
 } from '@aurora/processing-store';
+import { updateOnboardingStatus } from '@aurora/platform-project-governance';
 import type { IngestionWorkerConfig } from './configuration.js';
 import type { IngestionEventProcessor } from './processor.js';
 import { createErrorEventProcessor } from './error-event-processor.js';
 import { createRequestEventProcessor } from './request-event-processor.js';
 import { createPerformanceEventProcessor } from './performance-event-processor.js';
-import { createRequestProcessingRulesAdapter, DEFAULT_REQUEST_PROCESSING_RULES } from './request-processing-rules-adapter.js';
+import {
+  createRequestProcessingRulesAdapter,
+  DEFAULT_REQUEST_PROCESSING_RULES,
+} from './request-processing-rules-adapter.js';
 import { createEventProcessorRouter } from './event-processor-router.js';
 import type { RetryBackoffConfig, RetryBackoffEntropyProvider } from './retry-backoff-types.js';
 
@@ -49,6 +54,27 @@ export function createProductionIngestionWorker(
 
   const errorProcessor = createErrorEventProcessor({
     persist: (input) => persistErrorEventOccurrence(options.pool, input),
+    contributeIssue: async (input) => {
+      const contribution = await persistIssueContribution(options.pool, input);
+      if (
+        contribution.status === 'inserted' ||
+        contribution.status === 'applied' ||
+        contribution.status === 'reopened' ||
+        contribution.status === 'duplicate'
+      ) {
+        try {
+          const onboarding = await updateOnboardingStatus(options.pool, {
+            projectId: input.projectId,
+            status: 'completed',
+            currentStep: 3,
+          });
+          if (onboarding.status === 'not_found') return { status: 'temporarily_unavailable' };
+        } catch {
+          return { status: 'temporarily_unavailable' };
+        }
+      }
+      return contribution;
+    },
     backoff,
     entropyProvider,
     now,

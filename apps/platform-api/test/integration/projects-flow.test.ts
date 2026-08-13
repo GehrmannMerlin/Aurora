@@ -3,14 +3,13 @@ import { randomUUID } from 'node:crypto';
 import type { Pool } from 'pg';
 import type { FastifyInstance } from 'fastify';
 import { insertOrganizationMembership } from '@aurora/platform-identity';
-import { createSessionStore, type SessionStore } from '@aurora/platform-session';
+import type { SessionStore } from '@aurora/platform-session';
 import { ConsoleEmailAdapter } from '@aurora/platform-email';
 import { buildPlatformApi } from '../../src/app.js';
 import { loadPlatformApiConfig } from '../../src/config.js';
 import {
   assertIsTestDatabase,
   createTestPool,
-  redisUrl,
   runAllMigrations,
   testDatabaseUrl,
   truncateIdentityTables,
@@ -18,14 +17,14 @@ import {
 import { registerActor, type RegisteredActor } from './flow-helpers.js';
 
 const hasDb = process.env.AURORA_TEST_DATABASE_URL !== undefined;
-const hasRedis = process.env.AURORA_TEST_REDIS_URL !== undefined;
-const describeDb = hasDb && hasRedis ? describe : describe.skip;
+const describeDb = hasDb ? describe : describe.skip;
 
 const FIXED_NOW = new Date('2026-08-09T00:00:00.000Z');
 
 interface CreateProjectBody {
   projectId?: string;
   clientKeyPublicIdentifier?: string;
+  clientKey?: string;
   defaultEnvironment?: string;
   onboardingStatus?: string;
   navigationTargets?: readonly { routeId: string }[];
@@ -36,14 +35,31 @@ interface ProblemBody {
   detail?: string;
 }
 
-/** A base64url/hex run of 40+ chars: only a secret (43), digest (64) or public
- *  identifier would reach this length — UUIDs (36) and route ids never do. */
-const SECRET_LIKE = /[A-Za-z0-9_-]{40,}/;
-
-describeDb('B2 create-project flow (real PostgreSQL 17 + Redis)', () => {
+describeDb('B2 create-project flow (real PostgreSQL 17 + in-memory session authority)', () => {
   let pool: Pool;
   let sessionStore: SessionStore;
   let keyPrefix: string;
+
+  function createMemorySessionStore(prefix: string): SessionStore {
+    const values = new Map<string, string>();
+    const sets = new Map<string, Set<string>>();
+    const client = {
+      get: (key: string): Promise<string | null> => Promise.resolve(values.get(key) ?? null),
+      set: (key: string, value: string): Promise<string> => {
+        values.set(key, value);
+        return Promise.resolve('OK');
+      },
+      sAdd: (key: string, value: string): Promise<number> => {
+        const entries = sets.get(key) ?? new Set<string>();
+        const before = entries.size;
+        entries.add(value);
+        sets.set(key, entries);
+        return Promise.resolve(entries.size - before);
+      },
+      quit: (): Promise<string> => Promise.resolve('OK'),
+    };
+    return { client: client as unknown as SessionStore['client'], keyPrefix: prefix };
+  }
 
   beforeAll(async () => {
     assertIsTestDatabase(testDatabaseUrl());
@@ -51,7 +67,7 @@ describeDb('B2 create-project flow (real PostgreSQL 17 + Redis)', () => {
     await runAllMigrations();
     await truncateIdentityTables(pool);
     keyPrefix = `test:projects-flow:${randomUUID()}`;
-    sessionStore = await createSessionStore({ url: redisUrl(), keyPrefix });
+    sessionStore = createMemorySessionStore(keyPrefix);
   });
 
   afterAll(async () => {
@@ -65,7 +81,7 @@ describeDb('B2 create-project flow (real PostgreSQL 17 + Redis)', () => {
         HOST: '127.0.0.1',
         PORT: '0',
         DATABASE_URL: testDatabaseUrl(),
-        REDIS_URL: redisUrl(),
+        REDIS_URL: 'redis://127.0.0.1:6379',
         SESSION_IDLE_MS: String(30 * 60 * 1000),
         SESSION_ABSOLUTE_MS: String(8 * 60 * 60 * 1000),
         COOKIE_SECURE: 'false',
@@ -101,7 +117,7 @@ describeDb('B2 create-project flow (real PostgreSQL 17 + Redis)', () => {
     return { status: response.statusCode, body: response.json() };
   }
 
-  it('owner creates a project atomically: project + env + client key + onboarding, no secret returned', async () => {
+  it('owner creates project + environment + real ingestion key + onboarding atomically', async () => {
     const app = buildApp();
     const owner = await registerActor(app, `owner-${randomUUID()}@example.com`);
 
@@ -118,12 +134,13 @@ describeDb('B2 create-project flow (real PostgreSQL 17 + Redis)', () => {
     expect(created.defaultEnvironment).toBe('production');
     expect(created.onboardingStatus).toBe('not_started');
     expect(created.clientKeyPublicIdentifier).toMatch(/^aurora_key_/);
+    expect(created.clientKey).toMatch(/^aurora_ingest_/);
     expect(
       created.navigationTargets?.some((t) => t.routeId === 'organization.project-create'),
     ).toBe(true);
 
-    // The client-key secret is never returned: the response must not contain any
-    // secret-like base64url token beyond the public identifier itself.
+    // The complete browser-safe ingestion key is delivered once, but its raw
+    // value and database digest are never persisted together or echoed elsewhere.
     const raw = JSON.stringify(created);
     const digestColumns = await pool.query<{ key_digest: string }>(
       'SELECT key_digest FROM client_keys WHERE project_id = $1',
@@ -133,10 +150,6 @@ describeDb('B2 create-project flow (real PostgreSQL 17 + Redis)', () => {
     const digest = digestColumns.rows[0]?.key_digest;
     expect(digest).toMatch(/^[0-9a-f]{64}$/);
     expect(raw).not.toContain(digest ?? '');
-    // No secret-like token (43-char base64url secret / 64-char digest) may appear
-    // in the response; the public identifier is far shorter and starts with its
-    // fixed prefix.
-    expect(SECRET_LIKE.exec(raw) ?? []).toEqual([]);
 
     // DB rows: project + default production env + client key + onboarding.
     const project = await pool.query<{ name: string; framework_type: string; status: string }>(
@@ -161,6 +174,13 @@ describeDb('B2 create-project flow (real PostgreSQL 17 + Redis)', () => {
     );
     expect(key.rows[0]?.public_identifier).toBe(created.clientKeyPublicIdentifier);
     expect(key.rows[0]?.enabled).toBe(true);
+
+    const ingestionKey = await pool.query<{ key_id: string; status: string }>(
+      'SELECT key_id, status FROM ingestion_client_credentials WHERE project_id = $1',
+      [created.projectId],
+    );
+    expect(ingestionKey.rows).toHaveLength(1);
+    expect(ingestionKey.rows[0]?.status).toBe('active');
 
     const onboarding = await pool.query<{ status: string; current_step: number }>(
       'SELECT status, current_step FROM project_onboarding WHERE project_id = $1',
@@ -260,12 +280,38 @@ describeDb('B2 create-project flow (real PostgreSQL 17 + Redis)', () => {
     const secondBody = second.body as CreateProjectBody;
     expect(secondBody.projectId).toBe(firstBody.projectId);
     expect(secondBody.clientKeyPublicIdentifier).toBe(firstBody.clientKeyPublicIdentifier);
+    expect(firstBody.clientKey).toMatch(/^aurora_ingest_/);
+    expect(secondBody.clientKey).toBe('secret-not-recoverable-000000000000');
 
     const count = await pool.query<{ n: string }>(
       'SELECT count(*)::text AS n FROM projects WHERE organization_id = $1',
       [owner.organizationId],
     );
     expect(Number(count.rows[0]?.n ?? '0')).toBe(1);
+    await app.close();
+  });
+
+  it('returns the registered personal workspace through navigation context', async () => {
+    const app = buildApp();
+    const owner = await registerActor(app, `owner-${randomUUID()}@example.com`);
+    const response = await app.inject({
+      method: 'GET',
+      url: '/api/platform/v1/navigation/context',
+      headers: { cookie: `aurora_session=${owner.cookie}` },
+    });
+    expect(response.statusCode).toBe(200);
+    const body = response.json<{
+      organizations: readonly { organizationId: string; projects: readonly unknown[] }[];
+      currentScope: { type: string; id?: string; lifecycle: string };
+    }>();
+    expect(body.organizations).toHaveLength(1);
+    expect(body.organizations[0]?.organizationId).toBe(owner.organizationId);
+    expect(body.organizations[0]?.projects).toHaveLength(0);
+    expect(body.currentScope).toEqual({
+      type: 'organization',
+      id: owner.organizationId,
+      lifecycle: 'active',
+    });
     await app.close();
   });
 

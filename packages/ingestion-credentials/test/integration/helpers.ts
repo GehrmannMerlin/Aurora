@@ -39,9 +39,7 @@ export function inboxMigrationsDir(): string {
  * node-pg-migrate tracks migrations by filename in `pgmigrations`, so the same
  * filenames at a stable path keep the record consistent across test runs.
  */
-const COMBINED_DIR = fileURLToPath(
-  new URL('../.migrations-combined', import.meta.url),
-);
+const COMBINED_DIR = fileURLToPath(new URL('../.migrations-combined', import.meta.url));
 
 /** Rebuild the combined migrations directory with inbox + credentials migrations. */
 async function ensureCombinedDir(): Promise<string> {
@@ -59,6 +57,17 @@ async function ensureCombinedDir(): Promise<string> {
 
 /** Apply inbox + credentials migrations from the stable combined directory. */
 export async function migrateUp(): Promise<void> {
+  const pool = createTestPool();
+  try {
+    const existing = await pool.query<{ inbox: string | null; credentials: string | null }>(
+      `SELECT to_regclass('public.event_inbox')::text AS inbox,
+              to_regclass('public.ingestion_client_credentials')::text AS credentials`,
+    );
+    const row = existing.rows[0];
+    if (typeof row?.inbox === 'string' && typeof row.credentials === 'string') return;
+  } finally {
+    await pool.end();
+  }
   const dir = await ensureCombinedDir();
   await runner({
     databaseUrl: testDatabaseUrl(),

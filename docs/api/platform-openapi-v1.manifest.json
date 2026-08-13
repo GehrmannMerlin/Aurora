@@ -1856,6 +1856,11 @@
                 "minLength": 11,
                 "maxLength": 128
               },
+              "clientKey": {
+                "type": "string",
+                "minLength": 32,
+                "maxLength": 256
+              },
               "defaultEnvironment": {
                 "type": "string",
                 "minLength": 1,

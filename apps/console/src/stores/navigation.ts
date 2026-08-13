@@ -138,6 +138,15 @@ export const useNavigationStore = defineStore('navigation', () => {
         : { status: 'unavailable' };
   }
 
+  function selectOrganization(organizationId: string): void {
+    if (
+      !organizations.value.some((organization) => organization.organizationId === organizationId)
+    ) {
+      return;
+    }
+    currentScope.value = { type: 'organization', id: organizationId, lifecycle: 'active' };
+  }
+
   return {
     status,
     workspaceTargets,
@@ -149,6 +158,7 @@ export const useNavigationStore = defineStore('navigation', () => {
     currentOrganizationId,
     load,
     clear,
+    selectOrganization,
     applyUnreadCount,
   };
 });

@@ -13,6 +13,7 @@ import ProjectCreateView from '../../src/views/organization/ProjectCreateView.vu
 import SettingsView from '../../src/views/organization/SettingsView.vue';
 import UsageView from '../../src/views/organization/UsageView.vue';
 import WorkspaceHomeView from '../../src/views/workspace/WorkspaceHomeView.vue';
+import ProjectOnboardingView from '../../src/views/project/ProjectOnboardingView.vue';
 import TokensView from '../../src/views/organization/TokensView.vue';
 import AuditView from '../../src/views/organization/AuditView.vue';
 import TrashView from '../../src/views/organization/TrashView.vue';
@@ -88,6 +89,23 @@ describe('B1 workspace home (7A)', () => {
     expect(await screen.findByTestId('create-project-button')).toBeTruthy();
   });
 
+  it('shows the approved first-run empty state and create-project CTA', async () => {
+    mockServer.use(
+      http.get('/api/platform/v1/organizations/:organizationId/projects', () =>
+        HttpResponse.json(
+          { projects: [], allowedActions: ['read', 'create'], navigationTargets: [] },
+          { status: 200 },
+        ),
+      ),
+    );
+    await router.push({ path: '/workspace', query: { organizationId: 'org_test_1' } });
+    await router.isReady();
+    render(WorkspaceHomeView, { global: { plugins: [pinia, router] } });
+    expect(await screen.findByText('开始使用 Aurora')).toBeTruthy();
+    expect(screen.getByText('你还没有项目，创建第一个项目开始监控应用。')).toBeTruthy();
+    expect(screen.getByTestId('create-project-empty-button')).toBeTruthy();
+  });
+
   it('hides the create-project button when allowedActions lacks create', async () => {
     mockServer.use(
       http.get('/api/platform/v1/organizations/:organizationId/projects', () =>
@@ -122,7 +140,7 @@ describe('B5 usage unavailable (7A)', () => {
 });
 
 describe('B2 create project (7B)', () => {
-  it('submits the form and shows the public client key identifier', async () => {
+  it('submits the form and enters SDK onboarding with the one-time client key', async () => {
     await router.push('/organizations/org_test_1/projects/new');
     await router.isReady();
     render(ProjectCreateView, { global: { plugins: [pinia, router] } });
@@ -134,11 +152,12 @@ describe('B2 create project (7B)', () => {
     await fireEvent.update(screen.getByTestId('project-website-input'), 'https://example.com');
     await fireEvent.click(screen.getByTestId('create-project-submit'));
 
-    expect(await screen.findByTestId('create-success')).toBeTruthy();
-    // The PUBLIC client key identifier is shown; the key secret never is.
-    expect(screen.getByTestId('client-key-public-identifier').textContent).toBe(
-      'ck_pub_test_12345',
-    );
+    await waitFor(() => {
+      expect(router.currentRoute.value.path).toBe(
+        '/organizations/org_test_1/projects/prj_created_1/onboarding',
+      );
+    });
+    expect(window.history.state.clientKey).toMatch(/^aurora_ingest_/);
     expect(handlerControls.createProjectRequests).toBeGreaterThanOrEqual(1);
   });
 
@@ -166,6 +185,30 @@ describe('B2 create project (7B)', () => {
     render(ProjectCreateView, { global: { plugins: [pinia, router] } });
     expect(await screen.findByTestId('create-forbidden')).toBeTruthy();
     expect(screen.queryByTestId('project-name-input')).toBeNull();
+  });
+});
+
+describe('C1 first-run onboarding', () => {
+  it('renders install, real key initialization and test-error steps', async () => {
+    const clientKey =
+      'aurora_ingest_AAAAAAAAAAAAAAAAAAAAAA_BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB';
+    await router.push({
+      path: '/organizations/org_test_1/projects/prj_test_1/onboarding',
+      state: { clientKey, environment: 'production' },
+    });
+    await router.isReady();
+    render(ProjectOnboardingView, { global: { plugins: [pinia, router] } });
+    expect(await screen.findByTestId('onboarding-guide')).toBeTruthy();
+    expect(screen.getByTestId('onboarding-install-command').textContent).toContain(
+      '@aurora/browser @aurora/plugin-error',
+    );
+    expect(screen.getByTestId('onboarding-init-code').textContent).toContain(clientKey);
+    expect(screen.getByTestId('onboarding-init-code').textContent).toContain('production');
+    expect(screen.getByTestId('onboarding-test-code').textContent).toContain(
+      'Aurora Acceptance Test Error',
+    );
+    expect(screen.getByTestId('onboarding-send-test').textContent).toContain('发送测试错误');
+    expect(screen.getByTestId('onboarding-recheck').textContent).toContain('我已经发送测试事件');
   });
 });
 

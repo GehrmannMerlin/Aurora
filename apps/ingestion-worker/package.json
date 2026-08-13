@@ -26,6 +26,7 @@
   "dependencies": {
     "@aurora/event-schema": "workspace:*",
     "@aurora/ingestion-inbox": "workspace:*",
+    "@aurora/platform-project-governance": "workspace:*",
     "@aurora/processing-store": "workspace:*",
     "pg": "8.22.0"
   },

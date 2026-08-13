@@ -3,23 +3,11 @@ import { computed } from 'vue';
 import { storeToRefs } from 'pinia';
 import { resolveRouteTarget } from '../../contracts/route-registry';
 import { useNavigationStore } from '../../stores/navigation';
-import { useSessionStore } from '../../stores/session';
 import AppLink from '../aurora/AppLink.vue';
 import ScopeSwitcher from './ScopeSwitcher.vue';
 
-const session = useSessionStore();
 const navigation = useNavigationStore();
-const { status: sessionStatus } = storeToRefs(session);
-const { organizations, currentOrganizationId, unreadCount } = storeToRefs(navigation);
-
-const authenticated = computed(() => sessionStatus.value === 'authenticated');
-const orgLabel = computed(() => {
-  if (!authenticated.value) return '未登录';
-  const org = organizations.value.find(
-    (candidate) => candidate.organizationId === currentOrganizationId.value,
-  );
-  return org?.name ?? '未选择';
-});
+const { unreadCount } = storeToRefs(navigation);
 
 /** PLT-09 D1 unread badge: only an authoritative available count > 0 is shown. */
 const unreadBadge = computed(() => {
@@ -42,7 +30,6 @@ function hrefFor(routeId: string): string {
     <nav class="au-topnav" aria-label="顶栏导航">
       <AppLink :to="hrefFor('workspace.home')" label="工作空间" />
       <ScopeSwitcher />
-      <span class="au-scope-chip">{{ orgLabel }}</span>
       <AppLink :to="hrefFor('account.notifications')" aria-label="通知">
         通知
         <span
@@ -81,9 +68,6 @@ function hrefFor(routeId: string): string {
 }
 .au-brand {
   font-weight: 600;
-}
-.au-scope-chip {
-  color: var(--color-topbar-fg);
 }
 .au-unread-badge {
   display: inline-flex;

@@ -1148,6 +1148,8 @@ export function createPlatformHandlers() {
         {
           projectId: 'prj_created_1',
           clientKeyPublicIdentifier: 'ck_pub_test_12345',
+          clientKey:
+            'aurora_ingest_AAAAAAAAAAAAAAAAAAAAAA_BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB',
           defaultEnvironment: 'production',
           onboardingStatus: 'not_started',
           navigationTargets: [],
