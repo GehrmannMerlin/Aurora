@@ -81,26 +81,26 @@ DB_PASS="$(SSH "grep '^PREVIEW_DB_PASSWORD=' '${REMOTE_ROOT}/shared/.env' | cut 
 echo "==> Secrets present (not printed)"
 
 # 6. Compose config validation on server (dry-run).
-SSH "cd '${RELEASE_DIR}' && RELEASE_ID='${RELEASE_ID}' PREVIEW_DB_PASSWORD='${DB_PASS}' docker compose -f deploy/preview/compose.yaml config --quiet" || { echo "COMPOSE CONFIG FAILED"; exit 1; }
+SSH "cd '${RELEASE_DIR}' && RELEASE_ID='${RELEASE_ID}' PREVIEW_DB_PASSWORD='${DB_PASS}' docker compose --env-file '${REMOTE_ROOT}/shared/.env' -f deploy/preview/compose.yaml config --quiet" || { echo "COMPOSE CONFIG FAILED"; exit 1; }
 echo "==> Compose config valid"
 
 # 7. Build images on the server.
-SSH "cd '${RELEASE_DIR}' && RELEASE_ID='${RELEASE_ID}' PREVIEW_DB_PASSWORD='${DB_PASS}' docker compose -f deploy/preview/compose.yaml build" || { echo "IMAGE BUILD FAILED"; exit 1; }
+SSH "cd '${RELEASE_DIR}' && RELEASE_ID='${RELEASE_ID}' PREVIEW_DB_PASSWORD='${DB_PASS}' docker compose --env-file '${REMOTE_ROOT}/shared/.env' -f deploy/preview/compose.yaml build" || { echo "IMAGE BUILD FAILED"; exit 1; }
 echo "==> Images built"
 
 # 8. Start postgres, wait for health.
-SSH "cd '${RELEASE_DIR}' && RELEASE_ID='${RELEASE_ID}' PREVIEW_DB_PASSWORD='${DB_PASS}' docker compose -f deploy/preview/compose.yaml up -d postgres" || { echo "POSTGRES START FAILED"; exit 1; }
+SSH "cd '${RELEASE_DIR}' && RELEASE_ID='${RELEASE_ID}' PREVIEW_DB_PASSWORD='${DB_PASS}' docker compose --env-file '${REMOTE_ROOT}/shared/.env' -f deploy/preview/compose.yaml up -d postgres" || { echo "POSTGRES START FAILED"; exit 1; }
 
 # 9. Run migrations (migrate service exits 0 on success).
-SSH "cd '${RELEASE_DIR}' && RELEASE_ID='${RELEASE_ID}' PREVIEW_DB_PASSWORD='${DB_PASS}' docker compose -f deploy/preview/compose.yaml run --rm migrate" || { echo "MIGRATION FAILED"; exit 1; }
+SSH "cd '${RELEASE_DIR}' && RELEASE_ID='${RELEASE_ID}' PREVIEW_DB_PASSWORD='${DB_PASS}' docker compose --env-file '${REMOTE_ROOT}/shared/.env' -f deploy/preview/compose.yaml run --rm migrate" || { echo "MIGRATION FAILED"; exit 1; }
 echo "==> Migrations applied"
 
 # 10. Start the rest of the stack.
-SSH "cd '${RELEASE_DIR}' && RELEASE_ID='${RELEASE_ID}' PREVIEW_DB_PASSWORD='${DB_PASS}' docker compose -f deploy/preview/compose.yaml up -d" || { echo "STACK START FAILED"; exit 1; }
+SSH "cd '${RELEASE_DIR}' && RELEASE_ID='${RELEASE_ID}' PREVIEW_DB_PASSWORD='${DB_PASS}' docker compose --env-file '${REMOTE_ROOT}/shared/.env' -f deploy/preview/compose.yaml up -d" || { echo "STACK START FAILED"; exit 1; }
 
 # 11. Verify API and worker are up (no crash loop).
 sleep 3
-SSH "cd '${RELEASE_DIR}' && RELEASE_ID='${RELEASE_ID}' PREVIEW_DB_PASSWORD='${DB_PASS}' docker compose -f deploy/preview/compose.yaml ps --format 'table {{.Name}}\t{{.Status}}'" || { echo "PS FAILED"; exit 1; }
+SSH "cd '${RELEASE_DIR}' && RELEASE_ID='${RELEASE_ID}' PREVIEW_DB_PASSWORD='${DB_PASS}' docker compose --env-file '${REMOTE_ROOT}/shared/.env' -f deploy/preview/compose.yaml ps --format 'table {{.Name}}\t{{.Status}}'" || { echo "PS FAILED"; exit 1; }
 
 # 12. Atomic pointer switch: point current at the new release.
 #     The skeleton creates an empty `current` dir; remove it safely only if it

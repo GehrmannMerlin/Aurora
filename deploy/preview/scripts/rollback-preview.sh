@@ -55,7 +55,7 @@ PREVIOUS_DIR="${REMOTE_ROOT}/releases/${PREVIOUS}"
 SSH "rm -f '${CURRENT_DIR}' && ln -s '${PREVIOUS_DIR}' '${CURRENT_DIR}'" || { echo "POINTER FAILED"; exit 1; }
 
 # Restart the stack from the previous release.
-SSH "cd '${PREVIOUS_DIR}' && RELEASE_ID='${PREVIOUS}' PREVIEW_DB_PASSWORD=\"\$(cat '${REMOTE_ROOT}/shared/.env')\" docker compose -f deploy/preview/compose.yaml up -d --force-recreate" || { echo "RESTART FAILED"; exit 1; }
+SSH "cd '${PREVIOUS_DIR}' && RELEASE_ID='${PREVIOUS}' docker compose --env-file '${REMOTE_ROOT}/shared/.env' -f deploy/preview/compose.yaml up -d --force-recreate" || { echo "RESTART FAILED"; exit 1; }
 
 echo "==> Rollback complete: current -> ${PREVIOUS}"
 echo "==> Note: DB migration state is unchanged; verify the previous release"

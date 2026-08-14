@@ -15,24 +15,39 @@ consumer 的基础设施；Redis 仅由 `apps/platform-api` 的 Session（ADR-03
 ## 职责
 
 - `buildPlatformWorker`：可测试的轮询循环工厂。每个 `pollIntervalMs` 调用一次
-  `consumeOutboxEmails({ pool, port, outboxRepo, now, limit, maxAttempts })`；
+  `consumeOutboxEmails({ pool, port, outboxRepo, now, limit, maxAttempts, processingTimeoutMs,
+retryBaseDelayMs, retryMaxDelayMs })`；
   `AbortController` + 可注入 `SleeperPort` 控制停止与节奏（镜像 `apps/ingestion-worker` 的
   sleeper/timer 端口模式）；
 - `src/index.ts` 组合根：注入真实 outbox Repository（来自 `@aurora/platform-identity`，service 层
   `service → {protocol, data, tooling, contract}` 允许 data→data 接线）与 env 选择的邮件端口
-  （本地/Preview `ConsoleEmailAdapter`）；
+  （本地 `ConsoleEmailAdapter` 或正式 `AliyunDirectMailAdapter`）；
 - `startPlatformWorker`：创建并拥有 PostgreSQL Pool、启动 Worker、注册 SIGTERM/SIGINT 优雅关闭
   （先停轮询循环，再结束 Pool 恰好一次）；
 - `loadPlatformWorkerConfig`：读取并冻结 `DATABASE_URL` / `EMAIL_DELIVERY_MODE` /
   `OUTBOX_POLL_INTERVAL_MS` / `OUTBOX_BATCH_LIMIT` / `OUTBOX_MAX_ATTEMPTS` /
   `GRACEFUL_SHUTDOWN_TIMEOUT_MS`。
 
+## 邮件配置
+
+公网 Preview/生产必须显式设置 `EMAIL_DELIVERY_MODE=aliyun`；`console` 仅用于本地受控开发且不发送邮件。
+Worker 接受以下非秘密配置：
+
+- `ALIYUN_DIRECT_MAIL_ACCOUNT_NAME`（aliyun 模式必填）、`ALIYUN_DIRECT_MAIL_FROM_ALIAS`（默认 `Aurora`）；
+- `ALIYUN_DIRECT_MAIL_REGION_ID`（默认 `cn-hangzhou`）、可选 `ALIYUN_DIRECT_MAIL_ENDPOINT`；
+- `EMAIL_PROVIDER_TIMEOUT_MS`（默认 `10000`）；
+- `EMAIL_OUTBOX_PROCESSING_TIMEOUT_MS`（默认 `300000`，必须长于供应商超时）；
+- `EMAIL_OUTBOX_RETRY_BASE_DELAY_MS`（默认 `1000`）；
+- `EMAIL_OUTBOX_RETRY_MAX_DELAY_MS`（默认 `300000`）。
+
+凭据不属于 `PlatformWorkerConfig`。官方 SDK 使用默认凭据链，优先 ECS RAM 角色；受保护的
+`ALIBABA_CLOUD_ACCESS_KEY_ID`/`ALIBABA_CLOUD_ACCESS_KEY_SECRET` 仅是部署 fallback，绝不进入仓库。
+
 ## 非职责
 
 - 不实现 HTTP、Fastify、平台 API、Session、账号/密码/意图/邀请 Repository
   （`@aurora/platform-identity` / `@aurora/platform-session` / `apps/platform-api`）；
-- 不实现 EmailDeliveryPort 供应商适配器（`@aurora/platform-email` 的 `ConsoleEmailAdapter` 是
-  本地/Preview 路径；真实供应商等待用户授权，ADR-031 §6.3）；
+- 不在 Worker 内实现供应商协议；适配器由 `@aurora/platform-email` 提供并在组合根选择；
 - 不创建 Redis/BullMQ/S3/CI/IaC/云资源（ADR-032 YAGNI）；
 - 不实现 SEC-01 账号注销删除交接（A5 删除编排是 SEC-01 叶子，不在本 Task 范围）。
 
@@ -40,12 +55,13 @@ consumer 的基础设施；Redis 仅由 `apps/platform-api` 的 Session（ADR-03
 
 - **绝不日志打印**：验证码/重置 token、完整收件人地址、邮件链接 URL 都不进入 Worker 日志；
   `ConsoleEmailAdapter` 只打印掩码地址；Worker 的 poll 失败日志只记录有界错误消息（≤200 字符）；
-- **送达非承诺**（ADR-031）：`{status:'enqueued'}` 只表示发送请求已可靠入 Outbox，**不代表**收件箱到达；
+- **送达非承诺**：业务 `queued` 和供应商 `accepted` 都**不代表**收件箱到达；
 - **payload 暂存语义**（spec §4.11）：Outbox payload 暂存的一次性 token 是短期 + 单次使用 + 高熵随机，
   封装在 `mailLinkUrl` 内，随发送完成即清理；
-- **crash/停止语义**：`claim → deliver → settle` 原子（`claimOutboxRows` 一次性把 `pending` 置为
-  `processing`，`FOR UPDATE SKIP LOCKED`）。优雅关闭会等待当前一轮结算完成（不丢 in-flight 行）；若
-  进程在结算前崩溃，`processing` 行会遗留，需要未来 reclaim 机制（**本叶子 out-of-scope**，不自动开始）。
+- **crash/停止语义**：`claim → deliver → settle` 使用 `claim_id` fencing；超出
+  `EMAIL_OUTBOX_PROCESSING_TIMEOUT_MS` 的 `processing` 会由新 claim 回收，旧 Worker 的结算返回
+  `stale_claim`，不能覆盖新处理者。优雅关闭等待当前轮完成；重试按可用时间调度，最大尝试次数后死信；
+- **终态清理**：成功、永久失败、过期或重试预算耗尽都清理 token/payload，仅保留稳定错误码和供应商请求 ID。
 
 ## 命令
 
@@ -71,3 +87,4 @@ mock/内存替代真实 PostgreSQL 证据。
 - [PLT-03 实施计划](../../docs/superpowers/plans/2026-08-09-platform-identity-authentication-invitation.md)
 - [ADR-031 管理平台邮件发送责任、端口与供应商](../../docs/adr/ADR-031-platform-email-delivery.md)
 - [ADR-032 管理平台 Outbox、任务、缓存与对象存储基础设施](../../docs/adr/ADR-032-platform-outbox-tasks-cache-objects.md)
+- [阿里云 DirectMail 邮箱验证交付 Runbook](../../docs/operations/aliyun-direct-mail-email-verification.md)

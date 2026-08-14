@@ -8,8 +8,8 @@
 `password_reset_intents`、`organizations`、`organization_members`、`organization_invitations`、
 `project_members`、`security_audit_events`、`idempotency_records`、`outbox`（11 张表）。
 
-本包是 PLT-03 Task 2 + Task 3 的结果：包结构、构建/类型检查/migrate 入口、11 表 Migration、
-Repository 层、Argon2id 密码包装与一次性 intent token 均已真实存在。
+本包已实现身份基础、邮箱验证重发状态与可靠 Outbox 增量：11 表基础 Migration、可靠性 Migration、
+Repository 层、Argon2id 密码包装与一次性 intent token 均真实存在。
 
 ## 职责
 
@@ -20,8 +20,10 @@ Repository 层、Argon2id 密码包装与一次性 intent token 均已真实存�
 - intent/invitation `token_digest` 只存一次性 token 的 SHA-256 摘要，绝不存原始 token（ADR-030）；
 - `project_members.project_id` 为纯 uuid（无 FK）——`projects` 表由 PLT-04 创建，本叶子只建接受写入；
 - `security_audit_events` 不做 FK——身份事件可引用尚不存在的 actor/org 行，`details` 绝不包含密码/token/完整邮箱；
-- `outbox`（ADR-032 通用 Outbox）无 FK，`status` pending/processing/succeeded/failed/dead_lettered，
-  `attempt_count`/`available_at` 支持 Worker 租约与重试。
+- `outbox`（ADR-032）无 FK，支持 pending/processing/succeeded/failed/dead_lettered/superseded、
+  `claim_id` fencing、稳定错误码与供应商请求 ID；终态 payload 清理；
+- 历史未验证账号的重发查询/行锁、60 秒冷却、滚动窗口计数，以及 supersede 旧验证 intent/Outbox；
+- 邮箱确认在同一事务内锁定账号、消费最新 intent，并把账号从 `pending_verification` 激活为 `active`。
 
 ## 非职责
 
@@ -64,7 +66,8 @@ Repository 层、Argon2id 密码包装与一次性 intent token 均已真实存�
 - `project_members`：`(project_id, account_id)` 复合 PK（`project_id` 无 FK）、`role`（project_admin/developer/read_only）、`created_at`；
 - `security_audit_events`：`event_id`（uuid PK）、`organization_id`/`actor_account_id`/`target_account_id`（可空、无 FK）、`action`、`occurred_at`、`details`（jsonb 默认 `{}`）；
 - `idempotency_records`：`idempotency_key`（text PK）、`operation`、`request_digest`、`status`（processing/succeeded/failed）、`result_data`、`created_at`/`updated_at`；
-- `outbox`：`outbox_id`（uuid PK）、`aggregate_type`、`aggregate_id`、`payload`（jsonb）、`status`、`attempt_count`（默认 0）、`available_at`、`created_at`/`updated_at`。
+- `outbox`：`outbox_id`、aggregate、短期 `payload`、`status`、`attempt_count`、`claim_id`、
+  `last_error_code`、`provider_request_id`、`available_at`、时间戳；旧验证邮件可置 `superseded` 并立即清理 payload。
 
 ## 命令
 
@@ -89,3 +92,4 @@ pnpm --filter @aurora/platform-identity migrate          # 运行 Migration（AU
 - [ADR-030 平台 Session/CSRF/密码物理参数](../../docs/adr/ADR-030-platform-session-csrf-password-physical-parameters.md)
 - [ADR-031 平台邮件交付](../../docs/adr/ADR-031-platform-email-delivery.md)
 - [ADR-032 平台 Outbox/任务/缓存/对象存储](../../docs/adr/ADR-032-platform-outbox-tasks-cache-objects.md)
+- [阿里云 DirectMail 邮箱验证交付 Runbook](../../docs/operations/aliyun-direct-mail-email-verification.md)

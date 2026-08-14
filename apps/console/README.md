@@ -33,6 +33,16 @@ App.vue → components/shell/AppShell（TopBar + LayeredSidebar + ScopeSwitcher 
 - 顶栏的工作空间、组织、项目、通知和账号安全均通过 `aria-current="page"` 与底部强调线标记当前入口；侧栏当前项使用浅琥珀底色和独立蓝色指示条，指示条不参与文字排版。
 - 桌面壳层锁定为 `100dvh`：顶栏固定在顶部，侧栏填满剩余高度，只有右侧 `.au-content` 独立纵向滚动。侧栏导航行最小高度 48px、文字水平居中；窄屏继续复用同一 `LayeredSidebar` 的 Drawer 模式。
 
+## 邮箱验证与重发
+
+`/verify-email` 每次挂载都会 `session.restore({ force: true })`，以 Session 的
+`account.verified`/`account.emailMasked` 为权威；注册响应只加速首次绘制，刷新或历史未验证账号不依赖
+浏览器内存。页面不提供可编辑邮箱输入，重发命令只发送 idempotency key 和同步 CSRF。
+
+倒计时以 API 的 `serverTime`/`resendAvailableAt` 绝对时间为锚，修正客户端时钟偏差并向上取整；页面覆盖
+queued/cooldown、滚动配额、已验证、Session 失效及供应商暂不可用状态，动作完成后把焦点移到状态摘要。
+“进入工作空间”受既有受限 Session/服务端权限约束，不绕过邮箱验证限制。
+
 ## 命令
 
 | 命令                                          | 作用                                                                                            |

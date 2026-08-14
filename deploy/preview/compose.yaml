@@ -150,7 +150,6 @@ services:
       DATABASE_URL: postgresql://aurora:${PREVIEW_DB_PASSWORD:?PREVIEW_DB_PASSWORD is required}@postgres:5432/aurora_preview
       REDIS_URL: redis://redis:6379
       COOKIE_SECURE: 'true' # served over HTTPS via the shared Lumina nginx edge
-      EMAIL_DELIVERY_MODE: 'console' # approved degraded path; no real provider credential yet
       APP_ORIGIN: 'https://aurora.ah.cn'
       CONSOLE_ORIGIN: 'https://aurora.ah.cn'
       LOG_ENABLED: 'true'
@@ -185,11 +184,25 @@ services:
       dockerfile: deploy/preview/Dockerfile.platform-worker
     restart: unless-stopped
     environment:
-      OUTBOX_POLL_INTERVAL_MS: '2000'
-      OUTBOX_BATCH_LIMIT: '10'
-      OUTBOX_MAX_ATTEMPTS: '5'
-      EMAIL_DELIVERY_MODE: 'console' # approved degraded path; no real provider credential yet
-      DATABASE_URL: postgresql://aurora:${PREVIEW_DB_PASSWORD:?PREVIEW_DB_PASSWORD is required}@postgres:5432/aurora_preview
+      - OUTBOX_POLL_INTERVAL_MS=2000
+      - OUTBOX_BATCH_LIMIT=10
+      - OUTBOX_MAX_ATTEMPTS=5
+      # Public Preview must explicitly use the real provider. `console` is only
+      # a controlled local non-delivering mode and is never a public default.
+      - EMAIL_DELIVERY_MODE=${EMAIL_DELIVERY_MODE:?EMAIL_DELIVERY_MODE is required}
+      - ALIYUN_DIRECT_MAIL_ACCOUNT_NAME=${ALIYUN_DIRECT_MAIL_ACCOUNT_NAME:?ALIYUN_DIRECT_MAIL_ACCOUNT_NAME is required}
+      - ALIYUN_DIRECT_MAIL_FROM_ALIAS=${ALIYUN_DIRECT_MAIL_FROM_ALIAS:-Aurora}
+      - ALIYUN_DIRECT_MAIL_REGION_ID=${ALIYUN_DIRECT_MAIL_REGION_ID:-cn-hangzhou}
+      # Optional overrides/fallback credentials are passed only when present in
+      # the server-only shared env. Prefer an ECS RAM role/default credentials.
+      - ALIYUN_DIRECT_MAIL_ENDPOINT
+      - ALIBABA_CLOUD_ACCESS_KEY_ID
+      - ALIBABA_CLOUD_ACCESS_KEY_SECRET
+      - EMAIL_PROVIDER_TIMEOUT_MS=${EMAIL_PROVIDER_TIMEOUT_MS:-10000}
+      - EMAIL_OUTBOX_PROCESSING_TIMEOUT_MS=${EMAIL_OUTBOX_PROCESSING_TIMEOUT_MS:-300000}
+      - EMAIL_OUTBOX_RETRY_BASE_DELAY_MS=${EMAIL_OUTBOX_RETRY_BASE_DELAY_MS:-1000}
+      - EMAIL_OUTBOX_RETRY_MAX_DELAY_MS=${EMAIL_OUTBOX_RETRY_MAX_DELAY_MS:-300000}
+      - DATABASE_URL=postgresql://aurora:${PREVIEW_DB_PASSWORD:?PREVIEW_DB_PASSWORD is required}@postgres:5432/aurora_preview
     depends_on:
       migrate:
         condition: service_completed_successfully
