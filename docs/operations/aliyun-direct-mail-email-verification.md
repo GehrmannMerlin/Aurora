@@ -77,7 +77,9 @@ processing 可回收；旧 claim 的 fencing 结算不能覆盖新 claim。只�
 - 鉴权/权限/发信地址错误属于永久配置失败：暂停 Worker，修复控制台或 RAM 配置后再恢复；不要盲目重试；
 - 超时、网络、429、5xx 由 Outbox 有界退避处理；超过最大尝试次数进入 dead-lettered，payload 已清理；
 - 回滚到不能识别新 Outbox 状态/列的旧代码前，必须先**停止 platform-worker**，确认没有 processing claim，
-  再评估数据库向后兼容；不要运行会破坏已写入新状态的 down migration；
+  再评估数据库向后兼容；自动回滚只允许
+  `deploy/preview/email-outbox-schema-compatibility` 标记相同的两个版本，并在切换 release 指针前停止当前
+  Worker；标记缺失或不同必须 fail closed。不要运行会破坏已写入新状态的 down migration；
 - 代码回滚不等于业务数据回滚。绝不回滚已经 `verified` 的账号，也绝不恢复已经 `consumed` 的 intent；
   不得重新生成或从日志恢复 token；
 - 若只需停止真实发送，可停止 Worker 保留 Outbox，再部署修复；不得把公网切回会报告假成功的 console 模式。

@@ -39,7 +39,8 @@ describe('platform worker deployment documentation', () => {
       compose.indexOf('  redis:'),
     );
 
-    expect(platformWorker).toContain('${EMAIL_DELIVERY_MODE:?');
+    expect(platformWorker).toContain('- EMAIL_DELIVERY_MODE=aliyun');
+    expect(platformWorker).not.toContain('${EMAIL_DELIVERY_MODE');
     for (const name of workerEnvironmentNames) expect(platformWorker).toContain(name);
     expect(platformApi).not.toContain('EMAIL_DELIVERY_MODE');
     expect(consoleService).not.toContain('ALIYUN_DIRECT_MAIL');
@@ -58,5 +59,20 @@ describe('platform worker deployment documentation', () => {
     const rollback = await text('../../../deploy/preview/scripts/rollback-preview.sh');
     expect(deploy).toContain("--env-file '${REMOTE_ROOT}/shared/.env'");
     expect(rollback).toContain("--env-file '${REMOTE_ROOT}/shared/.env'");
+  });
+
+  it('fails closed on incompatible rollback and stops the current worker before pointer changes', async () => {
+    const rollback = await text('../../../deploy/preview/scripts/rollback-preview.sh');
+    const marker = 'deploy/preview/email-outbox-schema-compatibility';
+    expect(rollback).toContain(marker);
+    expect(rollback).toContain('ROLLBACK INCOMPATIBLE');
+    expect(rollback).toContain('stop platform-worker');
+
+    const compatibilityCheck = rollback.indexOf('ROLLBACK INCOMPATIBLE');
+    const stopWorker = rollback.indexOf('stop platform-worker');
+    const pointerChange = rollback.indexOf("rm -f '${CURRENT_DIR}'");
+    expect(compatibilityCheck).toBeGreaterThan(-1);
+    expect(stopWorker).toBeGreaterThan(compatibilityCheck);
+    expect(pointerChange).toBeGreaterThan(stopWorker);
   });
 });

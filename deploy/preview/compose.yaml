@@ -187,9 +187,9 @@ services:
       - OUTBOX_POLL_INTERVAL_MS=2000
       - OUTBOX_BATCH_LIMIT=10
       - OUTBOX_MAX_ATTEMPTS=5
-      # Public Preview must explicitly use the real provider. `console` is only
-      # a controlled local non-delivering mode and is never a public default.
-      - EMAIL_DELIVERY_MODE=${EMAIL_DELIVERY_MODE:?EMAIL_DELIVERY_MODE is required}
+      # Public Preview is fail-closed on the real provider. `console` is only a
+      # controlled local non-delivering mode and cannot be selected here.
+      - EMAIL_DELIVERY_MODE=aliyun
       - ALIYUN_DIRECT_MAIL_ACCOUNT_NAME=${ALIYUN_DIRECT_MAIL_ACCOUNT_NAME:?ALIYUN_DIRECT_MAIL_ACCOUNT_NAME is required}
       - ALIYUN_DIRECT_MAIL_FROM_ALIAS=${ALIYUN_DIRECT_MAIL_FROM_ALIAS:-Aurora}
       - ALIYUN_DIRECT_MAIL_REGION_ID=${ALIYUN_DIRECT_MAIL_REGION_ID:-cn-hangzhou}
