@@ -246,7 +246,7 @@ function backHref(): string {
         规则详情契约未返回触发持续时间/冷却/最小样本等字段，保存将以当前表单值为准。
       </p>
 
-      <form class="mon-form" data-testid="alert-rule-form" @submit.prevent="submit">
+      <form class="mon-form alert-rule-form-grid" data-testid="alert-rule-form" @submit.prevent="submit">
         <label class="mon-field">
           指标
           <select :value="draft.metric" data-testid="alert-rule-metric" @change="onMetricSelect">
@@ -274,6 +274,7 @@ function backHref(): string {
             <template v-if="selectedCapability?.isRatio"> · 需要最小样本数</template>
           </p>
 
+          <div class="alert-rule-group" data-testid="alert-rule-threshold-group">
           <label class="mon-field">
             统计窗口
             <select
@@ -305,6 +306,9 @@ function backHref(): string {
             />
           </label>
 
+          </div>
+
+          <div class="alert-rule-group" data-testid="alert-rule-delivery-group">
           <label class="mon-field">
             触发持续时间
             <select
@@ -413,6 +417,8 @@ function backHref(): string {
             }}</span>
           </fieldset>
 
+          </div>
+
           <p class="mon-hint" data-testid="alert-rule-filter-note">
             筛选维度当前无事件侧数据源（服务端返回 unavailable），本版规则作用于项目全部事件。
           </p>
@@ -470,6 +476,17 @@ function backHref(): string {
   gap: var(--space-3);
   max-width: 52ch;
 }
+.alert-rule-form-grid {
+  max-width: 72ch;
+}
+.alert-rule-group {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-3);
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--color-border-default);
+}
+.alert-rule-group > :first-child:last-child { grid-column: 1 / -1; }
 .mon-field {
   display: inline-flex;
   flex-direction: column;
@@ -550,5 +567,8 @@ function backHref(): string {
 .au-button:disabled {
   opacity: 0.6;
   cursor: default;
+}
+@media (max-width: 640px) {
+  .alert-rule-group { grid-template-columns: minmax(0, 1fr); }
 }
 </style>

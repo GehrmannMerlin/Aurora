@@ -135,6 +135,9 @@ function instanceTone(stateName: string): 'neutral' | 'warning' | 'danger' {
 
     <template v-if="tab === 'instances'">
       <section class="mon-block" data-testid="alert-instances">
+        <div class="alert-toolbar" data-testid="alert-instances-toolbar">
+          <p class="mon-hint">按当前状态、指标和触发时间查看告警实例。</p>
+        </div>
         <template v-if="state.instances.kind === 'loading'">
           <p class="mon-hint" role="status">正在加载告警实例…</p>
         </template>
@@ -171,7 +174,8 @@ function instanceTone(stateName: string): 'neutral' | 'warning' | 'danger' {
 
     <template v-else>
       <section class="mon-block" data-testid="alert-rules">
-        <div class="mon-actions-row">
+        <div class="alert-toolbar" data-testid="alert-rules-toolbar">
+          <p class="mon-hint">规则配置与当前评估状态分开呈现。</p>
           <AppLink :to="createRuleHref()" class="au-button" data-testid="alert-rule-create-link">
             新建规则
           </AppLink>
@@ -286,6 +290,17 @@ function instanceTone(stateName: string): 'neutral' | 'warning' | 'danger' {
 }
 .mon-actions-row {
   margin-bottom: var(--space-2);
+}
+.alert-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-bottom: var(--space-3);
+}
+.alert-toolbar .mon-hint { margin: 0; }
+@media (max-width: 640px) {
+  .alert-toolbar { align-items: flex-start; flex-direction: column; }
 }
 .au-button {
   display: inline-flex;

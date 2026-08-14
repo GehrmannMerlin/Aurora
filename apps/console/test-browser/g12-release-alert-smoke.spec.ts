@@ -34,7 +34,7 @@ async function setSessionAuthenticated(page: Page, authenticated: boolean): Prom
 /** Load the app once and wait for the MSW-backed shell so the worker is active. */
 async function primeApp(page: Page): Promise<void> {
   await page.goto(`${server!.origin}/`);
-  await expect(page.getByRole('navigation', { name: '侧栏导航' })).toBeVisible();
+  await expect(page.getByRole('navigation', { name: '全局导航' })).toBeVisible();
 }
 
 test.beforeAll(async () => {
@@ -60,18 +60,25 @@ test('PLT-07 smoke: releases → source maps → alerts render real views', asyn
   await page.goto(`${server!.origin}/organizations/org_test_1/projects/prj_test_1/releases`);
   await expect(page.getByTestId('project-releases-view')).toBeVisible();
   await expect(page.getByTestId('release-list')).toBeVisible();
+  await expect(page.getByTestId('delivery-list')).toBeVisible();
+  await expect(page.getByTestId('delivery-detail')).toBeVisible();
 
   // Navigate into a release detail → C9 source-map workspace renders.
   await page.getByTestId('release-list').locator('a').first().click();
   await expect(page.getByTestId('project-release-detail-view')).toBeVisible();
   await expect(page.getByTestId('project-source-maps-view')).toBeVisible();
   await expect(page.getByTestId('source-map-files')).toBeVisible();
+  await expect(page.getByTestId('source-map-file-actions')).toBeVisible();
 
   // C10: alerts workspace renders both tabs with real projections.
   await page.goto(`${server!.origin}/organizations/org_test_1/projects/prj_test_1/alerts`);
   await expect(page.getByTestId('project-alerts-view')).toBeVisible();
   await expect(page.getByTestId('tab-instances')).toBeVisible();
   await expect(page.getByTestId('tab-rules')).toBeVisible();
+  await expect(page.getByTestId('alert-instances-toolbar')).toBeVisible();
+  await page.getByTestId('tab-rules').click();
+  await expect(page).toHaveURL(/tab=rules/);
+  await expect(page.getByTestId('alert-rules-toolbar')).toBeVisible();
 
   // No fatal page error and no capability-not-provided stub on the visited pages.
   expect(pageErrors).toEqual([]);

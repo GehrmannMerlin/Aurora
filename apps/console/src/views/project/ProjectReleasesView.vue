@@ -64,7 +64,8 @@ function releaseHref(releaseId: string): string {
   <section class="au-surface" data-testid="project-releases-view">
     <AppPageHeader title="发布" />
 
-    <section class="mon-block" data-testid="releases-list">
+    <div class="delivery-workspace">
+    <section class="mon-block delivery-list" data-testid="delivery-list">
       <h2 class="mon-title">发布版本</h2>
       <template v-if="state.list.kind === 'loading'">
         <p class="mon-hint" role="status">正在加载发布列表…</p>
@@ -99,10 +100,13 @@ function releaseHref(releaseId: string): string {
       </template>
     </section>
 
-    <section class="mon-block" data-testid="releases-deployments">
+    <section class="mon-block delivery-detail" data-testid="delivery-detail">
+      <div data-testid="releases-deployments">
       <h2 class="mon-title">部署记录</h2>
       <SectionNotice :view="state.deployments" />
+      </div>
     </section>
+    </div>
   </section>
 </template>
 
@@ -152,5 +156,23 @@ function releaseHref(releaseId: string): string {
   border: 1px solid var(--color-border-default);
   color: var(--color-text-secondary);
   font-size: 12px;
+}
+.delivery-workspace {
+  display: grid;
+  grid-template-columns: minmax(0, 1.25fr) minmax(260px, 0.75fr);
+  align-items: start;
+  gap: var(--space-4);
+}
+.delivery-list,
+.delivery-detail {
+  min-width: 0;
+}
+.delivery-detail {
+  border-left: 1px solid var(--color-border-default);
+  padding-left: var(--space-4);
+}
+@media (max-width: 800px) {
+  .delivery-workspace { grid-template-columns: minmax(0, 1fr); }
+  .delivery-detail { border-left: 0; border-top: 1px solid var(--color-border-default); padding: var(--space-4) 0 0; }
 }
 </style>

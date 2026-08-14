@@ -113,8 +113,6 @@ function filtersText(filters: {
           }}</span>
         </div>
         <dl class="mon-dl">
-          <dt>直接原因</dt>
-          <dd>{{ state.instance.data.directReason }}</dd>
           <dt>指标</dt>
           <dd>{{ state.instance.data.metric }}</dd>
           <dt>触发时间</dt>
@@ -128,6 +126,11 @@ function filtersText(filters: {
             <dd>{{ state.instance.data.pauseReason }}</dd>
           </template>
         </dl>
+      </section>
+
+      <section class="mon-block mon-instance-reason" data-testid="alert-instance-reason">
+        <h2 class="mon-title">触发原因</h2>
+        <p>{{ state.instance.data.directReason }}</p>
       </section>
 
       <section class="mon-block" data-testid="alert-instance-rule-snapshot">
@@ -225,7 +228,7 @@ function filtersText(filters: {
           <SectionNotice :view="state.transitions" />
         </template>
         <template v-else>
-          <ol v-if="state.transitions.data.length > 0" class="mon-timeline">
+          <ol v-if="state.transitions.data.length > 0" class="mon-transition-list">
             <li
               v-for="(transition, index) in state.transitions.data"
               :key="index"
@@ -291,7 +294,7 @@ function filtersText(filters: {
   font-size: 14px;
   color: var(--color-text-primary);
 }
-.mon-timeline {
+.mon-transition-list {
   list-style: none;
   margin: 0;
   padding: 0;
@@ -299,6 +302,12 @@ function filtersText(filters: {
   flex-direction: column;
   gap: var(--space-2);
 }
+.mon-instance-reason {
+  padding: var(--space-3);
+  border-left: 3px solid var(--color-status-info);
+  background-color: var(--color-surface-bg);
+}
+.mon-instance-reason p { margin: 0; color: var(--color-text-primary); }
 .mon-timeline-item {
   display: flex;
   flex-direction: column;

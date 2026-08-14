@@ -299,7 +299,9 @@ const releaseVersionText = computed<string>(() => {
       <p class="mon-meta">发布版本：{{ releaseVersionText }} · 稳定标识 {{ releaseId }}</p>
     </section>
 
-    <section class="mon-block" data-testid="source-map-files">
+    <div class="delivery-workspace">
+    <section class="mon-block delivery-list" data-testid="delivery-list">
+      <div data-testid="source-map-files">
       <h2 class="mon-title">当前有效文件</h2>
       <template v-if="state.files.kind === 'loading'">
         <p class="mon-hint" role="status">正在加载文件列表…</p>
@@ -335,9 +337,12 @@ const releaseVersionText = computed<string>(() => {
           该发布尚无有效 Source Map 文件。仅项目管理员或获准开发成员可上传。
         </p>
       </template>
+      </div>
     </section>
 
-    <section class="mon-block" data-testid="source-map-upload">
+    <section class="mon-block delivery-detail" data-testid="delivery-detail">
+      <div data-testid="source-map-file-actions">
+      <section data-testid="source-map-upload">
       <h2 class="mon-title">上传 Source Map</h2>
       <template v-if="replacePhase.kind === 'confirm'">
         <div class="mon-confirm" role="alert" data-testid="source-map-replace-confirm">
@@ -430,9 +435,9 @@ const releaseVersionText = computed<string>(() => {
           {{ uploadErrorMessage }}
         </p>
       </template>
-    </section>
+      </section>
 
-    <section class="mon-block" data-testid="source-map-reparse">
+      <section data-testid="source-map-reparse">
       <h2 class="mon-title">重新解析</h2>
       <div class="mon-actions-row">
         <button
@@ -456,7 +461,10 @@ const releaseVersionText = computed<string>(() => {
       <p v-if="reparseErrorMessage !== null" class="mon-notice mon-notice--error" role="status">
         {{ reparseErrorMessage }}
       </p>
+      </section>
+      </div>
     </section>
+    </div>
   </section>
 </template>
 
@@ -571,5 +579,21 @@ const releaseVersionText = computed<string>(() => {
 }
 .mon-notice--error {
   color: var(--color-status-danger);
+}
+.delivery-workspace {
+  display: grid;
+  grid-template-columns: minmax(0, 1.25fr) minmax(280px, 0.75fr);
+  align-items: start;
+  gap: var(--space-4);
+}
+.delivery-list,
+.delivery-detail { min-width: 0; }
+.delivery-detail {
+  border-left: 1px solid var(--color-border-default);
+  padding-left: var(--space-4);
+}
+@media (max-width: 800px) {
+  .delivery-workspace { grid-template-columns: minmax(0, 1fr); }
+  .delivery-detail { border-left: 0; border-top: 1px solid var(--color-border-default); padding: var(--space-4) 0 0; }
 }
 </style>

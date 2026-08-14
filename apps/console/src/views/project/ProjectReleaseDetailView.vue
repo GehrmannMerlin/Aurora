@@ -87,7 +87,9 @@ const releaseVersionText = computed<string>(() => {
       </template>
     </section>
 
-    <ProjectSourceMapsView />
+    <section class="release-detail-evidence" data-testid="release-detail-evidence">
+      <ProjectSourceMapsView />
+    </section>
   </section>
 </template>
 
@@ -113,5 +115,9 @@ const releaseVersionText = computed<string>(() => {
   font-size: 20px;
   font-weight: 600;
   color: var(--color-text-primary);
+}
+.release-detail-evidence {
+  border-top: 1px solid var(--color-border-default);
+  padding-top: var(--space-4);
 }
 </style>
