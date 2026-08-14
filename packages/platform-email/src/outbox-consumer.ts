@@ -1,19 +1,13 @@
 import type { Pool, PoolClient } from 'pg';
-import type { EmailDeliveryPort, EmailIntentType } from './email-delivery-port.js';
+import type {
+  EmailDeliveryPort,
+  EmailDeliveryResult,
+  EmailIntentType,
+} from './email-delivery-port.js';
+import { calculateEmailRetryDelay } from './retry-policy.js';
 
-/**
- * Outbox consumer types (accepted ADR-032 generic transactional outbox;
- * Workspace Policy `data → {protocol}` only).
- *
- * This package is a data layer and therefore MUST NOT depend on
- * `@aurora/platform-identity` (also data). Instead it declares the subset of
- * outbox repository functions it needs as its OWN `OutboxRepository` interface
- * and receives an implementation by argument injection through
- * `consumeOutboxEmails`. The real implementation is provided by the
- * platform-worker composition root (PLT-03 Task 8) from
- * `@aurora/platform-identity`.
- */
-export type OutboxStatus = 'pending' | 'processing' | 'succeeded' | 'failed' | 'dead_lettered';
+export type OutboxStatus =
+  'pending' | 'processing' | 'succeeded' | 'failed' | 'dead_lettered' | 'superseded';
 
 export interface OutboxRow {
   readonly outboxId: string;
@@ -22,6 +16,9 @@ export interface OutboxRow {
   readonly payload: unknown;
   readonly status: OutboxStatus;
   readonly attemptCount: number;
+  readonly claimId: string;
+  readonly lastErrorCode: string | null;
+  readonly providerRequestId: string | null;
   readonly availableAt: string;
   readonly createdAt: string;
   readonly updatedAt: string;
@@ -30,6 +27,7 @@ export interface OutboxRow {
 export interface ClaimOutboxRowsInput {
   readonly limit: number;
   readonly now: Date;
+  readonly processingTimeoutMs: number;
 }
 
 export type ClaimOutboxRowsResult =
@@ -38,17 +36,25 @@ export type ClaimOutboxRowsResult =
 
 export interface MarkOutboxResultInput {
   readonly outboxId: string;
-  readonly status: Exclude<OutboxStatus, 'pending' | 'processing'>;
+  readonly claimId: string;
+  readonly status: 'succeeded' | 'failed' | 'dead_lettered';
   readonly attemptCount: number;
+  readonly availableAt?: Date;
+  readonly errorCode?: string;
+  readonly providerRequestId?: string;
+  readonly clearPayload: boolean;
 }
 
 export type MarkOutboxResultResult =
-  { readonly status: 'success' } | { readonly status: 'not_found' };
+  | { readonly status: 'success' }
+  | { readonly status: 'not_found' }
+  | { readonly status: 'stale_claim' };
 
 export interface InsertOutboxRowInput {
   readonly aggregateType: string;
   readonly aggregateId?: string;
   readonly payload: Readonly<Record<string, unknown>>;
+  readonly createdAt?: Date;
 }
 
 export interface InsertOutboxRowResult {
@@ -56,7 +62,7 @@ export interface InsertOutboxRowResult {
   readonly outboxId: string;
 }
 
-/** The subset of outbox repository functions the consumer needs (injected). */
+/** Repository surface injected by the platform-worker composition root. */
 export interface OutboxRepository {
   readonly insertOutboxRow: (
     pool: Pool | PoolClient,
@@ -72,22 +78,13 @@ export interface OutboxRepository {
   ) => Promise<MarkOutboxResultResult>;
 }
 
-/**
- * Typed outbox payload for transactional emails (produced by the platform-api
- * service layer in PLT-03 Task 7 and persisted verbatim by the outbox repo).
- *
- * `toAddress` is the normalized recipient needed for actual delivery (ADR-031
- * 决定细节 2 records the recipient email in the outbox). `toMasked` is the
- * server-side mask used for logging/display. `mailLinkUrl` embeds the transient
- * one-time intent token — the ONLY place the raw token travels; the request
- * built from this payload carries no separate token field.
- */
 export interface OutboxEmailPayload {
   readonly intentType: EmailIntentType;
   readonly toAddress: string;
   readonly toMasked: string;
   readonly mailLinkUrl: string;
   readonly expiresInMinutes: number;
+  readonly intentExpiresAt?: string;
 }
 
 export interface ConsumeOutboxEmailsInput {
@@ -97,17 +94,25 @@ export interface ConsumeOutboxEmailsInput {
   readonly now: Date;
   readonly limit?: number;
   readonly maxAttempts?: number;
+  readonly processingTimeoutMs?: number;
+  readonly retryBaseDelayMs?: number;
+  readonly retryMaxDelayMs?: number;
+  readonly entropy01?: () => number;
 }
 
 export interface ConsumeOutboxEmailsResult {
-  /** Rows whose port delivery resolved `enqueued` and were marked succeeded. */
   readonly consumed: number;
-  /** Rows that failed delivery, were malformed, or were dead-lettered. */
   readonly failed: number;
 }
 
 const DEFAULT_LIMIT = 20;
 const DEFAULT_MAX_ATTEMPTS = 5;
+const DEFAULT_PROCESSING_TIMEOUT_MS = 5 * 60 * 1000;
+const DEFAULT_RETRY_BASE_DELAY_MS = 1_000;
+const DEFAULT_RETRY_MAX_DELAY_MS = 5 * 60 * 1000;
+const MAX_EMAIL_LENGTH = 320;
+const MAX_LINK_LENGTH = 4_096;
+const MAX_EXPIRY_MINUTES = 31 * 24 * 60;
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
@@ -122,56 +127,109 @@ function isEmailIntentType(value: unknown): value is EmailIntentType {
   );
 }
 
-function requireNonEmptyString(payload: Record<string, unknown>, field: string): string {
+function boundedString(payload: Record<string, unknown>, field: string, maxLength: number): string {
   const value = payload[field];
-  if (typeof value !== 'string' || value.length === 0) {
-    throw new TypeError(`outbox email payload ${field} invalid`);
+  if (typeof value !== 'string' || value.length < 1 || value.length > maxLength) {
+    throw new TypeError('invalid email outbox payload');
   }
   return value;
 }
 
-/**
- * Runtime-validate an outbox payload into a typed `OutboxEmailPayload`. Throws
- * a stable error for malformed payloads; the consumer dead-letters those rows
- * (a malformed row can never succeed after retries).
- */
-function parseOutboxEmailPayload(payload: unknown): OutboxEmailPayload {
-  if (!isRecord(payload)) throw new TypeError('outbox email payload must be an object');
-  const intentType = payload.intentType;
-  if (!isEmailIntentType(intentType)) {
-    throw new TypeError('outbox email payload intentType invalid');
+function parseIntentExpiry(
+  payload: Record<string, unknown>,
+  intentType: EmailIntentType,
+): string | undefined {
+  const value = payload.intentExpiresAt;
+  if (value === undefined && intentType !== 'email_verification') return undefined;
+  if (typeof value !== 'string' || value.length > 64 || !Number.isFinite(Date.parse(value))) {
+    throw new TypeError('invalid email outbox payload');
   }
-  const toAddress = requireNonEmptyString(payload, 'toAddress');
-  const toMasked = requireNonEmptyString(payload, 'toMasked');
-  const mailLinkUrl = requireNonEmptyString(payload, 'mailLinkUrl');
+  return value;
+}
+
+function parseOutboxEmailPayload(payload: unknown): OutboxEmailPayload {
+  if (!isRecord(payload)) throw new TypeError('invalid email outbox payload');
+  const intentType = payload.intentType;
+  if (!isEmailIntentType(intentType)) throw new TypeError('invalid email outbox payload');
   const expiresInMinutes = payload.expiresInMinutes;
   if (
     typeof expiresInMinutes !== 'number' ||
-    !Number.isFinite(expiresInMinutes) ||
-    expiresInMinutes <= 0
+    !Number.isSafeInteger(expiresInMinutes) ||
+    expiresInMinutes < 1 ||
+    expiresInMinutes > MAX_EXPIRY_MINUTES
   ) {
-    throw new TypeError('outbox email payload expiresInMinutes invalid');
+    throw new TypeError('invalid email outbox payload');
   }
-  return { intentType, toAddress, toMasked, mailLinkUrl, expiresInMinutes };
+  const intentExpiresAt = parseIntentExpiry(payload, intentType);
+  return {
+    intentType,
+    toAddress: boundedString(payload, 'toAddress', MAX_EMAIL_LENGTH),
+    toMasked: boundedString(payload, 'toMasked', MAX_EMAIL_LENGTH),
+    mailLinkUrl: boundedString(payload, 'mailLinkUrl', MAX_LINK_LENGTH),
+    expiresInMinutes,
+    ...(intentExpiresAt === undefined ? {} : { intentExpiresAt }),
+  };
 }
 
-/**
- * Claim pending + available outbox rows (already atomically marked `processing`
- * by `claimOutboxRows`), deliver each through the port, and settle the row:
- * `succeeded` on `enqueued`, `failed` (retryable) on a port failure below the
- * budget, `dead_lettered` once the attempt budget is exhausted. Malformed
- * payloads are dead-lettered immediately.
- *
- * Delivery is non-committal: `enqueued` means the send request was durably
- * recorded, NOT that the inbox received it (ADR-031).
- */
+function requirePositiveInteger(value: number, field: string): void {
+  if (!Number.isSafeInteger(value) || value < 1) throw new TypeError(`${field} must be positive`);
+}
+
+function stableReasonCode(value: string): string {
+  return /^[A-Z0-9_]{1,128}$/.test(value) ? value : 'EMAIL_PROVIDER_UNAVAILABLE';
+}
+
+function stableProviderRequestId(value: string | undefined): string | undefined {
+  if (value === undefined) return undefined;
+  return /^[A-Za-z0-9._:-]{1,256}$/.test(value) ? value : undefined;
+}
+
+async function settle(
+  input: ConsumeOutboxEmailsInput,
+  row: OutboxRow,
+  settlement: Omit<MarkOutboxResultInput, 'outboxId' | 'claimId'>,
+): Promise<boolean> {
+  const result = await input.outboxRepo.markOutboxResult(input.pool, {
+    outboxId: row.outboxId,
+    claimId: row.claimId,
+    ...settlement,
+  });
+  return result.status === 'success';
+}
+
+function invalidPayloadSettlement(
+  nextAttempt: number,
+  errorCode: 'EMAIL_PAYLOAD_INVALID' | 'EMAIL_INTENT_EXPIRED',
+): Omit<MarkOutboxResultInput, 'outboxId' | 'claimId'> {
+  return {
+    status: 'dead_lettered',
+    attemptCount: nextAttempt,
+    errorCode,
+    clearPayload: true,
+  };
+}
+
+/** Claim, deliver once, and fenced-settle each available transactional email. */
 export async function consumeOutboxEmails(
   input: ConsumeOutboxEmailsInput,
 ): Promise<ConsumeOutboxEmailsResult> {
   const limit = input.limit ?? DEFAULT_LIMIT;
   const maxAttempts = input.maxAttempts ?? DEFAULT_MAX_ATTEMPTS;
+  const processingTimeoutMs = input.processingTimeoutMs ?? DEFAULT_PROCESSING_TIMEOUT_MS;
+  const retryBaseDelayMs = input.retryBaseDelayMs ?? DEFAULT_RETRY_BASE_DELAY_MS;
+  const retryMaxDelayMs = input.retryMaxDelayMs ?? DEFAULT_RETRY_MAX_DELAY_MS;
+  requirePositiveInteger(limit, 'limit');
+  requirePositiveInteger(maxAttempts, 'maxAttempts');
+  requirePositiveInteger(processingTimeoutMs, 'processingTimeoutMs');
+  requirePositiveInteger(retryBaseDelayMs, 'retryBaseDelayMs');
+  requirePositiveInteger(retryMaxDelayMs, 'retryMaxDelayMs');
+  if (retryMaxDelayMs > 300_000) throw new TypeError('retryMaxDelayMs exceeds five minutes');
 
-  const claimed = await input.outboxRepo.claimOutboxRows(input.pool, { limit, now: input.now });
+  const claimed = await input.outboxRepo.claimOutboxRows(input.pool, {
+    limit,
+    now: input.now,
+    processingTimeoutMs,
+  });
   if (claimed.status === 'nothingToClaim') return { consumed: 0, failed: 0 };
 
   let consumed = 0;
@@ -182,38 +240,87 @@ export async function consumeOutboxEmails(
     try {
       payload = parseOutboxEmailPayload(row.payload);
     } catch {
-      failed += 1;
-      await input.outboxRepo.markOutboxResult(input.pool, {
-        outboxId: row.outboxId,
-        status: 'dead_lettered',
-        attemptCount: nextAttempt,
-      });
+      if (
+        await settle(input, row, invalidPayloadSettlement(nextAttempt, 'EMAIL_PAYLOAD_INVALID'))
+      ) {
+        failed += 1;
+      }
       continue;
     }
 
-    const delivery = await input.port.deliver({
-      intentType: payload.intentType,
-      toAddress: payload.toAddress,
-      toAddressMasked: payload.toMasked,
-      mailLinkUrl: payload.mailLinkUrl,
-      expiresInMinutes: payload.expiresInMinutes,
-    });
+    if (
+      payload.intentExpiresAt !== undefined &&
+      Date.parse(payload.intentExpiresAt) <= input.now.getTime()
+    ) {
+      if (await settle(input, row, invalidPayloadSettlement(nextAttempt, 'EMAIL_INTENT_EXPIRED'))) {
+        failed += 1;
+      }
+      continue;
+    }
+
+    let delivery: EmailDeliveryResult;
+    try {
+      delivery = await input.port.deliver({
+        intentType: payload.intentType,
+        toAddress: payload.toAddress,
+        toAddressMasked: payload.toMasked,
+        mailLinkUrl: payload.mailLinkUrl,
+        expiresInMinutes: payload.expiresInMinutes,
+      });
+    } catch {
+      delivery = {
+        status: 'failed',
+        retryable: true,
+        reasonCode: 'EMAIL_PROVIDER_UNAVAILABLE',
+      };
+    }
 
     if (delivery.status === 'accepted') {
-      consumed += 1;
-      await input.outboxRepo.markOutboxResult(input.pool, {
-        outboxId: row.outboxId,
-        status: 'succeeded',
+      const providerRequestId = stableProviderRequestId(delivery.providerRequestId);
+      if (
+        await settle(input, row, {
+          status: 'succeeded',
+          attemptCount: nextAttempt,
+          ...(providerRequestId === undefined ? {} : { providerRequestId }),
+          clearPayload: true,
+        })
+      ) {
+        consumed += 1;
+      }
+      continue;
+    }
+
+    const errorCode = stableReasonCode(delivery.reasonCode);
+    if (!delivery.retryable || nextAttempt >= maxAttempts) {
+      if (
+        await settle(input, row, {
+          status: 'dead_lettered',
+          attemptCount: nextAttempt,
+          errorCode,
+          clearPayload: true,
+        })
+      ) {
+        failed += 1;
+      }
+      continue;
+    }
+
+    const delayMs = calculateEmailRetryDelay({
+      attempt: nextAttempt,
+      baseDelayMs: retryBaseDelayMs,
+      maxDelayMs: retryMaxDelayMs,
+      entropy01: input.entropy01?.() ?? Math.random(),
+    });
+    if (
+      await settle(input, row, {
+        status: 'failed',
         attemptCount: nextAttempt,
-      });
-    } else {
+        availableAt: new Date(input.now.getTime() + delayMs),
+        errorCode,
+        clearPayload: false,
+      })
+    ) {
       failed += 1;
-      const status = nextAttempt >= maxAttempts ? 'dead_lettered' : 'failed';
-      await input.outboxRepo.markOutboxResult(input.pool, {
-        outboxId: row.outboxId,
-        status,
-        attemptCount: nextAttempt,
-      });
     }
   }
   return { consumed, failed };

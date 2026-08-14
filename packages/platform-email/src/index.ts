@@ -58,3 +58,5 @@ export {
   type OutboxRow,
   type OutboxStatus,
 } from './outbox-consumer.js';
+
+export { calculateEmailRetryDelay, type CalculateEmailRetryDelayInput } from './retry-policy.js';

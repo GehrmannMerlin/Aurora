@@ -9,321 +9,251 @@ import {
 } from '../src/outbox-consumer.js';
 
 const pool = {} as Pool;
+const NOW = new Date('2026-08-14T00:00:00.000Z');
+const EXPIRES_AT = new Date(NOW.getTime() + 2 * 60 * 60 * 1000).toISOString();
 
 const validPayload = {
   intentType: 'email_verification',
-  toAddress: 'user@example.com',
-  toMasked: 'u***@example.com',
-  mailLinkUrl: 'https://aurora.ah.cn/verify?token=transient-token',
+  toAddress: 'user@example.invalid',
+  toMasked: 'u***@example.invalid',
+  mailLinkUrl: 'https://console.example.invalid/verify?token=transient-token',
   expiresInMinutes: 120,
+  intentExpiresAt: EXPIRES_AT,
 } as const;
 
-function row(overrides: Partial<Omit<OutboxRow, 'payload'>> & { payload?: unknown }): OutboxRow {
+function row(
+  overrides: Partial<Omit<OutboxRow, 'payload'>> & { payload?: unknown } = {},
+): OutboxRow {
   return {
     outboxId: 'row-1',
     aggregateType: 'email.verification',
     aggregateId: null,
     status: 'processing',
     attemptCount: 0,
-    availableAt: new Date().toISOString(),
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
+    claimId: 'claim-1',
+    lastErrorCode: null,
+    providerRequestId: null,
+    availableAt: NOW.toISOString(),
+    createdAt: NOW.toISOString(),
+    updatedAt: NOW.toISOString(),
     payload: validPayload,
     ...overrides,
   };
 }
 
-function repoWith(claimResult: ClaimOutboxRowsResult): {
-  repo: OutboxRepository;
-  markOutboxResult: ReturnType<typeof vi.fn>;
-} {
-  const markOutboxResult = vi.fn<OutboxRepository['markOutboxResult']>();
-  markOutboxResult.mockResolvedValue({ status: 'success' });
+function repoWith(
+  claimResult: ClaimOutboxRowsResult,
+  settlement: 'success' | 'stale_claim' = 'success',
+) {
   const claimOutboxRows = vi.fn<OutboxRepository['claimOutboxRows']>();
   claimOutboxRows.mockResolvedValue(claimResult);
+  const markOutboxResult = vi.fn<OutboxRepository['markOutboxResult']>();
+  markOutboxResult.mockResolvedValue({ status: settlement });
   return {
+    claimOutboxRows,
     markOutboxResult,
     repo: {
       insertOutboxRow: vi.fn<OutboxRepository['insertOutboxRow']>(),
       claimOutboxRows,
       markOutboxResult,
-    },
+    } satisfies OutboxRepository,
+  };
+}
+
+function consumeInput(
+  repo: OutboxRepository,
+  port: EmailDeliveryPort,
+): Parameters<typeof consumeOutboxEmails>[0] {
+  return {
+    pool,
+    port,
+    outboxRepo: repo,
+    now: NOW,
+    maxAttempts: 5,
+    processingTimeoutMs: 5 * 60 * 1000,
+    retryBaseDelayMs: 1_000,
+    retryMaxDelayMs: 300_000,
+    entropy01: () => 0,
   };
 }
 
 describe('consumeOutboxEmails', () => {
-  it('returns zero counts when there is nothing to claim', async () => {
-    const { repo, markOutboxResult } = repoWith({ status: 'nothingToClaim' });
-    const port: EmailDeliveryPort = { deliver: vi.fn() };
+  it('passes processing timeout to claim and returns zero when nothing is available', async () => {
+    const { repo, claimOutboxRows } = repoWith({ status: 'nothingToClaim' });
+    const deliver = vi.fn();
 
-    const result = await consumeOutboxEmails({ pool, port, outboxRepo: repo, now: new Date() });
-
-    expect(result).toEqual({ consumed: 0, failed: 0 });
-    expect(markOutboxResult).not.toHaveBeenCalled();
-    expect(port.deliver).not.toHaveBeenCalled();
+    await expect(consumeOutboxEmails(consumeInput(repo, { deliver }))).resolves.toEqual({
+      consumed: 0,
+      failed: 0,
+    });
+    expect(claimOutboxRows).toHaveBeenCalledWith(pool, {
+      limit: 20,
+      now: NOW,
+      processingTimeoutMs: 300_000,
+    });
   });
 
-  it('settles a claimed row as succeeded when the port enqueues', async () => {
-    const { repo, markOutboxResult } = repoWith({ status: 'claimed', rows: [row({})] });
-    const deliver = vi.fn().mockResolvedValue({ status: 'accepted' });
-
-    const result = await consumeOutboxEmails({
-      pool,
-      port: { deliver },
-      outboxRepo: repo,
-      now: new Date(),
-      maxAttempts: 3,
+  it('settles accepted delivery as succeeded, persists provider ID, and scrubs payload', async () => {
+    const { repo, markOutboxResult } = repoWith({ status: 'claimed', rows: [row()] });
+    const deliver = vi.fn().mockResolvedValue({
+      status: 'accepted',
+      providerRequestId: 'provider-request-1',
     });
 
-    expect(result).toEqual({ consumed: 1, failed: 0 });
-    expect(deliver).toHaveBeenCalledTimes(1);
-    expect(deliver).toHaveBeenCalledWith({
-      intentType: 'email_verification',
-      toAddress: 'user@example.com',
-      toAddressMasked: 'u***@example.com',
-      mailLinkUrl: 'https://aurora.ah.cn/verify?token=transient-token',
-      expiresInMinutes: 120,
+    await expect(consumeOutboxEmails(consumeInput(repo, { deliver }))).resolves.toEqual({
+      consumed: 1,
+      failed: 0,
     });
     expect(markOutboxResult).toHaveBeenCalledWith(pool, {
       outboxId: 'row-1',
+      claimId: 'claim-1',
       status: 'succeeded',
       attemptCount: 1,
+      providerRequestId: 'provider-request-1',
+      clearPayload: true,
     });
   });
 
-  it('accepts a deletion_confirmation payload (whitelisted intent type)', async () => {
+  it('schedules retryable failure below budget and retains the payload', async () => {
     const { repo, markOutboxResult } = repoWith({
+      status: 'claimed',
+      rows: [row({ attemptCount: 1 })],
+    });
+    const deliver = vi.fn().mockResolvedValue({
+      status: 'failed',
+      retryable: true,
+      reasonCode: 'EMAIL_PROVIDER_UNAVAILABLE',
+    });
+
+    await expect(consumeOutboxEmails(consumeInput(repo, { deliver }))).resolves.toEqual({
+      consumed: 0,
+      failed: 1,
+    });
+    expect(markOutboxResult).toHaveBeenCalledWith(pool, {
+      outboxId: 'row-1',
+      claimId: 'claim-1',
+      status: 'failed',
+      attemptCount: 2,
+      availableAt: new Date(NOW.getTime() + 1_000),
+      errorCode: 'EMAIL_PROVIDER_UNAVAILABLE',
+      clearPayload: false,
+    });
+  });
+
+  it('dead-letters and scrubs a retryable failure at attempt five', async () => {
+    const { repo, markOutboxResult } = repoWith({
+      status: 'claimed',
+      rows: [row({ attemptCount: 4 })],
+    });
+    const deliver = vi.fn().mockResolvedValue({
+      status: 'failed',
+      retryable: true,
+      reasonCode: 'EMAIL_PROVIDER_TIMEOUT',
+    });
+
+    await consumeOutboxEmails(consumeInput(repo, { deliver }));
+    expect(markOutboxResult).toHaveBeenCalledWith(pool, {
+      outboxId: 'row-1',
+      claimId: 'claim-1',
+      status: 'dead_lettered',
+      attemptCount: 5,
+      errorCode: 'EMAIL_PROVIDER_TIMEOUT',
+      clearPayload: true,
+    });
+  });
+
+  it('dead-letters and scrubs a permanent failure immediately', async () => {
+    const { repo, markOutboxResult } = repoWith({ status: 'claimed', rows: [row()] });
+    const deliver = vi.fn().mockResolvedValue({
+      status: 'failed',
+      retryable: false,
+      reasonCode: 'EMAIL_INVALID_RECIPIENT',
+    });
+
+    await consumeOutboxEmails(consumeInput(repo, { deliver }));
+    expect(markOutboxResult).toHaveBeenCalledWith(pool, {
+      outboxId: 'row-1',
+      claimId: 'claim-1',
+      status: 'dead_lettered',
+      attemptCount: 1,
+      errorCode: 'EMAIL_INVALID_RECIPIENT',
+      clearPayload: true,
+    });
+  });
+
+  it.each([
+    ['malformed', { broken: true }, 'EMAIL_PAYLOAD_INVALID'],
+    [
+      'expired',
+      { ...validPayload, intentExpiresAt: new Date(NOW.getTime() - 1).toISOString() },
+      'EMAIL_INTENT_EXPIRED',
+    ],
+    [
+      'verification missing expiry',
+      { ...validPayload, intentExpiresAt: undefined },
+      'EMAIL_PAYLOAD_INVALID',
+    ],
+  ])('dead-letters %s payload before calling the provider', async (_label, payload, errorCode) => {
+    const { repo, markOutboxResult } = repoWith({
+      status: 'claimed',
+      rows: [row({ payload })],
+    });
+    const deliver = vi.fn();
+
+    await consumeOutboxEmails(consumeInput(repo, { deliver }));
+    expect(deliver).not.toHaveBeenCalled();
+    expect(markOutboxResult).toHaveBeenCalledWith(pool, {
+      outboxId: 'row-1',
+      claimId: 'claim-1',
+      status: 'dead_lettered',
+      attemptCount: 1,
+      errorCode,
+      clearPayload: true,
+    });
+  });
+
+  it('accepts a pre-migration non-verification payload without intentExpiresAt', async () => {
+    const { repo } = repoWith({
       status: 'claimed',
       rows: [
         row({
+          aggregateType: 'email.password_reset',
           payload: {
-            intentType: 'deletion_confirmation',
-            toAddress: 'user@example.com',
-            toMasked: 'd***@example.com',
-            mailLinkUrl: 'https://aurora.ah.cn/deletion/confirm?token=transient-token',
-            expiresInMinutes: 120,
+            ...validPayload,
+            intentType: 'password_reset',
+            intentExpiresAt: undefined,
           },
         }),
       ],
     });
     const deliver = vi.fn().mockResolvedValue({ status: 'accepted' });
 
-    const result = await consumeOutboxEmails({
-      pool,
-      port: { deliver },
-      outboxRepo: repo,
-      now: new Date(),
-    });
-
-    expect(result).toEqual({ consumed: 1, failed: 0 });
+    await consumeOutboxEmails(consumeInput(repo, { deliver }));
     expect(deliver).toHaveBeenCalledTimes(1);
-    expect(deliver).toHaveBeenCalledWith({
-      intentType: 'deletion_confirmation',
-      toAddress: 'user@example.com',
-      toAddressMasked: 'd***@example.com',
-      mailLinkUrl: 'https://aurora.ah.cn/deletion/confirm?token=transient-token',
-      expiresInMinutes: 120,
-    });
-    expect(markOutboxResult).toHaveBeenCalledWith(pool, {
-      outboxId: 'row-1',
-      status: 'succeeded',
-      attemptCount: 1,
-    });
   });
 
-  it('maps the masked payload field into the port request (toMasked → toAddressMasked)', async () => {
-    const { repo } = repoWith({ status: 'claimed', rows: [row({})] });
+  it('normalizes a provider throw to a retryable stable failure without raw content', async () => {
+    const { repo, markOutboxResult } = repoWith({ status: 'claimed', rows: [row()] });
+    const deliver = vi.fn().mockRejectedValue(new Error('raw provider token and response'));
+
+    await consumeOutboxEmails(consumeInput(repo, { deliver }));
+    expect(markOutboxResult).toHaveBeenCalledWith(
+      pool,
+      expect.objectContaining({
+        errorCode: 'EMAIL_PROVIDER_UNAVAILABLE',
+        clearPayload: false,
+      }),
+    );
+    expect(JSON.stringify(markOutboxResult.mock.calls)).not.toContain('raw provider');
+  });
+
+  it('does not count a stale-claim settlement as consumed or failed', async () => {
+    const { repo } = repoWith({ status: 'claimed', rows: [row()] }, 'stale_claim');
     const deliver = vi.fn().mockResolvedValue({ status: 'accepted' });
 
-    await consumeOutboxEmails({ pool, port: { deliver }, outboxRepo: repo, now: new Date() });
-
-    const request = deliver.mock.calls[0]?.[0] as
-      { toAddress?: string; toAddressMasked?: string; toMasked?: string } | undefined;
-    expect(request?.toAddressMasked).toBe('u***@example.com');
-    expect(request?.toAddress).toBe('user@example.com');
-    expect(request?.toMasked).toBeUndefined();
-  });
-
-  it('increments attempt_count and marks failed below the budget', async () => {
-    const { repo, markOutboxResult } = repoWith({
-      status: 'claimed',
-      rows: [row({ attemptCount: 1 })],
-    });
-    const deliver = vi
-      .fn()
-      .mockResolvedValue({ status: 'failed', retryable: true, reasonCode: 'PROVIDER_DOWN' });
-
-    const result = await consumeOutboxEmails({
-      pool,
-      port: { deliver },
-      outboxRepo: repo,
-      now: new Date(),
-      maxAttempts: 3,
-    });
-
-    expect(result).toEqual({ consumed: 0, failed: 1 });
-    expect(markOutboxResult).toHaveBeenCalledWith(pool, {
-      outboxId: 'row-1',
-      status: 'failed',
-      attemptCount: 2,
-    });
-  });
-
-  it('dead-letters when the attempt budget is exhausted', async () => {
-    const { repo, markOutboxResult } = repoWith({
-      status: 'claimed',
-      rows: [row({ attemptCount: 2 })],
-    });
-    const deliver = vi
-      .fn()
-      .mockResolvedValue({ status: 'failed', retryable: true, reasonCode: 'PROVIDER_DOWN' });
-
-    const result = await consumeOutboxEmails({
-      pool,
-      port: { deliver },
-      outboxRepo: repo,
-      now: new Date(),
-      maxAttempts: 3,
-    });
-
-    expect(result).toEqual({ consumed: 0, failed: 1 });
-    expect(markOutboxResult).toHaveBeenCalledWith(pool, {
-      outboxId: 'row-1',
-      status: 'dead_lettered',
-      attemptCount: 3,
-    });
-  });
-
-  it('dead-letters a non-object payload without calling the port', async () => {
-    const { repo, markOutboxResult } = repoWith({
-      status: 'claimed',
-      rows: [row({ payload: 'not-an-object' })],
-    });
-    const deliver = vi.fn();
-
-    const result = await consumeOutboxEmails({
-      pool,
-      port: { deliver },
-      outboxRepo: repo,
-      now: new Date(),
-    });
-
-    expect(result).toEqual({ consumed: 0, failed: 1 });
-    expect(deliver).not.toHaveBeenCalled();
-    expect(markOutboxResult).toHaveBeenCalledWith(pool, {
-      outboxId: 'row-1',
-      status: 'dead_lettered',
-      attemptCount: 1,
-    });
-  });
-
-  const invalidPayloadCases: readonly (readonly [string, Record<string, unknown>])[] = [
-    [
-      'intentType',
-      { toAddress: 'a@b.co', toMasked: 'a***', mailLinkUrl: 'u', expiresInMinutes: 5 },
-    ],
-    [
-      'toAddress',
-      { intentType: 'email_verification', toMasked: 'a***', mailLinkUrl: 'u', expiresInMinutes: 5 },
-    ],
-    [
-      'toMasked',
-      {
-        intentType: 'email_verification',
-        toAddress: 'a@b.co',
-        mailLinkUrl: 'u',
-        expiresInMinutes: 5,
-      },
-    ],
-    [
-      'mailLinkUrl',
-      {
-        intentType: 'email_verification',
-        toAddress: 'a@b.co',
-        toMasked: 'a***',
-        expiresInMinutes: 5,
-      },
-    ],
-    [
-      'expiresInMinutes',
-      { intentType: 'email_verification', toAddress: 'a@b.co', toMasked: 'a***', mailLinkUrl: 'u' },
-    ],
-    [
-      'expiresInMinutes (nan)',
-      {
-        intentType: 'email_verification',
-        toAddress: 'a@b.co',
-        toMasked: 'a***',
-        mailLinkUrl: 'u',
-        expiresInMinutes: Number.NaN,
-      },
-    ],
-    [
-      'expiresInMinutes (non-positive)',
-      {
-        intentType: 'email_verification',
-        toAddress: 'a@b.co',
-        toMasked: 'a***',
-        mailLinkUrl: 'u',
-        expiresInMinutes: 0,
-      },
-    ],
-  ];
-
-  it.each(invalidPayloadCases)(
-    'dead-letters a payload with an invalid %s field',
-    async (_field, payload) => {
-      const { repo, markOutboxResult } = repoWith({
-        status: 'claimed',
-        rows: [row({ payload })],
-      });
-      const deliver = vi.fn();
-
-      const result = await consumeOutboxEmails({
-        pool,
-        port: { deliver },
-        outboxRepo: repo,
-        now: new Date(),
-      });
-
-      expect(result).toEqual({ consumed: 0, failed: 1 });
-      expect(deliver).not.toHaveBeenCalled();
-      expect(markOutboxResult).toHaveBeenCalledWith(pool, {
-        outboxId: 'row-1',
-        status: 'dead_lettered',
-        attemptCount: 1,
-      });
-    },
-  );
-
-  it('tallies mixed outcomes across a batch', async () => {
-    const { repo, markOutboxResult } = repoWith({
-      status: 'claimed',
-      rows: [row({ outboxId: 'a', attemptCount: 0 }), row({ outboxId: 'b', attemptCount: 2 })],
-    });
-    const deliver = vi
-      .fn()
-      .mockResolvedValueOnce({ status: 'accepted' })
-      .mockResolvedValueOnce({ status: 'failed', retryable: false, reasonCode: 'NOPE' });
-
-    const result = await consumeOutboxEmails({
-      pool,
-      port: { deliver },
-      outboxRepo: repo,
-      now: new Date(),
-      maxAttempts: 3,
-    });
-
-    expect(result).toEqual({ consumed: 1, failed: 1 });
-    expect(markOutboxResult).toHaveBeenNthCalledWith(1, pool, {
-      outboxId: 'a',
-      status: 'succeeded',
-      attemptCount: 1,
-    });
-    expect(markOutboxResult).toHaveBeenNthCalledWith(2, pool, {
-      outboxId: 'b',
-      status: 'dead_lettered',
-      attemptCount: 3,
+    await expect(consumeOutboxEmails(consumeInput(repo, { deliver }))).resolves.toEqual({
+      consumed: 0,
+      failed: 0,
     });
   });
 });

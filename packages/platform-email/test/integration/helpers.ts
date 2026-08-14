@@ -39,6 +39,9 @@ export async function ensureOutboxTable(pool: Pool): Promise<void> {
       payload jsonb NOT NULL,
       status text NOT NULL DEFAULT 'pending',
       attempt_count integer NOT NULL DEFAULT 0,
+      claim_id uuid,
+      last_error_code text,
+      provider_request_id text,
       available_at timestamptz NOT NULL DEFAULT now(),
       created_at timestamptz NOT NULL DEFAULT now(),
       updated_at timestamptz NOT NULL DEFAULT now(),
@@ -47,6 +50,9 @@ export async function ensureOutboxTable(pool: Pool): Promise<void> {
       )
     )
   `);
+  await pool.query('ALTER TABLE outbox ADD COLUMN IF NOT EXISTS claim_id uuid');
+  await pool.query('ALTER TABLE outbox ADD COLUMN IF NOT EXISTS last_error_code text');
+  await pool.query('ALTER TABLE outbox ADD COLUMN IF NOT EXISTS provider_request_id text');
 }
 
 /** Normalize a raw pg timestamptz value to a stable ISO-8601 UTC string. */

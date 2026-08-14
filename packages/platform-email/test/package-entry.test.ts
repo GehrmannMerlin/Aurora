@@ -25,6 +25,7 @@ describe('built platform-email package entry', () => {
     expect(result.stdout).toContain('AliyunDirectMailAdapter');
     expect(result.stdout).toContain('createAliyunDirectMailClient');
     expect(result.stdout).toContain('renderTransactionalEmail');
+    expect(result.stdout).toContain('calculateEmailRetryDelay');
     expect(result.stdout).toContain('consumeOutboxEmails');
   });
 
