@@ -294,6 +294,11 @@ onMounted(() => {
 
     <template v-else>
       <AppSection title="成员列表" description="电子邮箱以脱敏形式显示。">
+        <template #actions>
+          <div class="au-list-toolbar" role="toolbar" aria-label="成员列表操作">
+            <AppButton variant="secondary" :disabled="loading" @click="void loadMembers()">刷新成员</AppButton>
+          </div>
+        </template>
         <ul v-if="members.length > 0" class="au-member-list" data-testid="member-list">
           <li
             v-for="member in members"
@@ -462,6 +467,7 @@ onMounted(() => {
 .au-section {
   margin-bottom: var(--space-6);
 }
+.au-list-toolbar { display: flex; gap: var(--space-2); }
 .au-section-subtitle {
   margin: var(--space-4) 0 var(--space-2);
   font-size: 14px;

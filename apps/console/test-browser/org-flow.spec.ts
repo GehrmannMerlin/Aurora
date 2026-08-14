@@ -158,7 +158,9 @@ test('B7 audit shows a redacted security timeline', async ({ page }) => {
 
   await page.goto(`${server!.origin}/organizations/org_test_1/audit`);
   await expect(page.getByTestId('audit-list')).toBeVisible();
-  await expect(page.getByTestId('audit-action')).toHaveText('member.invited');
+  await expect(page.getByTestId('audit-primary-action')).toHaveText('已邀请成员');
+  await expect(page.getByTestId('audit-primary-result')).toHaveText('已完成');
+  await expect(page.getByTestId('audit-timestamp')).toContainText('UTC');
   // Redacted actor only; never the full email.
   await expect(page.getByTestId('audit-actor')).toHaveText('ow**@example.invalid');
   await expect(page.getByText('user@example.invalid')).toHaveCount(0);

@@ -1,5 +1,5 @@
 import { http, HttpResponse, type JsonBodyType } from 'msw';
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/vue';
+import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/vue';
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { requestCache } from '../../src/api/cache';
 import { router } from '../../src/router';
@@ -129,6 +129,7 @@ describe('B5 usage unavailable (7A)', () => {
     expect(screen.getByText(/不会显示任何模拟数据/)).toBeTruthy();
     expect(screen.queryByTestId('usage-chart')).toBeNull();
     expect(screen.queryByTestId('usage-number')).toBeNull();
+    expect(screen.getByTestId('usage-technical-details').textContent).toContain('org_test_1');
   });
 
   it('redirects an authenticated non-member to the forbidden page', async () => {
@@ -198,6 +199,19 @@ describe('B2 create project (7B)', () => {
 });
 
 describe('B3 members and invitations (7B)', () => {
+  it('places a labeled member toolbar before the stable member rows', async () => {
+    await router.push('/organizations/org_test_1/members');
+    await router.isReady();
+    render(MembersView, { global: { plugins: [pinia, router] } });
+
+    const list = await screen.findByTestId('member-list');
+    const toolbar = screen.getByRole('toolbar', { name: '成员列表操作' });
+    expect(within(toolbar).getByRole('button', { name: '刷新成员' })).toBeTruthy();
+    expect(list.compareDocumentPosition(toolbar)).toBe(
+      Node.DOCUMENT_POSITION_PRECEDING,
+    );
+  });
+
   it('lists members with masked emails only', async () => {
     await router.push('/organizations/org_test_1/members');
     await router.isReady();
@@ -380,6 +394,19 @@ function usePlainMemberProjection(): void {
 }
 
 describe('B6 private tokens (7C)', () => {
+  it('places a labeled token toolbar before the stable token rows', async () => {
+    await router.push('/organizations/org_test_1/tokens');
+    await router.isReady();
+    render(TokensView, { global: { plugins: [pinia, router] } });
+
+    const list = await screen.findByTestId('token-list');
+    const toolbar = screen.getByRole('toolbar', { name: '令牌列表操作' });
+    expect(within(toolbar).getByRole('button', { name: '刷新令牌' })).toBeTruthy();
+    expect(list.compareDocumentPosition(toolbar)).toBe(
+      Node.DOCUMENT_POSITION_PRECEDING,
+    );
+  });
+
   it('lists tokens with metadata only (no digest or plaintext in the DOM)', async () => {
     await router.push('/organizations/org_test_1/tokens');
     await router.isReady();
@@ -522,12 +549,54 @@ describe('B6 private tokens (7C)', () => {
 });
 
 describe('B7 security audit (7C)', () => {
+  it('localizes known audit keys and retains backend keys only in technical details', async () => {
+    await router.push('/organizations/org_test_1/audit');
+    await router.isReady();
+    render(AuditView, { global: { plugins: [pinia, router] } });
+
+    expect(await screen.findByTestId('audit-list')).toBeTruthy();
+    expect(screen.getByTestId('audit-primary-action').textContent).toContain('已邀请成员');
+    expect(screen.getByTestId('audit-primary-result').textContent).toContain('已完成');
+    expect(screen.getByTestId('audit-timestamp').textContent).toContain('UTC');
+    expect(within(screen.getByTestId('audit-technical-details')).getByText(/member\.invited/)).toBeTruthy();
+  });
+
+  it('uses a safe primary label for unknown audit keys', async () => {
+    mockServer.use(
+      http.get('/api/platform/v1/organizations/:organizationId/audit', () =>
+        HttpResponse.json(
+          {
+            events: [
+              {
+                eventId: 'aud_unknown_1',
+                action: 'unrecognized.backend_action',
+                occurredAt: '2026-08-09T01:00:00.000Z',
+                result: 'blocked',
+                actorMasked: 'ow**@example.invalid',
+              },
+            ],
+            pagination: { totalCountStatus: 'available' },
+          } as JsonBodyType,
+          { status: 200 },
+        ),
+      ),
+    );
+    await router.push('/organizations/org_test_1/audit');
+    await router.isReady();
+    render(AuditView, { global: { plugins: [pinia, router] } });
+
+    expect(await screen.findByTestId('audit-list')).toBeTruthy();
+    expect(screen.getByTestId('audit-primary-action').textContent).toContain('未识别的审计操作');
+    expect(screen.getByTestId('audit-primary-result').textContent).toContain('已阻止');
+    expect(within(screen.getByTestId('audit-technical-details')).getByText(/unrecognized\.backend_action/)).toBeTruthy();
+  });
+
   it('renders the redacted security timeline with no full email', async () => {
     await router.push('/organizations/org_test_1/audit');
     await router.isReady();
     render(AuditView, { global: { plugins: [pinia, router] } });
     expect(await screen.findByTestId('audit-list')).toBeTruthy();
-    expect(screen.getByTestId('audit-action').textContent).toBe('member.invited');
+    expect(screen.getByTestId('audit-primary-action').textContent).toBe('已邀请成员');
     // Redacted actor: only the masked projection is rendered, never the full email.
     expect(screen.getByTestId('audit-actor').textContent).toBe('ow**@example.invalid');
     expect(screen.queryByText('user@example.invalid')).toBeNull();
@@ -584,7 +653,7 @@ describe('B7 security audit (7C)', () => {
       expect(screen.queryByTestId('audit-load-more')).toBeNull();
     });
     expect(screen.getAllByTestId('audit-row')).toHaveLength(2);
-    expect(screen.getByText('project.restored')).toBeTruthy();
+    expect(screen.getByText('已恢复项目')).toBeTruthy();
   });
 
   it('shows a forbidden state for a plain member', async () => {
@@ -598,6 +667,19 @@ describe('B7 security audit (7C)', () => {
 });
 
 describe('B8 trash restore (7C)', () => {
+  it('places a labeled recovery toolbar before stable trash rows', async () => {
+    await router.push('/organizations/org_test_1/trash');
+    await router.isReady();
+    render(TrashView, { global: { plugins: [pinia, router] } });
+
+    const list = await screen.findByTestId('trash-list');
+    const toolbar = screen.getByRole('toolbar', { name: '回收站操作' });
+    expect(within(toolbar).getByRole('button', { name: '刷新回收站' })).toBeTruthy();
+    expect(list.compareDocumentPosition(toolbar)).toBe(
+      Node.DOCUMENT_POSITION_PRECEDING,
+    );
+  });
+
   it('lists recoverable projects and shows the G10 safety note', async () => {
     await router.push('/organizations/org_test_1/trash');
     await router.isReady();

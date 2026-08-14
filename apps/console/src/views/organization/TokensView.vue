@@ -336,6 +336,11 @@ function formatDate(value: string): string {
         </AppSection>
 
         <AppSection title="令牌列表" description="列表仅保留名称、范围和状态等元数据。">
+          <template #actions>
+            <div class="au-list-toolbar" role="toolbar" aria-label="令牌列表操作">
+              <AppButton variant="secondary" :disabled="loading" @click="void refreshTokens()">刷新令牌</AppButton>
+            </div>
+          </template>
           <ul v-if="tokens.length > 0" class="au-token-list" data-testid="token-list">
             <li
               v-for="token in tokens"
@@ -465,6 +470,7 @@ function formatDate(value: string): string {
 .au-section {
   margin-bottom: var(--space-6);
 }
+.au-list-toolbar { display: flex; gap: var(--space-2); }
 .au-one-time-secret {
   display: flex;
   flex-direction: column;

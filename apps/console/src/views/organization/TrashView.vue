@@ -225,6 +225,11 @@ function formatDate(value: string): string {
 
     <template v-else-if="!gateLoading">
       <AppSection title="可恢复项目" description="仅可恢复窗口内的项目本体；告警规则、已被吊销的令牌和已禁用的客户端密钥不会被恢复。" tone="danger" data-testid="trash-recovery-section">
+        <template #actions>
+          <div class="au-list-toolbar" role="toolbar" aria-label="回收站操作">
+            <AppButton variant="secondary" :disabled="loading" @click="void loadTrash()">刷新回收站</AppButton>
+          </div>
+        </template>
         <p class="au-hint" data-testid="trash-safety-note">被撤销或禁用的安全凭证不会被恢复。</p>
         <AppStatusBadge v-if="loadError !== null" tone="danger" data-testid="trash-error">{{ loadError }}</AppStatusBadge>
         <AppSkeleton v-else-if="loading" label="正在加载回收站…" :lines="4" data-testid="trash-loading" />
@@ -283,6 +288,7 @@ function formatDate(value: string): string {
 .au-section {
   margin-bottom: var(--space-4);
 }
+.au-list-toolbar { display: flex; gap: var(--space-2); }
 .au-trash-list {
   list-style: none;
   margin: 0;

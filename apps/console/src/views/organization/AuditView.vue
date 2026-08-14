@@ -21,6 +21,25 @@ type AuditResult = 'succeeded' | 'failed' | 'blocked';
 
 const AUDIT_PAGE_SIZE = 20;
 
+const AUDIT_ACTION_LABELS: Readonly<Record<string, string>> = {
+  'member.invited': '已邀请成员',
+  'member.role_changed': '已更新成员角色',
+  'member.removed': '已移除成员',
+  'member.invitation_resent': '已重新发送邀请',
+  'member.invitation_revoked': '已撤销邀请',
+  'organization.ownership_transferred': '已转让组织所有权',
+  'project.created': '已创建项目',
+  'project.restored': '已恢复项目',
+  'private_token.created': '已创建私有令牌',
+  'private_token.revoked': '已撤销私有令牌',
+};
+
+const AUDIT_RESULT_LABELS: Readonly<Record<AuditResult, string>> = {
+  succeeded: '已完成',
+  failed: '失败',
+  blocked: '已阻止',
+};
+
 interface AuditEventSummary {
   readonly eventId: string;
   readonly action: string;
@@ -153,7 +172,16 @@ async function onLoadMore(): Promise<void> {
 }
 
 function formatDate(value: string): string {
-  return new Date(value).toLocaleString();
+  return new Intl.DateTimeFormat('zh-CN', {
+    dateStyle: 'medium',
+    timeStyle: 'medium',
+    timeZone: 'UTC',
+    hour12: false,
+  }).format(new Date(value));
+}
+
+function auditActionLabel(action: string): string {
+  return AUDIT_ACTION_LABELS[action] ?? '未识别的审计操作';
 }
 </script>
 
@@ -182,7 +210,7 @@ function formatDate(value: string): string {
             data-testid="audit-row"
           >
             <div class="au-audit-meta">
-              <span class="au-audit-action" data-testid="audit-action">{{ event.action }}</span>
+              <span class="au-audit-action" data-testid="audit-primary-action">{{ auditActionLabel(event.action) }}</span>
               <AppStatusBadge
                 :tone="
                   event.result === 'succeeded'
@@ -192,14 +220,16 @@ function formatDate(value: string): string {
                       : 'warning'
                 "
               >
-                {{ event.result }}
+                <span data-testid="audit-primary-result">{{ AUDIT_RESULT_LABELS[event.result] }}</span>
               </AppStatusBadge>
-              <span class="au-audit-attr">{{ formatDate(event.occurredAt) }}</span>
+              <span class="au-audit-attr" data-testid="audit-timestamp">UTC · {{ formatDate(event.occurredAt) }}</span>
               <span class="au-audit-attr" data-testid="audit-actor">{{ event.actorMasked }}</span>
               <span v-if="event.targetProjectRef !== undefined" class="au-audit-attr">
                 项目 {{ event.targetProjectRef.projectId }}
               </span>
-              <AppTechnicalDetails summary="技术详情" data-testid="audit-technical-details">时间戳: {{ event.occurredAt }}
+              <AppTechnicalDetails summary="技术详情" data-testid="audit-technical-details">操作键: {{ event.action }}
+结果键: {{ event.result }}
+时间戳 (UTC): {{ event.occurredAt }}
 事件 ID: {{ event.eventId }}</AppTechnicalDetails>
             </div>
           </li>

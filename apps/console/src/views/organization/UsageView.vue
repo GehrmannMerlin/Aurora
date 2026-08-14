@@ -4,6 +4,7 @@ import { useRoute } from 'vue-router';
 import AppPageHeader from '../../components/aurora/AppPageHeader.vue';
 import AppSection from '../../components/aurora/AppSection.vue';
 import AppStatusBadge from '../../components/aurora/AppStatusBadge.vue';
+import AppTechnicalDetails from '../../components/aurora/AppTechnicalDetails.vue';
 
 const route = useRoute();
 
@@ -22,7 +23,9 @@ const organizationId = computed(() => {
     <AppSection title="资源用量" description="当前没有可用的用量查询能力。" tone="warning" data-testid="usage-unavailable-section">
       <AppStatusBadge tone="warning">功能未提供</AppStatusBadge>
       <p class="au-status-detail">资源用量上报尚未提供；此处不会显示任何模拟数据、趋势、预测、账单或升级信息。</p>
-      <p v-if="organizationId !== null" class="au-status-scope">组织 {{ organizationId }}</p>
+      <AppTechnicalDetails v-if="organizationId !== null" summary="技术上下文" data-testid="usage-technical-details">
+        组织 ID: {{ organizationId }}
+      </AppTechnicalDetails>
     </AppSection>
   </section>
 </template>
