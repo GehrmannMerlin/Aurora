@@ -38,7 +38,12 @@ describe('monitoring entry presentation', () => {
 
   it('does not claim a concrete environment when the onboarding projection is unavailable', () => {
     expect(onboardingSource).toContain('真实密钥投影尚未提供');
-    expect(onboardingSource).not.toContain('environment: "production"');
+    expect(onboardingSource).toContain(
+      'environment: "（未提供：运行环境投影能力尚未开放）"',
+    );
+    expect(onboardingSource).not.toMatch(
+      /environment:\s*"(?!（未提供：运行环境投影能力尚未开放）")/,
+    );
   });
 
   it('groups C7 authority, reason, stages, trust evidence, and action targets', () => {
