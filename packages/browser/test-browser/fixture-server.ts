@@ -3,9 +3,21 @@ import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-const distDirectory = fileURLToPath(new URL('../dist/', import.meta.url));
+const browserDist = fileURLToPath(new URL('../dist/', import.meta.url));
+const coreDist = fileURLToPath(new URL('../../core/dist/', import.meta.url));
+const protocolDist = fileURLToPath(new URL('../../event-schema/dist/', import.meta.url));
+const sdkDist = fileURLToPath(new URL('../../sdk/dist/', import.meta.url));
 const pageHtml = `<!doctype html>
-<html><head><meta charset="utf-8"><title>Aurora Browser Fixture</title></head>
+<html><head><meta charset="utf-8"><title>Aurora Browser Fixture</title>
+<script type="importmap">
+{
+  "imports": {
+    "@aurora/core": "/core/index.js",
+    "@aurora/event-schema": "/protocol/index.js",
+    "@aurora/sdk": "/sdk/index.js"
+  }
+}
+</script></head>
 <body><script type="module">
 import { createBrowserEnvironment } from '/dist/index.js';
 const baseline = Object.freeze({
@@ -476,6 +488,13 @@ function startHarness() {
 window.addEventListener('pageshow', startHarness, { once: true });
 </script></body></html>`;
 
+const directories: Readonly<Record<string, string>> = Object.freeze({
+  dist: browserDist,
+  core: coreDist,
+  protocol: protocolDist,
+  sdk: sdkDist,
+});
+
 export interface BrowserFixtureServer {
   readonly origin: string;
   close(): Promise<void>;
@@ -509,14 +528,16 @@ async function handleFixtureRequest(
     response.end(`echo:${body}`);
     return;
   }
-  const match = /^\/dist\/([a-z0-9-]+\.js)$/.exec(pathname);
-  if (match?.[1] === undefined) {
+  const match = /^\/(dist|core|protocol|sdk)\/([a-z0-9-]+\.js)$/u.exec(pathname);
+  const directory = match?.[1] === undefined ? undefined : directories[match[1]];
+  const fileName = match?.[2];
+  if (directory === undefined || fileName === undefined) {
     response.writeHead(404);
     response.end();
     return;
   }
   try {
-    const source = await readFile(join(distDirectory, match[1]), 'utf8');
+    const source = await readFile(join(directory, fileName), 'utf8');
     response.writeHead(200, { 'content-type': 'text/javascript; charset=utf-8' });
     response.end(source);
   } catch {
