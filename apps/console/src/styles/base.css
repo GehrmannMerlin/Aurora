@@ -16,6 +16,13 @@ body {
   font-family: var(--font-family-base);
   font-size: 14px;
   line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+::selection {
+  color: var(--color-rail-fg);
+  background-color: var(--color-action-primary);
 }
 
 /* 禁止渐变：正式表面统一背景图关闭，仅 Dialog/Drawer/Popover 浮层可用统一轻量阴影 */
@@ -28,5 +35,26 @@ body,
 
 :focus-visible {
   outline: 2px solid var(--color-action-primary);
-  outline-offset: 2px;
+  outline-offset: 3px;
+}
+
+a {
+  color: var(--color-action-primary);
+}
+
+:disabled,
+[aria-disabled='true'] {
+  opacity: 0.56;
+  cursor: not-allowed;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
 }

@@ -25,7 +25,7 @@ const classes = computed(() => ['au-link', { 'au-link--active': props.active }])
   align-items: center;
   min-height: var(--control-height);
   padding: 0 var(--space-2);
-  border-radius: var(--radius-base);
+  border-radius: var(--radius-control);
   color: var(--color-action-primary);
   text-decoration: none;
   background-image: none;

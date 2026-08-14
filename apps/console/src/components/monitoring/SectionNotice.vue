@@ -45,12 +45,18 @@ const message = computed<string | null>(() => {
 <style scoped>
 .mon-notice {
   margin: 0;
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-control);
   color: var(--color-text-secondary);
+  background-color: var(--color-surface-bg);
 }
 .mon-notice--error {
+  border-color: var(--color-status-danger);
   color: var(--color-status-danger);
 }
 .mon-notice--forbidden {
+  border-color: var(--color-status-danger);
   color: var(--color-status-danger);
 }
 </style>

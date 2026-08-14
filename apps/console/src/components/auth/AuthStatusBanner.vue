@@ -28,7 +28,7 @@ const role = computed<'status' | 'alert'>(() => (props.tone === 'danger' ? 'aler
   margin: 0;
   padding: var(--space-3) var(--space-4);
   border: 1px solid var(--color-border-default);
-  border-radius: var(--radius-base);
+  border-radius: var(--radius-control);
   color: var(--color-text-primary);
   background-image: none;
 }
@@ -41,7 +41,7 @@ const role = computed<'status' | 'alert'>(() => (props.tone === 'danger' ? 'aler
   color: var(--color-status-danger);
 }
 .au-status-banner--warning {
-  border-color: var(--color-sidebar-bg);
+  border-color: var(--color-status-warning);
   color: var(--color-text-primary);
 }
 </style>
