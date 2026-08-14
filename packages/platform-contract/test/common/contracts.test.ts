@@ -60,6 +60,24 @@ describe('common contracts', () => {
     ).toBe(true);
   });
 
+  it('permits relative and absolute resend timing without accepting unknown fields', () => {
+    const problem = {
+      type: 'about:blank',
+      title: 'Too many requests',
+      status: 429,
+      detail: 'Retry later.',
+      code: 'rate_limited',
+      requestId: 'r_1',
+      retryAfter: 60,
+      resendAvailableAt: '2026-08-14T01:01:00.000Z',
+    };
+
+    expect(auroraProblem.zod.safeParse(problem).success).toBe(true);
+    expect(auroraProblem.zod.safeParse({ ...problem, retryAt: problem.resendAvailableAt }).success).toBe(
+      false,
+    );
+  });
+
   it('freezes all 38 route target ids as a closed enum', () => {
     expect(ROUTE_TARGET_IDS).toHaveLength(38);
     expect(ROUTE_TARGET_IDS).toContain('auth.register');

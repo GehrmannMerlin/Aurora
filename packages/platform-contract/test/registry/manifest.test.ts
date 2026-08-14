@@ -14,6 +14,7 @@ describe('operation registry and manifest', () => {
       'navigationGetContext',
       'identityRegister',
       'identityConfirmEmailVerification',
+      'identityResendEmailVerification',
       'identityLogin',
       'identityLogout',
       'identityRequestPasswordReset',
@@ -188,7 +189,7 @@ describe('operation registry and manifest', () => {
   it('freezes the exact route target coverage kind for every route target', () => {
     const expected: Readonly<Record<RouteTargetId, CoverageKind>> = {
       'auth.register': 'stable',
-      'auth.verify-email': 'unavailable',
+      'auth.verify-email': 'stable',
       'auth.verify-email-confirm': 'stable',
       'auth.login': 'stable',
       'auth.forgot-password': 'stable',

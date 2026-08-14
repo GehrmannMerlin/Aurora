@@ -95,6 +95,30 @@ paths:
               additionalProperties: false
               required:
                 - idempotencyKey
+  /auth/email/resend:
+    post:
+      operationId: identityResendEmailVerification
+      summary: Queue a replacement email verification intent for the current account
+      tags:
+        - identity
+        - auth
+      responses:
+        "200":
+          description: 200 response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/identityResendEmailVerificationResponse"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                idempotencyKey: *a1
+              additionalProperties: false
+              required:
+                - idempotencyKey
   /auth/login:
     post:
       operationId: identityLogin
@@ -2998,12 +3022,17 @@ components:
               type: string
               minLength: 3
               maxLength: 320
+            emailMasked:
+              type: string
+              minLength: 3
+              maxLength: 320
             verified:
               type: boolean
           additionalProperties: false
           required:
             - accountId
             - email
+            - emailMasked
             - verified
         authentication:
           type: string
@@ -3216,6 +3245,10 @@ components:
           type: string
           minLength: 3
           maxLength: 320
+        deliveryStatus:
+          type: string
+          enum:
+            - queued
         verificationStatus:
           type: object
           properties:
@@ -3238,6 +3271,7 @@ components:
         - accountId
         - workspaceId
         - emailMasked
+        - deliveryStatus
         - verificationStatus
         - serverTime
     identityConfirmEmailVerificationResponse:
@@ -3271,6 +3305,25 @@ components:
       required:
         - verificationStatus
         - account
+    identityResendEmailVerificationResponse:
+      type: object
+      properties:
+        emailMasked:
+          type: string
+          minLength: 3
+          maxLength: 320
+        deliveryStatus:
+          type: string
+          enum:
+            - queued
+        resendAvailableAt: *a7
+        serverTime: *a7
+      additionalProperties: false
+      required:
+        - emailMasked
+        - deliveryStatus
+        - resendAvailableAt
+        - serverTime
     identityLoginResponse:
       type: object
       properties:

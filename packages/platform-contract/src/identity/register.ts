@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { obj, optional, str } from '../common/schema.js';
+import { enum_, obj, optional, str } from '../common/schema.js';
 import type { SchemaDef } from '../common/schema.js';
 import { idempotencyKey } from '../common/command.js';
 import { utcTimestamp } from '../common/time.js';
@@ -27,6 +27,7 @@ export const identityRegisterResponse = obj({
   // OrganizationId-branded UUID.
   workspaceId: obj({ organizationId: OrganizationId }),
   emailMasked: str(3, 320),
+  deliveryStatus: enum_(['queued']),
   verificationStatus: obj({ verified: verificationPending, reason: str(1, 64) }),
   resendAvailableAt: optional(utcTimestamp),
   serverTime: utcTimestamp,

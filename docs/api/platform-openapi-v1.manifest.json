@@ -4,6 +4,7 @@
     "navigationGetContext",
     "identityRegister",
     "identityConfirmEmailVerification",
+    "identityResendEmailVerification",
     "identityLogin",
     "identityLogout",
     "identityRequestPasswordReset",
@@ -94,7 +95,7 @@
   },
   "routeTargetCoverage": {
     "auth.register": "stable",
-    "auth.verify-email": "unavailable",
+    "auth.verify-email": "stable",
     "auth.verify-email-confirm": "stable",
     "auth.login": "stable",
     "auth.forgot-password": "stable",
@@ -217,6 +218,7 @@
                 "required": [
                   "accountId",
                   "email",
+                  "emailMasked",
                   "verified"
                 ],
                 "properties": {
@@ -226,6 +228,11 @@
                     "maxLength": 64
                   },
                   "email": {
+                    "type": "string",
+                    "minLength": 3,
+                    "maxLength": 320
+                  },
+                  "emailMasked": {
                     "type": "string",
                     "minLength": 3,
                     "maxLength": 320
@@ -855,6 +862,7 @@
               "accountId",
               "workspaceId",
               "emailMasked",
+              "deliveryStatus",
               "verificationStatus",
               "serverTime"
             ],
@@ -881,6 +889,13 @@
                 "type": "string",
                 "minLength": 3,
                 "maxLength": 320
+              },
+              "deliveryStatus": {
+                "type": "string",
+                "enum": [
+                  "queued"
+                ],
+                "openEnum": false
               },
               "verificationStatus": {
                 "type": "object",
@@ -965,6 +980,41 @@
                     "openEnum": false
                   }
                 }
+              }
+            }
+          }
+        }
+      },
+      "identityResendEmailVerification": {
+        "responses": {
+          "200": {
+            "type": "object",
+            "required": [
+              "emailMasked",
+              "deliveryStatus",
+              "resendAvailableAt",
+              "serverTime"
+            ],
+            "properties": {
+              "emailMasked": {
+                "type": "string",
+                "minLength": 3,
+                "maxLength": 320
+              },
+              "deliveryStatus": {
+                "type": "string",
+                "enum": [
+                  "queued"
+                ],
+                "openEnum": false
+              },
+              "resendAvailableAt": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "serverTime": {
+                "type": "string",
+                "format": "date-time"
               }
             }
           }

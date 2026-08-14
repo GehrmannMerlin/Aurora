@@ -24,7 +24,7 @@ describe('generated client', () => {
 
   it('accepts a valid session response', () => {
     const body = {
-      account: { accountId: 'acct_1', email: 'a@b.c', verified: true },
+      account: { accountId: 'acct_1', email: 'a@b.c', emailMasked: 'a***@b.c', verified: true },
       authentication: 'authenticated',
       session: { expiresAt: '2026-08-08T01:00:00.000Z' },
       csrf: 'tok',

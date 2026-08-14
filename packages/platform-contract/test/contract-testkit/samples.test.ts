@@ -8,7 +8,11 @@ import {
   identityConfirmPasswordResetResponse,
   identityRequestPasswordResetResponse,
 } from '../../src/identity/password.js';
-import { identityConfirmEmailVerificationResponse } from '../../src/identity/email-verification.js';
+import {
+  identityConfirmEmailVerificationResponse,
+  identityResendEmailVerificationRequest,
+  identityResendEmailVerificationResponse,
+} from '../../src/identity/email-verification.js';
 import { organizationAcceptInvitationResponse } from '../../src/identity/invitation.js';
 import { organizationListProjectsResponse } from '../../src/organization/workspace.js';
 import { organizationListMembersResponse } from '../../src/organization/members.js';
@@ -55,6 +59,8 @@ import {
   validConfirmPasswordResetSamples,
   validChangePasswordSamples,
   validConfirmEmailVerificationSamples,
+  validResendEmailVerificationRequestSamples,
+  validResendEmailVerificationResponseSamples,
   validAcceptInvitationSamples,
   validListProjectsSamples,
   validListMembersSamples,
@@ -104,6 +110,10 @@ describe('contract testkit', () => {
       expect(identityChangePasswordResponse.zod.safeParse(s).success).toBe(true);
     for (const s of validConfirmEmailVerificationSamples)
       expect(identityConfirmEmailVerificationResponse.zod.safeParse(s).success).toBe(true);
+    for (const s of validResendEmailVerificationRequestSamples)
+      expect(identityResendEmailVerificationRequest.zod.safeParse(s).success).toBe(true);
+    for (const s of validResendEmailVerificationResponseSamples)
+      expect(identityResendEmailVerificationResponse.zod.safeParse(s).success).toBe(true);
     for (const s of validAcceptInvitationSamples)
       expect(organizationAcceptInvitationResponse.zod.safeParse(s).success).toBe(true);
     for (const s of validListProjectsSamples)
@@ -178,6 +188,8 @@ describe('contract testkit', () => {
       ...validConfirmPasswordResetSamples,
       ...validChangePasswordSamples,
       ...validConfirmEmailVerificationSamples,
+      ...validResendEmailVerificationRequestSamples,
+      ...validResendEmailVerificationResponseSamples,
       ...validAcceptInvitationSamples,
       ...validListProjectsSamples,
       ...validListMembersSamples,

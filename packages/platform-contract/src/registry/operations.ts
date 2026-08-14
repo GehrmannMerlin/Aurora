@@ -32,7 +32,10 @@ import {
 import {
   identityConfirmEmailVerificationRequest,
   identityConfirmEmailVerificationResponse,
+  identityResendEmailVerificationRequest,
+  identityResendEmailVerificationResponse,
   OPERATION_ID_CONFIRM_EMAIL_VERIFICATION,
+  OPERATION_ID_RESEND_EMAIL_VERIFICATION,
 } from '../identity/email-verification.js';
 import {
   OPERATION_ID_ACCEPT_INVITATION,
@@ -450,6 +453,28 @@ export const PLATFORM_OPERATIONS: readonly OperationDef[] = [
       'authority_unavailable',
     ],
     page: 'auth.verify-email-confirm',
+    tags: ['identity', 'auth'],
+  },
+  {
+    operationId: OPERATION_ID_RESEND_EMAIL_VERIFICATION,
+    domain: 'identity',
+    authLevel: 'session',
+    method: 'POST',
+    path: '/api/platform/v1/auth/email/resend',
+    summary: 'Queue a replacement email verification intent for the current account',
+    request: { body: identityResendEmailVerificationRequest, idempotency: true, csrf: true },
+    responses: { 200: identityResendEmailVerificationResponse },
+    errorCodes: [
+      'structural_error',
+      'authentication',
+      'authorization',
+      'business_validation',
+      'idempotency_conflict',
+      'field_validation',
+      'rate_limited',
+      'authority_unavailable',
+    ],
+    page: 'auth.verify-email',
     tags: ['identity', 'auth'],
   },
   {

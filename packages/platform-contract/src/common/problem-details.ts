@@ -1,4 +1,5 @@
 import { arr, num, obj, optional, str, nullable } from './schema.js';
+import { utcTimestamp } from './time.js';
 
 // Informational closed set of stable AuroraProblem category codes. `auroraProblem.code`
 // intentionally stays an open string so new codes can be added within a major version.
@@ -31,6 +32,7 @@ export const auroraProblem = obj({
   requestId: str(1, 64),
   fieldErrors: optional(arr(fieldError, 0, 50)),
   retryAfter: optional(num(0)),
+  resendAvailableAt: optional(utcTimestamp),
   currentVersion: optional(str(1, 64)),
   operationId: optional(str(1, 64)),
   recoveryTarget: optional(nullable(str(1, 128))),

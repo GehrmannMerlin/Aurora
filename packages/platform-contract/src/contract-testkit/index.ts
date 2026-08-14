@@ -12,6 +12,8 @@ export {
   validConfirmPasswordResetSamples,
   validChangePasswordSamples,
   validConfirmEmailVerificationSamples,
+  validResendEmailVerificationRequestSamples,
+  validResendEmailVerificationResponseSamples,
   validAcceptInvitationSamples,
   validListProjectsSamples,
   validListMembersSamples,

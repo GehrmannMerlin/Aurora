@@ -42,11 +42,25 @@ describe('identityRegister contract', () => {
       accountId: 'acct_1',
       workspaceId: { organizationId: 'org_1' },
       emailMasked: 'u***@example.invalid',
+      deliveryStatus: 'queued',
       verificationStatus: { verified: false, reason: 'email_pending' },
       resendAvailableAt: '2026-08-09T01:00:00.000Z',
       serverTime: '2026-08-09T01:00:00.000Z',
     });
     expect(result.success).toBe(true);
+  });
+
+  it('requires a queued delivery status', () => {
+    expect(
+      identityRegisterResponse.zod.safeParse({
+        accountId: 'acct_1',
+        workspaceId: { organizationId: 'org_1' },
+        emailMasked: 'u***@example.invalid',
+        verificationStatus: { verified: false, reason: 'email_pending' },
+        resendAvailableAt: '2026-08-09T01:00:00.000Z',
+        serverTime: '2026-08-09T01:00:00.000Z',
+      }).success,
+    ).toBe(false);
   });
 
   it('rejects a response leaking passwordHash/sessionId/token', () => {
@@ -55,6 +69,7 @@ describe('identityRegister contract', () => {
         accountId: 'acct_1',
         workspaceId: { organizationId: 'org_1' },
         emailMasked: 'u***@example.invalid',
+        deliveryStatus: 'queued',
         verificationStatus: { verified: false, reason: 'email_pending' },
         resendAvailableAt: '2026-08-09T01:00:00.000Z',
         serverTime: '2026-08-09T01:00:00.000Z',

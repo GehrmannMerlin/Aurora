@@ -8,6 +8,7 @@ export const OPERATION_ID_SESSION = 'identityGetSession' as const;
 const accountSummary = obj({
   accountId: AccountId,
   email: str(3, 320),
+  emailMasked: str(3, 320),
   verified: bool(),
 });
 

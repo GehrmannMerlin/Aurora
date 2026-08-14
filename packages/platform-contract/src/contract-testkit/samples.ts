@@ -1,13 +1,23 @@
 export const validSessionSamples: readonly unknown[] = [
   {
-    account: { accountId: 'acct_test_1', email: 'user@example.invalid', verified: true },
+    account: {
+      accountId: 'acct_test_1',
+      email: 'user@example.invalid',
+      emailMasked: 'us**@example.invalid',
+      verified: true,
+    },
     authentication: 'authenticated',
     session: { expiresAt: '2026-08-08T01:00:00.000Z' },
     csrf: 'csrf_test_token',
     navigation: [{ routeId: 'workspace.home', pathParams: {}, query: {} }],
   },
   {
-    account: { accountId: 'acct_test_2', email: 'new@example.invalid', verified: false },
+    account: {
+      accountId: 'acct_test_2',
+      email: 'new@example.invalid',
+      emailMasked: 'ne**@example.invalid',
+      verified: false,
+    },
     authentication: 'pending_verification',
     session: { expiresAt: '2026-08-08T02:00:00.000Z', rotationDueAt: '2026-08-08T01:30:00.000Z' },
     csrf: 'csrf_test_token_2',
@@ -115,6 +125,7 @@ export const validRegisterSamples: readonly unknown[] = [
     accountId: 'acct_test_1',
     workspaceId: { organizationId: 'org_test_1' },
     emailMasked: 'us**@example.invalid',
+    deliveryStatus: 'queued',
     verificationStatus: { verified: false, reason: 'email_verification_pending' },
     resendAvailableAt: '2026-08-09T01:05:00.000Z',
     serverTime: '2026-08-09T01:00:00.000Z',
@@ -154,6 +165,19 @@ export const validConfirmEmailVerificationSamples: readonly unknown[] = [
   {
     verificationStatus: { verified: true },
     account: { accountId: 'acct_test_1', email: 'user@example.invalid', verified: true },
+  },
+];
+
+export const validResendEmailVerificationRequestSamples: readonly unknown[] = [
+  { idempotencyKey: 'k'.repeat(36) },
+];
+
+export const validResendEmailVerificationResponseSamples: readonly unknown[] = [
+  {
+    emailMasked: 'ne**@example.invalid',
+    deliveryStatus: 'queued',
+    resendAvailableAt: '2026-08-09T01:01:00.000Z',
+    serverTime: '2026-08-09T01:00:00.000Z',
   },
 ];
 
