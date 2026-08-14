@@ -2,11 +2,11 @@
 title: ADR-031：管理平台邮件发送责任、端口与供应商
 status: accepted
 decision-status: accepted
-implementation-status: in-progress
+implementation-status: implemented-in-feature-branch / deployment-blocked
 approval-status: approved
 owner: product/operations/security
 date: 2026-08-08
-last-reviewed: 2026-08-14
+last-reviewed: 2026-08-15
 applies-to: 平台身份事务邮件（邮箱验证、密码重置、组织邀请）的发送责任边界、EmailDeliveryPort 契约、外部邮件供应商选择、发送记录与失败恢复；不覆盖 ingestion 或其他域邮件
 related:
   - ../../AURORA_RULES.md
@@ -197,3 +197,10 @@ G10 的 PLT-03（A1 邮箱验证、A3 密码重置、A4 组织邀请）都需要
 - 凭据优先使用 ECS RAM 角色/默认凭证链；回退长期 AccessKey 时必须最小权限并只存部署 secret，绝不进入 Git、聊天、日志、前端或构建产物；
 - 用户同时批准历史未验证账号只能在成功登录后重发，服务端从 Session 推导账号/邮箱，不开放任意邮箱输入；具体产品与实现约束见[邮箱验证真实交付与历史账号重发设计](../superpowers/specs/2026-08-14-email-verification-delivery-and-resend-design.md)；
 - 截至本记录，`EmailDeliveryPort`、Console adapter、通用 Outbox 与 Worker 消费骨架已经存在；阿里云适配器、重发 Command、Outbox 可靠性修复和真实发信部署尚未实施，因此 ADR 实施状态更新为 `in-progress`，不得标记 `implemented`。
+
+### 2026-08-15：功能分支实现完成，部署受保护检查点阻塞
+
+- `EmailDeliveryPort` 的阿里云 DirectMail `SingleSendMail` adapter、官方 SDK 默认凭据链、`platform-worker` composition root、新注册自动入队、Session 保护的历史账号重发、最新链接唯一有效语义及 Console Session 恢复已经实现；
+- PostgreSQL Outbox 已实现失败重试、`processing` 超时回收、claim fencing、有界最大尝试次数和终态 token/payload 清理；事务、并发、冷却、滚动配额、幂等、旧链接失效和账号激活已通过真实 PostgreSQL 17.10/Redis 7.4 集成测试，自动化发信均使用假的 DirectMail client；
+- 全仓格式、lint、类型、测试、覆盖率、边界、OpenAPI/manifest 漂移、构建及 Chromium 门禁通过；脱敏实施证据见[2026-08-15 邮箱验证交付与重发实施证据](../testing/evidence/2026-08-15-email-verification-delivery-and-resend.md)；
+- 阿里云域名、DNS、发信地址、RAM 权限和两条公网真实发信检查仍需账号控制台权限，因此当前实施状态为 `implemented-in-feature-branch / deployment-blocked`，不得声称真实邮件交付已完成。

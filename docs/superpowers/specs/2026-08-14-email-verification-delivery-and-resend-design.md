@@ -1,11 +1,11 @@
 ---
 title: Aurora 邮箱验证真实交付与历史账号重发设计
 status: approved
-implementation-status: not-started
+implementation-status: implemented-in-feature-branch / deployment-blocked
 approval-status: approved
 owner: platform/identity/operations/security
 created: 2026-08-14
-last-reviewed: 2026-08-14
+last-reviewed: 2026-08-15
 applies-to: 新注册邮箱验证邮件、已登录未验证账号重发、阿里云 DirectMail 适配器、邮件 Outbox 可靠性与 Console 邮箱验证页
 related:
   - ../../../AGENTS.md
@@ -17,7 +17,7 @@ related:
   - ./2026-08-09-platform-identity-authentication-invitation.md
   - ./2026-08-14-aurora-console-ux-ui-redesign-design.md
 supersedes: none
-design-stage: approved-design-implementation-not-started
+design-stage: approved-design-implemented-in-feature-branch-deployment-blocked
 ---
 
 # Aurora 邮箱验证真实交付与历史账号重发设计
