@@ -163,7 +163,7 @@ function instanceTone(stateName: string): 'neutral' | 'warning' | 'danger' {
         :tabindex="tab === 'instances' ? 0 : -1"
         :class="{ 'is-active': tab === 'instances' }"
         data-testid="tab-instances"
-        @click="setTab('instances')"
+        @click="setTab('instances', true)"
         @keydown="onTabKeydown($event, 'instances')"
       >
         告警实例
@@ -178,7 +178,7 @@ function instanceTone(stateName: string): 'neutral' | 'warning' | 'danger' {
         :tabindex="tab === 'rules' ? 0 : -1"
         :class="{ 'is-active': tab === 'rules' }"
         data-testid="tab-rules"
-        @click="setTab('rules')"
+        @click="setTab('rules', true)"
         @keydown="onTabKeydown($event, 'rules')"
       >
         告警规则

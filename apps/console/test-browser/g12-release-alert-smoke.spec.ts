@@ -89,6 +89,22 @@ test('PLT-07 smoke: releases → source maps → alerts render real views', asyn
   await expect(page.getByTestId('alert-rules-toolbar')).toBeVisible();
   await expect(page.getByTestId('tab-rules')).toHaveAttribute('aria-selected', 'true');
   await expect(page.getByTestId('tab-rules')).toBeFocused();
+  await page.keyboard.press('Home');
+  await expect(page).toHaveURL(/tab=instances/);
+  await expect(page.getByTestId('tab-instances')).toHaveAttribute('aria-selected', 'true');
+  await expect(page.getByTestId('tab-instances')).toBeFocused();
+  await page.keyboard.press('End');
+  await expect(page).toHaveURL(/tab=rules/);
+  await expect(page.getByTestId('tab-rules')).toHaveAttribute('aria-selected', 'true');
+  await expect(page.getByTestId('tab-rules')).toBeFocused();
+  await page.getByTestId('tab-instances').click();
+  await expect(page).toHaveURL(/tab=instances/);
+  await expect(page.getByTestId('tab-instances')).toHaveAttribute('aria-selected', 'true');
+  await expect(page.getByTestId('tab-instances')).toBeFocused();
+  await page.getByTestId('tab-rules').click();
+  await expect(page).toHaveURL(/tab=rules/);
+  await expect(page.getByTestId('tab-rules')).toHaveAttribute('aria-selected', 'true');
+  await expect(page.getByTestId('tab-rules')).toBeFocused();
 
   // C11 remains reachable from the rules tab; the C12 instance view is read-only.
   await page.getByTestId('alert-rule-create-link').click();
