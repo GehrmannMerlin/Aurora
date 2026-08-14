@@ -4,6 +4,9 @@ import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from
 import App from '../../src/App.vue';
 import { router } from '../../src/router';
 import { pinia } from '../../src/stores';
+import { handlerControls, setMockScope } from '../../src/mocks/handlers';
+import { useNavigationStore } from '../../src/stores/navigation';
+import { useSessionStore } from '../../src/stores/session';
 import { mockServer } from '../msw/server';
 
 const DrawerStub = defineComponent({
@@ -18,7 +21,13 @@ beforeAll(() => {
   mockServer.listen({ onUnhandledRequest: 'error' });
 });
 beforeEach(async () => {
-  await router.push('/');
+  handlerControls.sessionAuthenticated = true;
+  setMockScope({ type: 'project', id: 'prj_test_1' });
+  useSessionStore(pinia).reset();
+  useNavigationStore(pinia).clear();
+  await useSessionStore(pinia).restore();
+  await useNavigationStore(pinia).load();
+  await router.push('/organizations/org_test_1/projects/prj_test_1/overview');
   await router.isReady();
 });
 afterEach(() => {
@@ -32,7 +41,7 @@ afterAll(() => {
 describe('responsive shell + keyboard foundation', () => {
   it('renders every shell nav entry as a keyboard-reachable link', async () => {
     render(App, { global: { plugins: [pinia, router], stubs: { Drawer: DrawerStub } } });
-    await screen.findByRole('navigation', { name: '侧栏导航' });
+    await screen.findByRole('navigation', { name: '项目导航' });
     await screen.findByRole('link', { name: '接入' });
     for (const label of ['接入', '概览', '问题', '请求', '数据状态', '发布', '告警', '访问']) {
       const link = screen.getByRole('link', { name: label });
@@ -40,19 +49,23 @@ describe('responsive shell + keyboard foundation', () => {
     }
   });
 
-  it('exposes the scope switcher as a combobox', async () => {
+  it('integrates organization and project switchers into the context sidebar', async () => {
     render(App, { global: { plugins: [pinia, router], stubs: { Drawer: DrawerStub } } });
-    await screen.findByRole('navigation', { name: '侧栏导航' });
-    expect(screen.getByRole('combobox')).toBeTruthy();
+    const contextSidebar = await screen.findByRole('navigation', { name: '项目导航' });
+    expect(screen.queryByRole('combobox')).toBeNull();
+    expect(screen.getByRole('button', { name: '组织：Acme' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: '项目：Web' })).toBeTruthy();
+    expect(contextSidebar.contains(screen.getByRole('button', { name: '组织：Acme' }))).toBe(true);
   });
 
-  it('opens the narrow-screen drawer with the same sidebar entries', async () => {
+  it('opens the narrow-screen drawer with expanded global and contextual navigation', async () => {
     render(App, { global: { plugins: [pinia, router], stubs: { Drawer: DrawerStub } } });
-    await screen.findByRole('navigation', { name: '侧栏导航' });
+    await screen.findByRole('navigation', { name: '项目导航' });
     const trigger = screen.getByRole('button', { name: '导航' });
     await fireEvent.click(trigger);
     expect(screen.getByTestId('drawer')).toBeTruthy();
-    // the drawer reuses the same LayeredSidebar, so the same amber entry order appears
+    expect(screen.getAllByRole('navigation', { name: '全局导航' }).length).toBeGreaterThanOrEqual(2);
+    expect(screen.getAllByRole('navigation', { name: '项目导航' }).length).toBeGreaterThanOrEqual(2);
     expect(screen.getAllByRole('link', { name: '概览' }).length).toBeGreaterThanOrEqual(1);
   });
 });

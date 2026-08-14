@@ -20,6 +20,7 @@
     "src/**/*.ts",
     "src/**/*.vue",
     "test/**/*.ts",
+    "test-browser/**/*.ts",
     "vite.config.ts",
     "vitest.config.ts",
     "playwright.config.ts"

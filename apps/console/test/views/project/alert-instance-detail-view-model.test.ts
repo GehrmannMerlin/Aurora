@@ -88,4 +88,9 @@ describe('labels', () => {
     expect(instanceStateLabel('evaluation_paused')).toBe('计算暂停');
     expect(instanceStateLabel('recovered')).toBe('已恢复');
   });
+
+  it('uses safe labels when the detail API returns unknown values', () => {
+    expect(instanceStateLabel('unknown')).toBe('实例状态未知');
+    expect(completenessLabel('unknown')).toBe('完整性未知');
+  });
 });

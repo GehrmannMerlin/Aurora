@@ -45,7 +45,11 @@ describe('built console production output', () => {
     expect(bundleJs.length).toBeGreaterThan(0);
     for (const file of bundleJs) {
       const content = readFileSync(file, 'utf8');
-      expect(content, file).not.toMatch(/msw|contract-testkit|validSessionSamples|__mock\/scope/);
+      // Match real package/runtime markers, not an incidental `msw` sequence
+      // inside a deterministic Vite asset hash (for example `...Qemsw2C.js`).
+      expect(content, file).not.toMatch(
+        /(?:["'/]msw["'/]|mockServiceWorker|contract-testkit|validSessionSamples|__mock\/scope)/,
+      );
     }
   });
 

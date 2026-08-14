@@ -37,6 +37,42 @@ describe('Navigation Context consumer', () => {
     const store = useNavigationStore();
     await store.load();
     expect(store.currentOrganizationId).toBe('org_test_1');
+    expect(store.currentProject?.projectId).toBe('prj_test_1');
+    expect(store.currentProject?.name).toBe('Web');
+  });
+
+  it('activates workspace, organization, and project scopes from the authorized projection', async () => {
+    const store = useNavigationStore();
+    await store.load();
+
+    store.activateWorkspace();
+    expect(store.currentScope).toEqual({ type: 'workspace', lifecycle: 'active' });
+
+    const organizationTarget = store.activateOrganization('org_test_1');
+    expect(organizationTarget?.routeId).toBe('workspace.home');
+    expect(store.currentScope).toEqual({
+      type: 'organization',
+      id: 'org_test_1',
+      lifecycle: 'active',
+    });
+
+    const projectTarget = store.activateProject('prj_test_1');
+    expect(projectTarget?.routeId).toBe('project.overview');
+    expect(store.currentScope).toEqual({
+      type: 'project',
+      id: 'prj_test_1',
+      lifecycle: 'active',
+    });
+  });
+
+  it('does not change scope for an unauthorized organization or project id', async () => {
+    const store = useNavigationStore();
+    await store.load();
+    const originalScope = store.currentScope;
+
+    expect(store.activateOrganization('org_unknown')).toBeNull();
+    expect(store.activateProject('prj_unknown')).toBeNull();
+    expect(store.currentScope).toEqual(originalScope);
   });
 
   it('supports an organization scope through the test control', async () => {

@@ -9,8 +9,11 @@ import { describeRequestError } from '../../api/feedback.js';
 import { resolveRouteTarget } from '../../contracts/route-registry.js';
 import { useNavigationStore } from '../../stores/navigation.js';
 import AppButton from '../../components/aurora/AppButton.vue';
+import AppEmptyState from '../../components/aurora/AppEmptyState.vue';
 import AppLink from '../../components/aurora/AppLink.vue';
 import AppPageHeader from '../../components/aurora/AppPageHeader.vue';
+import AppSection from '../../components/aurora/AppSection.vue';
+import AppSkeleton from '../../components/aurora/AppSkeleton.vue';
 import AppStatusBadge from '../../components/aurora/AppStatusBadge.vue';
 
 interface ProjectSummary {
@@ -55,6 +58,19 @@ const activeOrg = computed(
 );
 
 const canCreateProject = computed(() => allowedActions.value.includes('create'));
+
+const frameworkLabel: Record<ProjectSummary['frameworkType'], string> = {
+  javascript: 'JavaScript',
+  react: 'React',
+  vue: 'Vue',
+  other: '其他',
+};
+
+const lifecycleLabel: Record<ProjectSummary['lifecycle'], string> = {
+  active: '运行中',
+  archived: '已归档',
+  trash: '回收站',
+};
 
 function describeProjectsError(caught: unknown): string {
   if (caught instanceof ApiError) {
@@ -131,8 +147,18 @@ function projectHref(projectId: string): string {
 
 <template>
   <section data-testid="workspace-home" class="au-surface">
-    <AppPageHeader title="工作空间" />
-    <p class="au-hint">选择组织查看其项目。项目列表按账号在组织内的权限由服务端过滤。</p>
+    <AppPageHeader title="工作空间" description="在组织范围内选择和管理可访问项目。">
+      <template #actions>
+        <AppButton
+          v-if="activeOrg !== null && canCreateProject && projects.length > 0"
+          variant="primary"
+          data-testid="create-project-button"
+          @click="onCreateProject"
+        >
+          创建项目
+        </AppButton>
+      </template>
+    </AppPageHeader>
 
     <AppStatusBadge v-if="loadError !== null" tone="danger" data-testid="projects-error">
       {{ loadError }}
@@ -143,7 +169,7 @@ function projectHref(projectId: string): string {
     </p>
 
     <template v-else>
-      <div v-if="organizations.length > 0" class="au-org-tabs">
+      <div v-if="organizations.length > 0" class="au-org-tabs" data-testid="organization-scope">
         <AppLink
           v-for="org in organizations"
           :key="org.organizationId"
@@ -153,51 +179,43 @@ function projectHref(projectId: string): string {
           {{ org.name }}
         </AppLink>
       </div>
-      <p v-else-if="navStatus === 'ready'" class="au-hint" data-testid="no-orgs">
-        没有可访问的组织。
-      </p>
+      <AppEmptyState
+        v-else-if="navStatus === 'ready'"
+        title="没有可访问的组织"
+        description="当前账号没有可进入的组织范围，因此无法展示项目。"
+        data-testid="no-orgs"
+      />
 
       <template v-if="activeOrg !== null && loadError === null">
-        <div class="au-projects-head">
-          <h2 class="au-projects-title">{{ activeOrg.name }} 的项目</h2>
-          <AppButton
-            v-if="canCreateProject && projects.length > 0"
-            variant="secondary"
-            data-testid="create-project-button"
-            @click="onCreateProject"
+        <AppSection :title="`${activeOrg.name} 的项目`" description="仅展示当前组织范围内允许访问的项目。">
+          <AppSkeleton v-if="loading" label="正在加载项目…" :lines="4" data-testid="projects-loading" />
+          <AppEmptyState
+            v-else-if="projects.length === 0"
+            title="该组织暂无项目"
+            description="创建首个项目后，可获得 SDK 接入配置并发送第一条测试错误。"
+            data-testid="projects-empty"
           >
-            创建项目
-          </AppButton>
-        </div>
-        <div v-if="loading" class="au-hint" role="status" data-testid="projects-loading">
-          正在加载项目…
-        </div>
-        <div v-else-if="projects.length === 0" class="au-empty-card" data-testid="projects-empty">
-          <h3 class="au-empty-title">开始使用 Aurora</h3>
-          <p class="au-hint">你还没有项目，创建第一个项目开始监控应用。</p>
-          <p class="au-hint">创建项目后可获得 SDK 接入配置并发送第一条测试错误。</p>
-          <AppButton
-            v-if="canCreateProject"
-            variant="primary"
-            data-testid="create-project-empty-button"
-            @click="onCreateProject"
-          >
-            创建项目
-          </AppButton>
-          <p v-else class="au-hint" data-testid="create-project-forbidden">
+            <template v-if="canCreateProject" #actions>
+              <AppButton variant="primary" data-testid="create-project-empty-button" @click="onCreateProject">创建项目</AppButton>
+            </template>
+          </AppEmptyState>
+          <p v-if="!loading && projects.length === 0 && !canCreateProject" class="au-hint" data-testid="create-project-forbidden">
             你当前没有在该组织中创建项目的权限。
           </p>
-        </div>
-        <ul v-else class="au-project-list" data-testid="project-list">
-          <li v-for="project in projects" :key="project.projectId" class="au-project-item">
-            <AppLink :to="projectHref(project.projectId)">{{ project.name }}</AppLink>
-            <span class="au-project-meta">接入类型：{{ project.frameworkType }}</span>
-            <AppStatusBadge :tone="project.lifecycle === 'active' ? 'success' : 'neutral'">
-              状态：{{ project.status }}
-            </AppStatusBadge>
-            <span class="au-project-meta">生命周期：{{ project.lifecycle }}</span>
-          </li>
-        </ul>
+          <ul v-else class="au-project-list" data-testid="project-list">
+            <li v-for="project in projects" :key="project.projectId" class="au-project-item" data-testid="project-row">
+              <div class="au-project-item__identity">
+                <AppLink :to="projectHref(project.projectId)">{{ project.name }}</AppLink>
+                <span class="au-project-meta" data-testid="project-framework">接入类型：{{ frameworkLabel[project.frameworkType] }}</span>
+              </div>
+              <AppStatusBadge :tone="project.lifecycle === 'active' ? 'success' : 'neutral'" data-testid="project-lifecycle">
+                状态：{{ lifecycleLabel[project.status] }}
+              </AppStatusBadge>
+              <span class="au-project-meta">生命周期：{{ lifecycleLabel[project.lifecycle] }}</span>
+              <AppLink :to="projectHref(project.projectId)" :aria-label="`打开项目 ${project.name}`" :data-testid="`open-project-${project.projectId}`">打开项目</AppLink>
+            </li>
+          </ul>
+        </AppSection>
       </template>
     </template>
   </section>
@@ -213,18 +231,6 @@ function projectHref(projectId: string): string {
   gap: var(--space-2);
   margin-bottom: var(--space-5);
 }
-.au-projects-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--space-3);
-  margin-bottom: var(--space-3);
-}
-.au-projects-title {
-  margin: 0;
-  font-size: 16px;
-  color: var(--color-text-primary);
-}
 .au-project-list {
   list-style: none;
   margin: 0;
@@ -236,26 +242,14 @@ function projectHref(projectId: string): string {
 .au-project-item {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: var(--space-3);
+  padding: var(--space-3) 0;
+  border-bottom: 1px solid var(--color-border-default);
 }
+.au-project-item:last-child { border-bottom: 0; }
+.au-project-item__identity { display: grid; gap: var(--space-1); }
 .au-project-meta {
   color: var(--color-text-secondary);
-}
-.au-empty-card {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: var(--space-2);
-  padding: var(--space-5);
-  border: 1px solid var(--color-border-default);
-  border-radius: var(--radius-base);
-  background-color: var(--color-surface-bg);
-}
-.au-empty-title {
-  margin: 0;
-  color: var(--color-text-primary);
-}
-.au-empty-card .au-hint {
-  margin: 0;
 }
 </style>

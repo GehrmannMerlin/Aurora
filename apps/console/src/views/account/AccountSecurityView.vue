@@ -15,11 +15,12 @@ import { ApiError } from '../../api/errors.js';
 import { describeRequestError } from '../../api/feedback.js';
 import { resolveRouteTarget } from '../../contracts/route-registry.js';
 import { useSessionStore } from '../../stores/session.js';
-import AuthCard from '../../components/auth/AuthCard.vue';
 import AuthFormField from '../../components/auth/AuthFormField.vue';
 import AuthStatusBanner from '../../components/auth/AuthStatusBanner.vue';
 import AppButton from '../../components/aurora/AppButton.vue';
 import AppLink from '../../components/aurora/AppLink.vue';
+import AppPageHeader from '../../components/aurora/AppPageHeader.vue';
+import AppSection from '../../components/aurora/AppSection.vue';
 
 interface ChangePasswordResponse {
   readonly status: 'succeeded';
@@ -323,10 +324,18 @@ async function onRequestDeletionEmail(): Promise<void> {
 </script>
 
 <template>
-  <AuthCard title="账号安全" test-id="account-security-view">
-    <section class="au-security-section">
-      <h2 class="au-security-title">修改密码</h2>
-      <p class="au-security-hint">修改后，该账号在所有设备上的会话将被撤销，需要重新登录。</p>
+  <div class="account-security-page" data-testid="account-security-view">
+    <AppPageHeader
+      title="账号安全"
+      description="管理当前账号的凭据、会话和注销申请。高风险操作须由服务端完成确认。"
+    />
+
+    <div class="account-security-work-area">
+      <AppSection
+        title="修改密码"
+        description="修改后，该账号在所有设备上的会话将被撤销，需要重新登录。"
+        test-id="account-security-password-section"
+      >
       <form class="au-auth-form" novalidate @submit.prevent="onChangePassword">
         <AuthFormField
           id="security-current-password"
@@ -358,30 +367,42 @@ async function onRequestDeletionEmail(): Promise<void> {
       <AuthStatusBanner v-if="changeError !== null" tone="danger">
         {{ changeError }}
       </AuthStatusBanner>
-    </section>
+      </AppSection>
 
-    <section class="au-security-section">
-      <h2 class="au-security-title">退出登录</h2>
-      <p class="au-security-hint">退出当前设备的会话。</p>
+      <AppSection
+        title="当前会话"
+        description="退出仅结束当前设备的会话；其他设备仍保持其各自的会话状态。"
+        test-id="account-security-session-section"
+      >
       <AppButton
-        variant="danger"
+        variant="secondary"
         :disabled="loggingOut || !csrfReady"
         data-testid="logout-button"
         @click="onLogout"
       >
-        {{ loggingOut ? '退出中…' : '退出登录' }}
+        {{ loggingOut ? '退出中…' : '退出当前会话' }}
       </AppButton>
       <AuthStatusBanner v-if="logoutError !== null" tone="danger">
         {{ logoutError }}
       </AuthStatusBanner>
-    </section>
+      </AppSection>
 
-    <section class="au-security-section au-security-danger" data-testid="deletion-section">
-      <h2 class="au-security-title">注销账号</h2>
-      <p class="au-security-hint">
-        注销后账号将进入 7
-        天冷却期，期间可通过邮箱中的撤销链接取消；冷却期结束后数据将被清除且无法恢复。
-      </p>
+      <AppSection
+        title="注销账号"
+        description="不可逆的账号生命周期操作。请在确认影响后继续。"
+        tone="danger"
+        test-id="deletion-section"
+      >
+        <div class="deletion-consequences">
+          <p>
+            申请受理后，全部会话会立即终止，账号进入 7 天冷静期。冷静期内只能通过邮箱中的撤销链接取消申请。
+          </p>
+          <ul>
+            <li>注销必须完成邮箱确认与当前密码确认两项身份复核。</li>
+            <li>冷静期结束后，普通业务数据将匿名保留；在线数据在 7 天内清理。</li>
+            <li>安全审计记录保留 1 年，备份副本最迟在 35 天内淘汰。</li>
+          </ul>
+        </div>
 
       <p
         v-if="preflightUi === 'loading'"
@@ -480,29 +501,32 @@ async function onRequestDeletionEmail(): Promise<void> {
       <AuthStatusBanner v-if="deleteError !== null" tone="danger" data-testid="deletion-error">
         {{ deleteError }}
       </AuthStatusBanner>
-    </section>
-  </AuthCard>
+      </AppSection>
+    </div>
+  </div>
 </template>
 
 <style scoped>
-.au-security-section {
-  margin-bottom: var(--space-5);
+.account-security-page {
+  max-width: 880px;
+  margin: 0 auto;
 }
-.au-security-title {
-  margin: 0 0 var(--space-2);
-  font-size: 16px;
-  color: var(--color-text-primary);
+.account-security-work-area {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
 }
-.au-security-hint {
-  margin: 0 0 var(--space-4);
+.deletion-consequences {
+  margin-bottom: var(--space-4);
   color: var(--color-text-secondary);
 }
-.au-security-danger {
-  border-top: 2px solid var(--color-status-danger);
-  padding-top: var(--space-4);
+.deletion-consequences p,
+.deletion-consequences ul {
+  margin: 0;
 }
-.au-security-danger .au-security-title {
-  color: var(--color-status-danger);
+.deletion-consequences ul {
+  margin-top: var(--space-2);
+  padding-left: 1.25rem;
 }
 .au-auth-form {
   display: flex;
@@ -531,5 +555,10 @@ async function onRequestDeletionEmail(): Promise<void> {
 }
 .au-org-block-kind {
   color: var(--color-text-secondary);
+}
+@media (max-width: 640px) {
+  .account-security-page {
+    max-width: none;
+  }
 }
 </style>

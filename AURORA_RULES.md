@@ -15,7 +15,7 @@ related:
   - docs/adr/README.md
   - docs/superpowers/specs/2026-07-27-aurora-frontend-ux-ui-design.md
   - docs/superpowers/specs/2026-07-28-aurora-frontend-technology-stack-design.md
-  - docs/superpowers/specs/2026-07-30-aurora-console-visual-language-design.md
+  - docs/superpowers/specs/2026-08-14-aurora-console-ux-ui-redesign-design.md
   - docs/superpowers/specs/2026-07-28-aurora-foundation-topic-approval-baseline.md
   - docs/superpowers/specs/2026-07-28-aurora-platform-backend-design.md
   - docs/superpowers/specs/2026-07-28-aurora-testing-deployment-release-design.md
@@ -68,7 +68,7 @@ maintenance: operational-snapshot
 - approved 架构、代码、测试、文档和 ADR 治理基线；
 - 五大系统边界、SDK 分层、同步可靠接收与异步处理、`event-schema` 单一来源和单向依赖的 approved 架构规则；
 - 已批准的管理平台前端 UX/UI、前端技术栈设计及逐项决策记录；
-- 已批准的控制台视觉语言：浅色内容区、深石墨顶栏、纯色琥珀橙侧栏、深色前景、中高信息密度且禁止渐变；同方向低风险视觉细节由 Agent 直接收口并同步，业务、导航层级、权限、安全、数据和公共契约不在该授权内；
+- 已批准的 Console UX/UI 全面重设计：`Calm Observability`、深石墨窄全局栏、冷灰上下文侧栏、浅色内容区、状态→证据→行动和平衡证据密度；旧琥珀橙侧栏与横向深色顶栏规范已 superseded。业务、导航层级、权限、安全、数据和公共契约不在视觉授权内；真实令牌、共享组件、视觉截图基线和业务页面已在 feature branch 实施、尚未部署，状态为 `implemented-in-feature-branch / final-verification-partial`；最终移动端可达性矩阵及整合复验仍未完成，不得表述为全矩阵通过；
 - 已批准的管理平台总体 OpenAPI 与实现约束设计：统一公开契约、内部领域模块化、生成单一 Platform OpenAPI，31 个页面设计映射 36 个稳定 Route Target，并强制壳层与真实 UI 可达性先行；
 - 用户已批准前四个基础专题中可追溯的既有设计基线，批准边界和未决内容由独立正式文档记录。
 - 已批准的测试/部署/发布完整设计，包括 `TD-001=A`、`TD-002=A`、`TD-003=A` 和 `TDR-DERIVED-001`；
@@ -84,9 +84,8 @@ maintenance: operational-snapshot
 
 当前没有：
 
-- 管理平台业务页面（G10—G13）或正式服务端实现（`apps/console` Vue 3 SPA 壳层已 implemented-in-feature-branch、未部署）；
-- 管理平台设计令牌代码、PrimeVue/Aurora UI 主题、真实视觉组件、截图与浏览器证据；
-- 平台可执行服务端数据模型、`platform-api`/Worker 实现、通用资源事件正文（product scope deferred）、行为事件正文、采样算法、具体事件 Schema 机器运行时；
+- 生产 Navigation Context producer 及其导致的 D2 资源策略生产 discoverability；contract-testkit Navigation Context 样本仅证明条件 UI 入口，不替代生产授权投影；
+- 通用资源事件正文（product scope deferred）、行为事件正文、采样算法、具体事件 Schema 机器运行时，以及生产 Navigation Context producer；平台 API、Worker、资源策略与管理路由不在本“当前没有”项内；
 - 已通过必要 accepted ADR、可以授权实施的管理平台后端技术栈；
 - 前四个基础专题的独立完整实施规格，以及其未决工具、公共契约和基础设施选择；
 - ADR-002/004 对应实现、Issue、PR、测试或性能证据；ADR-002/004 实施状态仍是 `not-started`，ADR-003/005/006 为 `in-progress`。
@@ -156,7 +155,7 @@ maintenance: operational-snapshot
 
 [正式文档索引](docs/README.md)维护 approved 设计到长期权威文档的唯一映射；[正式化与实施就绪追踪](docs/architecture/formalization-readiness.md)维护 ADR、机器契约和真实阻塞，不成为第二份 PRD。
 
-管理平台 A1—D2、`NAV-A`、`AUDIT-A`、权限、Query/Command 需求、页面状态、数据口径、排除项和 GAP-01—GAP-20 的详细来源始终是[完整前端 UX/UI 设计](docs/superpowers/specs/2026-07-27-aurora-frontend-ux-ui-design.md)；稳定分域见[管理平台产品业务域](docs/prd/platform-product-domains.md)；视觉令牌和直接收口边界见[控制台视觉语言设计](docs/superpowers/specs/2026-07-30-aurora-console-visual-language-design.md)；机器导航、统一公开契约和实现门禁见已批准的[总体 OpenAPI 与实现约束设计](docs/superpowers/specs/2026-07-30-aurora-platform-openapi-and-implementation-design.md)。六专题总结只作跨专题索引，不得弱化完整设计。
+管理平台 A1—D2、`NAV-A`、`AUDIT-A`、权限、Query/Command 需求、页面状态、数据口径、排除项和 GAP-01—GAP-20 的详细来源始终是[完整前端 UX/UI 设计](docs/superpowers/specs/2026-07-27-aurora-frontend-ux-ui-design.md)；稳定分域见[管理平台产品业务域](docs/prd/platform-product-domains.md)；当前视觉令牌、双层壳层、页面族与适配边界见[Console UX/UI 全面重设计](docs/superpowers/specs/2026-08-14-aurora-console-ux-ui-redesign-design.md)；机器导航、统一公开契约和实现门禁见已批准的[总体 OpenAPI 与实现约束设计](docs/superpowers/specs/2026-07-30-aurora-platform-openapi-and-implementation-design.md)。六专题总结只作跨专题索引，不得弱化完整设计。
 
 前端技术、后端领域/技术栈、总体机器契约结构和测试/部署/发布设计均已批准并分别进入正式架构、测试、发布与运维文档；精确版本、命令和配置是 `implementation-detail`，机器契约制品第一增量已实现（Platform OpenAPI v1、`@aurora/platform-contract`、漂移门禁），其余精确领域 Schema 与平台数据模型仍 `deferred`/absent，容量/兼容/性能证据是 `requires-benchmark`，长期技术选择是 `requires-accepted-adr`。
 

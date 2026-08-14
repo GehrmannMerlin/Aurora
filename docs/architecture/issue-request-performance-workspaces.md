@@ -15,7 +15,7 @@ related:
   - '../../Aurora 文档规范.md'
   - ../../Auroa-PRD-业务逻辑汇总-v2.1-核心业务定稿版.md
   - ../superpowers/specs/2026-07-27-aurora-frontend-ux-ui-design.md
-  - ../superpowers/specs/2026-07-30-aurora-console-visual-language-design.md
+  - ../superpowers/specs/2026-08-14-aurora-console-ux-ui-redesign-design.md
   - ../architecture/issue-query-projection.md
   - ../architecture/issue-lifecycle-commands.md
   - ../architecture/request-metric-query-projection.md

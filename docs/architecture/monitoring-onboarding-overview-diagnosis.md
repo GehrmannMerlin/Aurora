@@ -15,7 +15,7 @@ related:
   - '../../Aurora 文档规范.md'
   - ../../Auroa-PRD-业务逻辑汇总-v2.1-核心业务定稿版.md
   - ../superpowers/specs/2026-07-27-aurora-frontend-ux-ui-design.md
-  - ../superpowers/specs/2026-07-30-aurora-console-visual-language-design.md
+  - ../superpowers/specs/2026-08-14-aurora-console-ux-ui-redesign-design.md
   - ../architecture/ingestion-diagnostics-status-query.md
   - ../architecture/issue-query-projection.md
   - ../architecture/request-metric-query-projection.md
@@ -53,7 +53,7 @@ review-cycle: platform-monitoring-console-schema-or-contract-change
 - 页面必须覆盖 `loading`、`empty`、`unavailable`、`error`、`success`（及契约支持的 `partial`/`stale`）状态；查询失败显示明确错误与重试，不中断导航；
 - 数据只来自公开 Platform API（`executeQuery` → 生成 client `buildRequest`/`parseResponse`）；禁止直连 PostgreSQL、禁止导入 processing 私有 Repository、禁止硬编码生产数据；
 - 时间显示服务端返回的 UTC 时间戳，标注时区；不计算本地业务状态；
-- 使用已批准控制台视觉语言（浅色内容区、深石墨顶栏、纯色琥珀橙侧栏、深色前景、中高信息密度、禁渐变），复用既有 Aurora UI 组件与设计令牌。
+- 使用已批准 `Calm Observability` 视觉语言（深石墨窄全局栏、冷灰上下文侧栏、浅色内容区、状态→证据→行动、平衡证据密度、禁装饰性渐变），复用 Aurora UI 组件与集中设计令牌；C2 继续禁止趋势图、健康分、预测和装饰性统计。
 
 ### 3.2 C1 项目接入（`project.onboarding`）
 

@@ -11,12 +11,34 @@ import { describeRequestError } from '../../api/feedback.js';
 import { useSessionStore } from '../../stores/session.js';
 import AppButton from '../../components/aurora/AppButton.vue';
 import AppPageHeader from '../../components/aurora/AppPageHeader.vue';
+import AppSection from '../../components/aurora/AppSection.vue';
+import AppSkeleton from '../../components/aurora/AppSkeleton.vue';
 import AppStatusBadge from '../../components/aurora/AppStatusBadge.vue';
+import AppTechnicalDetails from '../../components/aurora/AppTechnicalDetails.vue';
 
 type OrgRole = 'owner' | 'admin' | 'member';
 type AuditResult = 'succeeded' | 'failed' | 'blocked';
 
 const AUDIT_PAGE_SIZE = 20;
+
+const AUDIT_ACTION_LABELS: Readonly<Record<string, string>> = {
+  'member.invited': '已邀请成员',
+  'member.role_changed': '已更新成员角色',
+  'member.removed': '已移除成员',
+  'member.invitation_resent': '已重新发送邀请',
+  'member.invitation_revoked': '已撤销邀请',
+  'organization.ownership_transferred': '已转让组织所有权',
+  'project.created': '已创建项目',
+  'project.restored': '已恢复项目',
+  'private_token.created': '已创建私有令牌',
+  'private_token.revoked': '已撤销私有令牌',
+};
+
+const AUDIT_RESULT_LABELS: Readonly<Record<AuditResult, string>> = {
+  succeeded: '已完成',
+  failed: '失败',
+  blocked: '已阻止',
+};
 
 interface AuditEventSummary {
   readonly eventId: string;
@@ -150,13 +172,22 @@ async function onLoadMore(): Promise<void> {
 }
 
 function formatDate(value: string): string {
-  return new Date(value).toLocaleString();
+  return new Intl.DateTimeFormat('zh-CN', {
+    dateStyle: 'medium',
+    timeStyle: 'medium',
+    timeZone: 'UTC',
+    hour12: false,
+  }).format(new Date(value));
+}
+
+function auditActionLabel(action: string): string {
+  return AUDIT_ACTION_LABELS[action] ?? '未识别的审计操作';
 }
 </script>
 
 <template>
   <section class="au-surface" data-testid="audit-view">
-    <AppPageHeader title="安全审计" />
+    <AppPageHeader title="安全审计" description="以脱敏事实记录组织范围内的安全相关操作。" />
 
     <AppStatusBadge v-if="gateError !== null" tone="danger" data-testid="audit-gate-error">
       {{ gateError }}
@@ -167,19 +198,10 @@ function formatDate(value: string): string {
     </p>
 
     <template v-else-if="!gateLoading">
-      <p class="au-hint" data-testid="audit-hint">
-        安全审计时间线仅展示脱敏摘要（操作、时间、结果、脱敏操作者）；不含完整邮箱、密码或令牌明文。
-      </p>
-
-      <AppStatusBadge v-if="loadError !== null" tone="danger" data-testid="audit-error">
-        {{ loadError }}
-      </AppStatusBadge>
-
-      <p v-else-if="loading" class="au-hint" role="status" data-testid="audit-loading">
-        正在加载审计记录…
-      </p>
-
-      <template v-else>
+      <AppSection title="审计记录" description="仅显示操作、时间、结果、脱敏操作者与必要的项目引用；不提供未受契约支持的导出。">
+        <AppStatusBadge v-if="loadError !== null" tone="danger" data-testid="audit-error">{{ loadError }}</AppStatusBadge>
+        <AppSkeleton v-else-if="loading" label="正在加载审计记录…" :lines="6" data-testid="audit-loading" />
+        <template v-else>
         <ul v-if="events.length > 0" class="au-audit-list" data-testid="audit-list">
           <li
             v-for="event in events"
@@ -188,7 +210,7 @@ function formatDate(value: string): string {
             data-testid="audit-row"
           >
             <div class="au-audit-meta">
-              <span class="au-audit-action" data-testid="audit-action">{{ event.action }}</span>
+              <span class="au-audit-action" data-testid="audit-primary-action">{{ auditActionLabel(event.action) }}</span>
               <AppStatusBadge
                 :tone="
                   event.result === 'succeeded'
@@ -198,13 +220,19 @@ function formatDate(value: string): string {
                       : 'warning'
                 "
               >
-                {{ event.result }}
+                <span data-testid="audit-primary-result">{{ AUDIT_RESULT_LABELS[event.result] }}</span>
               </AppStatusBadge>
-              <span class="au-audit-attr">{{ formatDate(event.occurredAt) }}</span>
+              <span class="au-audit-attr" data-testid="audit-timestamp">UTC · {{ formatDate(event.occurredAt) }}</span>
               <span class="au-audit-attr" data-testid="audit-actor">{{ event.actorMasked }}</span>
               <span v-if="event.targetProjectRef !== undefined" class="au-audit-attr">
-                项目 {{ event.targetProjectRef.projectId }}
+                涉及项目
               </span>
+              <AppTechnicalDetails summary="技术详情" data-testid="audit-technical-details">操作键: {{ event.action }}
+结果键: {{ event.result }}
+时间戳 (UTC): {{ event.occurredAt }}
+<template v-if="event.targetProjectRef !== undefined">目标项目 ID: {{ event.targetProjectRef.projectId }}
+</template>
+事件 ID: {{ event.eventId }}</AppTechnicalDetails>
             </div>
           </li>
         </ul>
@@ -219,7 +247,8 @@ function formatDate(value: string): string {
         >
           {{ loadingMore ? '加载中…' : '加载更多' }}
         </AppButton>
-      </template>
+        </template>
+      </AppSection>
     </template>
   </section>
 </template>
@@ -240,7 +269,10 @@ function formatDate(value: string): string {
 .au-audit-item {
   display: flex;
   align-items: center;
+  padding: var(--space-3) 0;
+  border-bottom: 1px solid var(--color-border-default);
 }
+.au-audit-item:last-child { border-bottom: 0; }
 .au-audit-meta {
   display: flex;
   flex-wrap: wrap;

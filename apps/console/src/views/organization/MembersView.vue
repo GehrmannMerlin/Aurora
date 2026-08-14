@@ -17,9 +17,23 @@ import { describeRequestError } from '../../api/feedback.js';
 import { useSessionStore } from '../../stores/session.js';
 import AppButton from '../../components/aurora/AppButton.vue';
 import AppPageHeader from '../../components/aurora/AppPageHeader.vue';
+import AppSection from '../../components/aurora/AppSection.vue';
+import AppSkeleton from '../../components/aurora/AppSkeleton.vue';
 import AppStatusBadge from '../../components/aurora/AppStatusBadge.vue';
+import AppTechnicalDetails from '../../components/aurora/AppTechnicalDetails.vue';
+import { formatUtc } from '../../monitoring/format.js';
 
 type OrgRole = 'owner' | 'admin' | 'member';
+
+const ORG_ROLE_LABELS: Readonly<Record<OrgRole, string>> = Object.freeze({
+  owner: '所有者',
+  admin: '管理员',
+  member: '成员',
+});
+
+function organizationRoleLabel(role: string): string {
+  return ORG_ROLE_LABELS[role as OrgRole] ?? '未知角色';
+}
 
 interface MemberSummary {
   readonly accountId: string;
@@ -282,19 +296,21 @@ onMounted(() => {
 
 <template>
   <section class="au-surface" data-testid="members-view">
-    <AppPageHeader title="成员" />
+    <AppPageHeader title="成员" description="查看组织成员，并在具备权限时管理邀请和角色。" />
 
     <AppStatusBadge v-if="loadError !== null" tone="danger" data-testid="members-error">
       {{ loadError }}
     </AppStatusBadge>
 
-    <p v-else-if="loading" class="au-hint" role="status" data-testid="members-loading">
-      正在加载成员…
-    </p>
+    <AppSkeleton v-else-if="loading" label="正在加载成员…" :lines="4" data-testid="members-loading" />
 
     <template v-else>
-      <section class="au-section">
-        <h2 class="au-section-title">成员列表</h2>
+      <AppSection title="成员列表" description="电子邮箱以脱敏形式显示。">
+        <template #actions>
+          <div class="au-list-toolbar" role="toolbar" aria-label="成员列表操作">
+            <AppButton variant="secondary" :disabled="loading" @click="void loadMembers()">刷新成员</AppButton>
+          </div>
+        </template>
         <ul v-if="members.length > 0" class="au-member-list" data-testid="member-list">
           <li
             v-for="member in members"
@@ -304,7 +320,7 @@ onMounted(() => {
           >
             <span class="au-member-email" data-testid="member-email">{{ member.emailMasked }}</span>
             <AppStatusBadge :tone="member.orgRole === 'owner' ? 'success' : 'neutral'">
-              {{ member.orgRole }}
+              {{ organizationRoleLabel(member.orgRole) }}
             </AppStatusBadge>
             <span v-if="member.accountId === myAccountId" class="au-member-self">（我）</span>
             <span
@@ -331,10 +347,9 @@ onMounted(() => {
           </li>
         </ul>
         <p v-else class="au-hint">暂无成员。</p>
-      </section>
+      </AppSection>
 
-      <section v-if="canManage" class="au-section" data-testid="members-manage">
-        <h2 class="au-section-title">邀请成员</h2>
+      <AppSection v-if="canManage" title="邀请成员" description="邀请仅在当前会话内列出，服务端会再次确认权限。" data-testid="members-manage">
         <form class="au-form" novalidate @submit.prevent="onInvite">
           <div class="au-field">
             <label class="au-field__label" for="invite-email">邮箱</label>
@@ -365,8 +380,8 @@ onMounted(() => {
                 inviteRole = ($event.target as HTMLSelectElement).value as 'admin' | 'member'
               "
             >
-              <option value="member">member</option>
-              <option value="admin">admin</option>
+              <option value="member">成员</option>
+              <option value="admin">管理员</option>
             </select>
           </div>
           <AppButton
@@ -391,8 +406,11 @@ onMounted(() => {
             data-testid="invitation-row"
           >
             <span class="au-member-email">{{ invitation.invitedEmailMasked }}</span>
-            <AppStatusBadge tone="neutral">{{ invitation.status }}</AppStatusBadge>
-            <span class="au-invitation-expires">过期时间 {{ invitation.expiresAt }}</span>
+            <AppStatusBadge tone="neutral">等待接受</AppStatusBadge>
+            <span class="au-invitation-expires">过期时间（UTC） {{ formatUtc(invitation.expiresAt) }}</span>
+            <AppTechnicalDetails summary="技术详情">邀请状态键: {{ invitation.status }}
+邀请 ID: {{ invitation.invitationId }}
+过期时间 (UTC): {{ invitation.expiresAt }}</AppTechnicalDetails>
             <span class="au-member-actions">
               <AppButton
                 variant="secondary"
@@ -412,14 +430,14 @@ onMounted(() => {
           </li>
         </ul>
         <p v-else class="au-hint">本会话尚未创建邀请。</p>
-      </section>
+      </AppSection>
 
-      <section
+      <AppSection
         v-if="isOwner && transferableMembers.length > 0"
-        class="au-section"
+        title="转让所有权"
+        description="此操作会影响组织的管理权限。"
         data-testid="transfer-ownership"
       >
-        <h2 class="au-section-title">转让所有权</h2>
         <form class="au-form" novalidate @submit.prevent="onTransferOwnership">
           <div class="au-field">
             <label class="au-field__label" for="transfer-target">新所有者</label>
@@ -452,7 +470,7 @@ onMounted(() => {
             {{ transferError }}
           </AppStatusBadge>
         </form>
-      </section>
+      </AppSection>
     </template>
   </section>
 </template>
@@ -464,11 +482,7 @@ onMounted(() => {
 .au-section {
   margin-bottom: var(--space-6);
 }
-.au-section-title {
-  margin: 0 0 var(--space-3);
-  font-size: 16px;
-  color: var(--color-text-primary);
-}
+.au-list-toolbar { display: flex; gap: var(--space-2); }
 .au-section-subtitle {
   margin: var(--space-4) 0 var(--space-2);
   font-size: 14px;
@@ -524,7 +538,7 @@ onMounted(() => {
   height: var(--control-height);
   padding: 0 var(--space-3);
   border: 1px solid var(--color-border-default);
-  border-radius: var(--radius-base);
+  border-radius: var(--radius-control);
   background-color: var(--color-surface-bg);
   color: var(--color-text-primary);
   font: inherit;

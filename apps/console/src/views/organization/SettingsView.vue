@@ -9,6 +9,8 @@ import { describeRequestError } from '../../api/feedback.js';
 import { useSessionStore } from '../../stores/session.js';
 import AppButton from '../../components/aurora/AppButton.vue';
 import AppPageHeader from '../../components/aurora/AppPageHeader.vue';
+import AppSection from '../../components/aurora/AppSection.vue';
+import AppSkeleton from '../../components/aurora/AppSkeleton.vue';
 import AppStatusBadge from '../../components/aurora/AppStatusBadge.vue';
 
 type OrgRole = 'owner' | 'admin' | 'member';
@@ -174,7 +176,7 @@ async function onUpdateTimezone(): Promise<void> {
 
 <template>
   <section class="au-surface" data-testid="settings-view">
-    <AppPageHeader title="组织设置" />
+    <AppPageHeader title="组织设置" description="维护组织级统计口径所需的基础配置。" />
 
     <AppStatusBadge v-if="gateError !== null" tone="danger" data-testid="settings-gate-error">
       {{ gateError }}
@@ -184,16 +186,10 @@ async function onUpdateTimezone(): Promise<void> {
       你没有权限修改该组织的设置。
     </p>
 
-    <template v-else-if="!gateLoading">
-      <p class="au-hint" data-testid="settings-hint">
-        组织业务时区用于数据统计口径。当前时区与版本无法读取（契约没有读取设置的操作），
-        修改后以提交结果为准；若其他会话已并发修改，会提示版本冲突并刷新版本后重试。
-      </p>
+    <AppSkeleton v-else-if="gateLoading" label="正在确认设置权限…" :lines="3" data-testid="settings-gate-loading" />
 
-      <p v-if="lastSavedTimezone !== null" class="au-hint" data-testid="current-timezone">
-        当前保存的时区：{{ lastSavedTimezone }}
-      </p>
-
+    <AppSection v-else title="统计设置" description="组织业务时区用于数据统计口径。当前时区与版本无法读取，修改后以提交结果为准。" data-testid="organization-settings-section">
+      <p v-if="lastSavedTimezone !== null" class="au-hint" data-testid="current-timezone">当前保存的时区：{{ lastSavedTimezone }}</p>
       <form class="au-form" novalidate @submit.prevent="onUpdateTimezone">
         <div class="au-field">
           <label class="au-field__label" for="settings-timezone">时区（IANA 标识）</label>
@@ -235,7 +231,7 @@ async function onUpdateTimezone(): Promise<void> {
           {{ updateError }}
         </AppStatusBadge>
       </form>
-    </template>
+    </AppSection>
   </section>
 </template>
 
@@ -248,7 +244,7 @@ async function onUpdateTimezone(): Promise<void> {
   display: flex;
   flex-direction: column;
   gap: var(--space-4);
-  max-width: 42ch;
+  max-width: 720px;
   margin-top: var(--space-4);
 }
 .au-field {
@@ -264,7 +260,7 @@ async function onUpdateTimezone(): Promise<void> {
   height: var(--control-height);
   padding: 0 var(--space-3);
   border: 1px solid var(--color-border-default);
-  border-radius: var(--radius-base);
+  border-radius: var(--radius-control);
   background-color: var(--color-surface-bg);
   color: var(--color-text-primary);
   font: inherit;

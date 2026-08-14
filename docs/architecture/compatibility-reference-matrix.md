@@ -17,7 +17,7 @@ related:
   - '../../Aurora 测试规范.md'
   - '../testing/test-strategy.md'
   - '../superpowers/specs/2026-07-28-aurora-testing-deployment-release-design.md'
-  - '../superpowers/specs/2026-07-30-aurora-console-visual-language-design.md'
+  - '../superpowers/specs/2026-08-14-aurora-console-ux-ui-redesign-design.md'
   - 'ci-quality-workflows.md'
   - 'aurora-v1-remaining-module-batches.md'
   - 'formalization-readiness.md'
@@ -31,7 +31,7 @@ review-cycle: compatibility-matrix-or-quality-policy-change
 
 ## 1. 定位与效力
 
-本文正式化 Aurora 第一版兼容/设备/可访问性/性能参考验证（OPS-02）。它把 approved [测试/部署/发布设计](../superpowers/specs/2026-07-28-aurora-testing-deployment-release-design.md) 第 8 节（兼容性、可访问性与量化性能预算）、[测试策略](../testing/test-strategy.md) 第 4—6 节（兼容矩阵、性能预算、SLO）和[视觉语言](../superpowers/specs/2026-07-30-aurora-console-visual-language-design.md) 第 8—9 节（可访问性基线、质量门禁）落实为可重复验证的参考矩阵：SDK reference fixture、Vue/React 参考集成、Console reference target、browser compatibility matrix、代表 device/viewport matrix、accessibility validation、performance reference measurement 与 CI matrix wiring。
+本文正式化 Aurora 第一版兼容/设备/可访问性/性能参考验证（OPS-02）。它把 approved [测试/部署/发布设计](../superpowers/specs/2026-07-28-aurora-testing-deployment-release-design.md) 第 8 节（兼容性、可访问性与量化性能预算）、[测试策略](../testing/test-strategy.md) 第 4—6 节（兼容矩阵、性能预算、SLO）和[Console UX/UI 全面重设计](../superpowers/specs/2026-08-14-aurora-console-ux-ui-redesign-design.md) 第 14—17 节（响应式、可访问性、动效与验收）落实为可重复验证的参考矩阵：SDK reference fixture、Vue/React 参考集成、Console reference target、browser compatibility matrix、代表 device/viewport matrix、accessibility validation、performance reference measurement 与 CI matrix wiring。
 
 **OPS-02 不是性能优化项目**，不新增产品功能，不修改 SDK 公共行为，不修改 wire protocol。Reference fixture 只用于兼容验证，不演变成产品应用。
 
@@ -62,7 +62,7 @@ review-cycle: compatibility-matrix-or-quality-policy-change
 | OPS-02    | [测试规范](../../Aurora%20测试规范.md)                                                            | §4.4—4.8                    | 浏览器兼容范围由 SDK 专项规范定义；PR 至少核心真实浏览器测试；发布前完整支持矩阵 |
 | OPS-02    | [测试策略](../testing/test-strategy.md)                                                           | §4—6                        | 桌面/移动浏览器承诺；WCAG 2.2 AA；性能预算为发布门槛非已测结果                   |
 | OPS-02    | [测试/部署/发布设计](../superpowers/specs/2026-07-28-aurora-testing-deployment-release-design.md) | §8                          | 正式浏览器承诺、可访问性目标、SDK 体积/运行开销预算                              |
-| OPS-02    | [视觉语言](../superpowers/specs/2026-07-30-aurora-console-visual-language-design.md)              | §8—9                        | WCAG 2.2 AA 对比度；Playwright/axe 覆盖键盘、焦点、缩放、Drawer、RouteTarget     |
+| OPS-02    | [Console UX/UI 全面重设计](../superpowers/specs/2026-08-14-aurora-console-ux-ui-redesign-design.md) | §14—17                      | WCAG 2.2 AA 对比度；Playwright/axe 覆盖键盘、焦点、缩放、Drawer、RouteTarget     |
 | OPS-02    | [SDK 架构](../sdk/sdk-architecture.md)                                                            | §7—8                        | SDK 宿主安全与隐私默认；初始化/宿主开销预算                                      |
 | OPS-02    | [OPS-01 CI 规格](ci-quality-workflows.md)                                                         | §4、§6                      | PR/main/nightly/release 分层；完整矩阵属 OPS-02；禁止 arbitrary retry            |
 | OPS-02    | [批次基线](aurora-v1-remaining-module-batches.md)                                                 | §5.7 OPS-02 行、§6 G14、§10 | reference app 不演变成产品；OPS-02 不关闭 OPS-01                                 |

@@ -14,7 +14,7 @@ related:
   - ../../docs/architecture/platform-frontend.md
   - ../../docs/architecture/formalization-readiness.md
   - ../../docs/superpowers/specs/2026-07-28-aurora-frontend-technology-stack-design.md
-  - ../../docs/superpowers/specs/2026-07-30-aurora-console-visual-language-design.md
+  - ../../docs/superpowers/specs/2026-08-14-aurora-console-ux-ui-redesign-design.md
   - ../../docs/superpowers/specs/2026-07-30-aurora-platform-openapi-and-implementation-design.md
   - ../../docs/superpowers/specs/2026-07-27-aurora-frontend-ux-ui-design.md
   - ../../Auroa-PRD-业务逻辑汇总-v2.1-核心业务定稿版.md
@@ -34,7 +34,7 @@ superseded-by: none
 - Owner：platform/frontend
 - 适用范围：管理平台前端工程基线——Vue 3 SPA＋Vite（严格 TypeScript、SFC＋Composition API）、Vue Router、Pinia 与自建请求/缓存层、PrimeVue＋VeeValidate/Zod＋受控 DataTable＋Apache ECharts、质量工具链（vue-tsc/ESLint/Vitest/Vue Testing Library/MSW/Playwright/axe/Lighthouse CI）
 - 关联 PRD：[核心业务 PRD](../../Auroa-PRD-业务逻辑汇总-v2.1-核心业务定稿版.md)
-- 关联技术方案：[前端技术栈设计](../../docs/superpowers/specs/2026-07-28-aurora-frontend-technology-stack-design.md)（approved，FE-STACK-001—004）、[控制台视觉语言](../../docs/superpowers/specs/2026-07-30-aurora-console-visual-language-design.md)（approved）、[管理平台前端架构](../../docs/architecture/platform-frontend.md)（approved）
+- 关联技术方案：[前端技术栈设计](../../docs/superpowers/specs/2026-07-28-aurora-frontend-technology-stack-design.md)（approved，FE-STACK-001—004）、[Console UX/UI 全面重设计](../../docs/superpowers/specs/2026-08-14-aurora-console-ux-ui-redesign-design.md)（approved）、[管理平台前端架构](../../docs/architecture/platform-frontend.md)（approved）
 - 关联 Issue：none
 - 关联实现 PR：none
 - 替代 ADR：none

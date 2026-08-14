@@ -113,4 +113,8 @@ describe('notificationTypeLabel', () => {
     expect(notificationTypeLabel('issue_reappeared')).toBe('问题再次出现');
     expect(notificationTypeLabel('issue_assigned_to_me')).toBe('分配给我');
   });
+
+  it('uses readable fallback copy for an unknown notification type', () => {
+    expect(notificationTypeLabel('future_delivery_event')).toBe('通知');
+  });
 });

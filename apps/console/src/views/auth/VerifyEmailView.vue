@@ -7,6 +7,8 @@ import AuthCard from '../../components/auth/AuthCard.vue';
 import AuthStatusBanner from '../../components/auth/AuthStatusBanner.vue';
 import AppButton from '../../components/aurora/AppButton.vue';
 import AppLink from '../../components/aurora/AppLink.vue';
+import AppTechnicalDetails from '../../components/aurora/AppTechnicalDetails.vue';
+import { formatUtc } from '../../monitoring/format.js';
 
 const authStore = useAuthStore();
 const session = useSessionStore();
@@ -23,10 +25,19 @@ const cooldownActive = computed<boolean>(() => {
 const cooldownLabel = computed<string | null>(() => {
   const resend = registration.value?.resendAvailableAt;
   if (resend === undefined) return null;
-  return new Date(resend).toLocaleTimeString();
+  return formatUtc(resend);
 });
 
 const resendNotice = ref(false);
+
+const verificationStatusLabel = computed(() => {
+  switch (registration.value?.verificationStatus.reason) {
+    case 'email_verification_pending':
+      return '等待邮箱验证';
+    default:
+      return '验证状态暂时无法确认';
+  }
+});
 
 function onResend(): void {
   // The 8-operation PLT-03 contract has no resend operation. The button respects
@@ -45,17 +56,20 @@ function onResend(): void {
       <dl class="au-verify-meta">
         <div class="au-verify-meta__row">
           <dt>验证状态</dt>
-          <dd data-testid="verify-status">{{ registration.verificationStatus.reason }}</dd>
+          <dd data-testid="verify-status">{{ verificationStatusLabel }}</dd>
         </div>
         <div class="au-verify-meta__row">
           <dt>服务器时间</dt>
-          <dd data-testid="verify-server-time">{{ registration.serverTime }}</dd>
+          <dd data-testid="verify-server-time">{{ formatUtc(registration.serverTime) }}</dd>
         </div>
         <div v-if="registration.resendAvailableAt !== undefined" class="au-verify-meta__row">
           <dt>可重新发送</dt>
-          <dd data-testid="verify-resend-at">{{ registration.resendAvailableAt }}</dd>
+          <dd data-testid="verify-resend-at">{{ formatUtc(registration.resendAvailableAt) }}</dd>
         </div>
       </dl>
+      <AppTechnicalDetails summary="技术详情">验证状态键: {{ registration.verificationStatus.reason }}
+服务器时间 (UTC): {{ registration.serverTime }}
+<template v-if="registration.resendAvailableAt !== undefined">可重新发送时间 (UTC): {{ registration.resendAvailableAt }}</template></AppTechnicalDetails>
       <AppButton
         variant="secondary"
         :disabled="cooldownActive"

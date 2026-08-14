@@ -7,7 +7,7 @@
  * `evaluation_paused` 显示暂停原因而非恢复。新建/编辑入口前端不隐藏，每次
  * Command 由服务端按 project_admin 重鉴权（403 就地显示）。
  */
-import { computed, onMounted, ref } from 'vue';
+import { computed, nextTick, onMounted, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { describeRequestError } from '../../api/feedback.js';
 import { formatUtc } from '../../monitoring/format.js';
@@ -17,6 +17,7 @@ import { buildAlertsView, instanceStateLabel, ruleStateLabel } from './alerts-vi
 import AppPageHeader from '../../components/aurora/AppPageHeader.vue';
 import AppLink from '../../components/aurora/AppLink.vue';
 import AppStatusBadge from '../../components/aurora/AppStatusBadge.vue';
+import AppTechnicalDetails from '../../components/aurora/AppTechnicalDetails.vue';
 import SectionNotice from '../../components/monitoring/SectionNotice.vue';
 
 const route = useRoute();
@@ -33,6 +34,8 @@ const tab = computed<'rules' | 'instances'>(() => {
 const data = ref<AlertsData | null>(null);
 const loading = ref(false);
 const error = ref<string | null>(null);
+const instancesTab = ref<HTMLButtonElement | null>(null);
+const rulesTab = ref<HTMLButtonElement | null>(null);
 
 async function load(): Promise<void> {
   loading.value = true;
@@ -59,9 +62,48 @@ const state = computed(() =>
   }),
 );
 
-function setTab(next: 'rules' | 'instances'): void {
-  if (next === tab.value) return;
-  void router.push({ query: { ...route.query, tab: next } });
+async function setTab(next: 'rules' | 'instances', moveFocus = false): Promise<void> {
+  if (next !== tab.value) {
+    await router.push({ query: { ...route.query, tab: next } });
+  }
+  if (!moveFocus) return;
+  await nextTick();
+  (next === 'instances' ? instancesTab.value : rulesTab.value)?.focus();
+}
+
+function onTabKeydown(event: KeyboardEvent, current: 'rules' | 'instances'): void {
+  const next =
+    event.key === 'ArrowRight' || event.key === 'ArrowDown'
+      ? current === 'instances'
+        ? 'rules'
+        : 'instances'
+      : event.key === 'ArrowLeft' || event.key === 'ArrowUp'
+        ? current === 'instances'
+          ? 'rules'
+          : 'instances'
+        : event.key === 'Home'
+          ? 'instances'
+          : event.key === 'End'
+            ? 'rules'
+            : null;
+  if (next === null) return;
+  event.preventDefault();
+  void setTab(next, true);
+}
+
+function readableRuleName(name: string | undefined): string {
+  return name?.trim() || '未命名告警规则';
+}
+
+const alertReasonLabels: Readonly<Record<string, string>> = Object.freeze({
+  triggered: '观测值满足触发条件',
+  recovered: '观测值满足恢复条件',
+  evaluation_paused: '评估已暂停',
+  evaluation_resumed: '评估已恢复',
+});
+
+function alertReasonLabel(reason: string): string {
+  return alertReasonLabels[reason] ?? '服务端未提供可读说明';
 }
 
 function createRuleHref(): string {
@@ -114,27 +156,46 @@ function instanceTone(stateName: string): 'neutral' | 'warning' | 'danger' {
       <button
         type="button"
         role="tab"
+        id="tab-instances"
+        ref="instancesTab"
         :aria-selected="tab === 'instances'"
+        aria-controls="alert-instances-panel"
+        :tabindex="tab === 'instances' ? 0 : -1"
         :class="{ 'is-active': tab === 'instances' }"
         data-testid="tab-instances"
-        @click="setTab('instances')"
+        @click="setTab('instances', true)"
+        @keydown="onTabKeydown($event, 'instances')"
       >
         告警实例
       </button>
       <button
         type="button"
         role="tab"
+        id="tab-rules"
+        ref="rulesTab"
         :aria-selected="tab === 'rules'"
+        aria-controls="alert-rules-panel"
+        :tabindex="tab === 'rules' ? 0 : -1"
         :class="{ 'is-active': tab === 'rules' }"
         data-testid="tab-rules"
-        @click="setTab('rules')"
+        @click="setTab('rules', true)"
+        @keydown="onTabKeydown($event, 'rules')"
       >
         告警规则
       </button>
     </nav>
 
     <template v-if="tab === 'instances'">
-      <section class="mon-block" data-testid="alert-instances">
+      <section
+        id="alert-instances-panel"
+        class="mon-block"
+        role="tabpanel"
+        aria-labelledby="tab-instances"
+        data-testid="alert-instances"
+      >
+        <div class="alert-toolbar" data-testid="alert-instances-toolbar">
+          <p class="mon-hint">按当前状态、指标和触发时间查看告警实例。</p>
+        </div>
         <template v-if="state.instances.kind === 'loading'">
           <p class="mon-hint" role="status">正在加载告警实例…</p>
         </template>
@@ -149,7 +210,7 @@ function instanceTone(stateName: string): 'neutral' | 'warning' | 'danger' {
               class="mon-list-item"
             >
               <AppLink :to="instanceHref(instance.instanceId)" class="mon-link">
-                {{ instance.ruleName ?? instance.ruleId }}
+                {{ readableRuleName(instance.ruleName) }}
               </AppLink>
               <div class="mon-meta-row">
                 <AppStatusBadge :tone="instanceTone(instance.state)">
@@ -160,8 +221,12 @@ function instanceTone(stateName: string): 'neutral' | 'warning' | 'danger' {
                 <span v-if="instance.recoveredAt !== undefined"
                   >恢复 {{ formatUtc(instance.recoveredAt) }}</span
                 >
-                <span v-if="instance.pauseReason !== undefined">{{ instance.pauseReason }}</span>
+                <span v-if="instance.pauseReason !== undefined">{{ alertReasonLabel(instance.pauseReason) }}</span>
               </div>
+              <AppTechnicalDetails summary="实例技术详情">
+                instanceId: {{ instance.instanceId }}
+                ruleId: {{ instance.ruleId }}
+              </AppTechnicalDetails>
             </li>
           </ul>
           <p v-else class="mon-hint">尚无告警实例。实例由告警规则触发时创建。</p>
@@ -170,8 +235,15 @@ function instanceTone(stateName: string): 'neutral' | 'warning' | 'danger' {
     </template>
 
     <template v-else>
-      <section class="mon-block" data-testid="alert-rules">
-        <div class="mon-actions-row">
+      <section
+        id="alert-rules-panel"
+        class="mon-block"
+        role="tabpanel"
+        aria-labelledby="tab-rules"
+        data-testid="alert-rules"
+      >
+        <div class="alert-toolbar" data-testid="alert-rules-toolbar">
+          <p class="mon-hint">规则配置与当前评估状态分开呈现。</p>
           <AppLink :to="createRuleHref()" class="au-button" data-testid="alert-rule-create-link">
             新建规则
           </AppLink>
@@ -186,7 +258,7 @@ function instanceTone(stateName: string): 'neutral' | 'warning' | 'danger' {
           <ul v-if="state.rules.data.length > 0" class="mon-list">
             <li v-for="rule in state.rules.data" :key="rule.ruleId" class="mon-list-item">
               <div class="mon-title-row">
-                <span class="mon-rule-name">{{ rule.name ?? rule.ruleId }}</span>
+                <span class="mon-rule-name">{{ readableRuleName(rule.name) }}</span>
                 <AppStatusBadge :tone="ruleTone(rule.evaluation.state)">
                   {{ ruleStateLabel(rule.evaluation.state) }}
                 </AppStatusBadge>
@@ -199,12 +271,16 @@ function instanceTone(stateName: string): 'neutral' | 'warning' | 'danger' {
                   · 观测 {{ rule.evaluation.observedValue }}
                 </template>
                 <template v-if="rule.evaluation.pauseReason !== undefined">
-                  · {{ rule.evaluation.pauseReason }}
+                  · {{ alertReasonLabel(rule.evaluation.pauseReason) }}
                 </template>
                 <template v-if="rule.evaluation.lastEvaluatedAt !== undefined">
                   · 评估 {{ formatUtc(rule.evaluation.lastEvaluatedAt) }}
                 </template>
               </div>
+              <AppTechnicalDetails summary="规则技术详情">
+                ruleId: {{ rule.ruleId }}
+                version: {{ rule.version }}
+              </AppTechnicalDetails>
             </li>
           </ul>
           <p v-else class="mon-hint">尚无告警规则。创建规则以监控指标超阈值。</p>
@@ -260,7 +336,7 @@ function instanceTone(stateName: string): 'neutral' | 'warning' | 'danger' {
 }
 .mon-list-item {
   border: 1px solid var(--color-border-default);
-  border-radius: var(--radius-base);
+  border-radius: var(--radius-control);
   padding: var(--space-3);
 }
 .mon-title-row {
@@ -287,13 +363,25 @@ function instanceTone(stateName: string): 'neutral' | 'warning' | 'danger' {
 .mon-actions-row {
   margin-bottom: var(--space-2);
 }
+
+.alert-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-bottom: var(--space-3);
+}
+.alert-toolbar .mon-hint { margin: 0; }
+@media (max-width: 640px) {
+  .alert-toolbar { align-items: flex-start; flex-direction: column; }
+}
 .au-button {
   display: inline-flex;
   align-items: center;
   min-height: var(--control-height);
   padding: 0 var(--space-3);
   border: 1px solid var(--color-border-default);
-  border-radius: var(--radius-base);
+  border-radius: var(--radius-control);
   background-color: var(--color-surface-bg);
   color: var(--color-text-primary);
   cursor: pointer;

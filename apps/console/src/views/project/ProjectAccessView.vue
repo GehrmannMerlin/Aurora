@@ -166,52 +166,63 @@ function memberTone(effectiveRole: string): 'neutral' | 'success' | 'warning' {
         <SectionNotice :view="state.members" />
       </template>
       <template v-else>
-        <ul v-if="state.members.data.length > 0" class="mon-member-list">
-          <li v-for="member in state.members.data" :key="member.accountId" class="mon-member-item">
-            <div class="mon-member-row">
-              <span class="mon-email">{{ member.maskedEmail }}</span>
-              <AppStatusBadge :tone="memberTone(member.effectiveRole)">
-                {{ effectiveRoleLabel(member.effectiveRole) }}
-              </AppStatusBadge>
-            </div>
-            <div class="mon-meta">
-              来源：{{ member.sources.map(sourceLabel).join(' · ') }}
-              <template v-if="member.projectRole !== undefined">
-                · 项目角色 {{ effectiveRoleLabel(member.projectRole) }}
-              </template>
-            </div>
-            <div
-              v-if="canManageMember(member)"
-              class="mon-actions-row"
-              :data-testid="`member-actions-${member.accountId}`"
-            >
-              <label class="mon-field-inline">
-                角色
-                <select
-                  :value="member.projectRole ?? member.effectiveRole"
-                  :disabled="actionBusy !== null"
-                  @change="changeRole(member, ($event.target as HTMLSelectElement).value)"
-                >
-                  <option value="project_admin">项目管理员</option>
-                  <option value="developer">开发成员</option>
-                  <option value="read_only">只读成员</option>
-                </select>
-              </label>
-              <button
-                type="button"
-                class="au-button au-button--danger"
-                :disabled="actionBusy !== null"
-                :data-testid="`remove-member-${member.accountId}`"
-                @click="removeMember(member)"
-              >
-                移除项目成员
-              </button>
-            </div>
-            <p v-else-if="member.sources.includes('org_inherited')" class="mon-meta">
-              组织继承来源只读，请通过组织成员管理调整。
-            </p>
-          </li>
-        </ul>
+        <div v-if="state.members.data.length > 0" class="governance-table-wrap">
+          <table class="governance-table" data-testid="access-members-table">
+            <thead>
+              <tr>
+                <th>成员</th>
+                <th>有效角色</th>
+                <th>角色来源</th>
+                <th>项目角色</th>
+                <th><span class="sr-only">成员操作</span></th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="member in state.members.data" :key="member.accountId">
+                <td class="mon-email">{{ member.maskedEmail }}</td>
+                <td data-testid="member-effective-role">
+                  <AppStatusBadge :tone="memberTone(member.effectiveRole)">
+                    {{ effectiveRoleLabel(member.effectiveRole) }}
+                  </AppStatusBadge>
+                </td>
+                <td class="mon-meta" data-testid="member-role-source">
+                  {{ member.sources.map(sourceLabel).join(' · ') }}
+                </td>
+                <td class="mon-meta">
+                  {{ member.projectRole === undefined ? '未单独设置' : effectiveRoleLabel(member.projectRole) }}
+                </td>
+                <td>
+                  <div v-if="canManageMember(member)" :data-testid="`member-actions-${member.accountId}`">
+                    <label class="mon-field-inline">
+                      <span class="sr-only">调整角色</span>
+                      <select
+                        :value="member.projectRole ?? member.effectiveRole"
+                        :disabled="actionBusy !== null"
+                        @change="changeRole(member, ($event.target as HTMLSelectElement).value)"
+                      >
+                        <option value="project_admin">项目管理员</option>
+                        <option value="developer">开发成员</option>
+                        <option value="read_only">只读成员</option>
+                      </select>
+                    </label>
+                    <button
+                      type="button"
+                      class="au-button au-button--danger"
+                      :disabled="actionBusy !== null"
+                      :data-testid="`remove-member-${member.accountId}`"
+                      @click="removeMember(member)"
+                    >
+                      移除
+                    </button>
+                  </div>
+                  <span v-else-if="member.sources.includes('org_inherited')" class="mon-meta">
+                    由组织管理
+                  </span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
         <p v-else class="mon-hint">当前项目没有可访问人员。</p>
       </template>
     </section>
@@ -273,23 +284,31 @@ function memberTone(effectiveRole: string): 'neutral' | 'success' | 'warning' {
   color: var(--color-text-secondary);
   font-size: 12px;
 }
-.mon-member-list {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-2);
-}
-.mon-member-item {
+.governance-table-wrap {
+  overflow-x: auto;
   border: 1px solid var(--color-border-default);
-  border-radius: var(--radius-base);
-  padding: var(--space-3);
+  border-radius: var(--radius-surface);
+  background-color: var(--color-surface-bg);
 }
-.mon-member-row {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
+.governance-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 720px;
+}
+.governance-table th,
+.governance-table td {
+  padding: var(--space-3);
+  border-bottom: 1px solid var(--color-border-default);
+  text-align: left;
+  vertical-align: middle;
+}
+.governance-table th {
+  color: var(--color-text-secondary);
+  font-size: 12px;
+  font-weight: 600;
+}
+.governance-table tbody tr:last-child td {
+  border-bottom: 0;
 }
 .mon-email {
   font-weight: 600;
@@ -317,7 +336,7 @@ function memberTone(effectiveRole: string): 'neutral' | 'success' | 'warning' {
   min-height: var(--control-height);
   padding: 0 var(--space-2);
   border: 1px solid var(--color-border-default);
-  border-radius: var(--radius-base);
+  border-radius: var(--radius-control);
   background-color: var(--color-surface-bg);
   color: var(--color-text-primary);
   font: inherit;
@@ -328,13 +347,24 @@ function memberTone(effectiveRole: string): 'neutral' | 'success' | 'warning' {
   margin-top: var(--space-2);
   align-items: center;
 }
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
 .au-button {
   display: inline-flex;
   align-items: center;
   min-height: var(--control-height);
   padding: 0 var(--space-3);
   border: 1px solid var(--color-border-default);
-  border-radius: var(--radius-base);
+  border-radius: var(--radius-control);
   background-color: var(--color-surface-bg);
   color: var(--color-text-primary);
   cursor: pointer;

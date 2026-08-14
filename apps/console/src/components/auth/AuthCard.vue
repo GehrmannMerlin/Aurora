@@ -1,21 +1,19 @@
 <script setup lang="ts">
 import AppPageHeader from '../aurora/AppPageHeader.vue';
 
-defineProps<{ title: string; testId?: string }>();
+defineProps<{ title: string; description?: string; testId?: string }>();
 </script>
 
 <template>
-  <section class="au-auth-card au-surface" :data-testid="testId">
-    <AppPageHeader :title="title" />
+  <section class="au-auth-card" :data-testid="testId">
+    <AppPageHeader v-if="description !== undefined" :title="title" :description="description" />
+    <AppPageHeader v-else :title="title" />
     <slot />
   </section>
 </template>
 
 <style scoped>
 .au-auth-card {
-  max-width: 480px;
-  padding: var(--space-5);
-  border: 1px solid var(--color-border-default);
-  border-radius: var(--radius-base);
+  width: 100%;
 }
 </style>

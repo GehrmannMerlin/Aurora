@@ -1,5 +1,6 @@
 import { expect, test, type Page } from '@playwright/test';
 import { startSpaServer } from './serve-spa';
+import { waitForShell } from './shell-helpers';
 
 // Regression gate for the PrimeUI license defect (G09 post-deployment
 // stabilization hotfix).
@@ -13,6 +14,11 @@ import { startSpaServer } from './serve-spa';
 // license warning ever appears on a real page load — catching the defect class
 // at the layer the original shell smoke missed.
 let server: { origin: string; close(): Promise<void> } | undefined;
+
+function requiredServer(): NonNullable<typeof server> {
+  if (server === undefined) throw new Error('SPA server was not started');
+  return server;
+}
 
 async function setMockScope(
   page: Page,
@@ -30,11 +36,11 @@ async function setMockScope(
   );
 }
 
-const ROUTES: ReadonlyArray<{
+const ROUTES: readonly {
   name: string;
   path: string;
   scope?: 'workspace' | 'organization' | 'project';
-}> = [
+}[] = [
   { name: 'root', path: '/' },
   { name: 'workspace', path: '/workspace' },
   {
@@ -64,7 +70,7 @@ test('no PrimeUI license banner or warning appears on any shell route', async ({
   });
 
   for (const route of ROUTES) {
-    await page.goto(`${server!.origin}${route.path}`);
+    await page.goto(`${requiredServer().origin}${route.path}`);
     if (route.scope) {
       await setMockScope(
         page,
@@ -73,7 +79,7 @@ test('no PrimeUI license banner or warning appears on any shell route', async ({
       );
       await page.reload();
     }
-    await expect(page.getByRole('navigation', { name: '侧栏导航' })).toBeVisible();
+    await waitForShell(page);
 
     // The banner is injected into a closed shadow root, so it is not matched
     // by normal selectors — assert the host element it creates is absent.

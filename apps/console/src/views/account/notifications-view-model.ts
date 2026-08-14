@@ -12,6 +12,9 @@ import type { SectionView } from '../../monitoring/section.js';
 export interface NotificationsSection {
   readonly status: string;
   readonly reason?: string;
+  readonly missing?: string;
+  readonly freshAt?: string;
+  readonly staleReason?: string;
   readonly items: readonly NotificationItem[];
   readonly pagination: {
     readonly cursor?: string;
@@ -45,14 +48,29 @@ export function notificationSectionToItems(
   section: NotificationsSection,
 ): SectionView<readonly NotificationItem[]> {
   switch (section.status) {
+    case 'available':
+      return { kind: 'available', data: section.items };
     case 'empty':
       return { kind: 'empty', reason: section.reason ?? '暂无通知' };
+    case 'partial':
+      return {
+        kind: 'partial',
+        data: section.items,
+        missing: section.missing ?? section.reason ?? '服务端未说明缺失范围',
+      };
+    case 'stale':
+      return {
+        kind: 'stale',
+        data: section.items,
+        freshAt: section.freshAt ?? '服务端未提供最后新鲜时间',
+        staleReason: section.staleReason ?? section.reason ?? '服务端未说明陈旧原因',
+      };
     case 'unavailable':
       return { kind: 'unavailable', reason: section.reason ?? '通知列表不可用' };
     case 'forbidden':
       return { kind: 'forbidden' };
     default:
-      return { kind: 'available', data: section.items };
+      return { kind: 'unavailable', reason: '通知列表返回了未识别的状态，无法确认其可用性。' };
   }
 }
 
@@ -98,6 +116,6 @@ export function notificationTypeLabel(type: string): string {
     case 'issue_assigned_to_me':
       return '分配给我';
     default:
-      return type;
+      return '通知';
   }
 }

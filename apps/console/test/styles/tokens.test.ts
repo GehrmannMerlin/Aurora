@@ -19,21 +19,24 @@ describe('visual language foundation', () => {
   it('defines every approved token with its exact value', () => {
     const tokens = readFileSync(join(srcDir, 'styles/tokens.css'), 'utf8');
     const expected: readonly [string, string][] = [
-      ['--color-topbar-bg', '#111827'],
-      ['--color-topbar-fg', '#F8FAFC'],
-      ['--color-sidebar-bg', '#D47A16'],
-      ['--color-sidebar-fg', '#17120D'],
-      ['--color-sidebar-active-bg', '#FFF4DC'],
-      ['--color-sidebar-active-fg', '#172033'],
-      ['--color-sidebar-active-indicator', '#1D4ED8'],
-      ['--color-page-bg', '#F8FAFC'],
+      ['--color-rail-bg', '#101828'],
+      ['--color-rail-fg', '#F9FAFB'],
+      ['--color-rail-muted', '#98A2B3'],
+      ['--color-context-bg', '#F2F4F7'],
+      ['--color-page-bg', '#F7F8FA'],
       ['--color-surface-bg', '#FFFFFF'],
-      ['--color-border-default', '#CBD5E1'],
-      ['--color-text-primary', '#111827'],
-      ['--color-text-secondary', '#475569'],
-      ['--color-action-primary', '#2563EB'],
-      ['--color-status-danger', '#D92D20'],
-      ['--color-status-success', '#15803D'],
+      ['--color-border-default', '#D0D5DD'],
+      ['--color-text-primary', '#101828'],
+      ['--color-text-secondary', '#475467'],
+      ['--color-action-primary', '#3157D5'],
+      ['--color-status-success', '#067647'],
+      ['--color-status-warning', '#B54708'],
+      ['--color-status-danger', '#B42318'],
+      ['--color-status-info', '#175CD3'],
+      ['--global-rail-width', '64px'],
+      ['--context-sidebar-width', '232px'],
+      ['--radius-control', '8px'],
+      ['--radius-surface', '12px'],
     ];
     for (const [name, value] of expected) {
       expect(tokens, name).toContain(`${name}: ${value};`);
@@ -54,6 +57,23 @@ describe('visual language foundation', () => {
         if (/background-image\s*:/.test(line)) {
           expect(line, file).toMatch(/background-image\s*:\s*none\s*;/);
         }
+      }
+    }
+  });
+
+  it('does not retain legacy topbar or sidebar visual aliases in live Console sources', () => {
+    const legacyPatterns: readonly RegExp[] = [
+      /--color-topbar-/,
+      /--color-sidebar-/,
+      /#D47A16/i,
+      /\.au-topbar\b/,
+      /\.au-desktop-sidebar\b/,
+    ];
+
+    for (const file of sources) {
+      const content = readFileSync(file, 'utf8');
+      for (const pattern of legacyPatterns) {
+        expect(content, `${file} must not contain ${pattern.source}`).not.toMatch(pattern);
       }
     }
   });

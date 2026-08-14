@@ -1,4 +1,5 @@
 import { createApp } from 'vue';
+import PrimeVue from 'primevue/config';
 import App from './App.vue';
 import { router } from './router';
 import { pinia } from './stores';
@@ -14,6 +15,7 @@ async function bootstrap(): Promise<void> {
   app.config.errorHandler = (error) => {
     console.error('[console]', error instanceof Error ? error.message : 'unknown');
   };
+  app.use(PrimeVue);
   app.use(pinia);
   app.use(router);
   app.mount('#app');

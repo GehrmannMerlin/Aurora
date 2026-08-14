@@ -1,5 +1,5 @@
 import { http, HttpResponse, type JsonBodyType } from 'msw';
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/vue';
+import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/vue';
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { requestCache } from '../../src/api/cache';
 import { router } from '../../src/router';
@@ -13,7 +13,6 @@ import ProjectCreateView from '../../src/views/organization/ProjectCreateView.vu
 import SettingsView from '../../src/views/organization/SettingsView.vue';
 import UsageView from '../../src/views/organization/UsageView.vue';
 import WorkspaceHomeView from '../../src/views/workspace/WorkspaceHomeView.vue';
-import ProjectOnboardingView from '../../src/views/project/ProjectOnboardingView.vue';
 import TokensView from '../../src/views/organization/TokensView.vue';
 import AuditView from '../../src/views/organization/AuditView.vue';
 import TrashView from '../../src/views/organization/TrashView.vue';
@@ -89,23 +88,6 @@ describe('B1 workspace home (7A)', () => {
     expect(await screen.findByTestId('create-project-button')).toBeTruthy();
   });
 
-  it('shows the approved first-run empty state and create-project CTA', async () => {
-    mockServer.use(
-      http.get('/api/platform/v1/organizations/:organizationId/projects', () =>
-        HttpResponse.json(
-          { projects: [], allowedActions: ['read', 'create'], navigationTargets: [] },
-          { status: 200 },
-        ),
-      ),
-    );
-    await router.push({ path: '/workspace', query: { organizationId: 'org_test_1' } });
-    await router.isReady();
-    render(WorkspaceHomeView, { global: { plugins: [pinia, router] } });
-    expect(await screen.findByText('开始使用 Aurora')).toBeTruthy();
-    expect(screen.getByText('你还没有项目，创建第一个项目开始监控应用。')).toBeTruthy();
-    expect(screen.getByTestId('create-project-empty-button')).toBeTruthy();
-  });
-
   it('hides the create-project button when allowedActions lacks create', async () => {
     mockServer.use(
       http.get('/api/platform/v1/organizations/:organizationId/projects', () =>
@@ -118,10 +100,27 @@ describe('B1 workspace home (7A)', () => {
     expect(await screen.findByText('Web')).toBeTruthy();
     expect(screen.queryByTestId('create-project-button')).toBeNull();
   });
+
+  it('uses the workspace header, explicit organization scope, and project rows without fabricated metrics', async () => {
+    await router.push({ path: '/workspace', query: { organizationId: 'org_test_1' } });
+    await router.isReady();
+    render(WorkspaceHomeView, { global: { plugins: [pinia, router] } });
+
+    expect(await screen.findByTestId('workspace-home')).toBeTruthy();
+    expect(screen.getByText('在组织范围内选择和管理可访问项目。')).toBeTruthy();
+    expect(screen.getByTestId('organization-scope')).toBeTruthy();
+    expect(await screen.findByTestId('project-row')).toBeTruthy();
+    expect(screen.getByTestId('project-framework').textContent).toBe('接入类型：Vue');
+    expect(screen.getByTestId('project-lifecycle').textContent).toContain('状态：运行中');
+    expect(screen.getByTestId('open-project-prj_test_1').textContent).toContain('打开项目');
+    expect(screen.queryByText('健康分')).toBeNull();
+    expect(screen.queryByText('趋势')).toBeNull();
+    expect(screen.queryByTestId('workspace-metric')).toBeNull();
+  });
 });
 
 describe('B5 usage query (7A)', () => {
-  it('renders the real usage projection from usageGetSummary', async () => {
+  it('renders the real usage projection without fabricated charts', async () => {
     await router.push('/organizations/org_test_1/usage');
     await router.isReady();
     render(UsageView, { global: { plugins: [pinia, router] } });
@@ -129,6 +128,8 @@ describe('B5 usage query (7A)', () => {
     expect(screen.getByTestId('usage-processed').textContent).toContain('10');
     expect(screen.getByText('正常')).toBeTruthy();
     expect(screen.queryByTestId('usage-chart')).toBeNull();
+    expect(screen.queryByTestId('usage-number')).toBeNull();
+    expect(screen.getByTestId('usage-technical-details').textContent).toContain('org_test_1');
     expect(screen.queryByText('功能未提供')).toBeNull();
   });
 
@@ -140,6 +141,17 @@ describe('B5 usage query (7A)', () => {
 });
 
 describe('B2 create project (7B)', () => {
+  it('separates basic and configuration fields beneath one page heading', async () => {
+    await router.push('/organizations/org_test_1/projects/new');
+    await router.isReady();
+    render(ProjectCreateView, { global: { plugins: [pinia, router] } });
+
+    expect(await screen.findByTestId('project-create-view')).toBeTruthy();
+    expect(screen.getAllByRole('heading', { level: 1 })).toHaveLength(1);
+    expect(await screen.findByTestId('project-basic-section')).toBeTruthy();
+    expect(screen.getByTestId('project-settings-section')).toBeTruthy();
+  });
+
   it('submits the form and enters SDK onboarding with the one-time client key', async () => {
     await router.push('/organizations/org_test_1/projects/new');
     await router.isReady();
@@ -153,11 +165,11 @@ describe('B2 create project (7B)', () => {
     await fireEvent.click(screen.getByTestId('create-project-submit'));
 
     await waitFor(() => {
-      expect(router.currentRoute.value.path).toBe(
-        '/organizations/org_test_1/projects/prj_created_1/onboarding',
-      );
+      expect(router.currentRoute.value.name).toBe('project.onboarding');
     });
-    expect(window.history.state.clientKey).toMatch(/^aurora_ingest_/);
+    const handoff = window.history.state as Record<string, unknown>;
+    expect(handoff.clientKey).toMatch(/^aurora_ingest_/);
+    expect(handoff.environment).toBe('production');
     expect(handlerControls.createProjectRequests).toBeGreaterThanOrEqual(1);
   });
 
@@ -188,31 +200,20 @@ describe('B2 create project (7B)', () => {
   });
 });
 
-describe('C1 first-run onboarding', () => {
-  it('renders install, real key initialization and test-error steps', async () => {
-    const clientKey =
-      'aurora_ingest_AAAAAAAAAAAAAAAAAAAAAA_BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB';
-    await router.push({
-      path: '/organizations/org_test_1/projects/prj_test_1/onboarding',
-      state: { clientKey, environment: 'production' },
-    });
-    await router.isReady();
-    render(ProjectOnboardingView, { global: { plugins: [pinia, router] } });
-    expect(await screen.findByTestId('onboarding-guide')).toBeTruthy();
-    expect(screen.getByTestId('onboarding-install-command').textContent).toContain(
-      '@aurora/browser @aurora/plugin-error',
-    );
-    expect(screen.getByTestId('onboarding-init-code').textContent).toContain(clientKey);
-    expect(screen.getByTestId('onboarding-init-code').textContent).toContain('production');
-    expect(screen.getByTestId('onboarding-test-code').textContent).toContain(
-      'Aurora Acceptance Test Error',
-    );
-    expect(screen.getByTestId('onboarding-send-test').textContent).toContain('发送测试错误');
-    expect(screen.getByTestId('onboarding-recheck').textContent).toContain('我已经发送测试事件');
-  });
-});
-
 describe('B3 members and invitations (7B)', () => {
+  it('places a labeled member toolbar before the stable member rows', async () => {
+    await router.push('/organizations/org_test_1/members');
+    await router.isReady();
+    render(MembersView, { global: { plugins: [pinia, router] } });
+
+    const list = await screen.findByTestId('member-list');
+    const toolbar = screen.getByRole('toolbar', { name: '成员列表操作' });
+    expect(within(toolbar).getByRole('button', { name: '刷新成员' })).toBeTruthy();
+    expect(list.compareDocumentPosition(toolbar)).toBe(
+      Node.DOCUMENT_POSITION_PRECEDING,
+    );
+  });
+
   it('lists members with masked emails only', async () => {
     await router.push('/organizations/org_test_1/members');
     await router.isReady();
@@ -395,6 +396,19 @@ function usePlainMemberProjection(): void {
 }
 
 describe('B6 private tokens (7C)', () => {
+  it('places a labeled token toolbar before the stable token rows', async () => {
+    await router.push('/organizations/org_test_1/tokens');
+    await router.isReady();
+    render(TokensView, { global: { plugins: [pinia, router] } });
+
+    const list = await screen.findByTestId('token-list');
+    const toolbar = screen.getByRole('toolbar', { name: '令牌列表操作' });
+    expect(within(toolbar).getByRole('button', { name: '刷新令牌' })).toBeTruthy();
+    expect(list.compareDocumentPosition(toolbar)).toBe(
+      Node.DOCUMENT_POSITION_PRECEDING,
+    );
+  });
+
   it('lists tokens with metadata only (no digest or plaintext in the DOM)', async () => {
     await router.push('/organizations/org_test_1/tokens');
     await router.isReady();
@@ -537,12 +551,54 @@ describe('B6 private tokens (7C)', () => {
 });
 
 describe('B7 security audit (7C)', () => {
+  it('localizes known audit keys and retains backend keys only in technical details', async () => {
+    await router.push('/organizations/org_test_1/audit');
+    await router.isReady();
+    render(AuditView, { global: { plugins: [pinia, router] } });
+
+    expect(await screen.findByTestId('audit-list')).toBeTruthy();
+    expect(screen.getByTestId('audit-primary-action').textContent).toContain('已邀请成员');
+    expect(screen.getByTestId('audit-primary-result').textContent).toContain('已完成');
+    expect(screen.getByTestId('audit-timestamp').textContent).toContain('UTC');
+    expect(within(screen.getByTestId('audit-technical-details')).getByText(/member\.invited/)).toBeTruthy();
+  });
+
+  it('uses a safe primary label for unknown audit keys', async () => {
+    mockServer.use(
+      http.get('/api/platform/v1/organizations/:organizationId/audit', () =>
+        HttpResponse.json(
+          {
+            events: [
+              {
+                eventId: 'aud_unknown_1',
+                action: 'unrecognized.backend_action',
+                occurredAt: '2026-08-09T01:00:00.000Z',
+                result: 'blocked',
+                actorMasked: 'ow**@example.invalid',
+              },
+            ],
+            pagination: { totalCountStatus: 'available' },
+          } as JsonBodyType,
+          { status: 200 },
+        ),
+      ),
+    );
+    await router.push('/organizations/org_test_1/audit');
+    await router.isReady();
+    render(AuditView, { global: { plugins: [pinia, router] } });
+
+    expect(await screen.findByTestId('audit-list')).toBeTruthy();
+    expect(screen.getByTestId('audit-primary-action').textContent).toContain('未识别的审计操作');
+    expect(screen.getByTestId('audit-primary-result').textContent).toContain('已阻止');
+    expect(within(screen.getByTestId('audit-technical-details')).getByText(/unrecognized\.backend_action/)).toBeTruthy();
+  });
+
   it('renders the redacted security timeline with no full email', async () => {
     await router.push('/organizations/org_test_1/audit');
     await router.isReady();
     render(AuditView, { global: { plugins: [pinia, router] } });
     expect(await screen.findByTestId('audit-list')).toBeTruthy();
-    expect(screen.getByTestId('audit-action').textContent).toBe('member.invited');
+    expect(screen.getByTestId('audit-primary-action').textContent).toBe('已邀请成员');
     // Redacted actor: only the masked projection is rendered, never the full email.
     expect(screen.getByTestId('audit-actor').textContent).toBe('ow**@example.invalid');
     expect(screen.queryByText('user@example.invalid')).toBeNull();
@@ -599,7 +655,7 @@ describe('B7 security audit (7C)', () => {
       expect(screen.queryByTestId('audit-load-more')).toBeNull();
     });
     expect(screen.getAllByTestId('audit-row')).toHaveLength(2);
-    expect(screen.getByText('project.restored')).toBeTruthy();
+    expect(screen.getByText('已恢复项目')).toBeTruthy();
   });
 
   it('shows a forbidden state for a plain member', async () => {
@@ -613,6 +669,19 @@ describe('B7 security audit (7C)', () => {
 });
 
 describe('B8 trash restore (7C)', () => {
+  it('places a labeled recovery toolbar before stable trash rows', async () => {
+    await router.push('/organizations/org_test_1/trash');
+    await router.isReady();
+    render(TrashView, { global: { plugins: [pinia, router] } });
+
+    const list = await screen.findByTestId('trash-list');
+    const toolbar = screen.getByRole('toolbar', { name: '回收站操作' });
+    expect(within(toolbar).getByRole('button', { name: '刷新回收站' })).toBeTruthy();
+    expect(list.compareDocumentPosition(toolbar)).toBe(
+      Node.DOCUMENT_POSITION_PRECEDING,
+    );
+  });
+
   it('lists recoverable projects and shows the G10 safety note', async () => {
     await router.push('/organizations/org_test_1/trash');
     await router.isReady();

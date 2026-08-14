@@ -164,7 +164,7 @@ watch(unreadCount, (value) => {
 
 <template>
   <div class="notifications-page" data-testid="notifications-view">
-    <AppPageHeader title="通知中心" />
+    <AppPageHeader title="通知中心" description="按服务端提供的状态查看通知；筛选条件保存在地址中。" />
     <div class="notifications-tabs" role="tablist" aria-label="通知筛选">
       <RouterLink
         :to="{ path: '/notifications', query: { read: 'all' } }"
@@ -209,13 +209,11 @@ watch(unreadCount, (value) => {
             {{ item.summary }}
           </span>
           <span class="notifications-meta">
-            <span v-if="item.organizationId !== undefined" class="notifications-org">
-              {{ item.organizationId }}
-            </span>
             <time :datetime="item.occurredAt">{{ formatUtc(item.occurredAt) }}</time>
           </span>
         </button>
-        <span v-if="item.readAt === undefined" class="notifications-unread-dot" aria-label="未读" />
+        <span v-if="item.readAt === undefined" class="notifications-unread-dot" aria-hidden="true" />
+        <span v-if="item.readAt === undefined" class="notifications-unread-state">未读</span>
         <button
           v-if="item.readAt === undefined"
           type="button"
@@ -249,7 +247,7 @@ watch(unreadCount, (value) => {
 
 <style scoped>
 .notifications-page {
-  max-width: 960px;
+  max-width: 840px;
   margin: 0 auto;
 }
 .notifications-tabs {
@@ -267,7 +265,7 @@ watch(unreadCount, (value) => {
 }
 .notifications-tab--active {
   color: var(--color-text-primary);
-  border-bottom-color: var(--color-sidebar-active-indicator);
+  border-bottom-color: var(--color-context-active-indicator);
 }
 .notifications-list {
   list-style: none;
@@ -278,11 +276,13 @@ watch(unreadCount, (value) => {
   display: flex;
   align-items: center;
   gap: var(--space-3);
-  padding: var(--space-3) var(--space-4);
-  border-bottom: 1px solid var(--color-border, #ece7dc);
+  padding: var(--space-4);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-surface);
+  background-color: var(--color-surface-bg);
 }
 .notifications-item--unread {
-  background-color: var(--color-surface-raised, #fffdf7);
+  border-left: 3px solid var(--color-status-info);
 }
 .notifications-open {
   flex: 1;
@@ -297,7 +297,7 @@ watch(unreadCount, (value) => {
 }
 .notifications-type {
   font-size: 0.75rem;
-  color: var(--color-sidebar-active-indicator);
+  color: var(--color-context-active-indicator);
   font-weight: 600;
 }
 .notifications-title {
@@ -314,24 +314,25 @@ watch(unreadCount, (value) => {
 .notifications-meta {
   display: flex;
   gap: var(--space-3);
-  color: var(--color-text-muted, #8a8376);
+  color: var(--color-text-secondary);
   font-size: 0.75rem;
 }
 .notifications-unread-dot {
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background-color: var(--color-sidebar-active-indicator);
+  background-color: var(--color-status-info);
 }
+.notifications-unread-state { font-size: 0.75rem; color: var(--color-text-secondary); }
 .notifications-mark {
   padding: var(--space-1) var(--space-3);
-  border-radius: var(--radius-base, 6px);
-  border: 1px solid var(--color-border, #e5e0d6);
-  background-color: var(--color-surface, #ffffff);
+  border-radius: var(--radius-control);
+  border: 1px solid var(--color-border-default);
+  background-color: var(--color-surface-bg);
   cursor: pointer;
 }
 .notifications-read-at {
-  color: var(--color-text-muted, #8a8376);
+  color: var(--color-text-secondary);
   font-size: 0.75rem;
 }
 .notifications-action-error {
@@ -342,9 +343,9 @@ watch(unreadCount, (value) => {
   display: block;
   margin: var(--space-4) auto 0;
   padding: var(--space-2) var(--space-5);
-  border-radius: var(--radius-base, 6px);
-  border: 1px solid var(--color-border, #e5e0d6);
-  background-color: var(--color-surface, #ffffff);
+  border-radius: var(--radius-control);
+  border: 1px solid var(--color-border-default);
+  background-color: var(--color-surface-bg);
   cursor: pointer;
 }
 </style>

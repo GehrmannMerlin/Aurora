@@ -76,7 +76,7 @@ export function instanceStateLabel(state: string): string {
     case 'evaluation_paused':
       return '计算暂停';
     default:
-      return state;
+      return '实例状态未知';
   }
 }
 
@@ -90,6 +90,6 @@ export function completenessLabel(completeness: string): string {
     case 'missing':
       return '数据缺失';
     default:
-      return completeness;
+      return '完整性未知';
   }
 }

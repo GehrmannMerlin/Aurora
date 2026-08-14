@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { UnavailableReason } from '../../contracts/route-types';
+import AppEmptyState from '../aurora/AppEmptyState.vue';
 import AppPageHeader from '../aurora/AppPageHeader.vue';
-import AppStatusBadge from '../aurora/AppStatusBadge.vue';
 
 withDefaults(
   defineProps<{
@@ -22,16 +22,10 @@ const reasonLabel: Readonly<Record<UnavailableReason, string>> = {
 <template>
   <section class="au-status au-surface" data-testid="unavailable-view">
     <AppPageHeader :title="title" />
-    <AppStatusBadge tone="warning">{{ reasonLabel[reason] }}</AppStatusBadge>
-    <p class="au-status-detail">
-      {{ detail || '该能力尚未由后端提供；此处不会显示任何模拟数据。' }}
-    </p>
+    <AppEmptyState
+      :title="reasonLabel[reason]"
+      tone="warning"
+      :description="detail || '该能力尚未由后端提供；此处不会显示任何模拟数据。'"
+    />
   </section>
 </template>
-
-<style scoped>
-.au-status-detail {
-  color: var(--color-text-secondary);
-  max-width: 56ch;
-}
-</style>

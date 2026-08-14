@@ -14,6 +14,8 @@ import { describeRequestError } from '../../api/feedback.js';
 import { useSessionStore } from '../../stores/session.js';
 import AppButton from '../../components/aurora/AppButton.vue';
 import AppPageHeader from '../../components/aurora/AppPageHeader.vue';
+import AppSection from '../../components/aurora/AppSection.vue';
+import AppSkeleton from '../../components/aurora/AppSkeleton.vue';
 import AppStatusBadge from '../../components/aurora/AppStatusBadge.vue';
 
 type OrgRole = 'owner' | 'admin' | 'member';
@@ -284,7 +286,7 @@ function formatDate(value: string): string {
 
 <template>
   <section class="au-surface" data-testid="tokens-view">
-    <AppPageHeader title="私有令牌" />
+    <AppPageHeader title="私有令牌" description="管理组织私有令牌；明文只在创建后显示一次。" />
 
     <AppStatusBadge v-if="gateError !== null" tone="danger" data-testid="tokens-gate-error">
       {{ gateError }}
@@ -299,14 +301,15 @@ function formatDate(value: string): string {
         {{ loadError }}
       </AppStatusBadge>
 
-      <p v-else-if="loading" class="au-hint" role="status" data-testid="tokens-loading">
-        正在加载令牌…
-      </p>
+      <AppSkeleton v-else-if="loading" label="正在加载令牌…" :lines="4" data-testid="tokens-loading" />
 
       <template v-else>
         <!-- ONE-TIME plaintext panel: exists only while createResult is in memory. -->
-        <section
+        <AppSection
           v-if="createResult !== null"
+          title="一次性令牌明文"
+          description="请立即保存；关闭、离开页面或刷新后不会再次显示。"
+          tone="warning"
           class="au-one-time-secret"
           data-testid="token-plaintext-panel"
         >
@@ -330,10 +333,14 @@ function formatDate(value: string): string {
             </AppButton>
           </div>
           <p class="au-hint">令牌摘要与明文不会出现在令牌列表中。</p>
-        </section>
+        </AppSection>
 
-        <section class="au-section">
-          <h2 class="au-section-title">令牌列表</h2>
+        <AppSection title="令牌列表" description="列表仅保留名称、范围和状态等元数据。">
+          <template #actions>
+            <div class="au-list-toolbar" role="toolbar" aria-label="令牌列表操作">
+              <AppButton variant="secondary" :disabled="loading" @click="void refreshTokens()">刷新令牌</AppButton>
+            </div>
+          </template>
           <ul v-if="tokens.length > 0" class="au-token-list" data-testid="token-list">
             <li
               v-for="token in tokens"
@@ -367,10 +374,9 @@ function formatDate(value: string): string {
             </li>
           </ul>
           <p v-else class="au-hint">暂无私有令牌。</p>
-        </section>
+        </AppSection>
 
-        <section class="au-section" data-testid="token-create">
-          <h2 class="au-section-title">创建私有令牌</h2>
+        <AppSection title="创建私有令牌" description="选择最小必要授权范围，并可设置到期时间。" data-testid="token-create">
           <form class="au-form" novalidate @submit.prevent="onCreateToken">
             <div class="au-field">
               <label class="au-field__label" for="token-name">名称</label>
@@ -450,7 +456,7 @@ function formatDate(value: string): string {
               {{ createError }}
             </AppStatusBadge>
           </form>
-        </section>
+        </AppSection>
       </template>
     </template>
   </section>
@@ -464,11 +470,7 @@ function formatDate(value: string): string {
 .au-section {
   margin-bottom: var(--space-6);
 }
-.au-section-title {
-  margin: 0 0 var(--space-3);
-  font-size: 16px;
-  color: var(--color-text-primary);
-}
+.au-list-toolbar { display: flex; gap: var(--space-2); }
 .au-one-time-secret {
   display: flex;
   flex-direction: column;
@@ -477,7 +479,7 @@ function formatDate(value: string): string {
   margin-bottom: var(--space-6);
   padding: var(--space-4);
   border: 1px solid var(--color-border-default);
-  border-radius: var(--radius-base);
+  border-radius: var(--radius-control);
 }
 .au-secret-row {
   display: flex;
@@ -488,7 +490,7 @@ function formatDate(value: string): string {
 .au-secret-value {
   padding: var(--space-2) var(--space-3);
   border: 1px solid var(--color-border-default);
-  border-radius: var(--radius-base);
+  border-radius: var(--radius-control);
   background-color: var(--color-surface-bg);
   color: var(--color-text-primary);
   font-family: var(--font-mono);
@@ -529,7 +531,7 @@ function formatDate(value: string): string {
   display: flex;
   flex-direction: column;
   gap: var(--space-3);
-  max-width: 42ch;
+  max-width: 720px;
 }
 .au-field {
   display: flex;
@@ -544,7 +546,7 @@ function formatDate(value: string): string {
   height: var(--control-height);
   padding: 0 var(--space-3);
   border: 1px solid var(--color-border-default);
-  border-radius: var(--radius-base);
+  border-radius: var(--radius-control);
   background-color: var(--color-surface-bg);
   color: var(--color-text-primary);
   font: inherit;

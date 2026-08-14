@@ -18,6 +18,8 @@ import {
 import { defaultTimeRange } from '../../monitoring/time-range.js';
 import { toSectionView } from '../../monitoring/section.js';
 import AppPageHeader from '../../components/aurora/AppPageHeader.vue';
+import AppSection from '../../components/aurora/AppSection.vue';
+import AppTechnicalDetails from '../../components/aurora/AppTechnicalDetails.vue';
 import SectionNotice from '../../components/monitoring/SectionNotice.vue';
 import {
   buildRequestsView,
@@ -37,6 +39,7 @@ const items = ref<readonly RequestEndpointSummary[]>([]);
 const nextCursor = ref<string | null>(null);
 const loading = ref(false);
 const error = ref<string | null>(null);
+const selectedEndpointId = ref<string | null>(null);
 
 async function load(reset: boolean): Promise<void> {
   loading.value = true;
@@ -44,6 +47,7 @@ async function load(reset: boolean): Promise<void> {
   if (reset) {
     items.value = [];
     nextCursor.value = null;
+    selectedEndpointId.value = null;
   }
   try {
     const query: { timeRange: { start: string; end: string }; cursor?: string } = {
@@ -88,80 +92,132 @@ const state = computed<RequestsViewState>(() =>
       data.value?.endpoints === undefined ? null : endpointsSectionToPage(data.value.endpoints),
   }),
 );
+
+const selectedEndpoint = computed(
+  () => items.value.find((endpoint) => endpoint.endpointId === selectedEndpointId.value) ?? null,
+);
+
+function selectEndpoint(endpointId: string): void {
+  selectedEndpointId.value = endpointId;
+}
 </script>
 
 <template>
   <section class="au-surface" data-testid="project-requests-view">
     <AppPageHeader title="请求" />
 
-    <section class="mon-block" data-testid="requests-summary">
-      <h2 class="mon-title">请求聚合</h2>
-      <template v-if="state.summary.kind !== 'available'">
-        <SectionNotice :view="state.summary" />
-      </template>
-      <template v-else>
-        <dl v-if="state.summary.data.methods.length > 0" class="mon-inline">
-          <div v-for="method in state.summary.data.methods" :key="method.method">
-            <dt>{{ method.method }}</dt>
-            <dd>
-              {{ method.observedCount }} 次
-              <span class="mon-meta">
-                （失败 {{ method.failureCount }} · 慢 {{ method.slowCount }} · 最大
-                {{ method.durationMaxMs }}ms）
-              </span>
-            </dd>
-          </div>
-        </dl>
-        <p v-else class="mon-hint">窗口内没有请求指标。</p>
-        <p v-if="state.summary.data.dataThrough" class="mon-meta">
-          数据至 {{ formatUtc(state.summary.data.dataThrough) }}
-          <template v-if="state.summary.data.isPartial"> · 部分结果</template>
-        </p>
-      </template>
-    </section>
-
-    <section class="mon-block" data-testid="requests-endpoints">
-      <h2 class="mon-title">接口列表</h2>
-      <template v-if="state.endpoints.kind !== 'available'">
-        <SectionNotice :view="state.endpoints" />
-      </template>
-      <template v-else>
-        <ul v-if="items.length > 0" class="mon-endpoint-list">
-          <li v-for="endpoint in items" :key="endpoint.endpointId" class="mon-endpoint">
-            <span class="mon-method">{{ endpoint.method }}</span>
-            <span class="mon-url">{{ endpoint.url }}</span>
-            <div class="mon-meta">
-              {{ endpoint.sampleCount }} 个样本
-              <template v-if="endpoint.outcomeCounts.length > 0">
-                · {{ endpoint.outcomeCounts.map((o) => `${o.outcome} ${o.count}`).join(' · ') }}
-              </template>
-              <template v-if="endpoint.dataThrough !== undefined">
-                · 至 {{ formatUtc(endpoint.dataThrough) }}</template
+    <div class="investigation-workspace">
+      <AppSection title="接口" description="已规范化的接口身份；选择一项查看已返回的证据。">
+        <div data-testid="investigation-list">
+          <template v-if="state.endpoints.kind !== 'available'">
+            <SectionNotice :view="state.endpoints" />
+          </template>
+          <template v-else>
+            <ul v-if="items.length > 0" class="mon-endpoint-list" data-testid="requests-endpoints">
+              <li v-for="endpoint in items" :key="endpoint.endpointId">
+                <button
+                  type="button"
+                  :class="[
+                    'mon-endpoint',
+                    { 'mon-endpoint--selected': selectedEndpointId === endpoint.endpointId },
+                  ]"
+                  :aria-pressed="selectedEndpointId === endpoint.endpointId"
+                  @click="selectEndpoint(endpoint.endpointId)"
+                >
+                  <span class="mon-method">{{ endpoint.method }}</span>
+                  <span class="mon-url">{{ endpoint.url }}</span>
+                  <span class="mon-meta">{{ endpoint.sampleCount }} 个样本</span>
+                </button>
+              </li>
+            </ul>
+            <p v-else class="mon-hint">窗口内没有接口数据。</p>
+            <p v-if="state.endpoints.data.totalCount !== undefined" class="mon-meta">
+              共 {{ state.endpoints.data.totalCount }} 个接口
+            </p>
+            <AppTechnicalDetails v-if="state.endpoints.kind === 'available'" summary="列表技术状态"
+              >totalCountStatus: {{ state.endpoints.data.totalCountStatus }}</AppTechnicalDetails
+            >
+            <div v-if="nextCursor !== null" class="mon-actions-row">
+              <button
+                type="button"
+                class="au-button"
+                data-testid="requests-load-more"
+                :disabled="loading"
+                @click="load(false)"
               >
-              <template v-if="endpoint.isPartial"> · 部分结果</template>
-              <template v-if="!endpoint.completeness.bounded"> · 采样不受限</template>
+                加载更多
+              </button>
             </div>
-          </li>
-        </ul>
-        <p v-else class="mon-hint">窗口内没有接口数据。</p>
-        <div v-if="nextCursor !== null" class="mon-actions-row">
-          <button
-            type="button"
-            class="au-button"
-            data-testid="requests-load-more"
-            :disabled="loading"
-            @click="load(false)"
-          >
-            加载更多
-          </button>
+          </template>
         </div>
-      </template>
-    </section>
+      </AppSection>
 
-    <section class="mon-block" data-testid="requests-percentiles">
-      <h2 class="mon-title">百分位</h2>
-      <SectionNotice :view="state.percentiles" />
-    </section>
+      <div data-testid="investigation-detail">
+        <AppSection title="请求证据" data-testid="requests-summary">
+          <template v-if="state.summary.kind !== 'available'">
+            <SectionNotice :view="state.summary" />
+          </template>
+          <template v-else>
+            <dl v-if="state.summary.data.methods.length > 0" class="mon-inline">
+              <div v-for="method in state.summary.data.methods" :key="method.method">
+                <dt>{{ method.method }}</dt>
+                <dd>
+                  {{ method.observedCount }} 次
+                  <span class="mon-meta"
+                    >（失败 {{ method.failureCount }} · 慢 {{ method.slowCount }} · 最大
+                    {{ method.durationMaxMs }}ms）</span
+                  >
+                </dd>
+              </div>
+            </dl>
+            <p v-else class="mon-hint">窗口内没有请求指标。</p>
+            <p v-if="state.summary.data.dataThrough" class="mon-meta">
+              数据至 {{ formatUtc(state.summary.data.dataThrough)
+              }}<template v-if="state.summary.data.isPartial"> · 部分结果</template>
+            </p>
+          </template>
+        </AppSection>
+
+        <AppSection title="已选接口" class="investigation-detail-section">
+          <template v-if="selectedEndpoint === null">
+            <p class="mon-hint">选择左侧接口以查看该接口已返回的样本、结果和完整性说明。</p>
+          </template>
+          <template v-else>
+            <p class="selected-endpoint__identity">
+              <span class="mon-method">{{ selectedEndpoint.method }}</span>
+              {{ selectedEndpoint.url }}
+            </p>
+            <p class="mon-meta">
+              {{ selectedEndpoint.sampleCount }} 个样本<template
+                v-if="selectedEndpoint.outcomeCounts.length > 0"
+              >
+                ·
+                {{
+                  selectedEndpoint.outcomeCounts
+                    .map((outcome) => `${outcome.outcome} ${outcome.count}`)
+                    .join(' · ')
+                }}</template
+              ><template v-if="selectedEndpoint.dataThrough !== undefined">
+                · 数据至 {{ formatUtc(selectedEndpoint.dataThrough) }}</template
+              ><template v-if="selectedEndpoint.isPartial"> · 部分结果</template
+              ><template v-if="!selectedEndpoint.completeness.bounded"> · 采样不受限</template>
+            </p>
+            <AppTechnicalDetails summary="技术详情"
+              >endpointId: {{ selectedEndpoint.endpointId }}\ncompletenessSource:
+              {{ selectedEndpoint.completeness.source }}</AppTechnicalDetails
+            >
+          </template>
+        </AppSection>
+
+        <AppSection
+          title="百分位"
+          class="investigation-detail-section"
+          data-testid="requests-series-unavailable"
+        >
+          <SectionNotice :view="state.percentiles" />
+        </AppSection>
+      </div>
+    </div>
   </section>
 </template>
 
@@ -207,9 +263,19 @@ const state = computed<RequestsViewState>(() =>
   gap: var(--space-2);
 }
 .mon-endpoint {
+  width: 100%;
   border: 1px solid var(--color-border-default);
-  border-radius: var(--radius-base);
+  border-radius: var(--radius-control);
   padding: var(--space-3);
+  background-color: var(--color-surface-bg);
+  color: var(--color-text-primary);
+  cursor: pointer;
+  font: inherit;
+  text-align: left;
+}
+.mon-endpoint:hover,
+.mon-endpoint--selected {
+  border-color: var(--color-action-primary);
 }
 .mon-method {
   display: inline-block;
@@ -229,7 +295,7 @@ const state = computed<RequestsViewState>(() =>
   min-height: var(--control-height);
   padding: 0 var(--space-3);
   border: 1px solid var(--color-border-default);
-  border-radius: var(--radius-base);
+  border-radius: var(--radius-control);
   background-color: var(--color-surface-bg);
   color: var(--color-text-primary);
   cursor: pointer;
@@ -242,5 +308,23 @@ const state = computed<RequestsViewState>(() =>
 .au-button:disabled {
   opacity: 0.6;
   cursor: default;
+}
+.investigation-workspace {
+  display: grid;
+  grid-template-columns: minmax(260px, 0.85fr) minmax(0, 1.35fr);
+  align-items: start;
+  gap: var(--space-4);
+}
+.investigation-detail-section {
+  margin-top: var(--space-4);
+}
+.selected-endpoint__identity {
+  margin: 0 0 var(--space-2);
+  font-weight: 600;
+}
+@media (max-width: 800px) {
+  .investigation-workspace {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }
 </style>

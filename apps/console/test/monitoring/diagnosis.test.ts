@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   actionTargetHref,
+  actionTargetLabel,
   summaryDisplay,
   type ActionTarget,
   type DiagnosisSummary,
@@ -78,5 +79,16 @@ describe('actionTargetHref', () => {
       query: {},
     };
     expect(actionTargetHref(target)).toBeNull();
+  });
+});
+
+describe('actionTargetLabel', () => {
+  it('maps authorized monitoring targets to readable action copy', () => {
+    expect(actionTargetLabel('project.issues')).toBe('查看问题列表');
+    expect(actionTargetLabel('project.data-status')).toBe('打开数据诊断');
+  });
+
+  it('never exposes an unknown route key as primary action copy', () => {
+    expect(actionTargetLabel('project.requests')).not.toBe('project.requests');
   });
 });

@@ -93,4 +93,9 @@ describe('labels', () => {
     expect(instanceStateLabel('recovered')).toBe('已恢复');
     expect(instanceStateLabel('evaluation_paused')).toBe('计算暂停');
   });
+
+  it('uses safe labels when the API returns an unknown state key', () => {
+    expect(ruleStateLabel('unknown')).toBe('评估状态未知');
+    expect(instanceStateLabel('unknown')).toBe('实例状态未知');
+  });
 });

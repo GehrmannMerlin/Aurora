@@ -1,7 +1,13 @@
 import { expect, test, type Page } from '@playwright/test';
+import AxeBuilder from '@axe-core/playwright';
 import { startSpaServer } from './serve-spa';
 
 let server: { origin: string; close(): Promise<void> } | undefined;
+
+function requiredServer(): NonNullable<typeof server> {
+  if (server === undefined) throw new Error('SPA server was not started');
+  return server;
+}
 
 async function setSessionAuthenticated(page: Page, authenticated: boolean): Promise<void> {
   await page.evaluate(
@@ -11,14 +17,14 @@ async function setSessionAuthenticated(page: Page, authenticated: boolean): Prom
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({ authenticated: value }),
       }),
-    { origin: server!.origin, value: authenticated },
+    { origin: requiredServer().origin, value: authenticated },
   );
 }
 
 /** Load the app once and wait for the MSW-backed shell so the worker is active. */
 async function primeApp(page: Page): Promise<void> {
-  await page.goto(`${server!.origin}/`);
-  await expect(page.getByRole('navigation', { name: '侧栏导航' })).toBeVisible();
+  await page.goto(`${requiredServer().origin}/`);
+  await expect(page.getByRole('navigation', { name: '全局导航' })).toBeVisible();
 }
 
 test.beforeAll(async () => {
@@ -44,7 +50,7 @@ test('PLT-10c smoke: resource-policy page renders target picker and effective de
   await setSessionAuthenticated(page, true);
 
   // Normal navigation to the D2 platform resource-policy page.
-  await page.goto(`${server!.origin}/platform/resource-policies`);
+  await page.goto(`${requiredServer().origin}/platform/resource-policies`);
   await expect(page.getByTestId('resource-policy-view')).toBeVisible();
 
   // Capability probe resolved (platform admin in test fixture): the target
@@ -52,7 +58,7 @@ test('PLT-10c smoke: resource-policy page renders target picker and effective de
   await expect(page.getByTestId('rp-target-picker')).toBeVisible();
   await expect(page.getByTestId('rp-target-select')).toBeVisible();
   await expect(page.getByTestId('rp-effective-policy')).toBeVisible();
-  await expect(page.getByTestId('rp-fields-table')).toBeVisible();
+  await expect(page.getByTestId('rp-policy-evidence-table')).toBeVisible();
   await expect(page.getByRole('cell', { name: '周期配额' })).toBeVisible();
 
   // Target search resolves into selectable options (no fatal error); selecting
@@ -65,6 +71,17 @@ test('PLT-10c smoke: resource-policy page renders target picker and effective de
     page.getByTestId('rp-effective-policy').getByText('组织 · Acme'),
   ).toBeVisible();
   await expect(page.getByTestId('rp-org-reset')).toBeVisible();
+  await searchInput.fill('Web');
+  await expect(page.getByRole('option', { name: '项目 · Web' })).toHaveCount(1);
+  await page.getByTestId('rp-target-select').selectOption('prj:prj_test_1');
+  const projectEvidence = page.getByTestId('rp-policy-evidence-table');
+  await expect(projectEvidence).toBeVisible();
+  await expect(projectEvidence.getByRole('columnheader')).toHaveCount(4);
+  await expect(projectEvidence.getByRole('row').nth(1).getByRole('cell')).toHaveCount(4);
+  await expect(page.getByTestId('rp-project-limit-editor')).toBeVisible();
+  await page.setViewportSize({ width: 390, height: 844 });
+  await expect(projectEvidence).toBeVisible();
+  expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
 
   expect(pageErrors).toEqual([]);
   await expect(page.getByText('capability-not-provided')).toHaveCount(0);

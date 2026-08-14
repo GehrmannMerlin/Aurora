@@ -1,8 +1,14 @@
 import AxeBuilder from '@axe-core/playwright';
 import { expect, test, type Page } from '@playwright/test';
 import { startSpaServer } from './serve-spa';
+import { waitForShell } from './shell-helpers';
 
 let server: { origin: string; close(): Promise<void> } | undefined;
+
+function requiredServer(): NonNullable<typeof server> {
+  if (server === undefined) throw new Error('SPA server was not started');
+  return server;
+}
 
 async function setSessionAuthenticated(page: Page, authenticated: boolean): Promise<void> {
   await page.evaluate(
@@ -12,7 +18,7 @@ async function setSessionAuthenticated(page: Page, authenticated: boolean): Prom
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({ authenticated: value }),
       }),
-    { origin: server!.origin, value: authenticated },
+    { origin: requiredServer().origin, value: authenticated },
   );
 }
 
@@ -24,7 +30,7 @@ async function setDeletionPreflight(page: Page, status: 'ready' | 'blocked'): Pr
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({ status: value }),
       }),
-    { origin: server!.origin, value: status },
+    { origin: requiredServer().origin, value: status },
   );
 }
 
@@ -38,12 +44,12 @@ test.afterAll(async () => {
 
 test('A5 blocked preflight shows the blocking org list and no delete submit', async ({ page }) => {
   // Prime the app so the MSW worker is active, then set the blocked projection.
-  await page.goto(`${server!.origin}/`);
-  await expect(page.getByRole('navigation', { name: '侧栏导航' })).toBeVisible();
+  await page.goto(`${requiredServer().origin}/`);
+  await waitForShell(page);
   await setSessionAuthenticated(page, true);
   await setDeletionPreflight(page, 'blocked');
 
-  await page.goto(`${server!.origin}/account/security`);
+  await page.goto(`${requiredServer().origin}/account/security`);
   await expect(page.getByTestId('account-security-view')).toBeVisible();
   await expect(page.getByTestId('deletion-org-block-list')).toBeVisible();
   await expect(page.getByTestId('deletion-org-name')).toHaveText('Acme');
@@ -55,12 +61,12 @@ test('A5 blocked preflight shows the blocking org list and no delete submit', as
 });
 
 test('A5 cancel page: valid link, submit password, land on login', async ({ page }) => {
-  await page.goto(`${server!.origin}/`);
-  await expect(page.getByRole('navigation', { name: '侧栏导航' })).toBeVisible();
+  await page.goto(`${requiredServer().origin}/`);
+  await waitForShell(page);
   await setSessionAuthenticated(page, false);
   await setDeletionPreflight(page, 'ready');
 
-  await page.goto(`${server!.origin}/account/deletion-cancel?token=raw_token`);
+  await page.goto(`${requiredServer().origin}/account/deletion-cancel?token=raw_token`);
   await expect(page.getByTestId('deletion-cancel-view')).toBeVisible();
   await expect(page.getByText('us**@example.invalid')).toBeVisible();
   // The raw token is cleared from the address bar (history.replaceState).

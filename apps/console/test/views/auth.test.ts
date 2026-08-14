@@ -14,6 +14,7 @@ import ForgotPasswordView from '../../src/views/auth/ForgotPasswordView.vue';
 import ResetPasswordView from '../../src/views/auth/ResetPasswordView.vue';
 import InvitationAcceptView from '../../src/views/auth/InvitationAcceptView.vue';
 import AccountSecurityView from '../../src/views/account/AccountSecurityView.vue';
+import App from '../../src/App.vue';
 
 const REGISTRATION: RegisterResult = {
   accountId: 'acct_test_1',
@@ -118,9 +119,10 @@ describe('VerifyEmailView', () => {
     await router.isReady();
     render(VerifyEmailView, { global: { plugins: [pinia, router] } });
     expect(screen.getByText('us**@example.invalid')).toBeTruthy();
-    expect(screen.getByTestId('verify-status').textContent).toContain('email_verification_pending');
+    expect(screen.getByTestId('verify-status').textContent).toContain('等待邮箱验证');
+    expect(screen.getByText(/验证状态键: email_verification_pending/)).toBeTruthy();
     expect(screen.getByTestId('verify-server-time').textContent).toContain(
-      '2026-08-09T01:00:00.000Z',
+      '2026-08-09 01:00 UTC',
     );
     const resend = screen.getByTestId<HTMLButtonElement>('resend-button');
     expect(resend.disabled).toBe(true);
@@ -175,6 +177,23 @@ describe('VerifyEmailConfirmView', () => {
 });
 
 describe('LoginView', () => {
+  it('keeps the existing labels and submit behavior inside the public authentication shell', async () => {
+    await router.push('/login');
+    await router.isReady();
+    render(App, { global: { plugins: [pinia, router] } });
+
+    expect(await screen.findByTestId('auth-shell')).toBeTruthy();
+    expect(screen.getByLabelText('邮箱')).toBeTruthy();
+    expect(screen.getByLabelText('密码')).toBeTruthy();
+    await fireEvent.update(screen.getByLabelText('邮箱'), 'user@example.invalid');
+    await fireEvent.update(screen.getByLabelText('密码'), 's3cure-Passw0rd!');
+    await fireEvent.click(screen.getByRole('button', { name: '登录' }));
+
+    await waitFor(() => {
+      expect(handlerControls.loginRequests).toBe(1);
+    });
+  });
+
   it('submits identityLogin, applies the session and navigates to the workspace', async () => {
     await router.push('/login');
     await router.isReady();

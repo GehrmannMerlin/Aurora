@@ -16,6 +16,7 @@ import {
   fetchReleases,
   fetchSourceMapFiles,
   type ReleaseSummary,
+  type SourceMapFileSummary,
   type SourceMapFilesSection,
 } from '../../monitoring/queries.js';
 import { reparseRelease, replaceSourceMap, uploadSourceMap } from '../../monitoring/commands.js';
@@ -28,6 +29,7 @@ import {
   sourceMapStatusLabel,
 } from './source-maps-view-model.js';
 import AppPageHeader from '../../components/aurora/AppPageHeader.vue';
+import AppTechnicalDetails from '../../components/aurora/AppTechnicalDetails.vue';
 import SectionNotice from '../../components/monitoring/SectionNotice.vue';
 
 const route = useRoute();
@@ -283,10 +285,23 @@ const state = computed(() =>
   }),
 );
 
+const selectedSourceMapFileId = ref<string | null>(null);
+const selectedSourceMapFile = computed<SourceMapFileSummary | null>(() => {
+  if (state.value.files.kind !== 'available') return null;
+  return (
+    state.value.files.data.find((file) => file.sourceMapFileId === selectedSourceMapFileId.value) ??
+    null
+  );
+});
+
+function selectSourceMapFile(sourceMapFileId: string): void {
+  selectedSourceMapFileId.value = sourceMapFileId;
+}
+
 const releaseVersionText = computed<string>(() => {
   if (loadingReleases.value) return '正在加载发布…';
-  if (errorReleases.value !== null) return releaseId;
-  return currentRelease.value?.version ?? releaseId;
+  if (errorReleases.value !== null) return '发布信息暂不可用';
+  return currentRelease.value?.version ?? '发布版本暂不可用';
 });
 </script>
 
@@ -296,10 +311,13 @@ const releaseVersionText = computed<string>(() => {
 
     <section class="mon-block" data-testid="source-map-release-context">
       <h2 class="mon-title">发布上下文</h2>
-      <p class="mon-meta">发布版本：{{ releaseVersionText }} · 稳定标识 {{ releaseId }}</p>
+      <p class="mon-meta">发布版本：{{ releaseVersionText }}</p>
+      <AppTechnicalDetails summary="发布技术详情">releaseId: {{ releaseId }}</AppTechnicalDetails>
     </section>
 
-    <section class="mon-block" data-testid="source-map-files">
+    <div class="delivery-workspace">
+    <section class="mon-block delivery-list" data-testid="delivery-list">
+      <div data-testid="source-map-files">
       <h2 class="mon-title">当前有效文件</h2>
       <template v-if="state.files.kind === 'loading'">
         <p class="mon-hint" role="status">正在加载文件列表…</p>
@@ -310,34 +328,78 @@ const releaseVersionText = computed<string>(() => {
       <template v-else>
         <ul v-if="state.files.data.length > 0" class="mon-file-list">
           <li v-for="file in state.files.data" :key="file.sourceMapFileId" class="mon-file-item">
-            <div class="mon-file-row">
-              <span class="mon-build-path">{{ file.buildPath }}</span>
-              <span class="mon-badge">{{ sourceMapStatusLabel(file.status) }}</span>
-            </div>
-            <div class="mon-meta">
-              摘要 {{ file.digestPrefix }}… · 上传 {{ formatUtc(file.uploadedAt) }}
-              <template v-if="file.replacedAt !== undefined">
-                · 替换 {{ formatUtc(file.replacedAt) }}</template
-              >
-            </div>
-            <div class="mon-meta">
-              重解析：{{ reparseStateLabel(file.reparse.state) }}
-              <template v-if="file.reparse.totalCount !== undefined">
-                · {{ file.reparse.processedCount ?? 0 }}/{{ file.reparse.totalCount }}
-              </template>
-              <template v-if="file.reparse.updatedAt !== undefined">
-                · 更新 {{ formatUtc(file.reparse.updatedAt) }}
-              </template>
-            </div>
+            <button
+              type="button"
+              class="mon-file-select"
+              :class="{ 'is-selected': selectedSourceMapFileId === file.sourceMapFileId }"
+              :aria-pressed="selectedSourceMapFileId === file.sourceMapFileId"
+              :data-testid="`source-map-file-${file.sourceMapFileId}`"
+              @click="selectSourceMapFile(file.sourceMapFileId)"
+              @keydown.enter.prevent="selectSourceMapFile(file.sourceMapFileId)"
+              @keydown.space.prevent="selectSourceMapFile(file.sourceMapFileId)"
+            >
+              <span class="mon-file-row">
+                <span class="mon-build-path">{{ file.buildPath }}</span>
+                <span class="mon-badge">{{ sourceMapStatusLabel(file.status) }}</span>
+              </span>
+              <span class="mon-meta">
+                摘要 {{ file.digestPrefix }}… · 上传 {{ formatUtc(file.uploadedAt) }}
+                <template v-if="file.replacedAt !== undefined">
+                  · 替换 {{ formatUtc(file.replacedAt) }}</template
+                >
+              </span>
+              <span class="mon-meta">
+                重解析：{{ reparseStateLabel(file.reparse.state) }}
+                <template v-if="file.reparse.totalCount !== undefined">
+                  · {{ file.reparse.processedCount ?? 0 }}/{{ file.reparse.totalCount }}
+                </template>
+                <template v-if="file.reparse.updatedAt !== undefined">
+                  · 更新 {{ formatUtc(file.reparse.updatedAt) }}
+                </template>
+              </span>
+            </button>
           </li>
         </ul>
         <p v-else class="mon-hint">
           该发布尚无有效 Source Map 文件。仅项目管理员或获准开发成员可上传。
         </p>
       </template>
+      </div>
     </section>
 
-    <section class="mon-block" data-testid="source-map-upload">
+    <section class="mon-block delivery-detail" data-testid="delivery-detail">
+      <section class="mon-selected-file" data-testid="source-map-selected-file">
+        <h2 class="mon-title">已选文件</h2>
+        <p v-if="selectedSourceMapFile === null" class="mon-hint">
+          从左侧列表选择文件以查看已有投影中的证据。
+        </p>
+        <template v-else>
+          <p class="mon-build-path">{{ selectedSourceMapFile.buildPath }}</p>
+          <dl class="mon-dl">
+            <dt>文件状态</dt>
+            <dd>{{ sourceMapStatusLabel(selectedSourceMapFile.status) }}</dd>
+            <dt>摘要前缀</dt>
+            <dd>{{ selectedSourceMapFile.digestPrefix }}…</dd>
+            <dt>上传时间</dt>
+            <dd>{{ formatUtc(selectedSourceMapFile.uploadedAt) }}</dd>
+            <template v-if="selectedSourceMapFile.replacedAt !== undefined">
+              <dt>替换时间</dt>
+              <dd>{{ formatUtc(selectedSourceMapFile.replacedAt) }}</dd>
+            </template>
+            <dt>重解析</dt>
+            <dd>{{ reparseStateLabel(selectedSourceMapFile.reparse.state) }}</dd>
+          </dl>
+          <AppTechnicalDetails
+            summary="文件技术详情"
+            data-testid="source-map-selected-file-technical"
+          >
+            sourceMapFileId: {{ selectedSourceMapFile.sourceMapFileId }}
+            version: {{ selectedSourceMapFile.version }}
+          </AppTechnicalDetails>
+        </template>
+      </section>
+      <div data-testid="source-map-file-actions">
+      <section data-testid="source-map-upload">
       <h2 class="mon-title">上传 Source Map</h2>
       <template v-if="replacePhase.kind === 'confirm'">
         <div class="mon-confirm" role="alert" data-testid="source-map-replace-confirm">
@@ -430,9 +492,9 @@ const releaseVersionText = computed<string>(() => {
           {{ uploadErrorMessage }}
         </p>
       </template>
-    </section>
+      </section>
 
-    <section class="mon-block" data-testid="source-map-reparse">
+      <section data-testid="source-map-reparse">
       <h2 class="mon-title">重新解析</h2>
       <div class="mon-actions-row">
         <button
@@ -456,7 +518,10 @@ const releaseVersionText = computed<string>(() => {
       <p v-if="reparseErrorMessage !== null" class="mon-notice mon-notice--error" role="status">
         {{ reparseErrorMessage }}
       </p>
+      </section>
+      </div>
     </section>
+    </div>
   </section>
 </template>
 
@@ -487,8 +552,30 @@ const releaseVersionText = computed<string>(() => {
 }
 .mon-file-item {
   border: 1px solid var(--color-border-default);
-  border-radius: var(--radius-base);
+  border-radius: var(--radius-control);
+}
+.mon-file-select {
+  width: 100%;
   padding: var(--space-3);
+  border: 0;
+  border-radius: inherit;
+  background: var(--color-surface-bg);
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.mon-file-select:hover,
+.mon-file-select:focus-visible,
+.mon-file-select.is-selected {
+  background: var(--color-surface-raised);
+}
+.mon-file-select:focus-visible {
+  outline: 2px solid var(--color-action-primary);
+  outline-offset: 2px;
+}
+.mon-file-select.is-selected {
+  box-shadow: inset 3px 0 0 var(--color-action-primary);
 }
 .mon-file-row {
   display: flex;
@@ -503,7 +590,7 @@ const releaseVersionText = computed<string>(() => {
 .mon-badge {
   display: inline-block;
   padding: 1px var(--space-2);
-  border-radius: var(--radius-base);
+  border-radius: var(--radius-control);
   border: 1px solid var(--color-border-default);
   color: var(--color-text-secondary);
   font-size: 12px;
@@ -525,7 +612,7 @@ const releaseVersionText = computed<string>(() => {
   min-height: var(--control-height);
   padding: 0 var(--space-2);
   border: 1px solid var(--color-border-default);
-  border-radius: var(--radius-base);
+  border-radius: var(--radius-control);
   background-color: var(--color-surface-bg);
   color: var(--color-text-primary);
   font: inherit;
@@ -541,7 +628,7 @@ const releaseVersionText = computed<string>(() => {
   min-height: var(--control-height);
   padding: 0 var(--space-3);
   border: 1px solid var(--color-border-default);
-  border-radius: var(--radius-base);
+  border-radius: var(--radius-control);
   background-color: var(--color-surface-bg);
   color: var(--color-text-primary);
   cursor: pointer;
@@ -561,7 +648,7 @@ const releaseVersionText = computed<string>(() => {
 }
 .mon-confirm {
   border: 1px solid var(--color-status-warning);
-  border-radius: var(--radius-base);
+  border-radius: var(--radius-control);
   padding: var(--space-3);
   max-width: 56ch;
 }
@@ -571,5 +658,43 @@ const releaseVersionText = computed<string>(() => {
 }
 .mon-notice--error {
   color: var(--color-status-danger);
+}
+.mon-file-select .mon-meta {
+  display: block;
+  margin-top: var(--space-1);
+}
+.delivery-workspace {
+  display: grid;
+  grid-template-columns: minmax(0, 1.25fr) minmax(280px, 0.75fr);
+  align-items: start;
+  gap: var(--space-4);
+}
+.delivery-list,
+.delivery-detail { min-width: 0; }
+.delivery-detail {
+  border-left: 1px solid var(--color-border-default);
+  padding-left: var(--space-4);
+}
+.mon-selected-file {
+  margin-bottom: var(--space-5);
+}
+.mon-dl {
+  margin: var(--space-3) 0 0;
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  gap: var(--space-1) var(--space-3);
+}
+.mon-dl dt {
+  color: var(--color-text-secondary);
+  font-size: 12px;
+}
+.mon-dl dd {
+  margin: 0;
+  color: var(--color-text-primary);
+  font-size: 14px;
+}
+@media (max-width: 800px) {
+  .delivery-workspace { grid-template-columns: minmax(0, 1fr); }
+  .delivery-detail { border-left: 0; border-top: 1px solid var(--color-border-default); padding: var(--space-4) 0 0; }
 }
 </style>

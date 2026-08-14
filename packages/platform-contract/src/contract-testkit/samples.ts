@@ -40,7 +40,10 @@ export const invalidSessionSamples: readonly unknown[] = [
 export const validNavigationSamples: readonly unknown[] = [
   {
     account: { accountId: 'acct_test_1', email: 'user@example.invalid', verified: true },
-    workspace: [{ routeId: 'workspace.home', pathParams: {}, query: {} }],
+    workspace: [
+      { routeId: 'workspace.home', pathParams: {}, query: {} },
+      { routeId: 'platform.resource-policies', pathParams: {}, query: {} },
+    ],
     organizations: [
       {
         organizationId: 'org_test_1',

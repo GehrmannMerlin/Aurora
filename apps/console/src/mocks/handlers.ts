@@ -154,7 +154,7 @@ function mockDataStatus(organizationId: string, projectId: string) {
   };
 }
 
-function mockIssueList() {
+function mockIssueList(nextCursor?: string) {
   return {
     data: {
       issues: {
@@ -182,7 +182,11 @@ function mockIssueList() {
             version: 1,
           },
         ],
-        pagination: { totalCount: 2, totalCountStatus: 'available' },
+        pagination: {
+          totalCount: 2,
+          totalCountStatus: 'available',
+          ...(nextCursor === undefined ? {} : { nextCursor }),
+        },
       },
       filters: { status: 'available' },
       summary: { status: 'available' },
@@ -583,7 +587,6 @@ function mockAlertInstanceDetail(instanceId: string) {
         triggerDurationMinutes: 2,
         recoveryThreshold: 60,
         recoveryDurationMinutes: 2,
-        minSampleCount: 0,
         cooldownMinutes: 10,
       },
       evidence: {
@@ -594,7 +597,6 @@ function mockAlertInstanceDetail(instanceId: string) {
         numerator: 120,
         denominator: 1,
         sampleCount: 120,
-        minSampleRequirement: 0,
         watermarkAt: '2026-08-10T08:30:00.000Z',
         completeness: 'complete',
         appliedFilters: { environment: [], release: [], pageOrEndpoint: [], errorSeverity: [] },
@@ -1398,10 +1400,15 @@ export function createPlatformHandlers() {
     ),
     http.get(
       '/api/platform/v1/organizations/:organizationId/projects/:projectId/issues',
-      async () => {
+      async ({ request }) => {
         handlerControls.listIssuesRequests += 1;
         await maybeDelay();
-        return HttpResponse.json(mockIssueList() as JsonBodyType, { status: 200 });
+        const search = new URL(request.url).searchParams;
+        // The filtered fixture has a second page so browser tests can exercise
+        // the public cursor protocol without altering production behavior.
+        const nextCursor =
+          search.get('status') === 'open' && search.get('cursor') === null ? 'cursor_2' : undefined;
+        return HttpResponse.json(mockIssueList(nextCursor) as JsonBodyType, { status: 200 });
       },
     ),
     http.get(
