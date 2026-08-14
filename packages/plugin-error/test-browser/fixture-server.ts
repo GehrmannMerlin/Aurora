@@ -7,6 +7,7 @@ const pluginDist = fileURLToPath(new URL('../dist/', import.meta.url));
 const browserDist = fileURLToPath(new URL('../../browser/dist/', import.meta.url));
 const coreDist = fileURLToPath(new URL('../../core/dist/', import.meta.url));
 const protocolDist = fileURLToPath(new URL('../../event-schema/dist/', import.meta.url));
+const sdkDist = fileURLToPath(new URL('../../sdk/dist/', import.meta.url));
 
 const pageHtml = `<!doctype html>
 <html>
@@ -19,7 +20,8 @@ const pageHtml = `<!doctype html>
       "@aurora/plugin-error": "/plugin/index.js",
       "@aurora/browser": "/browser/index.js",
       "@aurora/core": "/core/index.js",
-      "@aurora/event-schema": "/protocol/index.js"
+      "@aurora/event-schema": "/protocol/index.js",
+      "@aurora/sdk": "/sdk/index.js"
     }
   }
   </script>
@@ -275,6 +277,7 @@ const directories: Readonly<Record<string, string>> = Object.freeze({
   browser: browserDist,
   core: coreDist,
   protocol: protocolDist,
+  sdk: sdkDist,
 });
 
 async function handleRequest(request: IncomingMessage, response: ServerResponse): Promise<void> {
@@ -284,7 +287,7 @@ async function handleRequest(request: IncomingMessage, response: ServerResponse)
     response.end(pageHtml);
     return;
   }
-  const match = /^\/(plugin|browser|core|protocol)\/([a-z0-9-]+\.js)$/u.exec(pathname);
+  const match = /^\/(plugin|browser|core|protocol|sdk)\/([a-z0-9-]+\.js)$/u.exec(pathname);
   const directory = match?.[1] === undefined ? undefined : directories[match[1]];
   const fileName = match?.[2];
   if (directory === undefined || fileName === undefined) {
