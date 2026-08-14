@@ -4,15 +4,13 @@ import { storeToRefs } from 'pinia';
 import { useRoute, useRouter } from 'vue-router';
 import { resolveRouteTarget } from '../../contracts/route-registry';
 import { useNavigationStore, type RouteTargetRef } from '../../stores/navigation';
-
+import ScopeMenu from './ScopeMenu.vue';
 const props = defineProps<{
   organizationActive: boolean;
   projectActive: boolean;
 }>();
-
 type MenuKind = 'organization' | 'project';
 type OpenMenu = MenuKind | null;
-
 const navigation = useNavigationStore();
 const router = useRouter();
 const route = useRoute();
@@ -20,12 +18,9 @@ const { status, organizations, currentOrganizationId, currentProject } = storeTo
 const root = ref<HTMLElement | null>(null);
 const organizationTrigger = ref<HTMLButtonElement | null>(null);
 const projectTrigger = ref<HTMLButtonElement | null>(null);
-const organizationMenu = ref<HTMLElement | null>(null);
-const projectMenu = ref<HTMLElement | null>(null);
 const openMenu = ref<OpenMenu>(null);
 const switchError = ref<string | null>(null);
 const menuPosition = ref({ top: '0px', left: '0px' });
-
 const currentOrganization = computed(() =>
   organizations.value.find((candidate) => candidate.organizationId === currentOrganizationId.value),
 );
@@ -61,9 +56,7 @@ function triggerFor(menu: MenuKind): HTMLButtonElement | null {
   return menu === 'organization' ? organizationTrigger.value : projectTrigger.value;
 }
 
-function menuFor(menu: MenuKind): HTMLElement | null {
-  return menu === 'organization' ? organizationMenu.value : projectMenu.value;
-}
+function menuFor(menu: MenuKind): HTMLElement | null { return document.getElementById(`${menu}-scope-menu`); }
 
 function positionOpenMenu(menu: MenuKind): void {
   const trigger = triggerFor(menu);
@@ -108,8 +101,7 @@ function closeAndRestoreFocus(): void {
 function onDocumentPointerDown(event: PointerEvent): void {
   const target = event.target as Node;
   if (root.value?.contains(target)) return;
-  if (organizationMenu.value?.contains(target)) return;
-  if (projectMenu.value?.contains(target)) return;
+  if (menuFor('organization')?.contains(target) || menuFor('project')?.contains(target)) return;
   close();
 }
 
@@ -246,97 +238,26 @@ watch(() => route.fullPath, close);
     </div>
   </div>
 
-  <Teleport to="body">
-    <nav v-if="openMenu !== null" class="au-scope-overlay" aria-label="作用域选择">
-      <ul
-        v-if="openMenu === 'organization'"
-        id="organization-scope-menu"
-        ref="organizationMenu"
-        class="au-scope-menu"
-        role="menu"
-        aria-label="选择组织"
-        :style="menuPosition"
-        @keydown.esc.stop="closeAndRestoreFocus"
-      >
-        <li v-if="organizationMessage !== null" class="au-scope-message" role="none">
-          {{ organizationMessage }}
-        </li>
-        <li v-for="organization in organizations" :key="organization.organizationId" role="none">
-          <button
-            class="au-scope-option"
-            type="button"
-            role="menuitem"
-            :aria-current="
-              organization.organizationId === currentOrganizationId ? 'true' : undefined
-            "
-            :aria-label="
-              organization.organizationId === currentOrganizationId
-                ? `${organization.name}（当前）`
-                : organization.name
-            "
-            @click="selectOrganization(organization.organizationId)"
-          >
-            <span>{{ organization.name }}</span>
-            <span
-              v-if="organization.organizationId === currentOrganizationId"
-              class="au-scope-current"
-              >（当前）</span
-            >
-          </button>
-        </li>
-        <li v-if="switchError !== null" class="au-scope-error" role="alert">
-          {{ switchError }}
-        </li>
-      </ul>
-
-      <ul
-        v-if="openMenu === 'project'"
-        id="project-scope-menu"
-        ref="projectMenu"
-        class="au-scope-menu"
-        role="menu"
-        aria-label="选择项目"
-        :style="menuPosition"
-        @keydown.esc.stop="closeAndRestoreFocus"
-      >
-        <li v-if="projectMessage !== null" class="au-scope-message" role="none">
-          {{ projectMessage }}
-        </li>
-        <li v-for="project in projectOptions" :key="project.projectId" role="none">
-          <button
-            class="au-scope-option"
-            type="button"
-            role="menuitem"
-            :aria-current="project.projectId === currentProject?.projectId ? 'true' : undefined"
-            :aria-label="
-              project.projectId === currentProject?.projectId
-                ? `${project.name}（当前）`
-                : project.name
-            "
-            @click="selectProject(project.projectId)"
-          >
-            <span>{{ project.name }}</span>
-            <span v-if="project.projectId === currentProject?.projectId" class="au-scope-current"
-              >（当前）</span
-            >
-          </button>
-        </li>
-        <li v-if="switchError !== null" class="au-scope-error" role="alert">
-          {{ switchError }}
-        </li>
-      </ul>
-    </nav>
-  </Teleport>
+  <ScopeMenu
+    :open-menu="openMenu"
+    :organizations="organizations"
+    :project-options="projectOptions"
+    :current-organization-id="currentOrganizationId"
+    :current-project-id="currentProject?.projectId"
+    :organization-message="organizationMessage"
+    :project-message="projectMessage"
+    :switch-error="switchError"
+    :menu-position="menuPosition"
+    @select-organization="selectOrganization"
+    @select-project="selectProject"
+    @close-and-restore-focus="closeAndRestoreFocus"
+  />
 </template>
 
 <style scoped>
 .au-scope-switch {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-1);
-}
-.au-scope-overlay {
-  display: contents;
+  display: grid;
+  gap: var(--space-2);
 }
 .au-scope-group {
   position: relative;
@@ -345,27 +266,28 @@ watch(() => route.fullPath, close);
   display: inline-flex;
   align-items: center;
   gap: var(--space-2);
-  min-height: var(--nav-height);
+  width: 100%;
+  min-height: var(--compact-control-height);
   padding: 0 var(--space-3);
   border: 0;
   border-radius: var(--radius-base);
   background-color: transparent;
-  color: var(--color-topbar-fg);
+  color: var(--color-text-primary);
   font: inherit;
   cursor: pointer;
 }
 .au-scope-trigger:hover,
 .au-scope-trigger:focus-visible,
 .au-scope-trigger--active {
-  background-color: rgb(248 250 252 / 12%);
+  background-color: var(--color-sidebar-active-bg);
 }
 .au-scope-trigger--active {
-  box-shadow: inset 0 -3px var(--color-sidebar-active-indicator);
+  box-shadow: inset 3px 0 var(--color-sidebar-active-indicator);
 }
 .au-scope-value {
   max-width: 144px;
   overflow: hidden;
-  color: #ffffff;
+  color: var(--color-text-primary);
   font-weight: 600;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -374,56 +296,5 @@ watch(() => route.fullPath, close);
   font-size: 1rem;
   line-height: 1;
   transform: translateY(-1px);
-}
-.au-scope-menu {
-  position: fixed;
-  z-index: 1000;
-  width: max-content;
-  min-width: 220px;
-  max-width: min(320px, calc(100vw - 16px));
-  max-height: min(360px, calc(100vh - var(--nav-height) - 16px));
-  margin: 0;
-  padding: var(--space-2);
-  overflow-y: auto;
-  border: 1px solid var(--color-border-default);
-  border-radius: var(--radius-base);
-  background-color: var(--color-surface-bg);
-  box-shadow: 0 10px 24px rgb(15 23 42 / 16%);
-  color: var(--color-text-primary);
-  list-style: none;
-}
-.au-scope-option {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  width: 100%;
-  min-height: var(--control-height);
-  padding: 0 var(--space-3);
-  border: 0;
-  border-radius: var(--radius-base);
-  background-color: transparent;
-  color: inherit;
-  font: inherit;
-  text-align: left;
-  cursor: pointer;
-}
-.au-scope-option:hover,
-.au-scope-option:focus-visible {
-  background-color: var(--color-sidebar-active-bg);
-}
-.au-scope-current {
-  margin-left: var(--space-3);
-  color: var(--color-text-secondary);
-  font-size: 0.8125rem;
-}
-.au-scope-message,
-.au-scope-error {
-  max-width: 280px;
-  padding: var(--space-3);
-  color: var(--color-text-secondary);
-  white-space: normal;
-}
-.au-scope-error {
-  color: var(--color-status-danger);
 }
 </style>

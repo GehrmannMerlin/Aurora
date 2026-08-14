@@ -126,7 +126,7 @@ test('every project sidebar entry is reachable by real click — PLT-05/06/07/08
   await page.goto(`${server!.origin}/`);
   await waitForShell(page);
   await setMockScope(page, 'project', 'prj_test_1');
-  await page.reload();
+  await page.goto(`${server!.origin}/organizations/org_test_1/projects/prj_test_1/overview`);
   const sidebar = await openResponsiveSidebar(page);
   for (const entry of REAL_PROJECT_ENTRIES) {
     await sidebar.getByRole('link', { name: entry.name, exact: true }).click();
@@ -140,7 +140,7 @@ test('every project sidebar entry is reachable by real click — PLT-05/06/07/08
   await expect(page.getByTestId('project-issue-detail-view')).toBeVisible();
 });
 
-test('top bar workspace, notifications and account entries are reachable by real click', async ({
+test('global rail workspace, notifications and account entries are reachable by real click', async ({
   page,
 }) => {
   await page.goto(`${server!.origin}/`);
@@ -177,7 +177,7 @@ test('every organization sidebar entry is reachable by real click after switchin
   await page.goto(`${server!.origin}/`);
   await waitForShell(page);
   await setMockScope(page, 'organization', 'org_test_1');
-  await page.reload();
+  await page.goto(`${server!.origin}/organizations/org_test_1/members`);
   const sidebar = await openResponsiveSidebar(page);
   for (const entry of ORG_ENTRIES) {
     await sidebar.getByRole('link', { name: entry.name, exact: true }).click();
@@ -192,7 +192,7 @@ test('scope switch menus activate authorized organization and project targets', 
   await page.goto(`${server!.origin}/`);
   await waitForShell(page);
   await setMockScope(page, 'project', 'prj_test_1');
-  await page.reload();
+  await page.goto(`${server!.origin}/organizations/org_test_1/projects/prj_test_1/overview`);
   await waitForShell(page);
   await page.getByRole('button', { name: '组织：Acme' }).click();
   const organizationMenu = page.getByRole('menu', { name: '选择组织' });
@@ -211,6 +211,7 @@ test('scope switch menus activate authorized organization and project targets', 
   }
   await page.getByRole('menuitem', { name: 'Acme（当前）' }).click();
   await expect(page).toHaveURL(/\/workspace$/);
+  await page.goto(`${server!.origin}/organizations/org_test_1/members`);
   await expect(page.getByRole('button', { name: '组织：Acme' })).toHaveAttribute(
     'aria-current',
     'page',
@@ -219,7 +220,7 @@ test('scope switch menus activate authorized organization and project targets', 
   await expect(organizationSidebar.getByRole('link', { name: '成员', exact: true })).toBeVisible();
   await closeResponsiveSidebar(page);
 
-  await page.getByRole('button', { name: '项目：请选择' }).click();
+  await page.getByRole('button', { name: '项目：Web' }).click();
   await page.getByRole('menuitem', { name: 'Web' }).click();
   await expect(page).toHaveURL(/\/organizations\/org_test_1\/projects\/prj_test_1\/overview$/);
   await expect(page.getByRole('button', { name: '项目：Web' })).toHaveAttribute(
@@ -262,7 +263,7 @@ test('scope menus support keyboard open, selection, and Escape focus restoration
   await expect(page).toHaveURL(/\/organizations\/org_test_1\/projects\/prj_test_1\/overview$/);
 });
 
-test('desktop content scroll keeps the sidebar fixed, full-height, balanced, and active', async ({
+test('desktop content scroll keeps the layered navigation fixed, sized, and active', async ({
   page,
 }) => {
   await page.setViewportSize({ width: 1280, height: 640 });
@@ -271,22 +272,25 @@ test('desktop content scroll keeps the sidebar fixed, full-height, balanced, and
   await setMockScope(page, 'project', 'prj_test_1');
   await page.goto(`${server!.origin}/organizations/org_test_1/projects/prj_test_1/overview`);
 
-  const sidebar = page.locator('.au-desktop-sidebar');
+  const sidebar = page.locator('.au-desktop-context');
+  const rail = page.locator('.au-desktop-rail');
   const content = page.locator('.au-content');
   const overview = page.getByRole('link', { name: '概览', exact: true });
   const sidebarBefore = await sidebar.boundingBox();
-  const topbar = await page.locator('.au-topbar').boundingBox();
+  const railBefore = await rail.boundingBox();
   expect(sidebarBefore).not.toBeNull();
-  expect(topbar).not.toBeNull();
-  expect(sidebarBefore!.height).toBeGreaterThanOrEqual(640 - topbar!.height - 1);
+  expect(railBefore).not.toBeNull();
+  expect(railBefore!.width).toBe(64);
+  expect(sidebarBefore!.width).toBe(232);
+  expect(sidebarBefore!.height).toBeGreaterThanOrEqual(639);
   await expect(overview).toHaveAttribute('aria-current', 'page');
 
   const rowStyle = await overview.evaluate((element) => {
     const style = getComputedStyle(element);
     return { minHeight: Number.parseFloat(style.minHeight), justifyContent: style.justifyContent };
   });
-  expect(rowStyle.minHeight).toBeGreaterThanOrEqual(48);
-  expect(rowStyle.justifyContent).toBe('center');
+  expect(rowStyle.minHeight).toBeGreaterThanOrEqual(36);
+  expect(rowStyle.justifyContent).toBe('flex-start');
 
   const scrollTop = await content.evaluate((element) => {
     element.scrollTop = element.scrollHeight;
@@ -301,7 +305,7 @@ test('a nav entry is reachable by keyboard (focus + Enter)', async ({ page }) =>
   await page.goto(`${server!.origin}/`);
   await waitForShell(page);
   await setMockScope(page, 'project', 'prj_test_1');
-  await page.reload();
+  await page.goto(`${server!.origin}/organizations/org_test_1/projects/prj_test_1/overview`);
   const sidebar = await openResponsiveSidebar(page);
   const overview = sidebar.getByRole('link', { name: '概览', exact: true });
   await overview.focus();

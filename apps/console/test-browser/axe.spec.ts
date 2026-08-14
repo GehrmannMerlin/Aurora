@@ -27,7 +27,7 @@ test('the authenticated shell passes axe auto-checks', async ({ page }) => {
   await page.goto(`${server!.origin}/`);
   await waitForShell(page);
   await setProjectScope(page);
-  await page.reload();
+  await page.goto(`${server!.origin}/organizations/org_test_1/projects/prj_test_1/overview`);
   await page.getByRole('button', { name: '组织：Acme' }).click();
   await expect(page.getByRole('menu', { name: '选择组织' })).toBeVisible();
   const openMenuResults = await new AxeBuilder({ page }).analyze();

@@ -1,7 +1,7 @@
 import { expect, type Locator, type Page } from '@playwright/test';
 
 export async function waitForShell(page: Page): Promise<void> {
-  await expect(page.getByRole('navigation', { name: '顶栏导航' })).toBeVisible();
+  await expect(page.getByRole('navigation', { name: '全局导航' }).first()).toBeVisible();
 }
 
 export async function openResponsiveSidebar(page: Page): Promise<Locator> {
@@ -11,7 +11,7 @@ export async function openResponsiveSidebar(page: Page): Promise<Locator> {
     await mobileTrigger.click();
     await expect(page.locator('#nav-drawer')).toBeVisible();
   }
-  const sidebar = page.getByRole('navigation', { name: '侧栏导航' }).filter({ visible: true });
+  const sidebar = page.getByRole('navigation', { name: /(?:项目|组织)导航/ }).filter({ visible: true });
   await expect(sidebar).toBeVisible();
   return sidebar;
 }
