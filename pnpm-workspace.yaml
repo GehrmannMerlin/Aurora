@@ -12,6 +12,7 @@ allowBuilds:
   esbuild: true
   argon2: false
   msw: true
+  '@alicloud/openapi-core': false
 minimumReleaseAge: 1440
 minimumReleaseAgeStrict: true
 minimumReleaseAgeIgnoreMissingTime: false

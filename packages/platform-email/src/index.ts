@@ -5,15 +5,16 @@
  * `ConsoleEmailAdapter`, and the transactional outbox consumer
  * (`consumeOutboxEmails`, ADR-032).
  *
- * This is a data-layer package: it depends ONLY on the external `pg` package.
- * Per Workspace Policy (`data → {protocol}` only) it declares NO workspace
- * dependency on `@aurora/platform-identity` (also data); instead the outbox
- * repository functions it needs are injected via the `OutboxRepository`
- * interface (argument injection). It never imports or declares
- * `@aurora/platform-contract` (contract layer).
+ * This is a data-layer package: it depends only on external PostgreSQL and
+ * official Alibaba Cloud SDK packages. Per Workspace Policy (`data →
+ * {protocol}` only) it declares NO workspace dependency on
+ * `@aurora/platform-identity` (also data); instead the outbox repository
+ * functions it needs are injected via the `OutboxRepository` interface
+ * (argument injection). It never imports or declares `@aurora/platform-contract`
+ * (contract layer).
  *
- * Delivery is non-committal: `{status:'enqueued'}` means the send request was
- * durably recorded, NOT that the inbox received it (ADR-031 决定细节 2).
+ * Delivery is non-committal: `{status:'accepted'}` means the provider accepted
+ * the API request, NOT that the inbox received it (ADR-031 决定细节 2).
  */
 export const PLATFORM_EMAIL_PACKAGE = '@aurora/platform-email' as const;
 
@@ -27,6 +28,20 @@ export type {
 } from './email-delivery-port.js';
 
 export { ConsoleEmailAdapter, type ConsoleEmailAdapterOptions } from './console-email-adapter.js';
+
+export { renderTransactionalEmail, type RenderedTransactionalEmail } from './email-template.js';
+
+export {
+  AliyunDirectMailAdapter,
+  type AliyunDirectMailAdapterOptions,
+  type DirectMailClientPort,
+  type DirectMailSingleSendRequest,
+} from './aliyun-direct-mail-adapter.js';
+
+export {
+  createAliyunDirectMailClient,
+  type AliyunDirectMailClientOptions,
+} from './aliyun-direct-mail-client.js';
 
 export {
   consumeOutboxEmails,

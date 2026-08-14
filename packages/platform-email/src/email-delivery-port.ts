@@ -5,8 +5,8 @@
  * Identity domain logic (email verification, password reset, organization
  * invitation) depends ONLY on this port, never on a concrete provider. A
  * provider adapter implements `deliver`. Delivery is NON-COMMITTAL:
- * `{status:'enqueued'}` means the send request was durably recorded in the
- * outbox, NOT that the inbox received it (ADR-031 决定细节 2).
+ * `{status:'accepted'}` means the provider accepted the API request, NOT that
+ * the recipient inbox received it (ADR-031 决定细节 2).
  *
  * Security invariants (ADR-031 实施约束):
  * - `toAddress` is the normalized recipient needed to send. It is never logged.
@@ -35,7 +35,12 @@ export interface EmailDeliveryRequest {
 }
 
 export type EmailDeliveryResult =
-  { readonly status: 'enqueued' } | { readonly status: 'failed'; readonly reason: string };
+  | { readonly status: 'accepted'; readonly providerRequestId?: string }
+  | {
+      readonly status: 'failed';
+      readonly retryable: boolean;
+      readonly reasonCode: string;
+    };
 
 export interface EmailDeliveryPort {
   readonly deliver: (request: EmailDeliveryRequest) => Promise<EmailDeliveryResult>;

@@ -18,7 +18,7 @@ afterEach(() => {
 });
 
 describe('ConsoleEmailAdapter', () => {
-  it('resolves enqueued and logs only the masked address for console mode', async () => {
+  it('resolves accepted and logs only the masked address for console mode', async () => {
     const lines: string[] = [];
     const adapter = new ConsoleEmailAdapter({
       mode: 'console',
@@ -27,7 +27,7 @@ describe('ConsoleEmailAdapter', () => {
 
     const result = await adapter.deliver(request());
 
-    expect(result).toEqual({ status: 'enqueued' });
+    expect(result).toEqual({ status: 'accepted' });
     expect(lines).toHaveLength(1);
     const line = lines[0];
     if (line === undefined) throw new Error('expected a log line');
@@ -38,7 +38,7 @@ describe('ConsoleEmailAdapter', () => {
     expect(line).not.toContain('short-lived-transient-token');
   });
 
-  it('treats an unset EMAIL_DELIVERY_MODE as the local console path', async () => {
+  it('fails closed when delivery mode is not explicitly configured', async () => {
     vi.stubEnv('EMAIL_DELIVERY_MODE', '');
     const lines: string[] = [];
     const adapter = new ConsoleEmailAdapter({ log: (message) => lines.push(message) });
@@ -47,10 +47,12 @@ describe('ConsoleEmailAdapter', () => {
       request({ intentType: 'password_reset', toAddressMasked: 'p***@example.com' }),
     );
 
-    expect(result).toEqual({ status: 'enqueued' });
-    const output = lines.join('\n');
-    expect(output).toContain('password_reset');
-    expect(output).toContain('p***@example.com');
+    expect(result).toEqual({
+      status: 'failed',
+      retryable: false,
+      reasonCode: 'EMAIL_PROVIDER_NOT_CONFIGURED',
+    });
+    expect(lines).toEqual([]);
   });
 
   it('accepts the deletion_confirmation intent type and logs only the masked address', async () => {
@@ -64,7 +66,7 @@ describe('ConsoleEmailAdapter', () => {
       request({ intentType: 'deletion_confirmation', toAddressMasked: 'd***@example.com' }),
     );
 
-    expect(result).toEqual({ status: 'enqueued' });
+    expect(result).toEqual({ status: 'accepted' });
     const output = lines.join('\n');
     expect(output).toContain('deletion_confirmation');
     expect(output).toContain('d***@example.com');
@@ -72,7 +74,7 @@ describe('ConsoleEmailAdapter', () => {
   });
 
   it('fails closed for any non-console delivery mode', async () => {
-    vi.stubEnv('EMAIL_DELIVERY_MODE', 'resend');
+    vi.stubEnv('EMAIL_DELIVERY_MODE', 'aliyun');
     const adapter = new ConsoleEmailAdapter({ log: () => undefined });
 
     const result = await adapter.deliver(
@@ -81,7 +83,11 @@ describe('ConsoleEmailAdapter', () => {
 
     expect(result.status).toBe('failed');
     if (result.status === 'failed') {
-      expect(result.reason).toBe('EMAIL_PROVIDER_CREDENTIAL_ACTION_REQUIRED');
+      expect(result).toEqual({
+        status: 'failed',
+        retryable: false,
+        reasonCode: 'EMAIL_PROVIDER_NOT_CONFIGURED',
+      });
     }
   });
 
@@ -90,7 +96,7 @@ describe('ConsoleEmailAdapter', () => {
     const adapter = new ConsoleEmailAdapter({ mode: 'console' });
     try {
       const result = await adapter.deliver(request());
-      expect(result).toEqual({ status: 'enqueued' });
+      expect(result).toEqual({ status: 'accepted' });
       expect(spy).toHaveBeenCalledWith('[email] queued email_verification to u***@example.com');
       expect(spy.mock.calls.map((call) => call[0] as string).join('\n')).not.toContain(
         'short-lived-transient-token',
@@ -101,7 +107,7 @@ describe('ConsoleEmailAdapter', () => {
   });
 
   it('respects the explicit mode option over the environment', async () => {
-    vi.stubEnv('EMAIL_DELIVERY_MODE', 'resend');
+    vi.stubEnv('EMAIL_DELIVERY_MODE', 'aliyun');
     const lines: string[] = [];
     const adapter = new ConsoleEmailAdapter({
       mode: 'console',
@@ -110,7 +116,7 @@ describe('ConsoleEmailAdapter', () => {
 
     const result = await adapter.deliver(request());
 
-    expect(result).toEqual({ status: 'enqueued' });
+    expect(result).toEqual({ status: 'accepted' });
     expect(lines.join('\n')).toContain('[email] queued');
   });
 });

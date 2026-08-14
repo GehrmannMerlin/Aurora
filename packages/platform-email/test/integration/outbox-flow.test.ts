@@ -168,7 +168,12 @@ describeDb('platform-email outbox flow (real PostgreSQL 17)', () => {
     ]);
 
     const port: EmailDeliveryPort = {
-      deliver: () => Promise.resolve({ status: 'failed' as const, reason: 'provider_unavailable' }),
+      deliver: () =>
+        Promise.resolve({
+          status: 'failed' as const,
+          retryable: true,
+          reasonCode: 'PROVIDER_UNAVAILABLE',
+        }),
     };
     const result = await consumeOutboxEmails({
       pool,
@@ -191,7 +196,7 @@ describeDb('platform-email outbox flow (real PostgreSQL 17)', () => {
     });
 
     const port: EmailDeliveryPort = {
-      deliver: () => Promise.resolve({ status: 'enqueued' as const }),
+      deliver: () => Promise.resolve({ status: 'accepted' as const }),
     };
     const result = await consumeOutboxEmails({
       pool,

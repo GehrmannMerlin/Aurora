@@ -199,7 +199,7 @@ export async function consumeOutboxEmails(
       expiresInMinutes: payload.expiresInMinutes,
     });
 
-    if (delivery.status === 'enqueued') {
+    if (delivery.status === 'accepted') {
       consumed += 1;
       await input.outboxRepo.markOutboxResult(input.pool, {
         outboxId: row.outboxId,

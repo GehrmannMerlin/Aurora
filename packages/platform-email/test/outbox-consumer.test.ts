@@ -65,7 +65,7 @@ describe('consumeOutboxEmails', () => {
 
   it('settles a claimed row as succeeded when the port enqueues', async () => {
     const { repo, markOutboxResult } = repoWith({ status: 'claimed', rows: [row({})] });
-    const deliver = vi.fn().mockResolvedValue({ status: 'enqueued' });
+    const deliver = vi.fn().mockResolvedValue({ status: 'accepted' });
 
     const result = await consumeOutboxEmails({
       pool,
@@ -106,7 +106,7 @@ describe('consumeOutboxEmails', () => {
         }),
       ],
     });
-    const deliver = vi.fn().mockResolvedValue({ status: 'enqueued' });
+    const deliver = vi.fn().mockResolvedValue({ status: 'accepted' });
 
     const result = await consumeOutboxEmails({
       pool,
@@ -133,7 +133,7 @@ describe('consumeOutboxEmails', () => {
 
   it('maps the masked payload field into the port request (toMasked → toAddressMasked)', async () => {
     const { repo } = repoWith({ status: 'claimed', rows: [row({})] });
-    const deliver = vi.fn().mockResolvedValue({ status: 'enqueued' });
+    const deliver = vi.fn().mockResolvedValue({ status: 'accepted' });
 
     await consumeOutboxEmails({ pool, port: { deliver }, outboxRepo: repo, now: new Date() });
 
@@ -149,7 +149,9 @@ describe('consumeOutboxEmails', () => {
       status: 'claimed',
       rows: [row({ attemptCount: 1 })],
     });
-    const deliver = vi.fn().mockResolvedValue({ status: 'failed', reason: 'provider_down' });
+    const deliver = vi
+      .fn()
+      .mockResolvedValue({ status: 'failed', retryable: true, reasonCode: 'PROVIDER_DOWN' });
 
     const result = await consumeOutboxEmails({
       pool,
@@ -172,7 +174,9 @@ describe('consumeOutboxEmails', () => {
       status: 'claimed',
       rows: [row({ attemptCount: 2 })],
     });
-    const deliver = vi.fn().mockResolvedValue({ status: 'failed', reason: 'provider_down' });
+    const deliver = vi
+      .fn()
+      .mockResolvedValue({ status: 'failed', retryable: true, reasonCode: 'PROVIDER_DOWN' });
 
     const result = await consumeOutboxEmails({
       pool,
@@ -299,8 +303,8 @@ describe('consumeOutboxEmails', () => {
     });
     const deliver = vi
       .fn()
-      .mockResolvedValueOnce({ status: 'enqueued' })
-      .mockResolvedValueOnce({ status: 'failed', reason: 'nope' });
+      .mockResolvedValueOnce({ status: 'accepted' })
+      .mockResolvedValueOnce({ status: 'failed', retryable: false, reasonCode: 'NOPE' });
 
     const result = await consumeOutboxEmails({
       pool,
