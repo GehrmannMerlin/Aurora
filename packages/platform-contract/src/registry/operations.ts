@@ -469,6 +469,7 @@ export const PLATFORM_OPERATIONS: readonly OperationDef[] = [
       'authentication',
       'authorization',
       'business_validation',
+      'state_machine_conflict',
       'idempotency_conflict',
       'field_validation',
       'rate_limited',

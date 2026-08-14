@@ -98,6 +98,7 @@ describeDb('platform-identity outbox repository (real PostgreSQL 17)', () => {
     ).resolves.toEqual({
       lastAcceptedAt: new Date(now.getTime() - 30_000).toISOString(),
       resendCount: 1,
+      oldestResendAt: new Date(now.getTime() - 23 * 60 * 60 * 1000).toISOString(),
     });
   });
 

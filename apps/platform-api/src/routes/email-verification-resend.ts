@@ -66,17 +66,6 @@ export async function handleResendEmailVerification(
   }
   const input = parsed.data.body as ResendBody;
 
-  const rate = deps.rateLimiter.check(
-    `${OPERATION_ID_RESEND_EMAIL_VERIFICATION}:${request.ip}:${session.accountId}`,
-    now.getTime(),
-  );
-  if (!rate.allowed) {
-    await sendProblem(reply, requestId, 429, 'rate_limited', 'Too many resend attempts.', {
-      ...(rate.retryAfterSeconds === undefined ? {} : { retryAfter: rate.retryAfterSeconds }),
-    });
-    return;
-  }
-
   let command;
   try {
     command = await runIdempotentCommand({
@@ -85,6 +74,16 @@ export async function handleResendEmailVerification(
       operation: OPERATION_ID_RESEND_EMAIL_VERIFICATION,
       digest: requestDigest(input),
       execute: async (client) => {
+        const rate = deps.rateLimiter.check(
+          `${OPERATION_ID_RESEND_EMAIL_VERIFICATION}:${request.ip}:${session.accountId}`,
+          now.getTime(),
+        );
+        if (!rate.allowed) {
+          throw new ServiceError(429, 'rate_limited', 'Too many resend attempts.', {
+            ...(rate.retryAfterSeconds === undefined ? {} : { retryAfter: rate.retryAfterSeconds }),
+          });
+        }
+
         const account = await getAccountByIdForUpdate(client, session.accountId);
         if (account?.status !== 'pending_verification' || account.verifiedAt !== null) {
           throw new ServiceError(
@@ -114,7 +113,16 @@ export async function handleResendEmailVerification(
           }
         }
         if (state.resendCount >= deps.config.emailResendMaxPerWindow) {
-          const availableAt = new Date(now.getTime() + deps.config.emailResendRollingWindowMs);
+          if (state.oldestResendAt === null) {
+            throw new ServiceError(
+              503,
+              'authority_unavailable',
+              'Email resend quota state is temporarily unavailable.',
+            );
+          }
+          const availableAt = new Date(
+            new Date(state.oldestResendAt).getTime() + deps.config.emailResendRollingWindowMs,
+          );
           throw new ServiceError(
             429,
             'rate_limited',

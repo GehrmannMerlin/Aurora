@@ -200,9 +200,11 @@ describeDb('email verification resend flow (real PostgreSQL 17 + Redis)', () => 
       resendAvailableAt: new Date(currentNow.getTime() + 60_000).toISOString(),
     });
 
-    const replay = await resend(app, actor, key);
-    expect(replay.statusCode).toBe(200);
-    expect(replay.json()).toEqual(body);
+    for (let replayIndex = 0; replayIndex < 12; replayIndex += 1) {
+      const replay = await resend(app, actor, key);
+      expect(replay.statusCode, `stable replay ${String(replayIndex + 1)}`).toBe(200);
+      expect(replay.json()).toEqual(body);
+    }
 
     const intents = await pool.query<{ intent_id: string; consumed_at: string | null }>(
       `SELECT intent_id, consumed_at FROM email_verification_intents
@@ -275,7 +277,10 @@ describeDb('email verification resend flow (real PostgreSQL 17 + Redis)', () => 
     currentNow = new Date(BASE_NOW.getTime() + 6 * 61_000);
     const sixth = await resend(app, actor);
     expect(sixth.statusCode).toBe(429);
-    expect(sixth.json<ProblemBody>().code).toBe('rate_limited');
+    expect(sixth.json<ProblemBody>()).toMatchObject({
+      code: 'rate_limited',
+      resendAvailableAt: new Date(BASE_NOW.getTime() + 61_000 + 86_400_000).toISOString(),
+    });
     const counts = await pool.query<{ aggregate_type: string; n: number }>(
       `SELECT aggregate_type, count(*)::int AS n FROM outbox
        WHERE aggregate_id = $1 GROUP BY aggregate_type ORDER BY aggregate_type`,

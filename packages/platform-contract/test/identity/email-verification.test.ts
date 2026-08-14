@@ -115,5 +115,6 @@ describe('identityResendEmailVerification contract', () => {
       authLevel: 'session',
       request: { csrf: true, idempotency: true },
     });
+    expect(operation?.errorCodes).toContain('state_machine_conflict');
   });
 });

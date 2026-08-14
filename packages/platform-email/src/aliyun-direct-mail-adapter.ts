@@ -87,6 +87,11 @@ function classifyProviderFailure(error: unknown): EmailDeliveryResult {
   if (code.includes('forbidden') || code.includes('permission') || code.endsWith('.ram')) {
     return failed(false, 'EMAIL_PROVIDER_PERMISSION_DENIED');
   }
+  if (status === 401) return failed(false, 'EMAIL_PROVIDER_AUTHENTICATION_FAILED');
+  if (status === 403) return failed(false, 'EMAIL_PROVIDER_PERMISSION_DENIED');
+  if (status !== undefined && status >= 400 && status < 500) {
+    return failed(false, 'EMAIL_PROVIDER_INVALID_REQUEST');
+  }
   return failed(true, 'EMAIL_PROVIDER_UNKNOWN');
 }
 

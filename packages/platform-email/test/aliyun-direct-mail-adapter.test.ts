@@ -80,4 +80,24 @@ describe('AliyunDirectMailAdapter', () => {
     expect(result).toEqual({ status: 'failed', retryable: false, reasonCode });
     expect(JSON.stringify(result)).not.toContain('secret');
   });
+
+  it.each([
+    [400, 'EMAIL_PROVIDER_INVALID_REQUEST'],
+    [401, 'EMAIL_PROVIDER_AUTHENTICATION_FAILED'],
+    [403, 'EMAIL_PROVIDER_PERMISSION_DENIED'],
+  ] as const)(
+    'classifies status-only permanent HTTP %s failures',
+    async (statusCode, reasonCode) => {
+      const client: DirectMailClientPort = {
+        singleSendMail: vi
+          .fn()
+          .mockRejectedValue({ statusCode, message: 'provider raw body secret' }),
+      };
+
+      const result = await adapterWith(client).deliver(deliveryRequest());
+
+      expect(result).toEqual({ status: 'failed', retryable: false, reasonCode });
+      expect(JSON.stringify(result)).not.toContain('secret');
+    },
+  );
 });

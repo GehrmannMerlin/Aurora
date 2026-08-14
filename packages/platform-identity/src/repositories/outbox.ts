@@ -74,6 +74,7 @@ export interface GetEmailVerificationResendStateInput {
 export interface EmailVerificationResendState {
   readonly lastAcceptedAt: string | null;
   readonly resendCount: number;
+  readonly oldestResendAt: string | null;
 }
 
 interface OutboxRowShape {
@@ -274,6 +275,7 @@ export async function getEmailVerificationResendState(
     const result = await pool.query<{
       last_accepted_at: string | null;
       resend_count: number;
+      oldest_resend_at: string | null;
     }>(
       `SELECT
          MAX(created_at) FILTER (
@@ -282,7 +284,11 @@ export async function getEmailVerificationResendState(
          COUNT(*) FILTER (
            WHERE aggregate_type = 'email.verification.resend'
              AND created_at > $2::timestamptz - ($4::bigint * interval '1 millisecond')
-         )::int AS resend_count
+         )::int AS resend_count,
+         MIN(created_at) FILTER (
+           WHERE aggregate_type = 'email.verification.resend'
+             AND created_at > $2::timestamptz - ($4::bigint * interval '1 millisecond')
+         ) AS oldest_resend_at
        FROM outbox
        WHERE aggregate_id = $1
          AND aggregate_type IN ('email.verification', 'email.verification.resend')
@@ -293,6 +299,7 @@ export async function getEmailVerificationResendState(
     return {
       lastAcceptedAt: isoTimestamp(row?.last_accepted_at ?? null),
       resendCount: row?.resend_count ?? 0,
+      oldestResendAt: isoTimestamp(row?.oldest_resend_at ?? null),
     };
   } catch (error) {
     throw toStableError(error);
