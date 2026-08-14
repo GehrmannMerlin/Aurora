@@ -139,10 +139,13 @@ describeDb('password flow (real PostgreSQL 17 + Redis)', () => {
     expect(forMissing.json()).toHaveProperty('serverTime');
 
     // Only the existing account wrote a reset outbox row.
-    const outbox = await pool.query(
+    const outbox = await pool.query<{ payload: { intentExpiresAt?: unknown } }>(
       `SELECT payload FROM outbox WHERE aggregate_type = 'email.password_reset'`,
     );
     expect(outbox.rows.length).toBe(1);
+    expect(outbox.rows[0]?.payload.intentExpiresAt).toBe(
+      new Date(FIXED_NOW.getTime() + 2 * 60 * 60 * 1000).toISOString(),
+    );
     await app.close();
   });
 

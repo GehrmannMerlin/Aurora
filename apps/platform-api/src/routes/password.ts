@@ -73,6 +73,7 @@ async function insertResetOutboxRow(
     toAddress: string;
     token: string;
     expiresInMinutes: number;
+    intentExpiresAt: Date;
     /** Public console origin; emailed links land on the SPA confirm page. */
     consoleOrigin: string;
   },
@@ -87,6 +88,7 @@ async function insertResetOutboxRow(
       toMasked: maskEmail(input.toAddress),
       mailLinkUrl: `${base}/reset-password?token=${input.token}`,
       expiresInMinutes: input.expiresInMinutes,
+      intentExpiresAt: input.intentExpiresAt.toISOString(),
     },
   });
 }
@@ -165,6 +167,7 @@ export async function handleRequestPasswordReset(
             toAddress: emailNormalized,
             token,
             expiresInMinutes: RESET_INTENT_MINUTES,
+            intentExpiresAt: expiresAt,
             consoleOrigin: deps.config.consoleOrigin,
           });
         }

@@ -3,12 +3,7 @@ import { PlatformIdentityError, toStableError } from '../errors.js';
 import { isoTimestamp } from './timestamp.js';
 
 export type OutboxStatus =
-  | 'pending'
-  | 'processing'
-  | 'succeeded'
-  | 'failed'
-  | 'dead_lettered'
-  | 'superseded';
+  'pending' | 'processing' | 'succeeded' | 'failed' | 'dead_lettered' | 'superseded';
 
 export const MAX_CLAIM_LIMIT = 100;
 
@@ -17,6 +12,8 @@ export interface InsertOutboxRowInput {
   readonly aggregateId?: string;
   /** Outbox payload. May hold a transient one-time token for email link rendering. */
   readonly payload: Readonly<Record<string, unknown>>;
+  /** Authoritative command acceptance time; defaults to the database clock. */
+  readonly createdAt?: Date;
 }
 
 export interface InsertOutboxRowResult {
@@ -117,10 +114,22 @@ export async function insertOutboxRow(
 ): Promise<InsertOutboxRowResult> {
   try {
     const result = await pool.query<{ outbox_id: string }>(
-      `INSERT INTO outbox (aggregate_type, aggregate_id, payload)
-       VALUES ($1, $2, $3::jsonb)
+      `INSERT INTO outbox (
+         aggregate_type, aggregate_id, payload, available_at, created_at, updated_at
+       )
+       VALUES (
+         $1, $2, $3::jsonb,
+         COALESCE($4::timestamptz, now()),
+         COALESCE($4::timestamptz, now()),
+         COALESCE($4::timestamptz, now())
+       )
        RETURNING outbox_id`,
-      [input.aggregateType, input.aggregateId ?? null, input.payload],
+      [
+        input.aggregateType,
+        input.aggregateId ?? null,
+        input.payload,
+        input.createdAt?.toISOString() ?? null,
+      ],
     );
     const row = result.rows[0];
     if (row === undefined) {

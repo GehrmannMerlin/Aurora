@@ -31,6 +31,7 @@ export interface AuroraProblem {
   readonly instance?: string;
   readonly recoveryTarget?: string | null;
   readonly retryAfter?: number;
+  readonly resendAvailableAt?: string;
   readonly fieldErrors?: readonly AuroraProblemFieldError[];
 }
 
@@ -51,6 +52,7 @@ const PROBLEM_TITLES: Readonly<Record<string, string>> = {
 export interface ProblemExtras {
   readonly recoveryTarget?: string | null;
   readonly retryAfter?: number;
+  readonly resendAvailableAt?: string;
   readonly fieldErrors?: readonly AuroraProblemFieldError[];
 }
 
@@ -71,6 +73,9 @@ export function problem(
     requestId,
     ...(extras?.recoveryTarget === undefined ? {} : { recoveryTarget: extras.recoveryTarget }),
     ...(extras?.retryAfter === undefined ? {} : { retryAfter: extras.retryAfter }),
+    ...(extras?.resendAvailableAt === undefined
+      ? {}
+      : { resendAvailableAt: extras.resendAvailableAt }),
     ...(extras?.fieldErrors === undefined ? {} : { fieldErrors: extras.fieldErrors }),
   };
 }
@@ -84,6 +89,9 @@ export function sendProblem(
   detail: string,
   extras?: ProblemExtras,
 ): FastifyReply {
+  if (status === 429 && extras?.retryAfter !== undefined) {
+    void reply.header('Retry-After', String(extras.retryAfter));
+  }
   return reply
     .header('x-aurora-request-id', requestId)
     .code(status)

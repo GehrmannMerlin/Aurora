@@ -22,6 +22,7 @@ import {
   handleRequestPasswordReset,
 } from './routes/password.js';
 import { handleConfirmEmailVerification } from './routes/email-verification.js';
+import { handleResendEmailVerification } from './routes/email-verification-resend.js';
 import { handleAcceptInvitation } from './routes/invitation.js';
 import { handleListProjects } from './routes/workspace.js';
 import { handleCreateProject } from './routes/projects.js';
@@ -236,6 +237,10 @@ export function buildPlatformApi(deps: PlatformApiDependencies): FastifyInstance
 
   app.post('/api/platform/v1/auth/email/confirm', async (request, reply) => {
     await handleConfirmEmailVerification(request, reply, routeContext);
+  });
+
+  app.post('/api/platform/v1/auth/email/resend', async (request, reply) => {
+    await handleResendEmailVerification(request, reply, routeContext);
   });
 
   app.post('/api/platform/v1/invitations/accept', async (request, reply) => {

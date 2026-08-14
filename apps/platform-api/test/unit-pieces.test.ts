@@ -124,6 +124,16 @@ describe('problem (RFC 9457)', () => {
     expect('recoveryTarget' in value).toBe(false);
     expect('retryAfter' in value).toBe(false);
   });
+  it('includes absolute resend timing only when supplied', () => {
+    const value = problem('req-3', 429, 'rate_limited', 'Retry later.', {
+      retryAfter: 60,
+      resendAvailableAt: '2026-08-14T01:01:00.000Z',
+    });
+    expect(value).toMatchObject({
+      retryAfter: 60,
+      resendAvailableAt: '2026-08-14T01:01:00.000Z',
+    });
+  });
 });
 
 describe('loadPlatformApiConfig', () => {
@@ -136,8 +146,36 @@ describe('loadPlatformApiConfig', () => {
     expect(config.sessionIdleMs).toBe(30 * 60 * 1000);
     expect(config.sessionAbsoluteMs).toBe(8 * 60 * 60 * 1000);
     expect(config.cookieSecure).toBe(false);
+    expect(config.emailResendCooldownMs).toBe(60_000);
+    expect(config.emailResendRollingWindowMs).toBe(86_400_000);
+    expect(config.emailResendMaxPerWindow).toBe(5);
     expect(config.appOrigins).toEqual([]);
     expect(config.port).toBe(0);
+  });
+  it('parses positive email resend limit overrides', () => {
+    const config = loadPlatformApiConfig({
+      DATABASE_URL: 'postgresql://localhost/db',
+      REDIS_URL: 'redis://localhost:6379',
+      EMAIL_RESEND_COOLDOWN_MS: '1000',
+      EMAIL_RESEND_WINDOW_MS: '2000',
+      EMAIL_RESEND_MAX_PER_WINDOW: '3',
+    });
+    expect(config.emailResendCooldownMs).toBe(1000);
+    expect(config.emailResendRollingWindowMs).toBe(2000);
+    expect(config.emailResendMaxPerWindow).toBe(3);
+  });
+  it.each([
+    ['EMAIL_RESEND_COOLDOWN_MS', '0'],
+    ['EMAIL_RESEND_WINDOW_MS', '-1'],
+    ['EMAIL_RESEND_MAX_PER_WINDOW', '1.5'],
+  ])('rejects invalid %s', (key, value) => {
+    expect(() =>
+      loadPlatformApiConfig({
+        DATABASE_URL: 'postgresql://localhost/db',
+        REDIS_URL: 'redis://localhost:6379',
+        [key]: value,
+      }),
+    ).toThrow(new RegExp(key));
   });
   it('rejects a non-numeric PORT', () => {
     expect(() =>

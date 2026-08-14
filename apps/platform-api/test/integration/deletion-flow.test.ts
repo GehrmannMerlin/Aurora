@@ -112,7 +112,9 @@ async function cancelIntentToken(pool: Pool, accountId: string): Promise<string>
     [accountId],
   );
   const row = result.rows[0];
-  const payload = row?.payload as { mailLinkUrl?: string } | undefined;
+  const payload = row?.payload as { mailLinkUrl?: string; intentExpiresAt?: string } | undefined;
+  expect(typeof payload?.intentExpiresAt).toBe('string');
+  expect(Number.isFinite(Date.parse(payload?.intentExpiresAt ?? ''))).toBe(true);
   const url = typeof payload?.mailLinkUrl === 'string' ? payload.mailLinkUrl : '';
   const tokenMatch = /\btoken=([^&]+)/.exec(url);
   if (tokenMatch === null) {
@@ -130,7 +132,9 @@ async function requestIntentToken(pool: Pool, accountId: string): Promise<string
     [accountId],
   );
   const row = result.rows[0];
-  const payload = row?.payload as { mailLinkUrl?: string } | undefined;
+  const payload = row?.payload as { mailLinkUrl?: string; intentExpiresAt?: string } | undefined;
+  expect(typeof payload?.intentExpiresAt).toBe('string');
+  expect(Number.isFinite(Date.parse(payload?.intentExpiresAt ?? ''))).toBe(true);
   const url = typeof payload?.mailLinkUrl === 'string' ? payload.mailLinkUrl : '';
   const tokenMatch = /\btoken=([^&]+)/.exec(url);
   if (tokenMatch === null) {

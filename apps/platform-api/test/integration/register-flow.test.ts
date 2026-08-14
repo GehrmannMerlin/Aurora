@@ -29,6 +29,8 @@ interface RegisterResponse {
   verificationStatus?: { verified: boolean; reason: string };
   serverTime: string;
   emailMasked: string;
+  deliveryStatus: string;
+  resendAvailableAt: string;
 }
 
 interface ProblemBody {
@@ -105,7 +107,9 @@ describeDb('register flow (real PostgreSQL 17 + Redis)', () => {
     expect(typeof body.workspaceId?.organizationId).toBe('string');
     expect(body.verificationStatus?.verified).toBe(false);
     expect(body.verificationStatus?.reason).toBe('email_verification_pending');
-    expect(typeof body.serverTime).toBe('string');
+    expect(body.deliveryStatus).toBe('queued');
+    expect(body.serverTime).toBe(FIXED_NOW.toISOString());
+    expect(body.resendAvailableAt).toBe(new Date(FIXED_NOW.getTime() + 60_000).toISOString());
 
     const account = await pool.query<{ status: string }>(
       'SELECT status FROM accounts WHERE account_id = $1',
@@ -124,12 +128,35 @@ describeDb('register flow (real PostgreSQL 17 + Redis)', () => {
       `SELECT payload FROM outbox WHERE aggregate_type = 'email.verification'`,
     );
     expect(outbox.rows.length).toBe(1);
-    const payload = outbox.rows[0]?.payload as { intentType?: string; toMasked?: string };
+    const payload = outbox.rows[0]?.payload as {
+      intentType?: string;
+      toMasked?: string;
+      intentExpiresAt?: string;
+    };
     expect(payload.intentType).toBe('email_verification');
     expect(payload.toMasked).toBe(body.emailMasked);
+    expect(payload.intentExpiresAt).toBe(
+      new Date(FIXED_NOW.getTime() + 2 * 60 * 60 * 1000).toISOString(),
+    );
+
+    const intents = await pool.query<{ expires_at: string }>(
+      `SELECT expires_at FROM email_verification_intents WHERE account_id = $1`,
+      [body.accountId],
+    );
+    expect(intents.rows).toHaveLength(1);
+    expect(new Date(intents.rows[0]?.expires_at ?? '').toISOString()).toBe(
+      new Date(FIXED_NOW.getTime() + 2 * 60 * 60 * 1000).toISOString(),
+    );
 
     const cookie = extractSessionCookie(response.headers['set-cookie']);
     expect(cookie.length).toBeGreaterThan(0);
+    const session = await app.inject({
+      method: 'GET',
+      url: '/api/platform/v1/session',
+      headers: { cookie: `aurora_session=${cookie}` },
+    });
+    expect(session.statusCode).toBe(200);
+    expect(session.json()).toMatchObject({ account: { emailMasked: body.emailMasked } });
     await app.close();
   });
 
@@ -205,6 +232,7 @@ describeDb('register flow (real PostgreSQL 17 + Redis)', () => {
     expect(typeof retryBody.accountId).toBe('string');
     expect(retryBody.emailMasked).toContain('@example.com');
     expect(retryBody.verificationStatus?.verified).toBe(false);
+    expect(retryBody.deliveryStatus).toBe('queued');
     const retryCookie = extractSessionCookie(retry.headers['set-cookie']);
     expect(retryCookie.length).toBeGreaterThan(0);
     await recovered.close();

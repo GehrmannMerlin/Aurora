@@ -78,7 +78,7 @@ export async function registerVerifiedActor(
 ): Promise<RegisteredActor> {
   const pending = await registerActor(app, email);
 
-  const token = await outboxIntentToken(pool, 'email.verification');
+  const token = await outboxIntentToken(pool, 'email.verification', pending.accountId);
   const link = await app.inject({ method: 'GET', url: `/api/platform/v1/auth/verify/${token}` });
   if (link.statusCode !== 200) {
     throw new Error(`verify link failed with ${String(link.statusCode)}`);

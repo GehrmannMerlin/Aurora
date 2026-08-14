@@ -37,6 +37,12 @@ export interface PlatformApiConfig {
   readonly rateLimitWindowMs: number;
   /** Maximum requests per rate-limit window per (operation, IP, email) key. */
   readonly rateLimitMax: number;
+  /** Minimum delay between accepted email-verification resend commands. */
+  readonly emailResendCooldownMs: number;
+  /** Rolling window used to count accepted email-verification resends. */
+  readonly emailResendRollingWindowMs: number;
+  /** Maximum accepted resends in one rolling window (initial send excluded). */
+  readonly emailResendMaxPerWindow: number;
   readonly gracefulShutdownTimeoutMs: number;
   readonly logEnabled: boolean;
 }
@@ -146,6 +152,13 @@ export function loadPlatformApiConfig(env: NodeJS.ProcessEnv): PlatformApiConfig
     ),
     rateLimitWindowMs: optionalPositiveInt(env, 'RATE_LIMIT_WINDOW_MS', 60_000),
     rateLimitMax: optionalPositiveInt(env, 'RATE_LIMIT_MAX', 10),
+    emailResendCooldownMs: optionalPositiveInt(env, 'EMAIL_RESEND_COOLDOWN_MS', 60_000),
+    emailResendRollingWindowMs: optionalPositiveInt(
+      env,
+      'EMAIL_RESEND_WINDOW_MS',
+      24 * 60 * 60 * 1000,
+    ),
+    emailResendMaxPerWindow: optionalPositiveInt(env, 'EMAIL_RESEND_MAX_PER_WINDOW', 5),
     gracefulShutdownTimeoutMs: optionalPositiveInt(env, 'GRACEFUL_SHUTDOWN_TIMEOUT_MS', 5000),
     logEnabled: optionalBoolean(env, 'LOG_ENABLED', false),
   };

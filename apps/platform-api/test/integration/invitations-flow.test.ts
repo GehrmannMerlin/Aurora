@@ -129,10 +129,16 @@ describeDb('B3 invitations flow (real PostgreSQL 17 + Redis)', () => {
       `SELECT aggregate_type, payload FROM outbox WHERE aggregate_type = 'email.invitation'`,
     );
     expect(outbox.rows.length).toBeGreaterThan(0);
-    const payload = outbox.rows[0]?.payload as { mailLinkUrl?: string; toMasked?: string };
+    const payload = outbox.rows[0]?.payload as {
+      mailLinkUrl?: string;
+      toMasked?: string;
+      intentExpiresAt?: string;
+    };
     expect(typeof payload.mailLinkUrl).toBe('string');
     expect(payload.mailLinkUrl ?? '').toContain('token=');
     expect(payload.toMasked).toContain('***');
+    expect(typeof payload.intentExpiresAt).toBe('string');
+    expect(Number.isFinite(Date.parse(payload.intentExpiresAt ?? ''))).toBe(true);
     await app.close();
   });
 

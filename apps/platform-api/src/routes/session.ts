@@ -5,6 +5,7 @@ import { serializeOutput, type OperationDef } from '@aurora/platform-contract/se
 import { operationById } from '../operations.js';
 import { mapErrorToProblem, sendProblem } from '../error-mapper.js';
 import type { PlatformApiRouteDependencies } from '../route-deps.js';
+import { maskEmail } from '../email-mask.js';
 
 const SESSION_OPERATION: OperationDef = operationById(OPERATION_ID_SESSION);
 
@@ -68,6 +69,7 @@ export async function handleGetSession(
     account: {
       accountId: account.accountId,
       email: account.email,
+      emailMasked: maskEmail(account.email),
       verified: account.verifiedAt !== null,
     },
     authentication: session.authLevel,

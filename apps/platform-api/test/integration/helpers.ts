@@ -153,10 +153,16 @@ export function extractIntentCookie(setCookie: unknown): string | undefined {
  * Extract the raw intent token from the most recent outbox row for an aggregate
  * type. The mailLinkUrl embeds the transient token as the final path segment.
  */
-export async function outboxIntentToken(pool: Pool, aggregateType: string): Promise<string> {
+export async function outboxIntentToken(
+  pool: Pool,
+  aggregateType: string,
+  aggregateId?: string,
+): Promise<string> {
   const result = await pool.query<{ payload: unknown }>(
-    `SELECT payload FROM outbox WHERE aggregate_type = $1 ORDER BY created_at DESC, outbox_id DESC LIMIT 1`,
-    [aggregateType],
+    `SELECT payload FROM outbox
+     WHERE aggregate_type = $1 AND ($2::uuid IS NULL OR aggregate_id = $2)
+     ORDER BY created_at DESC, outbox_id DESC LIMIT 1`,
+    [aggregateType, aggregateId ?? null],
   );
   const row = result.rows[0];
   if (row === undefined) {

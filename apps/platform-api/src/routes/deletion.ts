@@ -577,6 +577,7 @@ export async function handleRequestAccountDeletion(
             toMasked: maskEmail(account.email),
             mailLinkUrl: `${base}/account/deletion-confirm?token=${token}`,
             expiresInMinutes: REQUEST_INTENT_HOURS * 60,
+            intentExpiresAt: expiresAt.toISOString(),
           },
         });
         await insertAuditEvent(client, {
@@ -936,6 +937,7 @@ export async function handleDeleteAccount(
             toMasked: maskEmail(account.email),
             mailLinkUrl: `${base}/account/deletion-cancel?token=${token}`,
             expiresInMinutes: CANCEL_INTENT_HOURS * 60,
+            intentExpiresAt: cancelExpiresAt.toISOString(),
           },
         });
 

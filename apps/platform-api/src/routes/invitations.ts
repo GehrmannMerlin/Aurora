@@ -225,6 +225,7 @@ export async function handleInviteMember(
             toMasked: masked,
             mailLinkUrl: `${base}/invitations/accept?token=${token}`,
             expiresInMinutes: INVITATION_EXPIRES_MINUTES,
+            intentExpiresAt: expiresAt.toISOString(),
           },
         });
 
@@ -398,6 +399,7 @@ export async function handleResendInvitation(
           toMasked: maskEmail(invitation.invitedEmail),
           mailLinkUrl: `${base}/invitations/accept?token=${resent.token}`,
           expiresInMinutes: INVITATION_EXPIRES_MINUTES,
+          intentExpiresAt: resent.expiresAt,
         },
       });
       return {

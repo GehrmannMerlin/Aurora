@@ -3,7 +3,7 @@ import type { FastifyReply, FastifyRequest } from 'fastify';
 import {
   consumeIntent,
   findEmailVerificationIntentByDigest,
-  getAccountById,
+  getAccountByIdForUpdate,
   updateAccountVerifiedAt,
 } from '@aurora/platform-identity';
 import { createSession, rotateSession } from '@aurora/platform-session';
@@ -95,6 +95,18 @@ export async function handleConfirmEmailVerification(
       operation: OPERATION_ID_CONFIRM_EMAIL_VERIFICATION,
       digest: requestDigest(input),
       execute: async (client) => {
+        const account = await getAccountByIdForUpdate(client, intent.accountId);
+        if (account === null) {
+          throw new ServiceError(404, 'not_found', 'The account was not found.');
+        }
+        if (account.status !== 'pending_verification' || account.verifiedAt !== null) {
+          throw new ServiceError(
+            409,
+            'business_validation',
+            'The verification intent is no longer valid.',
+          );
+        }
+
         const consumed = await consumeIntent(client, {
           kind: 'email_verification',
           intentId: intent.intentId,
@@ -111,14 +123,13 @@ export async function handleConfirmEmailVerification(
           throw new ServiceError(404, 'not_found', 'The verification intent was not found.');
         }
 
-        const account = await getAccountById(client, intent.accountId);
-        if (account === null) {
-          throw new ServiceError(404, 'not_found', 'The account was not found.');
-        }
-
         const verified = await updateAccountVerifiedAt(client, account.accountId, now);
         if (verified.status === 'not_found') {
-          throw new ServiceError(404, 'not_found', 'The account was not found.');
+          throw new ServiceError(
+            409,
+            'business_validation',
+            'The verification intent is no longer valid.',
+          );
         }
 
         return {

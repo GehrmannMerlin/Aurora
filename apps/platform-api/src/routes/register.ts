@@ -135,12 +135,14 @@ export async function handleRegister(
         await insertOutboxRow(client, {
           aggregateType: 'email.verification',
           aggregateId: account.account.accountId,
+          createdAt: now,
           payload: {
             intentType: 'email_verification',
             toAddress: emailNormalized,
             toMasked: masked,
             mailLinkUrl: `${base}/verify-email/confirm?token=${token}`,
             expiresInMinutes: VERIFY_INTENT_MINUTES,
+            intentExpiresAt: expiresAt.toISOString(),
           },
         });
 
@@ -149,6 +151,10 @@ export async function handleRegister(
           workspaceId: { organizationId: workspace.organizationId },
           emailMasked: masked,
           verificationStatus: { verified: false, reason: 'email_verification_pending' },
+          deliveryStatus: 'queued',
+          resendAvailableAt: new Date(
+            now.getTime() + deps.config.emailResendCooldownMs,
+          ).toISOString(),
           serverTime: now.toISOString(),
         };
       },
@@ -168,6 +174,8 @@ export async function handleRegister(
     workspaceId: { organizationId: string };
     emailMasked: string;
     verificationStatus: { verified: false; reason: string };
+    deliveryStatus: 'queued';
+    resendAvailableAt: string;
     serverTime: string;
   };
 

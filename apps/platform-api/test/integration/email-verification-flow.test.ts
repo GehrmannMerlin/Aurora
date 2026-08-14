@@ -136,11 +136,12 @@ describeDb('email verification flow (real PostgreSQL 17 + Redis)', () => {
     expect(typeof body.account?.accountId).toBe('string');
 
     // verified_at is set.
-    const account = await pool.query<{ verified_at: string | null }>(
-      'SELECT verified_at FROM accounts WHERE account_id = $1',
+    const account = await pool.query<{ verified_at: string | null; status: string }>(
+      'SELECT verified_at, status FROM accounts WHERE account_id = $1',
       [body.account?.accountId],
     );
     expect(account.rows[0]?.verified_at).not.toBeNull();
+    expect(account.rows[0]?.status).toBe('active');
 
     // The pending-verification session was rotated to a new authenticated session.
     const newCookie = extractSessionCookie(confirm.headers['set-cookie']);
