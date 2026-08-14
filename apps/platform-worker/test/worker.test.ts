@@ -1,14 +1,26 @@
 import { describe, expect, it, vi } from 'vitest';
 import type { Pool } from 'pg';
-import type { EmailDeliveryPort, OutboxRepository } from '@aurora/platform-email';
+import type {
+  ClaimOutboxRowsInput,
+  DirectMailClientPort,
+  EmailDeliveryPort,
+  OutboxRepository,
+} from '@aurora/platform-email';
+import { createPlatformEmailPort } from '../src/index.js';
 import { buildPlatformWorker } from '../src/worker.js';
 import type { SleeperPort } from '../src/timers.js';
 
 const fakePool = {} as Pool;
 
 const enqueuePort: EmailDeliveryPort = {
-  deliver: () => Promise.resolve({ status: 'enqueued' as const }),
+  deliver: () => Promise.resolve({ status: 'accepted' as const }),
 };
+
+const emailReliabilitySettings = {
+  processingTimeoutMs: 120_000,
+  retryBaseDelayMs: 2_000,
+  retryMaxDelayMs: 90_000,
+} as const;
 
 interface NothingToClaimRepo {
   repo: OutboxRepository;
@@ -48,6 +60,35 @@ async function waitUntil(predicate: () => boolean, timeoutMs = 2000): Promise<vo
 }
 
 describe('platform-worker poll loop', () => {
+  it('passes the configured processing lease and retry policy to the consumer', async () => {
+    let claimInput: ClaimOutboxRowsInput | undefined;
+    const repo: OutboxRepository = {
+      insertOutboxRow: () => Promise.resolve({ status: 'success', outboxId: 'outbox-1' }),
+      claimOutboxRows: (_pool, input) => {
+        claimInput = input;
+        return Promise.resolve({ status: 'nothingToClaim' });
+      },
+      markOutboxResult: () => Promise.resolve({ status: 'success' }),
+    };
+    const { sleeper } = tickSleeper();
+    const worker = buildPlatformWorker({
+      pool: fakePool,
+      port: enqueuePort,
+      outboxRepo: repo,
+      pollIntervalMs: 60_000,
+      batchLimit: 20,
+      maxAttempts: 5,
+      ...emailReliabilitySettings,
+      sleeper,
+    });
+
+    await worker.start();
+    await waitUntil(() => claimInput !== undefined);
+    await worker.stop();
+
+    expect(claimInput?.processingTimeoutMs).toBe(120_000);
+  });
+
   it('polls consumeOutboxEmails on the configured interval', async () => {
     const { repo, claimCount } = createNothingToClaimRepo();
     const { sleeper, sleepMs } = tickSleeper();
@@ -58,6 +99,7 @@ describe('platform-worker poll loop', () => {
       pollIntervalMs: 30,
       batchLimit: 20,
       maxAttempts: 5,
+      ...emailReliabilitySettings,
       sleeper,
     });
 
@@ -81,6 +123,7 @@ describe('platform-worker poll loop', () => {
       pollIntervalMs: 75,
       batchLimit: 20,
       maxAttempts: 5,
+      ...emailReliabilitySettings,
       sleeper,
     });
 
@@ -101,6 +144,7 @@ describe('platform-worker poll loop', () => {
       pollIntervalMs: 5,
       batchLimit: 20,
       maxAttempts: 5,
+      ...emailReliabilitySettings,
       sleeper,
     });
 
@@ -124,6 +168,7 @@ describe('platform-worker poll loop', () => {
       pollIntervalMs: 60_000,
       batchLimit: 20,
       maxAttempts: 5,
+      ...emailReliabilitySettings,
       sleeper,
     });
 
@@ -159,6 +204,7 @@ describe('platform-worker poll loop', () => {
         pollIntervalMs: 5,
         batchLimit: 20,
         maxAttempts: 5,
+        ...emailReliabilitySettings,
         sleeper,
       });
 
@@ -174,5 +220,75 @@ describe('platform-worker poll loop', () => {
     } finally {
       errorSpy.mockRestore();
     }
+  });
+});
+
+describe('platform-worker email delivery composition', () => {
+  it('does not construct an Aliyun client in console mode', async () => {
+    let factoryCalls = 0;
+    const port = createPlatformEmailPort(
+      {
+        mode: 'console',
+        accountName: null,
+        fromAlias: 'Aurora',
+        regionId: 'cn-hangzhou',
+        endpoint: null,
+        providerTimeoutMs: 10_000,
+      },
+      () => {
+        factoryCalls += 1;
+        throw new Error('Aliyun client must not be constructed in console mode');
+      },
+    );
+
+    expect(factoryCalls).toBe(0);
+    await expect(
+      port.deliver({
+        intentType: 'email_verification',
+        toAddress: 'user@example.invalid',
+        toAddressMasked: 'u***@example.invalid',
+        mailLinkUrl: 'https://console.invalid/verify-email?token=not-a-real-token',
+        expiresInMinutes: 120,
+      }),
+    ).resolves.toEqual({ status: 'accepted' });
+  });
+
+  it('constructs the Aliyun adapter once with public settings and an injected client factory', async () => {
+    const factoryOptions: unknown[] = [];
+    const requests: unknown[] = [];
+    const fakeClient: DirectMailClientPort = {
+      singleSendMail: (request) => {
+        requests.push(request);
+        return Promise.resolve({ requestId: 'provider-request-1' });
+      },
+    };
+    const port = createPlatformEmailPort(
+      {
+        mode: 'aliyun',
+        accountName: 'no-reply@example.invalid',
+        fromAlias: 'Aurora',
+        regionId: 'cn-shanghai',
+        endpoint: 'dm.cn-shanghai.aliyuncs.com',
+        providerTimeoutMs: 8_000,
+      },
+      (options) => {
+        factoryOptions.push(options);
+        return fakeClient;
+      },
+    );
+
+    const result = await port.deliver({
+      intentType: 'email_verification',
+      toAddress: 'user@example.invalid',
+      toAddressMasked: 'u***@example.invalid',
+      mailLinkUrl: 'https://console.invalid/verify-email?token=not-a-real-token',
+      expiresInMinutes: 120,
+    });
+
+    expect(factoryOptions).toEqual([
+      { regionId: 'cn-shanghai', endpoint: 'dm.cn-shanghai.aliyuncs.com' },
+    ]);
+    expect(requests).toHaveLength(1);
+    expect(result).toEqual({ status: 'accepted', providerRequestId: 'provider-request-1' });
   });
 });

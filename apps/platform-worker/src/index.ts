@@ -1,6 +1,10 @@
 import type { Pool } from 'pg';
 import {
+  AliyunDirectMailAdapter,
   ConsoleEmailAdapter,
+  createAliyunDirectMailClient,
+  type AliyunDirectMailClientOptions,
+  type DirectMailClientPort,
   type EmailDeliveryPort,
   type OutboxRepository,
 } from '@aurora/platform-email';
@@ -34,14 +38,53 @@ export function createPlatformOutboxRepository(): OutboxRepository {
   };
 }
 
-/** Build the env-selected email delivery port (local/Preview console adapter). */
-export function createPlatformEmailPort(mode: string): EmailDeliveryPort {
-  return new ConsoleEmailAdapter({ mode });
+export interface PlatformEmailPortConfig {
+  readonly mode: 'console' | 'aliyun';
+  readonly accountName: string | null;
+  readonly fromAlias: string;
+  readonly regionId: string;
+  readonly endpoint: string | null;
+  readonly providerTimeoutMs: number;
+}
+
+export type DirectMailClientFactory = (
+  options: AliyunDirectMailClientOptions,
+) => DirectMailClientPort;
+
+/** Build the env-selected delivery port exactly once at startup. */
+export function createPlatformEmailPort(
+  config: PlatformEmailPortConfig,
+  clientFactory: DirectMailClientFactory = createAliyunDirectMailClient,
+): EmailDeliveryPort {
+  if (config.mode === 'console') return new ConsoleEmailAdapter({ mode: 'console' });
+  if (config.accountName === null) {
+    throw new Error('ALIYUN_DIRECT_MAIL_ACCOUNT_NAME is required in aliyun mode');
+  }
+  const client = clientFactory({
+    regionId: config.regionId,
+    ...(config.endpoint === null ? {} : { endpoint: config.endpoint }),
+  });
+  return new AliyunDirectMailAdapter({
+    client,
+    accountName: config.accountName,
+    fromAlias: config.fromAlias,
+    timeoutMs: config.providerTimeoutMs,
+  });
 }
 
 export interface BuildPlatformWorkerCompositionInput {
   readonly pool: Pool;
-  readonly emailDeliveryMode: string;
+  readonly emailDeliveryMode: 'console' | 'aliyun';
+  readonly aliyunDirectMailAccountName: string | null;
+  readonly aliyunDirectMailFromAlias: string;
+  readonly aliyunDirectMailRegionId: string;
+  readonly aliyunDirectMailEndpoint: string | null;
+  readonly emailProviderTimeoutMs: number;
+  readonly emailOutboxProcessingTimeoutMs: number;
+  readonly emailOutboxRetryBaseDelayMs: number;
+  readonly emailOutboxRetryMaxDelayMs: number;
+  /** Injectable only for composition tests; production uses the official SDK factory. */
+  readonly directMailClientFactory?: DirectMailClientFactory;
   readonly pollIntervalMs: number;
   readonly batchLimit: number;
   readonly maxAttempts: number;
@@ -70,11 +113,24 @@ export function buildPlatformWorkerComposition(
 ): PlatformWorker {
   return buildPlatformWorker({
     pool: input.pool,
-    port: createPlatformEmailPort(input.emailDeliveryMode),
+    port: createPlatformEmailPort(
+      {
+        mode: input.emailDeliveryMode,
+        accountName: input.aliyunDirectMailAccountName,
+        fromAlias: input.aliyunDirectMailFromAlias,
+        regionId: input.aliyunDirectMailRegionId,
+        endpoint: input.aliyunDirectMailEndpoint,
+        providerTimeoutMs: input.emailProviderTimeoutMs,
+      },
+      input.directMailClientFactory,
+    ),
     outboxRepo: createPlatformOutboxRepository(),
     pollIntervalMs: input.pollIntervalMs,
     batchLimit: input.batchLimit,
     maxAttempts: input.maxAttempts,
+    processingTimeoutMs: input.emailOutboxProcessingTimeoutMs,
+    retryBaseDelayMs: input.emailOutboxRetryBaseDelayMs,
+    retryMaxDelayMs: input.emailOutboxRetryMaxDelayMs,
     cleanup: {
       adapters: input.cleanupAdapters,
       maxAttempts: input.cleanupMaxAttempts,

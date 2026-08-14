@@ -40,6 +40,9 @@ export interface BuildPlatformWorkerInput {
   readonly pollIntervalMs: number;
   readonly batchLimit: number;
   readonly maxAttempts: number;
+  readonly processingTimeoutMs: number;
+  readonly retryBaseDelayMs: number;
+  readonly retryMaxDelayMs: number;
   /** Optional SEC-02 cross-store cleanup loop (retention worker). */
   readonly cleanup?: CleanupWorkerSettings;
   /** Optional DAT-19 product-alert evaluation loop. */
@@ -81,6 +84,9 @@ export function buildPlatformWorker(input: BuildPlatformWorkerInput): PlatformWo
       now: new Date(),
       limit: input.batchLimit,
       maxAttempts: input.maxAttempts,
+      processingTimeoutMs: input.processingTimeoutMs,
+      retryBaseDelayMs: input.retryBaseDelayMs,
+      retryMaxDelayMs: input.retryMaxDelayMs,
     });
     if (input.cleanup !== undefined) {
       await runCleanupRound({

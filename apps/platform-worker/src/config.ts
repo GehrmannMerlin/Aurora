@@ -7,8 +7,16 @@ import { MAX_CLAIM_LIMIT } from '@aurora/platform-identity';
  */
 export interface PlatformWorkerConfig {
   readonly databaseUrl: string;
-  /** `EMAIL_DELIVERY_MODE` for the local/Preview email adapter ('console'). */
-  readonly emailDeliveryMode: string;
+  /** Explicit provider mode. `console` is restricted to local/Preview delivery. */
+  readonly emailDeliveryMode: 'console' | 'aliyun';
+  readonly aliyunDirectMailAccountName: string | null;
+  readonly aliyunDirectMailFromAlias: string;
+  readonly aliyunDirectMailRegionId: string;
+  readonly aliyunDirectMailEndpoint: string | null;
+  readonly emailProviderTimeoutMs: number;
+  readonly emailOutboxProcessingTimeoutMs: number;
+  readonly emailOutboxRetryBaseDelayMs: number;
+  readonly emailOutboxRetryMaxDelayMs: number;
   /** Poll interval in milliseconds between outbox claim passes. */
   readonly outboxPollIntervalMs: number;
   /** Maximum outbox rows claimed per pass (1..MAX_CLAIM_LIMIT). */
@@ -49,10 +57,71 @@ function optionalPositiveInt(env: NodeJS.ProcessEnv, key: string, defaultValue: 
   return parsed;
 }
 
+function optionalTrimmedString(env: NodeJS.ProcessEnv, key: string, defaultValue: string): string {
+  const raw = env[key];
+  if (raw === undefined) return defaultValue;
+  const value = raw.trim();
+  if (value === '') {
+    throw new Error(`invalid configuration: ${key} must be non-empty when provided`);
+  }
+  return value;
+}
+
+function deliveryMode(env: NodeJS.ProcessEnv): 'console' | 'aliyun' {
+  const mode = (env.EMAIL_DELIVERY_MODE ?? 'console').trim().toLowerCase();
+  if (mode !== 'console' && mode !== 'aliyun') {
+    throw new Error('invalid configuration: EMAIL_DELIVERY_MODE must be one of: console, aliyun');
+  }
+  return mode;
+}
+
+function directMailAccountName(env: NodeJS.ProcessEnv, mode: 'console' | 'aliyun'): string | null {
+  const value = env.ALIYUN_DIRECT_MAIL_ACCOUNT_NAME?.trim() ?? '';
+  if (mode === 'console' && value === '') return null;
+  if (value.length > 320 || /[\r\n]/u.test(value) || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/u.test(value)) {
+    throw new Error(
+      'invalid configuration: ALIYUN_DIRECT_MAIL_ACCOUNT_NAME must be a valid sender address in aliyun mode',
+    );
+  }
+  return value;
+}
+
 /**
  * Read untrusted environment strings once and freeze a validated typed config.
  */
 export function loadPlatformWorkerConfig(env: NodeJS.ProcessEnv): PlatformWorkerConfig {
+  const emailDeliveryMode = deliveryMode(env);
+  const emailProviderTimeoutMs = optionalPositiveInt(env, 'EMAIL_PROVIDER_TIMEOUT_MS', 10_000);
+  const emailOutboxProcessingTimeoutMs = optionalPositiveInt(
+    env,
+    'EMAIL_OUTBOX_PROCESSING_TIMEOUT_MS',
+    300_000,
+  );
+  const emailOutboxRetryBaseDelayMs = optionalPositiveInt(
+    env,
+    'EMAIL_OUTBOX_RETRY_BASE_DELAY_MS',
+    1_000,
+  );
+  const emailOutboxRetryMaxDelayMs = optionalPositiveInt(
+    env,
+    'EMAIL_OUTBOX_RETRY_MAX_DELAY_MS',
+    300_000,
+  );
+  if (emailProviderTimeoutMs >= emailOutboxProcessingTimeoutMs) {
+    throw new Error(
+      'invalid configuration: EMAIL_PROVIDER_TIMEOUT_MS must be shorter than EMAIL_OUTBOX_PROCESSING_TIMEOUT_MS',
+    );
+  }
+  if (emailOutboxRetryBaseDelayMs > emailOutboxRetryMaxDelayMs) {
+    throw new Error(
+      'invalid configuration: EMAIL_OUTBOX_RETRY_BASE_DELAY_MS must not exceed EMAIL_OUTBOX_RETRY_MAX_DELAY_MS',
+    );
+  }
+  if (emailOutboxRetryMaxDelayMs > 300_000) {
+    throw new Error(
+      'invalid configuration: EMAIL_OUTBOX_RETRY_MAX_DELAY_MS must not exceed 300000',
+    );
+  }
   const outboxBatchLimit = optionalPositiveInt(env, 'OUTBOX_BATCH_LIMIT', 20);
   if (outboxBatchLimit > MAX_CLAIM_LIMIT) {
     throw new Error(
@@ -61,7 +130,26 @@ export function loadPlatformWorkerConfig(env: NodeJS.ProcessEnv): PlatformWorker
   }
   const config: PlatformWorkerConfig = {
     databaseUrl: requiredString(env, 'DATABASE_URL'),
-    emailDeliveryMode: (env.EMAIL_DELIVERY_MODE ?? 'console').trim().toLowerCase() || 'console',
+    emailDeliveryMode,
+    aliyunDirectMailAccountName: directMailAccountName(env, emailDeliveryMode),
+    aliyunDirectMailFromAlias: optionalTrimmedString(
+      env,
+      'ALIYUN_DIRECT_MAIL_FROM_ALIAS',
+      'Aurora',
+    ),
+    aliyunDirectMailRegionId: optionalTrimmedString(
+      env,
+      'ALIYUN_DIRECT_MAIL_REGION_ID',
+      'cn-hangzhou',
+    ),
+    aliyunDirectMailEndpoint:
+      env.ALIYUN_DIRECT_MAIL_ENDPOINT === undefined
+        ? null
+        : optionalTrimmedString(env, 'ALIYUN_DIRECT_MAIL_ENDPOINT', ''),
+    emailProviderTimeoutMs,
+    emailOutboxProcessingTimeoutMs,
+    emailOutboxRetryBaseDelayMs,
+    emailOutboxRetryMaxDelayMs,
     outboxPollIntervalMs: optionalPositiveInt(env, 'OUTBOX_POLL_INTERVAL_MS', 2000),
     outboxBatchLimit,
     outboxMaxAttempts: optionalPositiveInt(env, 'OUTBOX_MAX_ATTEMPTS', 5),

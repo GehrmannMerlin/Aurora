@@ -37,12 +37,18 @@ export async function ensureOutboxTable(pool: Pool): Promise<void> {
       payload jsonb NOT NULL,
       status text NOT NULL DEFAULT 'pending',
       attempt_count integer NOT NULL DEFAULT 0,
+      claim_id uuid,
+      last_error_code text,
+      provider_request_id text,
       available_at timestamptz NOT NULL DEFAULT now(),
       created_at timestamptz NOT NULL DEFAULT now(),
       updated_at timestamptz NOT NULL DEFAULT now(),
       CONSTRAINT ck_outbox_status CHECK (
-        status IN ('pending','processing','succeeded','failed','dead_lettered')
+        status IN ('pending','processing','succeeded','failed','dead_lettered','superseded')
       )
     )
   `);
+  await pool.query('ALTER TABLE outbox ADD COLUMN IF NOT EXISTS claim_id uuid');
+  await pool.query('ALTER TABLE outbox ADD COLUMN IF NOT EXISTS last_error_code text');
+  await pool.query('ALTER TABLE outbox ADD COLUMN IF NOT EXISTS provider_request_id text');
 }

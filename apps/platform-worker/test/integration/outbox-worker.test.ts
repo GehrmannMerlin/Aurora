@@ -18,14 +18,30 @@ interface OutboxRowShape {
   aggregate_type: string;
   status: string;
   attempt_count: number;
+  payload: Record<string, unknown>;
+  last_error_code: string | null;
+  provider_request_id: string | null;
+  available_at: Date;
 }
 
-const emailPayload = {
-  intentType: 'email_verification',
-  toAddress: 'user@example.com',
-  toMasked: 'u***@example.com',
-  mailLinkUrl: 'https://aurora.ah.cn/verify?token=transient-token',
-  expiresInMinutes: 120,
+function emailPayload(intentType = 'email_verification'): Record<string, unknown> {
+  return {
+    intentType,
+    toAddress: 'recipient@tests.invalid',
+    toMasked: 'r***@tests.invalid',
+    mailLinkUrl: 'https://console.invalid/verify-email?token=not-a-real-token',
+    expiresInMinutes: 120,
+    intentExpiresAt: new Date(Date.now() + 60_000).toISOString(),
+  };
+}
+
+const workerSettings = {
+  pollIntervalMs: 20,
+  batchLimit: 20,
+  maxAttempts: 3,
+  processingTimeoutMs: 100,
+  retryBaseDelayMs: 10,
+  retryMaxDelayMs: 30,
 } as const;
 
 async function insertRow(pool: Pool, payload: unknown, aggregateType: string): Promise<string> {
@@ -40,7 +56,9 @@ async function insertRow(pool: Pool, payload: unknown, aggregateType: string): P
 
 async function selectRow(pool: Pool, outboxId: string): Promise<OutboxRowShape> {
   const result = await pool.query<OutboxRowShape>(
-    'SELECT outbox_id, aggregate_type, status, attempt_count FROM outbox WHERE outbox_id = $1',
+    `SELECT outbox_id, aggregate_type, status, attempt_count, payload,
+            last_error_code, provider_request_id, available_at
+       FROM outbox WHERE outbox_id = $1`,
     [outboxId],
   );
   const row = result.rows[0];
@@ -83,15 +101,13 @@ describeDb('apps/platform-worker outbox consumer (real PostgreSQL 17)', () => {
 
   it('claims and settles outbox rows to succeeded via the console adapter', async () => {
     const outboxRepo = createPlatformOutboxRepository();
-    const id = await insertRow(pool, emailPayload, 'email.verification');
+    const id = await insertRow(pool, emailPayload(), 'email.verification');
 
     const worker = buildPlatformWorker({
       pool,
       port: new ConsoleEmailAdapter({ mode: 'console', log: () => undefined }),
       outboxRepo,
-      pollIntervalMs: 20,
-      batchLimit: 20,
-      maxAttempts: 5,
+      ...workerSettings,
     });
 
     await worker.start();
@@ -104,28 +120,87 @@ describeDb('apps/platform-worker outbox consumer (real PostgreSQL 17)', () => {
     const row = await selectRow(pool, id);
     expect(row.status).toBe('succeeded');
     expect(row.attempt_count).toBe(1);
+    expect(row.payload).toEqual({});
   });
 
-  it('dead-letters a row after the attempt budget is exhausted on a failing port', async () => {
+  it('schedules a retry and later succeeds through an injected fake port', async () => {
     const outboxRepo = createPlatformOutboxRepository();
-    const id = await insertRow(
+    const id = await insertRow(pool, emailPayload('password_reset'), 'email.password_reset');
+    const firstAttemptStartedAt = new Date();
+    let deliveries = 0;
+    const retryThenAcceptPort: EmailDeliveryPort = {
+      deliver: () => {
+        deliveries += 1;
+        return Promise.resolve(
+          deliveries === 1
+            ? { status: 'failed', retryable: true, reasonCode: 'EMAIL_PROVIDER_TIMEOUT' }
+            : { status: 'accepted', providerRequestId: 'provider-request-2' },
+        );
+      },
+    };
+
+    const worker = buildPlatformWorker({
       pool,
-      { ...emailPayload, intentType: 'password_reset' },
-      'email.password_reset',
-    );
+      port: retryThenAcceptPort,
+      outboxRepo,
+      ...workerSettings,
+      retryBaseDelayMs: 10_000,
+      retryMaxDelayMs: 10_000,
+    });
+
+    await worker.start();
+    try {
+      await waitForStatus(pool, id, 'failed');
+    } finally {
+      await worker.stop();
+    }
+
+    const retryScheduled = await selectRow(pool, id);
+    expect(retryScheduled.attempt_count).toBe(1);
+    expect(retryScheduled.last_error_code).toBe('EMAIL_PROVIDER_TIMEOUT');
+    expect(retryScheduled.available_at.getTime()).toBeGreaterThan(firstAttemptStartedAt.getTime());
+    expect(retryScheduled.payload).not.toEqual({});
+
+    await pool.query('UPDATE outbox SET available_at = now() WHERE outbox_id = $1', [id]);
+    const recoveryWorker = buildPlatformWorker({
+      pool,
+      port: retryThenAcceptPort,
+      outboxRepo,
+      ...workerSettings,
+    });
+    await recoveryWorker.start();
+    try {
+      await waitForStatus(pool, id, 'succeeded');
+    } finally {
+      await recoveryWorker.stop();
+    }
+
+    const row = await selectRow(pool, id);
+    expect(deliveries).toBe(2);
+    expect(row.attempt_count).toBe(2);
+    expect(row.provider_request_id).toBe('provider-request-2');
+    expect(row.payload).toEqual({});
+  });
+
+  it('dead-letters at the attempt budget and scrubs terminal payloads', async () => {
+    const outboxRepo = createPlatformOutboxRepository();
+    const id = await insertRow(pool, emailPayload('password_reset'), 'email.password_reset');
     await pool.query('UPDATE outbox SET attempt_count = 2 WHERE outbox_id = $1', [id]);
 
     const failingPort: EmailDeliveryPort = {
-      deliver: () => Promise.resolve({ status: 'failed' as const, reason: 'provider_unavailable' }),
+      deliver: () =>
+        Promise.resolve({
+          status: 'failed',
+          retryable: true,
+          reasonCode: 'EMAIL_PROVIDER_UNAVAILABLE',
+        }),
     };
 
     const worker = buildPlatformWorker({
       pool,
       port: failingPort,
       outboxRepo,
-      pollIntervalMs: 20,
-      batchLimit: 20,
-      maxAttempts: 3,
+      ...workerSettings,
     });
 
     await worker.start();
@@ -138,6 +213,43 @@ describeDb('apps/platform-worker outbox consumer (real PostgreSQL 17)', () => {
     const row = await selectRow(pool, id);
     expect(row.status).toBe('dead_lettered');
     expect(row.attempt_count).toBe(3);
+    expect(row.last_error_code).toBe('EMAIL_PROVIDER_UNAVAILABLE');
+    expect(row.payload).toEqual({});
+  });
+
+  it('recovers a stale processing claim and fences it with a fresh claim', async () => {
+    const outboxRepo = createPlatformOutboxRepository();
+    const id = await insertRow(pool, emailPayload('password_reset'), 'email.password_reset');
+    await pool.query(
+      `UPDATE outbox
+          SET status = 'processing', claim_id = gen_random_uuid(),
+              updated_at = now() - interval '10 minutes'
+        WHERE outbox_id = $1`,
+      [id],
+    );
+    const acceptedPort: EmailDeliveryPort = {
+      deliver: () =>
+        Promise.resolve({ status: 'accepted', providerRequestId: 'provider-recovered' }),
+    };
+
+    const worker = buildPlatformWorker({
+      pool,
+      port: acceptedPort,
+      outboxRepo,
+      ...workerSettings,
+    });
+
+    await worker.start();
+    try {
+      await waitForStatus(pool, id, 'succeeded');
+    } finally {
+      await worker.stop();
+    }
+
+    const row = await selectRow(pool, id);
+    expect(row.attempt_count).toBe(1);
+    expect(row.provider_request_id).toBe('provider-recovered');
+    expect(row.payload).toEqual({});
   });
 
   it('stops the poll loop promptly on stop()', async () => {
@@ -146,9 +258,8 @@ describeDb('apps/platform-worker outbox consumer (real PostgreSQL 17)', () => {
       pool,
       port: new ConsoleEmailAdapter({ mode: 'console', log: () => undefined }),
       outboxRepo,
+      ...workerSettings,
       pollIntervalMs: 60_000,
-      batchLimit: 20,
-      maxAttempts: 5,
     });
 
     await worker.start();
