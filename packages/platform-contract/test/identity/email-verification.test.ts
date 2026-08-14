@@ -95,8 +95,9 @@ describe('identityResendEmailVerification contract', () => {
     expect(identityResendEmailVerificationResponse.zod.safeParse(valid).success).toBe(true);
 
     for (const requiredField of Object.keys(valid)) {
-      const incomplete = { ...valid };
-      delete incomplete[requiredField as keyof typeof incomplete];
+      const incomplete = Object.fromEntries(
+        Object.entries(valid).filter(([field]) => field !== requiredField),
+      );
       expect(
         identityResendEmailVerificationResponse.zod.safeParse(incomplete).success,
         requiredField,

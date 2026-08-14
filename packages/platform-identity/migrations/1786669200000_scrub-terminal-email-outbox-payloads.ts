@@ -19,4 +19,4 @@ export const up = (pgm: MigrationBuilder): void => {
 };
 
 /** Intentionally irreversible: a down migration must never restore secrets. */
-export const down = (_pgm: MigrationBuilder): void => undefined;
+export const down = (): void => undefined;
