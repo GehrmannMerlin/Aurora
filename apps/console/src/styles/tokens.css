@@ -24,12 +24,9 @@
 
   --control-height: 40px;
   --nav-height: 44px;
+  --sidebar-width: 240px;
+  --sidebar-row-height: 48px;
   --radius-base: 6px;
 
-  --font-family-base:
-    system-ui,
-    'Segoe UI',
-    'PingFang SC',
-    'Microsoft YaHei',
-    sans-serif;
+  --font-family-base: system-ui, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
 }

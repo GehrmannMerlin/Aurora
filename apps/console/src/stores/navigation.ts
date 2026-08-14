@@ -78,6 +78,60 @@ export const useNavigationStore = defineStore('navigation', () => {
     return null;
   });
 
+  const currentProject = computed<ProjectNav | null>(() => {
+    if (currentScope.value?.type !== 'project' || currentScope.value.id === undefined) return null;
+    for (const organization of organizations.value) {
+      const project = organization.projects.find(
+        (candidate) => candidate.projectId === currentScope.value?.id,
+      );
+      if (project !== undefined) return project;
+    }
+    return null;
+  });
+
+  function invalidateCurrentScope(): void {
+    const scope = currentScope.value;
+    if (scope?.type === 'organization' && scope.id !== undefined) {
+      invalidateScope({ type: 'organization', id: scope.id });
+      return;
+    }
+    if (scope?.type === 'project' && scope.id !== undefined) {
+      invalidateScope({ type: 'project', id: scope.id });
+      return;
+    }
+    invalidateScope({ type: 'workspace' });
+  }
+
+  function activateWorkspace(): void {
+    invalidateCurrentScope();
+    currentScope.value = { type: 'workspace', lifecycle: 'active' };
+  }
+
+  function activateOrganization(organizationId: string): RouteTargetRef | null {
+    const organization = organizations.value.find(
+      (candidate) => candidate.organizationId === organizationId,
+    );
+    if (organization === undefined) return null;
+    invalidateCurrentScope();
+    currentScope.value = { type: 'organization', id: organizationId, lifecycle: 'active' };
+    return organization.entry;
+  }
+
+  function activateProject(projectId: string): RouteTargetRef | null {
+    for (const organization of organizations.value) {
+      const project = organization.projects.find((candidate) => candidate.projectId === projectId);
+      if (project === undefined) continue;
+      invalidateCurrentScope();
+      currentScope.value = {
+        type: 'project',
+        id: projectId,
+        lifecycle: project.lifecycle,
+      };
+      return project.entry;
+    }
+    return null;
+  }
+
   async function load(): Promise<void> {
     if (status.value === 'loading' || status.value === 'ready') return;
     status.value = 'loading';
@@ -147,8 +201,12 @@ export const useNavigationStore = defineStore('navigation', () => {
     safeExitTarget,
     unreadCount,
     currentOrganizationId,
+    currentProject,
     load,
     clear,
+    activateWorkspace,
+    activateOrganization,
+    activateProject,
     applyUnreadCount,
   };
 });

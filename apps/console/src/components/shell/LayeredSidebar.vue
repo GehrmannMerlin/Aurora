@@ -13,6 +13,10 @@ const route = useRoute();
 const navigation = useNavigationStore();
 const { status, currentScope, currentOrganizationId } = storeToRefs(navigation);
 
+const currentRouteEntry = computed(() =>
+  typeof route.name === 'string' ? ROUTE_BY_ID.get(route.name as never) : undefined,
+);
+
 const entries = computed(() => {
   if (status.value !== 'ready') return [];
   if (currentScope.value?.type === 'organization') {
@@ -44,6 +48,10 @@ function hrefFor(routeId: string): string {
     '/not-found'
   );
 }
+
+function isActive(routeId: string): boolean {
+  return route.name === routeId || currentRouteEntry.value?.parent === routeId;
+}
 </script>
 
 <template>
@@ -53,7 +61,7 @@ function hrefFor(routeId: string): string {
         <AppLink
           :to="hrefFor(entry.routeId)"
           :label="entry.label"
-          :active="route.name === entry.routeId"
+          :active="isActive(entry.routeId)"
         />
       </li>
     </ul>
@@ -62,9 +70,11 @@ function hrefFor(routeId: string): string {
 
 <style scoped>
 .au-sidebar {
-  width: 240px;
+  width: var(--sidebar-width);
+  height: 100%;
   flex-shrink: 0;
-  padding: var(--space-4) 0;
+  overflow-y: auto;
+  padding: var(--space-3) 0;
   background-color: var(--color-sidebar-bg);
   color: var(--color-sidebar-fg);
 }
@@ -76,12 +86,31 @@ function hrefFor(routeId: string): string {
   flex-direction: column;
   gap: var(--space-1);
 }
+.au-sidebar-list > li {
+  margin: 0 var(--space-3);
+}
 .au-sidebar :deep(.au-link) {
+  position: relative;
+  justify-content: center;
+  width: 100%;
+  min-height: var(--sidebar-row-height);
+  padding: 0 var(--space-4);
   color: var(--color-sidebar-fg);
+  text-align: center;
 }
 .au-sidebar :deep(.au-link--active) {
   background-color: var(--color-sidebar-active-bg);
   color: var(--color-sidebar-active-fg);
+}
+.au-sidebar :deep(.au-link--active::before) {
+  position: absolute;
+  top: var(--space-2);
+  bottom: var(--space-2);
+  left: 0;
+  width: 3px;
+  border-radius: 0 2px 2px 0;
+  background-color: var(--color-sidebar-active-indicator);
+  content: '';
 }
 .au-sidebar--fill {
   width: 100%;

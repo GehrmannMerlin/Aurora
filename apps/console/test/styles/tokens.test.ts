@@ -34,6 +34,8 @@ describe('visual language foundation', () => {
       ['--color-action-primary', '#2563EB'],
       ['--color-status-danger', '#D92D20'],
       ['--color-status-success', '#15803D'],
+      ['--sidebar-width', '240px'],
+      ['--sidebar-row-height', '48px'],
     ];
     for (const [name, value] of expected) {
       expect(tokens, name).toContain(`${name}: ${value};`);

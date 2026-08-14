@@ -27,6 +27,12 @@ App.vue → components/shell/AppShell（TopBar + LayeredSidebar + ScopeSwitcher 
 - `src/components/aurora/`：基础 UI（AppButton/AppLink/AppDrawer/AppPageHeader/AppStatusBadge）。
 - `src/styles/`：设计令牌（`tokens.css`）与基础样式（`base.css`）。
 
+## 导航壳层交互
+
+- 顶栏的“组织”和“项目”是与导航项一体化的菜单触发器，菜单仅列出 Navigation Context 下发的授权投影；点击外部或按 `Escape` 关闭，键盘焦点返回触发器。
+- 顶栏的工作空间、组织、项目、通知和账号安全均通过 `aria-current="page"` 与底部强调线标记当前入口；侧栏当前项使用浅琥珀底色和独立蓝色指示条，指示条不参与文字排版。
+- 桌面壳层锁定为 `100dvh`：顶栏固定在顶部，侧栏填满剩余高度，只有右侧 `.au-content` 独立纵向滚动。侧栏导航行最小高度 48px、文字水平居中；窄屏继续复用同一 `LayeredSidebar` 的 Drawer 模式。
+
 ## 命令
 
 | 命令                                          | 作用                                                                                            |

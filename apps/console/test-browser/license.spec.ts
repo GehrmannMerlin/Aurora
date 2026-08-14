@@ -1,5 +1,6 @@
 import { expect, test, type Page } from '@playwright/test';
 import { startSpaServer } from './serve-spa';
+import { waitForShell } from './shell-helpers';
 
 // Regression gate for the PrimeUI license defect (G09 post-deployment
 // stabilization hotfix).
@@ -73,7 +74,7 @@ test('no PrimeUI license banner or warning appears on any shell route', async ({
       );
       await page.reload();
     }
-    await expect(page.getByRole('navigation', { name: '侧栏导航' })).toBeVisible();
+    await waitForShell(page);
 
     // The banner is injected into a closed shadow root, so it is not matched
     // by normal selectors — assert the host element it creates is absent.

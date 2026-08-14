@@ -32,7 +32,7 @@ test('B1 workspace home lists projects and honors allowedActions', async ({ page
 
   await page.goto(`${server!.origin}/workspace?organizationId=org_test_1`);
   await expect(page.getByTestId('workspace-home')).toBeVisible();
-  await expect(page.getByText('Web')).toBeVisible();
+  await expect(page.getByRole('link', { name: 'Web', exact: true })).toBeVisible();
   await expect(page.getByTestId('create-project-button')).toBeVisible();
   await expect(new AxeBuilder({ page }).analyze()).resolves.toHaveProperty('violations', []);
 });

@@ -4,6 +4,9 @@ import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from
 import App from '../../src/App.vue';
 import { router } from '../../src/router';
 import { pinia } from '../../src/stores';
+import { handlerControls, setMockScope } from '../../src/mocks/handlers';
+import { useNavigationStore } from '../../src/stores/navigation';
+import { useSessionStore } from '../../src/stores/session';
 import { mockServer } from '../msw/server';
 
 const DrawerStub = defineComponent({
@@ -18,6 +21,12 @@ beforeAll(() => {
   mockServer.listen({ onUnhandledRequest: 'error' });
 });
 beforeEach(async () => {
+  handlerControls.sessionAuthenticated = true;
+  setMockScope({ type: 'project', id: 'prj_test_1' });
+  useSessionStore(pinia).reset();
+  useNavigationStore(pinia).clear();
+  await useSessionStore(pinia).restore();
+  await useNavigationStore(pinia).load();
   await router.push('/');
   await router.isReady();
 });
@@ -40,10 +49,12 @@ describe('responsive shell + keyboard foundation', () => {
     }
   });
 
-  it('exposes the scope switcher as a combobox', async () => {
+  it('integrates organization and project switchers into top-level menu buttons', async () => {
     render(App, { global: { plugins: [pinia, router], stubs: { Drawer: DrawerStub } } });
     await screen.findByRole('navigation', { name: '侧栏导航' });
-    expect(screen.getByRole('combobox')).toBeTruthy();
+    expect(screen.queryByRole('combobox')).toBeNull();
+    expect(screen.getByRole('button', { name: '组织：Acme' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: '项目：Web' })).toBeTruthy();
   });
 
   it('opens the narrow-screen drawer with the same sidebar entries', async () => {

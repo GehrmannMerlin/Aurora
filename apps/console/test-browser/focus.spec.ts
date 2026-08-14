@@ -1,5 +1,6 @@
 import { expect, test, type Page } from '@playwright/test';
 import { startSpaServer } from './serve-spa';
+import { openResponsiveSidebar, waitForShell } from './shell-helpers';
 
 let server: { origin: string; close(): Promise<void> } | undefined;
 
@@ -29,11 +30,11 @@ test.afterAll(async () => {
 
 test('post-navigation focus lands on the newly rendered page title', async ({ page }) => {
   await page.goto(`${server!.origin}/`);
-  await expect(page.getByRole('navigation', { name: '侧栏导航' })).toBeVisible();
+  await waitForShell(page);
   await setMockScope(page, 'project', 'prj_test_1');
   await page.reload();
-  await expect(page.getByRole('navigation', { name: '侧栏导航' })).toBeVisible();
-  await page.getByRole('link', { name: '概览', exact: true }).click();
+  const sidebar = await openResponsiveSidebar(page);
+  await sidebar.getByRole('link', { name: '概览', exact: true }).click();
   await expect(page).toHaveURL(/\/organizations\/org_test_1\/projects\/prj_test_1\/overview$/);
   await expect(page.locator('#page-title')).toBeFocused();
 });

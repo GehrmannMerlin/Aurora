@@ -1,6 +1,7 @@
 import AxeBuilder from '@axe-core/playwright';
 import { expect, test, type Page } from '@playwright/test';
 import { startSpaServer } from './serve-spa';
+import { openResponsiveSidebar, waitForShell } from './shell-helpers';
 
 let server: { origin: string; close(): Promise<void> } | undefined;
 
@@ -24,10 +25,15 @@ test.afterAll(async () => {
 
 test('the authenticated shell passes axe auto-checks', async ({ page }) => {
   await page.goto(`${server!.origin}/`);
-  await expect(page.getByRole('navigation', { name: '侧栏导航' })).toBeVisible();
+  await waitForShell(page);
   await setProjectScope(page);
   await page.reload();
-  await expect(page.getByRole('navigation', { name: '侧栏导航' })).toBeVisible();
+  await page.getByRole('button', { name: '组织：Acme' }).click();
+  await expect(page.getByRole('menu', { name: '选择组织' })).toBeVisible();
+  const openMenuResults = await new AxeBuilder({ page }).analyze();
+  expect(openMenuResults.violations).toEqual([]);
+  await page.keyboard.press('Escape');
+  await openResponsiveSidebar(page);
   const results = await new AxeBuilder({ page }).analyze();
   expect(results.violations).toEqual([]);
 });

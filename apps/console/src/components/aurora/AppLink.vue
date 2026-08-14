@@ -33,6 +33,5 @@ const classes = computed(() => ['au-link', { 'au-link--active': props.active }])
 .au-link--active {
   background-color: var(--color-sidebar-active-bg);
   color: var(--color-sidebar-active-fg);
-  border-left: 3px solid var(--color-sidebar-active-indicator);
 }
 </style>
