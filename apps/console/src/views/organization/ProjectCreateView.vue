@@ -10,6 +10,8 @@ import { resolveRouteTarget } from '../../contracts/route-registry.js';
 import { useSessionStore } from '../../stores/session.js';
 import AppButton from '../../components/aurora/AppButton.vue';
 import AppPageHeader from '../../components/aurora/AppPageHeader.vue';
+import AppSection from '../../components/aurora/AppSection.vue';
+import AppSkeleton from '../../components/aurora/AppSkeleton.vue';
 import AppStatusBadge from '../../components/aurora/AppStatusBadge.vue';
 
 const FRAMEWORK_TYPES = ['javascript', 'react', 'vue', 'other'] as const;
@@ -154,7 +156,7 @@ function onEnterProject(): void {
 
 <template>
   <section class="au-surface" data-testid="project-create-view">
-    <AppPageHeader title="创建项目" />
+    <AppPageHeader title="创建项目" description="在当前组织范围内建立一个新的可观测项目。" />
 
     <AppStatusBadge v-if="gateError !== null" tone="danger" data-testid="create-gate-error">
       {{ gateError }}
@@ -164,8 +166,10 @@ function onEnterProject(): void {
       你没有权限在该组织内创建项目。
     </p>
 
-    <template v-else-if="!gateLoading">
-      <div v-if="createResult !== null" class="au-create-success" data-testid="create-success">
+    <AppSkeleton v-else-if="gateLoading" label="正在确认创建权限…" :lines="3" data-testid="create-gate-loading" />
+
+    <template v-else>
+      <AppSection v-if="createResult !== null" title="项目已创建" class="au-create-success" data-testid="create-success">
         <AppStatusBadge tone="success">项目已创建</AppStatusBadge>
         <p class="au-success-text">
           客户端密钥（公钥标识，非密钥明文）：<code data-testid="client-key-public-identifier">{{
@@ -176,51 +180,30 @@ function onEnterProject(): void {
         <AppButton variant="primary" data-testid="enter-project-button" @click="onEnterProject">
           进入项目
         </AppButton>
-      </div>
+      </AppSection>
 
       <form v-else class="au-create-form" novalidate @submit.prevent="onCreateProject">
-        <div class="au-field">
-          <label class="au-field__label" for="create-project-name">项目名称</label>
-          <input
-            id="create-project-name"
-            class="au-field__input"
-            type="text"
-            :value="name"
-            data-testid="project-name-input"
-            @input="name = ($event.target as HTMLInputElement).value"
-          />
-          <p v-if="nameError !== null" class="au-field-error" data-testid="name-error">
-            {{ nameError }}
-          </p>
-        </div>
+        <AppSection title="基本信息" description="名称用于在组织内识别项目。" test-id="project-basic-section">
+          <div class="au-field">
+            <label class="au-field__label" for="create-project-name">项目名称</label>
+            <input id="create-project-name" class="au-field__input" type="text" :value="name" data-testid="project-name-input" @input="name = ($event.target as HTMLInputElement).value" />
+            <p v-if="nameError !== null" class="au-field-error" data-testid="name-error">{{ nameError }}</p>
+          </div>
+        </AppSection>
 
-        <div class="au-field">
-          <label class="au-field__label" for="create-project-framework">框架类型</label>
-          <select
-            id="create-project-framework"
-            class="au-field__input"
-            :value="frameworkType"
-            data-testid="project-framework-select"
-            @change="frameworkType = ($event.target as HTMLSelectElement).value as FrameworkType"
-          >
-            <option v-for="type in FRAMEWORK_TYPES" :key="type" :value="type">{{ type }}</option>
-          </select>
-        </div>
-
-        <div class="au-field">
-          <label class="au-field__label" for="create-project-website">网站地址（可选）</label>
-          <input
-            id="create-project-website"
-            class="au-field__input"
-            type="text"
-            :value="websiteUrl"
-            data-testid="project-website-input"
-            @input="websiteUrl = ($event.target as HTMLInputElement).value"
-          />
-          <p v-if="websiteUrlError !== null" class="au-field-error" data-testid="website-error">
-            {{ websiteUrlError }}
-          </p>
-        </div>
+        <AppSection title="项目设置" description="选择当前项目使用的框架，并可补充网站地址。" test-id="project-settings-section">
+          <div class="au-field">
+            <label class="au-field__label" for="create-project-framework">框架类型</label>
+            <select id="create-project-framework" class="au-field__input" :value="frameworkType" data-testid="project-framework-select" @change="frameworkType = ($event.target as HTMLSelectElement).value as FrameworkType">
+              <option v-for="type in FRAMEWORK_TYPES" :key="type" :value="type">{{ type }}</option>
+            </select>
+          </div>
+          <div class="au-field">
+            <label class="au-field__label" for="create-project-website">网站地址（可选）</label>
+            <input id="create-project-website" class="au-field__input" type="text" :value="websiteUrl" data-testid="project-website-input" @input="websiteUrl = ($event.target as HTMLInputElement).value" />
+            <p v-if="websiteUrlError !== null" class="au-field-error" data-testid="website-error">{{ websiteUrlError }}</p>
+          </div>
+        </AppSection>
 
         <AppButton
           type="submit"
@@ -247,7 +230,7 @@ function onEnterProject(): void {
   display: flex;
   flex-direction: column;
   gap: var(--space-4);
-  max-width: 42ch;
+  max-width: 720px;
 }
 .au-field {
   display: flex;

@@ -17,6 +17,8 @@ import { describeRequestError } from '../../api/feedback.js';
 import { useSessionStore } from '../../stores/session.js';
 import AppButton from '../../components/aurora/AppButton.vue';
 import AppPageHeader from '../../components/aurora/AppPageHeader.vue';
+import AppSection from '../../components/aurora/AppSection.vue';
+import AppSkeleton from '../../components/aurora/AppSkeleton.vue';
 import AppStatusBadge from '../../components/aurora/AppStatusBadge.vue';
 
 type OrgRole = 'owner' | 'admin' | 'member';
@@ -282,19 +284,16 @@ onMounted(() => {
 
 <template>
   <section class="au-surface" data-testid="members-view">
-    <AppPageHeader title="成员" />
+    <AppPageHeader title="成员" description="查看组织成员，并在具备权限时管理邀请和角色。" />
 
     <AppStatusBadge v-if="loadError !== null" tone="danger" data-testid="members-error">
       {{ loadError }}
     </AppStatusBadge>
 
-    <p v-else-if="loading" class="au-hint" role="status" data-testid="members-loading">
-      正在加载成员…
-    </p>
+    <AppSkeleton v-else-if="loading" label="正在加载成员…" :lines="4" data-testid="members-loading" />
 
     <template v-else>
-      <section class="au-section">
-        <h2 class="au-section-title">成员列表</h2>
+      <AppSection title="成员列表" description="电子邮箱以脱敏形式显示。">
         <ul v-if="members.length > 0" class="au-member-list" data-testid="member-list">
           <li
             v-for="member in members"
@@ -331,10 +330,9 @@ onMounted(() => {
           </li>
         </ul>
         <p v-else class="au-hint">暂无成员。</p>
-      </section>
+      </AppSection>
 
-      <section v-if="canManage" class="au-section" data-testid="members-manage">
-        <h2 class="au-section-title">邀请成员</h2>
+      <AppSection v-if="canManage" title="邀请成员" description="邀请仅在当前会话内列出，服务端会再次确认权限。" data-testid="members-manage">
         <form class="au-form" novalidate @submit.prevent="onInvite">
           <div class="au-field">
             <label class="au-field__label" for="invite-email">邮箱</label>
@@ -412,14 +410,14 @@ onMounted(() => {
           </li>
         </ul>
         <p v-else class="au-hint">本会话尚未创建邀请。</p>
-      </section>
+      </AppSection>
 
-      <section
+      <AppSection
         v-if="isOwner && transferableMembers.length > 0"
-        class="au-section"
+        title="转让所有权"
+        description="此操作会影响组织的管理权限。"
         data-testid="transfer-ownership"
       >
-        <h2 class="au-section-title">转让所有权</h2>
         <form class="au-form" novalidate @submit.prevent="onTransferOwnership">
           <div class="au-field">
             <label class="au-field__label" for="transfer-target">新所有者</label>
@@ -452,7 +450,7 @@ onMounted(() => {
             {{ transferError }}
           </AppStatusBadge>
         </form>
-      </section>
+      </AppSection>
     </template>
   </section>
 </template>
@@ -463,11 +461,6 @@ onMounted(() => {
 }
 .au-section {
   margin-bottom: var(--space-6);
-}
-.au-section-title {
-  margin: 0 0 var(--space-3);
-  font-size: 16px;
-  color: var(--color-text-primary);
 }
 .au-section-subtitle {
   margin: var(--space-4) 0 var(--space-2);

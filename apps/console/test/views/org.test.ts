@@ -100,6 +100,23 @@ describe('B1 workspace home (7A)', () => {
     expect(await screen.findByText('Web')).toBeTruthy();
     expect(screen.queryByTestId('create-project-button')).toBeNull();
   });
+
+  it('uses the workspace header, explicit organization scope, and project rows without fabricated metrics', async () => {
+    await router.push({ path: '/workspace', query: { organizationId: 'org_test_1' } });
+    await router.isReady();
+    render(WorkspaceHomeView, { global: { plugins: [pinia, router] } });
+
+    expect(await screen.findByTestId('workspace-home')).toBeTruthy();
+    expect(screen.getByText('在组织范围内选择和管理可访问项目。')).toBeTruthy();
+    expect(screen.getByTestId('organization-scope')).toBeTruthy();
+    expect(await screen.findByTestId('project-row')).toBeTruthy();
+    expect(screen.getByTestId('project-framework').textContent).toBe('Vue');
+    expect(screen.getByTestId('project-lifecycle').textContent).toBe('运行中');
+    expect(screen.getByTestId('open-project-prj_test_1').textContent).toContain('打开项目');
+    expect(screen.queryByText('健康分')).toBeNull();
+    expect(screen.queryByText('趋势')).toBeNull();
+    expect(screen.queryByTestId('workspace-metric')).toBeNull();
+  });
 });
 
 describe('B5 usage unavailable (7A)', () => {
@@ -122,6 +139,17 @@ describe('B5 usage unavailable (7A)', () => {
 });
 
 describe('B2 create project (7B)', () => {
+  it('separates basic and configuration fields beneath one page heading', async () => {
+    await router.push('/organizations/org_test_1/projects/new');
+    await router.isReady();
+    render(ProjectCreateView, { global: { plugins: [pinia, router] } });
+
+    expect(await screen.findByTestId('project-create-view')).toBeTruthy();
+    expect(screen.getAllByRole('heading', { level: 1 })).toHaveLength(1);
+    expect(await screen.findByTestId('project-basic-section')).toBeTruthy();
+    expect(screen.getByTestId('project-settings-section')).toBeTruthy();
+  });
+
   it('submits the form and shows the public client key identifier', async () => {
     await router.push('/organizations/org_test_1/projects/new');
     await router.isReady();

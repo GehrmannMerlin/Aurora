@@ -27,19 +27,22 @@ test.afterAll(async () => {
 test('B1 workspace home lists projects and honors allowedActions', async ({ page }) => {
   // Prime the app so the MSW worker is active, then sign in.
   await page.goto(`${server!.origin}/`);
-  await expect(page.getByRole('navigation', { name: '侧栏导航' })).toBeVisible();
+  await expect(page.getByRole('navigation', { name: '全局导航' })).toBeVisible();
   await setSessionAuthenticated(page, true);
 
   await page.goto(`${server!.origin}/workspace?organizationId=org_test_1`);
   await expect(page.getByTestId('workspace-home')).toBeVisible();
   await expect(page.getByRole('link', { name: 'Web', exact: true })).toBeVisible();
   await expect(page.getByTestId('create-project-button')).toBeVisible();
+  await expect(page.getByTestId('organization-scope')).toBeVisible();
+  await expect(page.getByTestId('project-row')).toBeVisible();
+  await expect(page.getByTestId('open-project-prj_test_1')).toHaveText('打开项目');
   await expect(new AxeBuilder({ page }).analyze()).resolves.toHaveProperty('violations', []);
 });
 
 test('B5 usage page shows an honest unavailable state', async ({ page }) => {
   await page.goto(`${server!.origin}/`);
-  await expect(page.getByRole('navigation', { name: '侧栏导航' })).toBeVisible();
+  await expect(page.getByRole('navigation', { name: '全局导航' })).toBeVisible();
   await setSessionAuthenticated(page, true);
 
   await page.goto(`${server!.origin}/organizations/org_test_1/usage`);
@@ -54,7 +57,7 @@ test('B5 usage page shows an honest unavailable state', async ({ page }) => {
 
 test('B2 create-project form succeeds and shows the public client key identifier', async ({ page }) => {
   await page.goto(`${server!.origin}/`);
-  await expect(page.getByRole('navigation', { name: '侧栏导航' })).toBeVisible();
+  await expect(page.getByRole('navigation', { name: '全局导航' })).toBeVisible();
   await setSessionAuthenticated(page, true);
 
   await page.goto(`${server!.origin}/organizations/org_test_1/projects/new`);
@@ -71,7 +74,7 @@ test('B2 create-project form succeeds and shows the public client key identifier
 
 test('B3 members lists masked emails and invites a member', async ({ page }) => {
   await page.goto(`${server!.origin}/`);
-  await expect(page.getByRole('navigation', { name: '侧栏导航' })).toBeVisible();
+  await expect(page.getByRole('navigation', { name: '全局导航' })).toBeVisible();
   await setSessionAuthenticated(page, true);
 
   await page.goto(`${server!.origin}/organizations/org_test_1/members`);
@@ -89,7 +92,7 @@ test('B3 members lists masked emails and invites a member', async ({ page }) => 
 
 test('B4 timezone settings updates the organization timezone', async ({ page }) => {
   await page.goto(`${server!.origin}/`);
-  await expect(page.getByRole('navigation', { name: '侧栏导航' })).toBeVisible();
+  await expect(page.getByRole('navigation', { name: '全局导航' })).toBeVisible();
   await setSessionAuthenticated(page, true);
 
   await page.goto(`${server!.origin}/organizations/org_test_1/settings`);
@@ -105,7 +108,7 @@ test('B6 tokens: list is metadata-only and the one-time plaintext is never re-di
   page,
 }) => {
   await page.goto(`${server!.origin}/`);
-  await expect(page.getByRole('navigation', { name: '侧栏导航' })).toBeVisible();
+  await expect(page.getByRole('navigation', { name: '全局导航' })).toBeVisible();
   await setSessionAuthenticated(page, true);
 
   await page.goto(`${server!.origin}/organizations/org_test_1/tokens`);
@@ -150,7 +153,7 @@ test('B6 tokens: list is metadata-only and the one-time plaintext is never re-di
 
 test('B7 audit shows a redacted security timeline', async ({ page }) => {
   await page.goto(`${server!.origin}/`);
-  await expect(page.getByRole('navigation', { name: '侧栏导航' })).toBeVisible();
+  await expect(page.getByRole('navigation', { name: '全局导航' })).toBeVisible();
   await setSessionAuthenticated(page, true);
 
   await page.goto(`${server!.origin}/organizations/org_test_1/audit`);
@@ -164,7 +167,7 @@ test('B7 audit shows a redacted security timeline', async ({ page }) => {
 
 test('B8 trash lists recoverable projects and restores one', async ({ page }) => {
   await page.goto(`${server!.origin}/`);
-  await expect(page.getByRole('navigation', { name: '侧栏导航' })).toBeVisible();
+  await expect(page.getByRole('navigation', { name: '全局导航' })).toBeVisible();
   await setSessionAuthenticated(page, true);
 
   await page.goto(`${server!.origin}/organizations/org_test_1/trash`);

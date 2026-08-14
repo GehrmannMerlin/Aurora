@@ -2,6 +2,7 @@
 import { computed } from 'vue';
 import { useRoute } from 'vue-router';
 import AppPageHeader from '../../components/aurora/AppPageHeader.vue';
+import AppSection from '../../components/aurora/AppSection.vue';
 import AppStatusBadge from '../../components/aurora/AppStatusBadge.vue';
 
 const route = useRoute();
@@ -17,10 +18,12 @@ const organizationId = computed(() => {
 
 <template>
   <section class="au-status au-surface" data-testid="usage-view">
-    <AppPageHeader title="用量" />
-    <AppStatusBadge tone="warning">功能未提供</AppStatusBadge>
-    <p class="au-status-detail">资源用量上报尚未提供；此处不会显示任何模拟数据或图表。</p>
-    <p v-if="organizationId !== null" class="au-status-scope">组织 {{ organizationId }}</p>
+    <AppPageHeader title="用量" description="组织资源事实将在契约支持后显示。" />
+    <AppSection title="资源用量" description="当前没有可用的用量查询能力。" tone="warning" data-testid="usage-unavailable-section">
+      <AppStatusBadge tone="warning">功能未提供</AppStatusBadge>
+      <p class="au-status-detail">资源用量上报尚未提供；此处不会显示任何模拟数据、趋势、预测、账单或升级信息。</p>
+      <p v-if="organizationId !== null" class="au-status-scope">组织 {{ organizationId }}</p>
+    </AppSection>
   </section>
 </template>
 
