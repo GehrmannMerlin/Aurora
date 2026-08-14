@@ -17,7 +17,7 @@ const view = computed<'workspace' | 'unavailable' | 'auth'>(() => {
 </script>
 
 <template>
-  <main class="root-view" aria-live="polite">
+  <div class="root-view" aria-live="polite">
     <WorkspaceHomeView v-if="view === 'workspace'" />
     <UnavailableView
       v-else-if="view === 'unavailable'"
@@ -26,5 +26,5 @@ const view = computed<'workspace' | 'unavailable' | 'auth'>(() => {
       detail="平台认证后端尚未实现；会话以安全不可用状态展示，不会伪造登录。"
     />
     <AuthUnavailableView v-else />
-  </main>
+  </div>
 </template>

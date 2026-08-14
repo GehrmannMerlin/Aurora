@@ -324,7 +324,7 @@ async function onRequestDeletionEmail(): Promise<void> {
 </script>
 
 <template>
-  <main class="account-security-page" data-testid="account-security-view">
+  <div class="account-security-page" data-testid="account-security-view">
     <AppPageHeader
       title="账号安全"
       description="管理当前账号的凭据、会话和注销申请。高风险操作须由服务端完成确认。"
@@ -503,7 +503,7 @@ async function onRequestDeletionEmail(): Promise<void> {
       </AuthStatusBanner>
       </AppSection>
     </div>
-  </main>
+  </div>
 </template>
 
 <style scoped>
