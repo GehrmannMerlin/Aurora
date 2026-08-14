@@ -28,6 +28,7 @@ export interface ClaimOutboxRowsInput {
   readonly limit: number;
   readonly now: Date;
   readonly processingTimeoutMs: number;
+  readonly maxAttempts: number;
 }
 
 export type ClaimOutboxRowsResult =
@@ -229,99 +230,108 @@ export async function consumeOutboxEmails(
     limit,
     now: input.now,
     processingTimeoutMs,
+    maxAttempts,
   });
   if (claimed.status === 'nothingToClaim') return { consumed: 0, failed: 0 };
 
   let consumed = 0;
   let failed = 0;
-  for (const row of claimed.rows) {
-    const nextAttempt = row.attemptCount + 1;
-    let payload: OutboxEmailPayload;
-    try {
-      payload = parseOutboxEmailPayload(row.payload);
-    } catch {
+  await Promise.all(
+    claimed.rows.map(async (row) => {
+      const currentAttempt = row.attemptCount;
+      let payload: OutboxEmailPayload;
+      try {
+        payload = parseOutboxEmailPayload(row.payload);
+      } catch {
+        if (
+          await settle(
+            input,
+            row,
+            invalidPayloadSettlement(currentAttempt, 'EMAIL_PAYLOAD_INVALID'),
+          )
+        ) {
+          failed += 1;
+        }
+        return;
+      }
+
       if (
-        await settle(input, row, invalidPayloadSettlement(nextAttempt, 'EMAIL_PAYLOAD_INVALID'))
+        payload.intentExpiresAt !== undefined &&
+        Date.parse(payload.intentExpiresAt) <= input.now.getTime()
       ) {
-        failed += 1;
+        if (
+          await settle(input, row, invalidPayloadSettlement(currentAttempt, 'EMAIL_INTENT_EXPIRED'))
+        ) {
+          failed += 1;
+        }
+        return;
       }
-      continue;
-    }
 
-    if (
-      payload.intentExpiresAt !== undefined &&
-      Date.parse(payload.intentExpiresAt) <= input.now.getTime()
-    ) {
-      if (await settle(input, row, invalidPayloadSettlement(nextAttempt, 'EMAIL_INTENT_EXPIRED'))) {
-        failed += 1;
+      let delivery: EmailDeliveryResult;
+      try {
+        delivery = await input.port.deliver({
+          intentType: payload.intentType,
+          toAddress: payload.toAddress,
+          toAddressMasked: payload.toMasked,
+          mailLinkUrl: payload.mailLinkUrl,
+          expiresInMinutes: payload.expiresInMinutes,
+        });
+      } catch {
+        delivery = {
+          status: 'failed',
+          retryable: true,
+          reasonCode: 'EMAIL_PROVIDER_UNAVAILABLE',
+        };
       }
-      continue;
-    }
 
-    let delivery: EmailDeliveryResult;
-    try {
-      delivery = await input.port.deliver({
-        intentType: payload.intentType,
-        toAddress: payload.toAddress,
-        toAddressMasked: payload.toMasked,
-        mailLinkUrl: payload.mailLinkUrl,
-        expiresInMinutes: payload.expiresInMinutes,
+      if (delivery.status === 'accepted') {
+        const providerRequestId = stableProviderRequestId(delivery.providerRequestId);
+        if (
+          await settle(input, row, {
+            status: 'succeeded',
+            attemptCount: currentAttempt,
+            ...(providerRequestId === undefined ? {} : { providerRequestId }),
+            clearPayload: true,
+          })
+        ) {
+          consumed += 1;
+        }
+        return;
+      }
+
+      const errorCode = stableReasonCode(delivery.reasonCode);
+      if (!delivery.retryable || currentAttempt >= maxAttempts) {
+        if (
+          await settle(input, row, {
+            status: 'dead_lettered',
+            attemptCount: currentAttempt,
+            errorCode,
+            clearPayload: true,
+          })
+        ) {
+          failed += 1;
+        }
+        return;
+      }
+
+      const delayMs = calculateEmailRetryDelay({
+        attempt: currentAttempt,
+        baseDelayMs: retryBaseDelayMs,
+        maxDelayMs: retryMaxDelayMs,
+        entropy01: input.entropy01?.() ?? Math.random(),
       });
-    } catch {
-      delivery = {
-        status: 'failed',
-        retryable: true,
-        reasonCode: 'EMAIL_PROVIDER_UNAVAILABLE',
-      };
-    }
-
-    if (delivery.status === 'accepted') {
-      const providerRequestId = stableProviderRequestId(delivery.providerRequestId);
       if (
         await settle(input, row, {
-          status: 'succeeded',
-          attemptCount: nextAttempt,
-          ...(providerRequestId === undefined ? {} : { providerRequestId }),
-          clearPayload: true,
-        })
-      ) {
-        consumed += 1;
-      }
-      continue;
-    }
-
-    const errorCode = stableReasonCode(delivery.reasonCode);
-    if (!delivery.retryable || nextAttempt >= maxAttempts) {
-      if (
-        await settle(input, row, {
-          status: 'dead_lettered',
-          attemptCount: nextAttempt,
+          status: 'failed',
+          attemptCount: currentAttempt,
+          availableAt: new Date(input.now.getTime() + delayMs),
           errorCode,
-          clearPayload: true,
+          clearPayload: false,
         })
       ) {
         failed += 1;
       }
-      continue;
-    }
-
-    const delayMs = calculateEmailRetryDelay({
-      attempt: nextAttempt,
-      baseDelayMs: retryBaseDelayMs,
-      maxDelayMs: retryMaxDelayMs,
-      entropy01: input.entropy01?.() ?? Math.random(),
-    });
-    if (
-      await settle(input, row, {
-        status: 'failed',
-        attemptCount: nextAttempt,
-        availableAt: new Date(input.now.getTime() + delayMs),
-        errorCode,
-        clearPayload: false,
-      })
-    ) {
-      failed += 1;
-    }
-  }
+    }),
+  );
   return { consumed, failed };
 }

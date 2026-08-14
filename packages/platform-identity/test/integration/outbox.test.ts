@@ -55,9 +55,11 @@ describeDb('platform-identity outbox repository (real PostgreSQL 17)', () => {
       status: string;
       attempt_count: number;
       claim_id: string | null;
-    }>(pool, 'SELECT aggregate_type, status, attempt_count, claim_id FROM outbox WHERE outbox_id = $1', [
-      result.outboxId,
-    ]);
+    }>(
+      pool,
+      'SELECT aggregate_type, status, attempt_count, claim_id FROM outbox WHERE outbox_id = $1',
+      [result.outboxId],
+    );
     expect(row).toEqual({
       aggregate_type: 'email.verification',
       status: 'pending',
@@ -154,6 +156,7 @@ describeDb('platform-identity outbox repository (real PostgreSQL 17)', () => {
       limit: 10,
       now,
       processingTimeoutMs: PROCESSING_TIMEOUT_MS,
+      maxAttempts: 5,
     });
     expect(claimed.status).toBe('claimed');
     if (claimed.status !== 'claimed') return;
@@ -162,6 +165,7 @@ describeDb('platform-identity outbox repository (real PostgreSQL 17)', () => {
     );
     for (const row of claimed.rows) {
       expect(row.status).toBe('processing');
+      expect(row.attemptCount).toBe(1);
       expect(row.claimId).toMatch(/^[0-9a-f-]{36}$/);
     }
     expect(new Set(claimed.rows.map((row) => row.claimId)).size).toBe(2);
@@ -188,7 +192,12 @@ describeDb('platform-identity outbox repository (real PostgreSQL 17)', () => {
     );
 
     await expect(
-      claimOutboxRows(pool, { limit: 10, now, processingTimeoutMs: PROCESSING_TIMEOUT_MS }),
+      claimOutboxRows(pool, {
+        limit: 10,
+        now,
+        processingTimeoutMs: PROCESSING_TIMEOUT_MS,
+        maxAttempts: 5,
+      }),
     ).resolves.toEqual({ status: 'nothingToClaim' });
   });
 
@@ -203,6 +212,7 @@ describeDb('platform-identity outbox repository (real PostgreSQL 17)', () => {
       limit: 1,
       now: firstNow,
       processingTimeoutMs: PROCESSING_TIMEOUT_MS,
+      maxAttempts: 5,
     });
     if (first.status !== 'claimed') throw new Error('expected first claim');
     const firstClaimId = first.rows[0]?.claimId;
@@ -211,10 +221,70 @@ describeDb('platform-identity outbox repository (real PostgreSQL 17)', () => {
       limit: 1,
       now: new Date(firstNow.getTime() + PROCESSING_TIMEOUT_MS + 1),
       processingTimeoutMs: PROCESSING_TIMEOUT_MS,
+      maxAttempts: 5,
     });
     if (second.status !== 'claimed') throw new Error('expected stale reclaim');
     expect(second.rows[0]?.outboxId).toBe(inserted.outboxId);
     expect(second.rows[0]?.claimId).not.toBe(firstClaimId);
+    expect(second.rows[0]?.attemptCount).toBe(2);
+  });
+
+  it('durably consumes the attempt budget on claim and scrubs a crashed final attempt', async () => {
+    await pool.query('DELETE FROM outbox');
+    const inserted = await insertOutboxRow(pool, {
+      aggregateType: 'email.verification',
+      payload: { token: 'transient' },
+    });
+    const firstNow = claimNow();
+    const first = await claimOutboxRows(pool, {
+      limit: 1,
+      now: firstNow,
+      processingTimeoutMs: PROCESSING_TIMEOUT_MS,
+      maxAttempts: 2,
+    });
+    if (first.status !== 'claimed' || first.rows[0] === undefined)
+      throw new Error('expected claim');
+    expect(first.rows[0].attemptCount).toBe(1);
+
+    const secondNow = new Date(firstNow.getTime() + PROCESSING_TIMEOUT_MS + 1);
+    const second = await claimOutboxRows(pool, {
+      limit: 1,
+      now: secondNow,
+      processingTimeoutMs: PROCESSING_TIMEOUT_MS,
+      maxAttempts: 2,
+    });
+    if (second.status !== 'claimed' || second.rows[0] === undefined) {
+      throw new Error('expected final claim');
+    }
+    expect(second.rows[0].attemptCount).toBe(2);
+
+    await expect(
+      claimOutboxRows(pool, {
+        limit: 1,
+        now: new Date(secondNow.getTime() + PROCESSING_TIMEOUT_MS + 1),
+        processingTimeoutMs: PROCESSING_TIMEOUT_MS,
+        maxAttempts: 2,
+      }),
+    ).resolves.toEqual({ status: 'nothingToClaim' });
+    const terminal = await queryRow<{
+      status: string;
+      attempt_count: number;
+      payload: unknown;
+      claim_id: string | null;
+      last_error_code: string | null;
+    }>(
+      pool,
+      `SELECT status, attempt_count, payload, claim_id, last_error_code
+       FROM outbox WHERE outbox_id = $1`,
+      [inserted.outboxId],
+    );
+    expect(terminal).toEqual({
+      status: 'dead_lettered',
+      attempt_count: 2,
+      payload: {},
+      claim_id: null,
+      last_error_code: 'EMAIL_ATTEMPTS_EXHAUSTED',
+    });
   });
 
   it('settles only the current claim, supports retry timing, and clears claim metadata', async () => {
@@ -228,6 +298,7 @@ describeDb('platform-identity outbox repository (real PostgreSQL 17)', () => {
       limit: 1,
       now,
       processingTimeoutMs: PROCESSING_TIMEOUT_MS,
+      maxAttempts: 5,
     });
     if (claimed.status !== 'claimed' || claimed.rows[0] === undefined) {
       throw new Error('expected claim');
@@ -277,6 +348,7 @@ describeDb('platform-identity outbox repository (real PostgreSQL 17)', () => {
         limit: 1,
         now: claimNow(),
         processingTimeoutMs: PROCESSING_TIMEOUT_MS,
+        maxAttempts: 5,
       });
       if (claimed.status !== 'claimed' || claimed.rows[0] === undefined) {
         throw new Error('expected claim');
@@ -296,9 +368,11 @@ describeDb('platform-identity outbox repository (real PostgreSQL 17)', () => {
         payload: unknown;
         claim_id: string | null;
         provider_request_id: string | null;
-      }>(pool, 'SELECT status, payload, claim_id, provider_request_id FROM outbox WHERE outbox_id = $1', [
-        inserted.outboxId,
-      ]);
+      }>(
+        pool,
+        'SELECT status, payload, claim_id, provider_request_id FROM outbox WHERE outbox_id = $1',
+        [inserted.outboxId],
+      );
       expect(row).toEqual({
         status,
         payload: {},
@@ -319,12 +393,15 @@ describeDb('platform-identity outbox repository (real PostgreSQL 17)', () => {
       limit: 1,
       now: firstNow,
       processingTimeoutMs: PROCESSING_TIMEOUT_MS,
+      maxAttempts: 5,
     });
-    if (first.status !== 'claimed' || first.rows[0] === undefined) throw new Error('expected claim');
+    if (first.status !== 'claimed' || first.rows[0] === undefined)
+      throw new Error('expected claim');
     const second = await claimOutboxRows(pool, {
       limit: 1,
       now: new Date(firstNow.getTime() + PROCESSING_TIMEOUT_MS + 1),
       processingTimeoutMs: PROCESSING_TIMEOUT_MS,
+      maxAttempts: 5,
     });
     if (second.status !== 'claimed' || second.rows[0] === undefined) {
       throw new Error('expected reclaim');
@@ -361,13 +438,36 @@ describeDb('platform-identity outbox repository (real PostgreSQL 17)', () => {
 
   it('validates claim bounds and processing timeout', async () => {
     await expect(
-      claimOutboxRows(pool, { limit: 0, now: new Date(), processingTimeoutMs: 1 }),
+      claimOutboxRows(pool, {
+        limit: 0,
+        now: new Date(),
+        processingTimeoutMs: 1,
+        maxAttempts: 5,
+      }),
     ).rejects.toMatchObject({ kind: 'invalid_input' });
     await expect(
-      claimOutboxRows(pool, { limit: 101, now: new Date(), processingTimeoutMs: 1 }),
+      claimOutboxRows(pool, {
+        limit: 101,
+        now: new Date(),
+        processingTimeoutMs: 1,
+        maxAttempts: 5,
+      }),
     ).rejects.toMatchObject({ kind: 'invalid_input' });
     await expect(
-      claimOutboxRows(pool, { limit: 1, now: new Date(), processingTimeoutMs: 0 }),
+      claimOutboxRows(pool, {
+        limit: 1,
+        now: new Date(),
+        processingTimeoutMs: 0,
+        maxAttempts: 5,
+      }),
+    ).rejects.toMatchObject({ kind: 'invalid_input' });
+    await expect(
+      claimOutboxRows(pool, {
+        limit: 1,
+        now: new Date(),
+        processingTimeoutMs: 1,
+        maxAttempts: 0,
+      }),
     ).rejects.toMatchObject({ kind: 'invalid_input' });
   });
 

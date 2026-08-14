@@ -29,7 +29,7 @@ function row(
     aggregateType: 'email.verification',
     aggregateId: null,
     status: 'processing',
-    attemptCount: 0,
+    attemptCount: 1,
     claimId: 'claim-1',
     lastErrorCode: null,
     providerRequestId: null,
@@ -90,6 +90,7 @@ describe('consumeOutboxEmails', () => {
       limit: 20,
       now: NOW,
       processingTimeoutMs: 300_000,
+      maxAttempts: 5,
     });
   });
 
@@ -133,8 +134,8 @@ describe('consumeOutboxEmails', () => {
       outboxId: 'row-1',
       claimId: 'claim-1',
       status: 'failed',
-      attemptCount: 2,
-      availableAt: new Date(NOW.getTime() + 1_000),
+      attemptCount: 1,
+      availableAt: new Date(NOW.getTime() + 500),
       errorCode: 'EMAIL_PROVIDER_UNAVAILABLE',
       clearPayload: false,
     });
@@ -143,7 +144,7 @@ describe('consumeOutboxEmails', () => {
   it('dead-letters and scrubs a retryable failure at attempt five', async () => {
     const { repo, markOutboxResult } = repoWith({
       status: 'claimed',
-      rows: [row({ attemptCount: 4 })],
+      rows: [row({ attemptCount: 5 })],
     });
     const deliver = vi.fn().mockResolvedValue({
       status: 'failed',
@@ -255,5 +256,29 @@ describe('consumeOutboxEmails', () => {
       consumed: 0,
       failed: 0,
     });
+  });
+
+  it('starts every row in the bounded claimed batch before slow deliveries settle', async () => {
+    const { repo } = repoWith({
+      status: 'claimed',
+      rows: [
+        row({ outboxId: 'row-1', claimId: 'claim-1' }),
+        row({ outboxId: 'row-2', claimId: 'claim-2' }),
+      ],
+    });
+    let active = 0;
+    let maxActive = 0;
+    const deliver = vi.fn(async () => {
+      active += 1;
+      maxActive = Math.max(maxActive, active);
+      await new Promise((resolve) => setTimeout(resolve, 20));
+      active -= 1;
+      return { status: 'accepted' as const };
+    });
+
+    await consumeOutboxEmails({ ...consumeInput(repo, { deliver }), limit: 2 });
+
+    expect(deliver).toHaveBeenCalledTimes(2);
+    expect(maxActive).toBe(2);
   });
 });

@@ -41,6 +41,7 @@ export interface ClaimOutboxRowsInput {
   readonly limit: number;
   readonly now: Date;
   readonly processingTimeoutMs: number;
+  readonly maxAttempts: number;
 }
 
 export type ClaimOutboxRowsResult =
@@ -155,24 +156,48 @@ function validateClaimInput(input: ClaimOutboxRowsInput): void {
     );
   }
   validatePositiveDuration(input.processingTimeoutMs, 'processingTimeoutMs');
+  validatePositiveDuration(input.maxAttempts, 'maxAttempts');
 }
 
 const CLAIM_SQL = `
-  UPDATE outbox
-  SET status = 'processing', claim_id = gen_random_uuid(), updated_at = $2
-  WHERE outbox_id IN (
+  WITH exhausted AS (
+    UPDATE outbox
+    SET status = 'dead_lettered',
+        payload = '{}'::jsonb,
+        claim_id = NULL,
+        last_error_code = COALESCE(last_error_code, 'EMAIL_ATTEMPTS_EXHAUSTED'),
+        updated_at = $2::timestamptz
+    WHERE attempt_count >= $4
+      AND (
+        status IN ('pending', 'failed')
+        OR
+        (status = 'processing' AND updated_at <= $2::timestamptz - ($3::bigint * interval '1 millisecond'))
+      )
+    RETURNING outbox_id
+  ),
+  claimable AS (
     SELECT outbox_id FROM outbox
-    WHERE
-      (status IN ('pending', 'failed') AND available_at <= $2)
-      OR
-      (status = 'processing' AND updated_at <= $2 - ($3::bigint * interval '1 millisecond'))
+    WHERE attempt_count < $4
+      AND (
+        (status IN ('pending', 'failed') AND available_at <= $2::timestamptz)
+        OR
+        (status = 'processing' AND updated_at <= $2::timestamptz - ($3::bigint * interval '1 millisecond'))
+      )
     ORDER BY outbox_id
     LIMIT $1
     FOR UPDATE SKIP LOCKED
   )
-  RETURNING outbox_id, aggregate_type, aggregate_id, payload, status,
-            attempt_count, claim_id, last_error_code, provider_request_id,
-            available_at, created_at, updated_at
+  UPDATE outbox AS target
+  SET status = 'processing',
+      claim_id = gen_random_uuid(),
+      attempt_count = target.attempt_count + 1,
+      updated_at = $2::timestamptz
+  FROM claimable
+  WHERE target.outbox_id = claimable.outbox_id
+  RETURNING target.outbox_id, target.aggregate_type, target.aggregate_id,
+            target.payload, target.status, target.attempt_count, target.claim_id,
+            target.last_error_code, target.provider_request_id,
+            target.available_at, target.created_at, target.updated_at
 `;
 
 /** Claim available or stale outbox rows with a fresh fencing UUID. */
@@ -186,6 +211,7 @@ export async function claimOutboxRows(
       input.limit,
       input.now.toISOString(),
       input.processingTimeoutMs,
+      input.maxAttempts,
     ]);
     if (result.rows.length === 0) return { status: 'nothingToClaim' };
     return { status: 'claimed', rows: result.rows.map(toOutboxRow) };

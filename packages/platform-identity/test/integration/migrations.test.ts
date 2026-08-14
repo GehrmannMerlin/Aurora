@@ -65,8 +65,27 @@ describeDb('platform-identity migrations (real PostgreSQL 17)', () => {
     await pool.end();
   });
 
-  it('runs up on an empty schema and records the migration', async () => {
+  it('scrubs historical terminal email payloads in a forward-only migration', async () => {
     const executed = await runner({
+      databaseUrl: testDatabaseUrl(),
+      dir: migrationsDir,
+      direction: 'up',
+      migrationsTable: 'pgmigrations',
+      count: 4,
+      log: () => undefined,
+    });
+    expect(executed).toHaveLength(4);
+
+    const seeded = await pool.query<{ outbox_id: string; aggregate_type: string }>(
+      `INSERT INTO outbox (aggregate_type, payload, status)
+       VALUES
+         ('email.verification', '{"token":"terminal-success"}'::jsonb, 'succeeded'),
+         ('email.password_reset', '{"token":"terminal-dead"}'::jsonb, 'dead_lettered'),
+         ('email.verification', '{"token":"still-pending"}'::jsonb, 'pending'),
+         ('audit.export', '{"marker":"not-email"}'::jsonb, 'succeeded')
+       RETURNING outbox_id, aggregate_type`,
+    );
+    const remaining = await runner({
       databaseUrl: testDatabaseUrl(),
       dir: migrationsDir,
       direction: 'up',
@@ -74,13 +93,35 @@ describeDb('platform-identity migrations (real PostgreSQL 17)', () => {
       count: Infinity,
       log: () => undefined,
     });
-    expect(executed.length).toBeGreaterThanOrEqual(1);
-    const rows = await queryRows<MigrationRow>(pool, 'SELECT name FROM pgmigrations ORDER BY id');
-    expect(rows.map((row) => row.name)).toEqual(
+    expect(remaining.map((migration) => migration.name)).toEqual([
+      '1786669200000_scrub-terminal-email-outbox-payloads',
+    ]);
+
+    const rows = await queryRows<{ outbox_id: string; aggregate_type: string; payload: unknown }>(
+      pool,
+      `SELECT outbox_id, aggregate_type, payload
+       FROM outbox WHERE outbox_id = ANY($1::uuid[]) ORDER BY aggregate_type, outbox_id`,
+      [seeded.rows.map((row) => row.outbox_id)],
+    );
+    const byType = new Map(rows.map((row) => [row.aggregate_type, row.payload]));
+    expect(byType.get('email.password_reset')).toEqual({});
+    expect(byType.get('audit.export')).toEqual({ marker: 'not-email' });
+    const verificationPayloads = rows
+      .filter((row) => row.aggregate_type === 'email.verification')
+      .map((row) => row.payload);
+    expect(verificationPayloads).toContainEqual({});
+    expect(verificationPayloads).toContainEqual({ token: 'still-pending' });
+
+    const migrationRows = await queryRows<MigrationRow>(
+      pool,
+      'SELECT name FROM pgmigrations ORDER BY id',
+    );
+    expect(migrationRows.map((row) => row.name)).toEqual(
       expect.arrayContaining([
         '1786233600000_create-platform-identity-tables',
         '1786244000000_account-deletion',
         '1786665600000_email-verification-resend-and-outbox-reliability',
+        '1786669200000_scrub-terminal-email-outbox-payloads',
       ]),
     );
   });
