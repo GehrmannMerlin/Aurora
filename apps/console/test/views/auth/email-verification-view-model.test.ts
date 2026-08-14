@@ -42,4 +42,29 @@ describe('email verification resend view model', () => {
       }),
     ).toEqual({ kind: 'ready' });
   });
+
+  it('fails closed for malformed server timestamps and never rewinds elapsed time', () => {
+    expect(
+      estimateServerNow({
+        serverTime: 'not-a-timestamp',
+        observedClientTime: new Date('2026-08-14T09:00:05.000Z'),
+        clientNow: new Date('2026-08-14T09:00:00.000Z'),
+      }).toISOString(),
+    ).toBe('2026-08-14T09:00:00.000Z');
+
+    expect(
+      deriveResendState({
+        serverTime: 'not-a-timestamp',
+        resendAvailableAt: '2026-08-14T01:00:01.000Z',
+        clientNow: new Date('2026-08-14T09:00:00.000Z'),
+      }),
+    ).toEqual({ kind: 'ready' });
+    expect(
+      deriveResendState({
+        serverTime: '2026-08-14T01:00:00.000Z',
+        resendAvailableAt: 'not-a-timestamp',
+        clientNow: new Date('2026-08-14T09:00:00.000Z'),
+      }),
+    ).toEqual({ kind: 'ready' });
+  });
 });

@@ -35,7 +35,10 @@ export default defineConfig({
     coverage: {
       provider: 'v8',
       include: ['src/**/*.ts'],
-      exclude: ['src/main.ts'],
+      // MSW handlers are test/dev fixtures, not production application code.
+      // Their behavior is covered by unit/browser tests but must not dilute the
+      // production TypeScript coverage denominator.
+      exclude: ['src/main.ts', 'src/mocks/**'],
       reporter: ['text', 'json-summary'],
       thresholds: { branches: 75, functions: 80, lines: 80, statements: 80 },
     },

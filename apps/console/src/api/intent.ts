@@ -51,7 +51,14 @@ export async function fetchIntentLink(
       credentials: 'same-origin',
     });
   } catch (error) {
-    if (error instanceof Error && error.name === 'AbortError') throw error;
+    if (
+      typeof error === 'object' &&
+      error !== null &&
+      'name' in error &&
+      error.name === 'AbortError'
+    ) {
+      throw error;
+    }
     throw new ApiError({ code: 'network_error', message: 'Network request failed.' });
   }
   const raw: unknown = await response.json().catch(() => null);
