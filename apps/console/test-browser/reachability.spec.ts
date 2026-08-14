@@ -314,6 +314,32 @@ test('a nav entry is reachable by keyboard (focus + Enter)', async ({ page }) =>
   await expect(page).toHaveURL(/\/organizations\/org_test_1\/projects\/prj_test_1\/overview$/);
   await expect(page.getByTestId('project-overview-view')).toBeVisible();
 });
+
+test('project monitoring entry pages expose the calm authority, evidence, and action hierarchy', async ({
+  page,
+}) => {
+  await page.goto(`${server!.origin}/`);
+  await waitForShell(page);
+  await setMockScope(page, 'project', 'prj_test_1');
+
+  await page.goto(`${server!.origin}/organizations/org_test_1/projects/prj_test_1/overview`);
+  await expect(page.getByTestId('overview-status')).toBeVisible();
+  await expect(page.getByTestId('overview-evidence')).toBeVisible();
+  await expect(page.getByTestId('overview-actions')).toBeVisible();
+  await expect(page.getByText('正在接收', { exact: true })).toBeVisible();
+  await expect(page.getByText('project.requests', { exact: true })).toHaveCount(0);
+  await expect(page.locator('svg[role="img"], canvas')).toHaveCount(0);
+
+  await page.goto(`${server!.origin}/organizations/org_test_1/projects/prj_test_1/onboarding`);
+  await expect(page.getByTestId('onboarding-guide')).toBeVisible();
+  await expect(page.locator('.mon-onboarding-sequence pre')).toHaveCount(2);
+
+  await page.goto(`${server!.origin}/organizations/org_test_1/projects/prj_test_1/data-status`);
+  await expect(page.getByTestId('ds-authority')).toBeVisible();
+  await expect(page.getByTestId('ds-stages')).toBeVisible();
+  await expect(page.getByTestId('ds-trust-evidence')).toBeVisible();
+  await expect(page.getByTestId('ds-actions')).toBeVisible();
+});
 test('platform G13 resource-policy target renders the real D2 view (not an unavailable stub)', async ({
   page,
 }) => {

@@ -37,3 +37,16 @@ test('the authenticated shell passes axe auto-checks', async ({ page }) => {
   const results = await new AxeBuilder({ page }).analyze();
   expect(results.violations).toEqual([]);
 });
+
+test('project monitoring entry evidence surfaces pass axe auto-checks', async ({ page }) => {
+  await page.goto(`${server!.origin}/`);
+  await waitForShell(page);
+  await setProjectScope(page);
+
+  for (const path of ['onboarding', 'overview', 'data-status']) {
+    await page.goto(`${server!.origin}/organizations/org_test_1/projects/prj_test_1/${path}`);
+    await expect(page.locator('main')).toBeVisible();
+    const results = await new AxeBuilder({ page }).analyze();
+    expect(results.violations).toEqual([]);
+  }
+});
