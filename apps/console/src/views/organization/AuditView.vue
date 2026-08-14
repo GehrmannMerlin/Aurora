@@ -225,11 +225,13 @@ function auditActionLabel(action: string): string {
               <span class="au-audit-attr" data-testid="audit-timestamp">UTC · {{ formatDate(event.occurredAt) }}</span>
               <span class="au-audit-attr" data-testid="audit-actor">{{ event.actorMasked }}</span>
               <span v-if="event.targetProjectRef !== undefined" class="au-audit-attr">
-                项目 {{ event.targetProjectRef.projectId }}
+                涉及项目
               </span>
               <AppTechnicalDetails summary="技术详情" data-testid="audit-technical-details">操作键: {{ event.action }}
 结果键: {{ event.result }}
 时间戳 (UTC): {{ event.occurredAt }}
+<template v-if="event.targetProjectRef !== undefined">目标项目 ID: {{ event.targetProjectRef.projectId }}
+</template>
 事件 ID: {{ event.eventId }}</AppTechnicalDetails>
             </div>
           </li>

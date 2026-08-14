@@ -77,7 +77,7 @@ Command 使用唯一业务操作上下文、幂等键和资源版本；提交期
 - PrimeVue 组件需要统一封装焦点、错误关联、密度、主题和语义，不把视觉状态当业务枚举；
 - WCAG 2.2 AA、键盘顺序、焦点恢复、缩放、屏幕阅读器和非颜色状态表达是发布门禁。
 
-当前批准视觉语言为单一浅色 `Calm Observability`：`#101828` 深石墨窄全局栏、`#F2F4F7` 冷灰组织/项目上下文侧栏、`#F7F8FA` 浅色画布、白色工作表面、钴蓝主操作与独立语义色；内容遵循“状态 → 证据 → 行动”和平衡证据密度。正式表面禁止装饰性渐变、纹理、光晕和玻璃拟态。完整令牌、双层壳层、页面族、状态和适配边界见[Console UX/UI 全面重设计](../superpowers/specs/2026-08-14-aurora-console-ux-ui-redesign-design.md)。代码已在 feature branch 实施、未部署；Chromium 全量浏览器门禁和桌面三引擎矩阵分片已有证据，最终移动可达性矩阵与整合复验仍 partial，不能写成完整发布验证。
+当前批准视觉语言为单一浅色 `Calm Observability`：`#101828` 深石墨窄全局栏、`#F2F4F7` 冷灰组织/项目上下文侧栏、`#F7F8FA` 浅色画布、白色工作表面、钴蓝主操作与独立语义色；内容遵循“状态 → 证据 → 行动”和平衡证据密度。正式表面禁止装饰性渐变、纹理、光晕和玻璃拟态。完整令牌、双层壳层、共享组件、页面族、状态和适配边界见[Console UX/UI 全面重设计](../superpowers/specs/2026-08-14-aurora-console-ux-ui-redesign-design.md)。真实令牌、共享组件、截图基线和业务页面已在 feature branch 实施、未部署，状态为 `implemented-in-feature-branch / final-verification-partial`；Chromium 全量浏览器门禁和桌面三引擎矩阵分片已有证据，最终移动可达性矩阵与整合复验仍 partial，不能写成完整发布验证。
 
 ## 6. 质量与性能
 
@@ -87,4 +87,4 @@ Command 使用唯一业务操作上下文、幂等键和资源版本；提交期
 
 ## 7. 实施门禁
 
-总体 OpenAPI、实现约束和控制台视觉语言设计已批准，但机器 Platform OpenAPI、`platform-contract`、生成 Client、稳定领域错误/Operation Schema、权限投影实现、请求缓存、设计令牌主题和组件实现仍不存在；前端技术栈与依赖检查仍需相应 accepted ADR，真实浏览器和性能基准也不存在。因此本文是 approved 架构设计，不是可直接实现的授权。首个前端增量必须先交付 Session 恢复、Route Target、路由注册表、分层壳层、作用域切换和可达性测试，并让公共壳层落实已批准视觉令牌，不能先并行制造互相独立的业务页面。
+总体 OpenAPI、`platform-contract`、生成 Client、稳定领域错误/Operation Schema、权限投影、请求缓存、设计令牌主题、共享组件、分层壳层和已批准的业务页面已在 feature branch 实施；这不表示后端服务、部署或发布验证存在。控制台视觉状态为 `implemented-in-feature-branch / final-verification-partial`：旧琥珀橙壳层已 superseded，截图基线与已完成浏览器证据存在，而最终移动可达性矩阵和整合复验仍为 residual gate。本文仍不授权超出既有 Route Target、API、权限投影或产品边界的新能力。

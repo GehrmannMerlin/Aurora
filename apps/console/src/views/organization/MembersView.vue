@@ -20,6 +20,8 @@ import AppPageHeader from '../../components/aurora/AppPageHeader.vue';
 import AppSection from '../../components/aurora/AppSection.vue';
 import AppSkeleton from '../../components/aurora/AppSkeleton.vue';
 import AppStatusBadge from '../../components/aurora/AppStatusBadge.vue';
+import AppTechnicalDetails from '../../components/aurora/AppTechnicalDetails.vue';
+import { formatUtc } from '../../monitoring/format.js';
 
 type OrgRole = 'owner' | 'admin' | 'member';
 
@@ -394,8 +396,11 @@ onMounted(() => {
             data-testid="invitation-row"
           >
             <span class="au-member-email">{{ invitation.invitedEmailMasked }}</span>
-            <AppStatusBadge tone="neutral">{{ invitation.status }}</AppStatusBadge>
-            <span class="au-invitation-expires">过期时间 {{ invitation.expiresAt }}</span>
+            <AppStatusBadge tone="neutral">等待接受</AppStatusBadge>
+            <span class="au-invitation-expires">过期时间（UTC） {{ formatUtc(invitation.expiresAt) }}</span>
+            <AppTechnicalDetails summary="技术详情">邀请状态键: {{ invitation.status }}
+邀请 ID: {{ invitation.invitationId }}
+过期时间 (UTC): {{ invitation.expiresAt }}</AppTechnicalDetails>
             <span class="au-member-actions">
               <AppButton
                 variant="secondary"

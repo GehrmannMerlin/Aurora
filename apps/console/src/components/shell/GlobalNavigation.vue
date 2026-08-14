@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue';
-import { Bell, LayoutGrid, ShieldCheck } from 'lucide-vue-next';
+import { Bell, LayoutGrid, ShieldCheck, SlidersHorizontal } from 'lucide-vue-next';
 import { storeToRefs } from 'pinia';
 import { useRoute } from 'vue-router';
 import { resolveRouteTarget } from '../../contracts/route-registry';
@@ -11,7 +11,7 @@ const props = withDefaults(defineProps<{ expanded?: boolean }>(), { expanded: fa
 const emit = defineEmits<{ (event: 'navigate'): void }>();
 const route = useRoute();
 const navigation = useNavigationStore();
-const { unreadCount } = storeToRefs(navigation);
+const { unreadCount, workspaceTargets } = storeToRefs(navigation);
 
 const items = computed(() => [
   { routeId: 'workspace.home', label: '工作空间', icon: LayoutGrid },
@@ -23,10 +23,27 @@ const unreadBadge = computed(() =>
     ? String(unreadCount.value.value)
     : null,
 );
+const resourcePolicyTarget = computed(
+  () =>
+    workspaceTargets.value.find((target) => target.routeId === 'platform.resource-policies') ?? null,
+);
+const resourcePolicyHref = computed(() => {
+  const target = resourcePolicyTarget.value;
+  if (target === null) return null;
+  return resolveRouteTarget({
+    routeId: target.routeId as never,
+    pathParams: target.pathParams,
+    query: target.query,
+  }).path ?? null;
+});
 function hrefFor(routeId: (typeof items.value)[number]['routeId']): string {
   return resolveRouteTarget({ routeId, pathParams: {}, query: {} }).path ?? '/not-found';
 }
-function isActive(routeId: (typeof items.value)[number]['routeId']): boolean {
+function labelFor(routeId: (typeof items.value)[number]['routeId']): string {
+  if (routeId !== 'account.notifications' || unreadBadge.value === null) return items.value.find((item) => item.routeId === routeId)?.label ?? '';
+  return `通知，${unreadBadge.value} 条未读`;
+}
+function isActive(routeId: string): boolean {
   return route.name === routeId;
 }
 function handleWorkspace(): void {
@@ -42,7 +59,8 @@ function handleWorkspace(): void {
         <AppLink
           v-if="props.expanded"
           :to="hrefFor(item.routeId)"
-          :label="item.label"
+          :label="labelFor(item.routeId)"
+          :aria-label="labelFor(item.routeId)"
           :active="isActive(item.routeId)"
           @click="item.routeId === 'workspace.home' ? handleWorkspace() : emit('navigate')"
         >
@@ -53,13 +71,25 @@ function handleWorkspace(): void {
         <AppLink
           v-else
           :to="hrefFor(item.routeId)"
-          :aria-label="item.label"
+          :aria-label="labelFor(item.routeId)"
           :title="item.label"
           :active="isActive(item.routeId)"
           @click="item.routeId === 'workspace.home' ? handleWorkspace() : emit('navigate')"
         >
           <component :is="item.icon" :size="20" stroke-width="1.8" aria-hidden="true" />
           <span v-if="item.routeId === 'account.notifications' && unreadBadge !== null" class="au-global-unread" aria-hidden="true">{{ unreadBadge }}</span>
+        </AppLink>
+      </li>
+      <li v-if="resourcePolicyHref !== null">
+        <AppLink
+          :to="resourcePolicyHref"
+          label="资源策略"
+          aria-label="资源策略"
+          :active="isActive('platform.resource-policies')"
+          @click="emit('navigate')"
+        >
+          <SlidersHorizontal :size="20" stroke-width="1.8" aria-hidden="true" />
+          <span v-if="props.expanded">资源策略</span>
         </AppLink>
       </li>
     </ul>

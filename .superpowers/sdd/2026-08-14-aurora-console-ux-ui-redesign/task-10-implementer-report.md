@@ -6,6 +6,8 @@ The redesign implementation, legacy-token cleanup, visual baseline generation an
 
 Post-closure read-only review corrected the design document's checklist/list formatting and stale self-check wording, plus one mock-handler signature whitespace defect. Those corrections were committed without running tests or other verification commands.
 
+A subsequent static closure review corrected authorized D2 navigation exposure, the public Browser SDK onboarding example, notification-state uncertainty handling, localized primary labels/UTC time presentation, scope-menu keyboard navigation, coarse-pointer touch targets, unread-count accessibility, and the authoritative status wording. These source-only fixes retain the same `implemented-in-feature-branch / final-verification-partial` boundary and were not followed by test execution.
+
 ## TDD and visual evidence
 
 - `pnpm --filter @aurora/console test -- test/styles/tokens.test.ts`: first RED run had 1 failing / 3 passing tests; the remaining legacy `--color-sidebar-*` consumer was then migrated.

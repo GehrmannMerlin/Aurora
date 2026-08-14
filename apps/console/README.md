@@ -29,7 +29,7 @@ App.vue → components/shell/AppShell（GlobalRail + ContextSidebar + ScopeSwitc
 
 ## 当前视觉实现状态
 
-`Calm Observability` 重设计代码已在本 feature branch 实施、未部署：深石墨窄全局栏、冷灰上下文侧栏、浅色画布与“状态 → 证据 → 行动”页面结构已替代旧琥珀橙侧栏/横向顶栏。Task 10 已生成并人工检查七张确定性视觉基线，且完成 Chromium 全量门禁、桌面 Chromium/Firefox/WebKit 矩阵分片与 Android axe 分片。最终移动可达性矩阵和最后整合复验因用户明确停止测试而未完成；不得把本分支写成已部署或完整发布验证通过。
+`Calm Observability` 重设计的真实令牌、共享组件、截图基线和业务页面已在本 feature branch 实施、未部署：深石墨窄全局栏、冷灰上下文侧栏、浅色画布与“状态 → 证据 → 行动”页面结构已替代旧琥珀橙侧栏/横向顶栏。状态为 `implemented-in-feature-branch / final-verification-partial`；Task 10 已生成并人工检查七张确定性视觉基线，且完成 Chromium 全量门禁、桌面 Chromium/Firefox/WebKit 矩阵分片与 Android axe 分片。最终移动可达性矩阵和最后整合复验因用户明确停止测试而未完成；不得把本分支写成已部署或完整发布验证通过。
 
 ## 导航壳层交互
 

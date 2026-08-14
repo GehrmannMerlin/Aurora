@@ -68,17 +68,14 @@ const actionTargets = computed(() => {
     <AppSection title="接入步骤" description="三步均保留原有能力边界；未提供的项目数据不会由页面补造。" test-id="onboarding-guide">
       <ol class="mon-onboarding-sequence">
         <li><span class="mon-step-number">1</span><div><h3>安装 SDK</h3><p>安装命令需由版本化模板契约提供；当前能力未提供，因此不会生成猜测的版本命令。</p></div></li>
-        <li><span class="mon-step-number">2</span><div><h3>初始化 SDK</h3><p>初始化使用当前项目的客户端上报密钥与运行环境。真实密钥投影尚未提供，以下仅为批准的结构示例。</p><pre class="mon-code" tabindex="0" aria-label="初始化 SDK 示例"><code>import {{ '{' }} Aurora {{ '}' }} from "@aurora/browser";
+        <li><span class="mon-step-number">2</span><div><h3>初始化 SDK</h3><p>初始化使用当前项目的客户端上报密钥与运行环境。真实密钥投影尚未提供，以下是公开 SDK 的有效组合与生命周期调用；请在获得项目配置后替换示例值。</p><pre class="mon-code" tabindex="0" aria-label="初始化 SDK 示例"><code>import {{ '{' }} createAuroraSdk {{ '}' }} from "@aurora/browser";
 
-Aurora.init({{ '{' }}
-  clientKey: "（未提供：密钥投影能力尚未开放）",
-  environment: "（未提供：运行环境投影能力尚未开放）"
-{{ '}' }});</code></pre></div></li>
-        <li><span class="mon-step-number">3</span><div><h3>发送测试错误</h3><p>测试错误需完成接收、校验、存储并聚合为问题；测试事件状态查询未提供，页面不会宣称接入成功。</p><pre class="mon-code" tabindex="0" aria-label="发送测试错误示例"><code>import {{ '{' }} Aurora {{ '}' }} from "@aurora/browser";
+const aurora = createAuroraSdk({{ '{' }}
+  config: {{ '{' }} clientKey: "YOUR_CLIENT_KEY", environment: "production" {{ '}' }}
+{{ '}' }});
 
-Aurora.captureException(
-  new Error("Aurora SDK 接入测试")
-);</code></pre><AppStatusBadge tone="warning">测试事件状态能力未提供</AppStatusBadge></div></li>
+await aurora.start();</code></pre></div></li>
+        <li><span class="mon-step-number">3</span><div><h3>发送测试错误</h3><p>当前公开的 <code>@aurora/browser</code> composition API 未提供 <code>captureException</code> 方法；测试错误发送与状态查询能力尚未提供，页面不会编造调用方式或宣称接入成功。</p><AppStatusBadge tone="warning">测试事件状态能力未提供</AppStatusBadge></div></li>
       </ol>
     </AppSection>
 

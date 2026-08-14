@@ -68,7 +68,7 @@ maintenance: operational-snapshot
 - approved 架构、代码、测试、文档和 ADR 治理基线；
 - 五大系统边界、SDK 分层、同步可靠接收与异步处理、`event-schema` 单一来源和单向依赖的 approved 架构规则；
 - 已批准的管理平台前端 UX/UI、前端技术栈设计及逐项决策记录；
-- 已批准的 Console UX/UI 全面重设计：`Calm Observability`、深石墨窄全局栏、冷灰上下文侧栏、浅色内容区、状态→证据→行动和平衡证据密度；旧琥珀橙侧栏与横向深色顶栏规范已 superseded。业务、导航层级、权限、安全、数据和公共契约不在视觉授权内；新设计代码已在 feature branch 实施、尚未部署，最终移动端可达性矩阵及整合复验为 `final-verification-partial`，不得表述为全矩阵通过；
+- 已批准的 Console UX/UI 全面重设计：`Calm Observability`、深石墨窄全局栏、冷灰上下文侧栏、浅色内容区、状态→证据→行动和平衡证据密度；旧琥珀橙侧栏与横向深色顶栏规范已 superseded。业务、导航层级、权限、安全、数据和公共契约不在视觉授权内；真实令牌、共享组件、视觉截图基线和业务页面已在 feature branch 实施、尚未部署，状态为 `implemented-in-feature-branch / final-verification-partial`；最终移动端可达性矩阵及整合复验仍未完成，不得表述为全矩阵通过；
 - 已批准的管理平台总体 OpenAPI 与实现约束设计：统一公开契约、内部领域模块化、生成单一 Platform OpenAPI，31 个页面设计映射 36 个稳定 Route Target，并强制壳层与真实 UI 可达性先行；
 - 用户已批准前四个基础专题中可追溯的既有设计基线，批准边界和未决内容由独立正式文档记录。
 - 已批准的测试/部署/发布完整设计，包括 `TD-001=A`、`TD-002=A`、`TD-003=A` 和 `TDR-DERIVED-001`；

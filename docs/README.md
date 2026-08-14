@@ -17,7 +17,7 @@ review-cycle: milestone-or-release
 
 # Aurora 正式文档索引与权威来源映射
 
-> Console UX/UI 重设计状态（2026-08-14）：`Calm Observability` 已在 feature branch 实施，尚未部署。Chromium 全量浏览器、桌面 Chromium/Firefox/WebKit 分片矩阵、Android axe 分片和视觉基线已有证据；最终移动端可达性矩阵及整合复验因测试稳定性修复后的用户明确停测而为 `final-verification-partial`，不得表述为全矩阵通过。
+> Console UX/UI 重设计状态（2026-08-14）：`Calm Observability` 的真实令牌、共享组件、截图基线和业务页面已在 feature branch 实施，尚未部署；旧琥珀橙侧栏与横向顶栏已 superseded。状态为 `implemented-in-feature-branch / final-verification-partial`：Chromium 全量浏览器、桌面 Chromium/Firefox/WebKit 分片矩阵、Android axe 分片和视觉基线已有证据；最终移动端可达性矩阵及整合复验因测试稳定性修复后的用户明确停测而仍为 residual gate，不得表述为全矩阵通过。
 
 ## 1. 使用规则
 

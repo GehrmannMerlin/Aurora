@@ -57,3 +57,13 @@ a {
     animation-iteration-count: 1 !important;
   }
 }
+
+/* Preserve the compact desktop density while providing reliable touch targets. */
+@media (pointer: coarse) {
+  button,
+  .au-link,
+  .au-scope-option,
+  .au-scope-trigger {
+    min-height: 44px;
+  }
+}
