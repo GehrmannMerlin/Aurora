@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
+import AxeBuilder from '@axe-core/playwright';
 import { startSpaServer } from './serve-spa';
 
 let server: { origin: string; close(): Promise<void> } | undefined;
@@ -65,6 +66,17 @@ test('PLT-10c smoke: resource-policy page renders target picker and effective de
     page.getByTestId('rp-effective-policy').getByText('组织 · Acme'),
   ).toBeVisible();
   await expect(page.getByTestId('rp-org-reset')).toBeVisible();
+  await searchInput.fill('Web');
+  await expect(page.getByRole('option', { name: '项目 · Web' })).toHaveCount(1);
+  await page.getByTestId('rp-target-select').selectOption('prj:prj_test_1');
+  const projectEvidence = page.getByTestId('rp-policy-evidence-table');
+  await expect(projectEvidence).toBeVisible();
+  await expect(projectEvidence.getByRole('columnheader')).toHaveCount(4);
+  await expect(projectEvidence.getByRole('row').nth(1).getByRole('cell')).toHaveCount(4);
+  await expect(page.getByTestId('rp-project-limit-editor')).toBeVisible();
+  await page.setViewportSize({ width: 390, height: 844 });
+  await expect(projectEvidence).toBeVisible();
+  expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
 
   expect(pageErrors).toEqual([]);
   await expect(page.getByText('capability-not-provided')).toHaveCount(0);

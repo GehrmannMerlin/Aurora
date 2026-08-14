@@ -48,6 +48,8 @@ const saveError = ref<string | null>(null);
 const envNameInput = ref('');
 const envBusy = ref(false);
 const envError = ref<string | null>(null);
+const generalTab = ref<HTMLButtonElement | null>(null);
+const environmentsTab = ref<HTMLButtonElement | null>(null);
 
 async function load(): Promise<void> {
   loading.value = true;
@@ -81,9 +83,20 @@ const state = computed(() =>
   }),
 );
 
-function setTab(next: 'general' | 'environments'): void {
+async function setTab(next: 'general' | 'environments'): Promise<void> {
   if (next === tab.value) return;
-  void router.push({ query: { ...route.query, tab: next } });
+  await router.push({ query: { ...route.query, tab: next } });
+}
+
+async function moveTabFocus(event: KeyboardEvent): Promise<void> {
+  let next: 'general' | 'environments' | null = null;
+  if (event.key === 'ArrowLeft' || event.key === 'Home') next = 'general';
+  if (event.key === 'ArrowRight' || event.key === 'End') next = 'environments';
+  if (next === null) return;
+
+  event.preventDefault();
+  await setTab(next);
+  (next === 'general' ? generalTab.value : environmentsTab.value)?.focus();
 }
 
 async function submitSettings(): Promise<void> {
@@ -167,7 +180,9 @@ async function submitCreateEnvironment(): Promise<void> {
         :aria-selected="tab === 'general'"
         :class="{ 'is-active': tab === 'general' }"
         data-testid="tab-general"
-        @click="setTab('general')"
+        ref="generalTab"
+        @click="void setTab('general')"
+        @keydown="void moveTabFocus($event)"
       >
         基本设置
       </button>
@@ -177,7 +192,9 @@ async function submitCreateEnvironment(): Promise<void> {
         :aria-selected="tab === 'environments'"
         :class="{ 'is-active': tab === 'environments' }"
         data-testid="tab-environments"
-        @click="setTab('environments')"
+        ref="environmentsTab"
+        @click="void setTab('environments')"
+        @keydown="void moveTabFocus($event)"
       >
         运行环境
       </button>

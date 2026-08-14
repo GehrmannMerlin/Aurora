@@ -492,8 +492,7 @@ onBeforeUnmount(() => {
           <table v-if="orgPolicy !== null" class="rp-table" data-testid="rp-policy-evidence-table">
             <thead>
               <tr>
-                <th>字段</th>
-                <th>已配置值</th>
+                <th>策略字段</th>
                 <th>已配置值</th>
                 <th>来源</th>
                 <th>生效值</th>
@@ -512,7 +511,8 @@ onBeforeUnmount(() => {
           <table v-else-if="projectPolicy !== null" class="rp-table" data-testid="rp-policy-evidence-table">
             <thead>
               <tr>
-                <th>字段</th>
+                <th>策略字段</th>
+                <th>已配置值</th>
                 <th>来源</th>
                 <th>生效值</th>
               </tr>

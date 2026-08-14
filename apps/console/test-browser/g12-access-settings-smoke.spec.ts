@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
+import AxeBuilder from '@axe-core/playwright';
 import { startSpaServer } from './serve-spa';
 
 let server: { origin: string; close(): Promise<void> } | undefined;
@@ -74,6 +75,14 @@ test('PLT-08 smoke: access → client-keys → settings → lifecycle render rea
   await expect(page.getByTestId('tab-environments')).toBeVisible();
   await page.getByTestId('tab-environments').click();
   await expect(page.getByTestId('settings-environments-workspace')).toBeVisible();
+  await page.goto(`${server!.origin}/organizations/org_test_1/projects/prj_test_1/settings?tab=environments`);
+  await expect(page.getByTestId('tab-environments')).toHaveAttribute('aria-selected', 'true');
+  await expect(page.getByTestId('settings-environments-workspace')).toBeVisible();
+  await page.getByTestId('tab-environments').focus();
+  await page.keyboard.press('ArrowLeft');
+  await expect(page).toHaveURL(/tab=general/);
+  await expect(page.getByTestId('tab-general')).toHaveAttribute('aria-selected', 'true');
+  await expect(page.getByTestId('tab-general')).toBeFocused();
 
   // C16: lifecycle workspace renders the summary and high-risk action areas.
   await page.goto(`${server!.origin}/organizations/org_test_1/projects/prj_test_1/settings/lifecycle`);
@@ -81,6 +90,10 @@ test('PLT-08 smoke: access → client-keys → settings → lifecycle render rea
   await expect(page.getByTestId('lifecycle-summary')).toBeVisible();
   await expect(page.getByTestId('lifecycle-archive-zone')).toBeVisible();
   await expect(page.getByTestId('lifecycle-delete-zone')).toBeVisible();
+  await page.setViewportSize({ width: 390, height: 844 });
+  await expect(page.getByTestId('lifecycle-archive-zone')).toBeVisible();
+  await expect(page.getByTestId('lifecycle-delete-zone')).toBeVisible();
+  expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
 
   expect(pageErrors).toEqual([]);
   await expect(page.getByText('capability-not-provided')).toHaveCount(0);
