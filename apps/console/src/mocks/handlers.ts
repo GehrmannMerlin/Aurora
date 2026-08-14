@@ -154,7 +154,7 @@ function mockDataStatus(organizationId: string, projectId: string) {
   };
 }
 
-function mockIssueList(nextCursor: string | undefined = undefined) {
+function mockIssueList(nextCursor?: string  ) {
   return {
     data: {
       issues: {

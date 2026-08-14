@@ -53,19 +53,21 @@ afterAll(() => {
 function tableText(row: HTMLElement, role: 'columnheader' | 'cell'): string[] {
   return within(row)
     .getAllByRole(role)
-    .map((cell) => cell.textContent?.trim() ?? '');
+    .map((cell) => cell.textContent.trim());
 }
 
 function expectEvidenceSchema(table: HTMLElement): void {
   const rows = within(table).getAllByRole('row');
-  expect(tableText(rows[0] as HTMLElement, 'columnheader')).toEqual([
+  const [headerRow, ...dataRows] = rows;
+  if (headerRow === undefined) throw new Error('Policy evidence table must contain a header row');
+  expect(tableText(headerRow, 'columnheader')).toEqual([
     '策略字段',
     '已配置值',
     '来源',
     '生效值',
   ]);
-  for (const row of rows.slice(1)) {
-    expect(tableText(row as HTMLElement, 'cell')).toHaveLength(4);
+  for (const row of dataRows) {
+    expect(tableText(row, 'cell')).toHaveLength(4);
   }
 }
 
@@ -77,7 +79,7 @@ async function renderPolicy(): Promise<void> {
 async function selectPolicyTarget(query: string, target: string): Promise<void> {
   await fireEvent.update(screen.getByTestId('rp-target-search'), query);
   await waitFor(() => {
-    expect((screen.getByTestId('rp-target-select') as HTMLSelectElement).querySelector(`option[value="${target}"]`)).not.toBeNull();
+    expect((screen.getByTestId('rp-target-select')).querySelector(`option[value="${target}"]`)).not.toBeNull();
   });
   await fireEvent.update(screen.getByTestId('rp-target-select'), target);
   await waitFor(() => {

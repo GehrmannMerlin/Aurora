@@ -10,7 +10,7 @@ import ProjectAlertRuleFormView from '../../../src/views/project/ProjectAlertRul
 import ProjectSourceMapsView from '../../../src/views/project/ProjectSourceMapsView.vue';
 import { mockServer } from '../../msw/server.js';
 
-beforeAll(() => mockServer.listen({ onUnhandledRequest: 'error' }));
+beforeAll(() => { mockServer.listen({ onUnhandledRequest: 'error' }); });
 
 beforeEach(async () => {
   requestCache.clear();
@@ -24,7 +24,7 @@ afterEach(() => {
   mockServer.resetHandlers();
 });
 
-afterAll(() => mockServer.close());
+afterAll(() => { mockServer.close(); });
 
 describe('delivery and alerting rendered regressions', () => {
   it('selects a Source Map file by keyboard and renders only returned-file evidence', async () => {
@@ -52,7 +52,7 @@ describe('delivery and alerting rendered regressions', () => {
     await fireEvent.update(metric, 'error_count');
     expect(screen.getByTestId('alert-rule-threshold-group')).toBeTruthy();
     expect(screen.getByTestId('alert-rule-delivery-group')).toBeTruthy();
-    expect((screen.getByTestId('alert-rule-submit') as HTMLButtonElement).disabled).toBe(false);
+    expect(screen.getByTestId<HTMLButtonElement>('alert-rule-submit').disabled).toBe(false);
   });
 
   it('renders C12 evidence as read-only and does not expose raw instance identifiers', async () => {

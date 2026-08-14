@@ -270,7 +270,7 @@ watch(() => route.fullPath, close);
   min-height: var(--compact-control-height);
   padding: 0 var(--space-3);
   border: 0;
-  border-radius: var(--radius-base);
+  border-radius: var(--radius-control);
   background-color: transparent;
   color: var(--color-text-primary);
   font: inherit;
@@ -279,10 +279,10 @@ watch(() => route.fullPath, close);
 .au-scope-trigger:hover,
 .au-scope-trigger:focus-visible,
 .au-scope-trigger--active {
-  background-color: var(--color-sidebar-active-bg);
+  background-color: var(--color-context-active-bg);
 }
 .au-scope-trigger--active {
-  box-shadow: inset 3px 0 var(--color-sidebar-active-indicator);
+  box-shadow: inset 3px 0 var(--color-context-active-indicator);
 }
 .au-scope-value {
   max-width: 144px;

@@ -219,7 +219,7 @@ function metricUnit(unit: string): string {
 .mon-inline dt { color: var(--color-text-secondary); font-size: 12px; }
 .mon-inline dd { margin: 0; color: var(--color-text-primary); font-weight: 600; }
 .mon-actions { display: flex; flex-direction: column; gap: var(--space-2); margin: 0; padding: 0; list-style: none; }
-.au-button { min-height: var(--control-height); padding: 0 var(--space-3); border: 1px solid var(--color-border-default); border-radius: var(--radius-base); background: var(--color-surface-bg); color: var(--color-text-primary); font: inherit; cursor: pointer; }
+.au-button { min-height: var(--control-height); padding: 0 var(--space-3); border: 1px solid var(--color-border-default); border-radius: var(--radius-control); background: var(--color-surface-bg); color: var(--color-text-primary); font: inherit; cursor: pointer; }
 .au-button:disabled { cursor: default; opacity: 0.6; }
 @media (max-width: 700px) { .mon-evidence-grid { grid-template-columns: 1fr; } }
 </style>

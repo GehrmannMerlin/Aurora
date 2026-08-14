@@ -109,7 +109,7 @@ describe('investigation workspace rendered behavior', () => {
     expect(screen.getByTestId('issues-selection-summary').textContent).toContain('已选择 1 个问题');
 
     await fireEvent.click(screen.getByTestId('issues-load-more'));
-    await waitFor(() => expect(calls).toBe(2));
+    await waitFor(() => { expect(calls).toBe(2); });
     expect(screen.getByTestId('issues-selection-summary').textContent).toContain('已选择 0 个问题');
   });
 
@@ -126,7 +126,7 @@ describe('investigation workspace rendered behavior', () => {
     await renderIssues();
     await fireEvent.click(await screen.findByRole('checkbox', { name: /选择问题/ }));
     await fireEvent.click(screen.getByTestId('issues-load-more'));
-    await waitFor(() => expect(calls).toBe(2));
+    await waitFor(() => { expect(calls).toBe(2); });
     expect(screen.getByTestId('issues-selection-summary').textContent).toContain('已选择 0 个问题');
   });
 
@@ -172,7 +172,7 @@ describe('investigation workspace rendered behavior', () => {
     await renderIssueDetail();
     await screen.findByTestId('issue-lifecycle-actions');
     for (const name of ['标记处理中', '解决', '永久忽略', '重新打开']) {
-      expect((screen.getByRole('button', { name }) as HTMLButtonElement).disabled).toBe(false);
+      expect(screen.getByRole<HTMLButtonElement>('button', { name }).disabled).toBe(false);
     }
   });
 

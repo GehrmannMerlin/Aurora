@@ -137,7 +137,7 @@ const state = computed(() =>
 }
 .mon-metric {
   border: 1px solid var(--color-border-default);
-  border-radius: var(--radius-base);
+  border-radius: var(--radius-control);
   padding: var(--space-3);
   min-width: 180px;
 }

@@ -5,6 +5,11 @@ import { waitForShell } from './shell-helpers';
 
 let server: { origin: string; close(): Promise<void> } | undefined;
 
+function requiredServer(): NonNullable<typeof server> {
+  if (server === undefined) throw new Error('SPA server was not started');
+  return server;
+}
+
 async function setSessionAuthenticated(page: Page, authenticated: boolean): Promise<void> {
   await page.evaluate(
     ({ origin, value }) =>
@@ -13,7 +18,7 @@ async function setSessionAuthenticated(page: Page, authenticated: boolean): Prom
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({ authenticated: value }),
       }),
-    { origin: server!.origin, value: authenticated },
+    { origin: requiredServer().origin, value: authenticated },
   );
 }
 
@@ -27,12 +32,12 @@ test.afterAll(async () => {
 
 test('register → verify → login → logout full walk with real Vue components', async ({ page }) => {
   // Prime the app so the MSW worker is active, then start signed out.
-  await page.goto(`${server!.origin}/`);
+  await page.goto(`${requiredServer().origin}/`);
   await waitForShell(page);
   await setSessionAuthenticated(page, false);
 
   // A1 register
-  await page.goto(`${server!.origin}/register`);
+  await page.goto(`${requiredServer().origin}/register`);
   await expect(page.getByTestId('auth-shell')).toBeVisible();
   await expect(page.getByRole('navigation', { name: '全局导航' })).toHaveCount(0);
   await expect(page.getByRole('navigation', { name: /(?:项目|组织)导航/ })).toHaveCount(0);
@@ -49,7 +54,7 @@ test('register → verify → login → logout full walk with real Vue component
   await expect(page.getByTestId('resend-button')).toBeDisabled();
 
   // A1 verify via the intent-link confirm page
-  await page.goto(`${server!.origin}/verify-email/confirm?token=raw_token`);
+  await page.goto(`${requiredServer().origin}/verify-email/confirm?token=raw_token`);
   await expect(page.getByTestId('verify-email-confirm-view')).toBeVisible();
   await expect(page.getByTestId('confirm-email-button')).toBeVisible();
   // the raw token is cleared from the address bar (history.replaceState)
@@ -59,7 +64,7 @@ test('register → verify → login → logout full walk with real Vue component
 
   // A2 login (fresh signed-out visit so the login form is reachable)
   await setSessionAuthenticated(page, false);
-  await page.goto(`${server!.origin}/login`);
+  await page.goto(`${requiredServer().origin}/login`);
   await expect(page.getByTestId('auth-shell')).toBeVisible();
   await expect(page.getByRole('navigation', { name: '全局导航' })).toHaveCount(0);
   await expect(page.getByTestId('login-view')).toBeVisible();
@@ -71,7 +76,7 @@ test('register → verify → login → logout full walk with real Vue component
   await expect(page.getByTestId('workspace-home')).toBeVisible();
 
   // A2 logout from account security
-  await page.goto(`${server!.origin}/account/security`);
+  await page.goto(`${requiredServer().origin}/account/security`);
   await expect(page.getByTestId('account-security-view')).toBeVisible();
   await page.getByTestId('logout-button').click();
   await expect(page).toHaveURL(/\/login$/);

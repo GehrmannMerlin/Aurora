@@ -1,7 +1,7 @@
 ---
 title: Aurora Console UX/UI 全面重设计
 status: approved
-implementation-status: not-started
+implementation-status: implemented-in-feature-branch / final-verification-partial
 approval-status: approved
 owner: platform/frontend
 created: 2026-08-14
@@ -22,7 +22,7 @@ related:
 supersedes:
   - ./2026-07-30-aurora-console-visual-language-design.md
   - ./2026-08-14-console-navigation-shell-polish-design.md
-design-stage: approved-design-implementation-not-started
+design-stage: approved-design-implemented-in-feature-branch
 ---
 
 # Aurora Console UX/UI 全面重设计
@@ -41,7 +41,7 @@ design-stage: approved-design-implementation-not-started
 6. 第 2 章“页面族与信息架构”；
 7. 第 3 章“状态、交互与适配标准”。
 
-用户于 2026-08-14 完成整体最终批准。本文现为 `approved`，是新的视觉实施依据。它不改变任何 Route Target、业务规则、权限、安全模型、数据生命周期、Query/Command、API 或协议；代码实现仍为 `not-started`，必须先形成独立实施计划。
+用户于 2026-08-14 完成整体最终批准。本文现为 `approved`，是新的视觉实施依据。它不改变任何 Route Target、业务规则、权限、安全模型、数据生命周期、Query/Command、API 或协议；代码已在 feature branch 实施、尚未部署，最终移动矩阵与整合复验仍为 partial，不能宣称完整发布验证通过。
 
 ## 2. 替代关系与长期权威边界
 
@@ -419,7 +419,8 @@ C2 不展示趋势图、健康评分、预测、排名、推荐操作卡片或�
 - [x] 将两个旧视觉设计文档改为 `superseded` 并添加反向链接；
 - [x] 同步 `AGENTS.md`、`AURORA_RULES.md` 和正式文档索引中的当前视觉基线；
 - [x] 使用 `writing-plans` 形成[实施计划](../plans/2026-08-14-aurora-console-ux-ui-redesign.md)；
-- [ ] 实施代码、测试和浏览器证据。
+- [x] 实施代码、遗留琥珀橙/顶栏令牌清理、确定性视觉基线和 Chromium 证据。
+- [ ] 最终移动可达性矩阵与整合复验（用户在复验期间明确停止测试；保留恢复入口）。
 
 ### 18.2 当前自检结论
 

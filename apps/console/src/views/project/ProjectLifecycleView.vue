@@ -327,7 +327,7 @@ function statusTone(status: string): 'neutral' | 'success' | 'warning' | 'danger
   min-height: var(--control-height);
   padding: 0 var(--space-2);
   border: 1px solid var(--color-border-default);
-  border-radius: var(--radius-base);
+  border-radius: var(--radius-control);
   background-color: var(--color-surface-bg);
   color: var(--color-text-primary);
   font: inherit;
@@ -336,7 +336,7 @@ function statusTone(status: string): 'neutral' | 'success' | 'warning' | 'danger
   font-family: ui-monospace, monospace;
   background-color: var(--color-surface-muted);
   padding: 0 var(--space-1);
-  border-radius: var(--radius-base);
+  border-radius: var(--radius-control);
 }
 .mon-actions-row {
   margin-top: var(--space-2);
@@ -347,7 +347,7 @@ function statusTone(status: string): 'neutral' | 'success' | 'warning' | 'danger
   min-height: var(--control-height);
   padding: 0 var(--space-3);
   border: 1px solid var(--color-border-default);
-  border-radius: var(--radius-base);
+  border-radius: var(--radius-control);
   background-color: var(--color-surface-bg);
   color: var(--color-text-primary);
   cursor: pointer;

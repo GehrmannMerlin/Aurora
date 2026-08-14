@@ -254,7 +254,7 @@ watch(unreadCount, (value) => {
 }
 .notifications-tab--active {
   color: var(--color-text-primary);
-  border-bottom-color: var(--color-sidebar-active-indicator);
+  border-bottom-color: var(--color-context-active-indicator);
 }
 .notifications-list {
   list-style: none;
@@ -286,7 +286,7 @@ watch(unreadCount, (value) => {
 }
 .notifications-type {
   font-size: 0.75rem;
-  color: var(--color-sidebar-active-indicator);
+  color: var(--color-context-active-indicator);
   font-weight: 600;
 }
 .notifications-title {

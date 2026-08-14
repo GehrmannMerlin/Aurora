@@ -60,4 +60,21 @@ describe('visual language foundation', () => {
       }
     }
   });
+
+  it('does not retain legacy topbar or sidebar visual aliases in live Console sources', () => {
+    const legacyPatterns: readonly RegExp[] = [
+      /--color-topbar-/,
+      /--color-sidebar-/,
+      /#D47A16/i,
+      /\.au-topbar\b/,
+      /\.au-desktop-sidebar\b/,
+    ];
+
+    for (const file of sources) {
+      const content = readFileSync(file, 'utf8');
+      for (const pattern of legacyPatterns) {
+        expect(content, `${file} must not contain ${pattern.source}`).not.toMatch(pattern);
+      }
+    }
+  });
 });

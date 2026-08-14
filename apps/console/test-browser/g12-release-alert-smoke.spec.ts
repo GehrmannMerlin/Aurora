@@ -4,6 +4,11 @@ import { startSpaServer } from './serve-spa';
 
 let server: { origin: string; close(): Promise<void> } | undefined;
 
+function requiredServer(): NonNullable<typeof server> {
+  if (server === undefined) throw new Error('SPA server was not started');
+  return server;
+}
+
 async function setMockScope(
   page: Page,
   type: 'workspace' | 'organization' | 'project',
@@ -28,13 +33,13 @@ async function setSessionAuthenticated(page: Page, authenticated: boolean): Prom
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({ authenticated: value }),
       }),
-    { origin: server!.origin, value: authenticated },
+    { origin: requiredServer().origin, value: authenticated },
   );
 }
 
 /** Load the app once and wait for the MSW-backed shell so the worker is active. */
 async function primeApp(page: Page): Promise<void> {
-  await page.goto(`${server!.origin}/`);
+  await page.goto(`${requiredServer().origin}/`);
   await expect(page.getByRole('navigation', { name: '全局导航' })).toBeVisible();
 }
 
@@ -58,7 +63,7 @@ test('PLT-07 smoke: releases → source maps → alerts render real views', asyn
   await setSessionAuthenticated(page, true);
 
   // C8: release list is a real view with real releases.
-  await page.goto(`${server!.origin}/organizations/org_test_1/projects/prj_test_1/releases`);
+  await page.goto(`${requiredServer().origin}/organizations/org_test_1/projects/prj_test_1/releases`);
   await expect(page.getByTestId('project-releases-view')).toBeVisible();
   await expect(page.getByTestId('release-list')).toBeVisible();
   await expect(page.getByTestId('delivery-list')).toBeVisible();
@@ -78,7 +83,7 @@ test('PLT-07 smoke: releases → source maps → alerts render real views', asyn
   await expect(page.getByTestId('source-map-selected-file')).toContainText('/assets/app.js');
 
   // C10: alerts workspace renders both tabs with real projections.
-  await page.goto(`${server!.origin}/organizations/org_test_1/projects/prj_test_1/alerts`);
+  await page.goto(`${requiredServer().origin}/organizations/org_test_1/projects/prj_test_1/alerts`);
   await expect(page.getByTestId('project-alerts-view')).toBeVisible();
   await expect(page.getByTestId('tab-instances')).toBeVisible();
   await expect(page.getByTestId('tab-rules')).toBeVisible();
@@ -111,7 +116,7 @@ test('PLT-07 smoke: releases → source maps → alerts render real views', asyn
   await expect(page.getByTestId('project-alert-rule-form-view')).toBeVisible();
   await expect(page.getByTestId('alert-rule-form')).toBeVisible();
   await page.goto(
-    `${server!.origin}/organizations/org_test_1/projects/prj_test_1/alerts/instances/instance_test_1`,
+    `${requiredServer().origin}/organizations/org_test_1/projects/prj_test_1/alerts/instances/instance_test_1`,
   );
   await expect(page.getByTestId('project-alert-instance-detail-view')).toBeVisible();
   await expect(page.getByTestId('alert-instance-evidence')).toBeVisible();
@@ -119,7 +124,7 @@ test('PLT-07 smoke: releases → source maps → alerts render real views', asyn
 
   // The delivery workspace remains usable on a narrow viewport and has no axe violations.
   await page.setViewportSize({ width: 390, height: 844 });
-  await page.goto(`${server!.origin}/organizations/org_test_1/projects/prj_test_1/releases/release_test_1`);
+  await page.goto(`${requiredServer().origin}/organizations/org_test_1/projects/prj_test_1/releases/release_test_1`);
   await expect(page.getByTestId('delivery-list')).toBeVisible();
   await expect(page.getByTestId('delivery-detail')).toBeVisible();
   await expect(new AxeBuilder({ page }).analyze()).resolves.toHaveProperty('violations', []);

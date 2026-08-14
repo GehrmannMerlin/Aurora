@@ -522,7 +522,7 @@ function onBack(): void {
 .com select,
 .mon-textarea {
   border: 1px solid var(--color-border-default);
-  border-radius: var(--radius-base);
+  border-radius: var(--radius-control);
   background-color: var(--color-surface-bg);
   color: var(--color-text-primary);
   font: inherit;
@@ -552,14 +552,14 @@ function onBack(): void {
 .mon-sample,
 .mon-note {
   border: 1px solid var(--color-border-default);
-  border-radius: var(--radius-base);
+  border-radius: var(--radius-control);
   padding: var(--space-3);
 }
 .mon-code {
   margin: var(--space-1) 0 0;
   padding: var(--space-2);
   border: 1px solid var(--color-border-default);
-  border-radius: var(--radius-base);
+  border-radius: var(--radius-control);
   overflow-x: auto;
   background-color: var(--color-surface-bg);
 }
@@ -585,7 +585,7 @@ function onBack(): void {
   min-height: var(--control-height);
   padding: 0 var(--space-3);
   border: 1px solid var(--color-border-default);
-  border-radius: var(--radius-base);
+  border-radius: var(--radius-control);
   background-color: var(--color-surface-bg);
   color: var(--color-text-primary);
   cursor: pointer;

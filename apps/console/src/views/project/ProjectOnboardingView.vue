@@ -68,13 +68,13 @@ const actionTargets = computed(() => {
     <AppSection title="接入步骤" description="三步均保留原有能力边界；未提供的项目数据不会由页面补造。" test-id="onboarding-guide">
       <ol class="mon-onboarding-sequence">
         <li><span class="mon-step-number">1</span><div><h3>安装 SDK</h3><p>安装命令需由版本化模板契约提供；当前能力未提供，因此不会生成猜测的版本命令。</p></div></li>
-        <li><span class="mon-step-number">2</span><div><h3>初始化 SDK</h3><p>初始化使用当前项目的客户端上报密钥与运行环境。真实密钥投影尚未提供，以下仅为批准的结构示例。</p><pre class="mon-code"><code>import {{ '{' }} Aurora {{ '}' }} from "@aurora/browser";
+        <li><span class="mon-step-number">2</span><div><h3>初始化 SDK</h3><p>初始化使用当前项目的客户端上报密钥与运行环境。真实密钥投影尚未提供，以下仅为批准的结构示例。</p><pre class="mon-code" tabindex="0" aria-label="初始化 SDK 示例"><code>import {{ '{' }} Aurora {{ '}' }} from "@aurora/browser";
 
 Aurora.init({{ '{' }}
   clientKey: "（未提供：密钥投影能力尚未开放）",
   environment: "（未提供：运行环境投影能力尚未开放）"
 {{ '}' }});</code></pre></div></li>
-        <li><span class="mon-step-number">3</span><div><h3>发送测试错误</h3><p>测试错误需完成接收、校验、存储并聚合为问题；测试事件状态查询未提供，页面不会宣称接入成功。</p><pre class="mon-code"><code>import {{ '{' }} Aurora {{ '}' }} from "@aurora/browser";
+        <li><span class="mon-step-number">3</span><div><h3>发送测试错误</h3><p>测试错误需完成接收、校验、存储并聚合为问题；测试事件状态查询未提供，页面不会宣称接入成功。</p><pre class="mon-code" tabindex="0" aria-label="发送测试错误示例"><code>import {{ '{' }} Aurora {{ '}' }} from "@aurora/browser";
 
 Aurora.captureException(
   new Error("Aurora SDK 接入测试")
@@ -110,10 +110,10 @@ Aurora.captureException(
 .mon-onboarding-sequence li { display: grid; grid-template-columns: 32px minmax(0, 1fr); gap: var(--space-3); }
 .mon-onboarding-sequence h3 { margin: 0; font-size: 15px; }.mon-onboarding-sequence p { margin: var(--space-2) 0 0; color: var(--color-text-secondary); max-width: 64ch; }
 .mon-step-number { display: grid; width: 28px; height: 28px; place-items: center; border: 1px solid var(--color-border-default); border-radius: 50%; color: var(--color-action-primary); font-weight: 700; }
-.mon-code { margin: var(--space-3) 0; padding: var(--space-3); overflow-x: auto; border: 1px solid var(--color-border-default); border-radius: var(--radius-base); background: var(--color-page-bg); font-family: var(--font-family-mono); font-size: 13px; }
+.mon-code { margin: var(--space-3) 0; padding: var(--space-3); overflow-x: auto; border: 1px solid var(--color-border-default); border-radius: var(--radius-control); background: var(--color-page-bg); font-family: var(--font-family-mono); font-size: 13px; }
 .mon-evidence-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-4); }
-.mon-stage-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-3); margin: 0; }.mon-stage-grid > div { padding: var(--space-3); border: 1px solid var(--color-border-default); border-radius: var(--radius-base); }.mon-stage-grid dt, .mon-inline dt { color: var(--color-text-secondary); font-size: 12px; }.mon-stage-grid dd, .mon-inline dd { margin: var(--space-1) 0 0; color: var(--color-text-primary); font-weight: 650; }.mon-stage-grid .mon-stage-meta { display: block; font-weight: 400; }
+.mon-stage-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-3); margin: 0; }.mon-stage-grid > div { padding: var(--space-3); border: 1px solid var(--color-border-default); border-radius: var(--radius-control); }.mon-stage-grid dt, .mon-inline dt { color: var(--color-text-secondary); font-size: 12px; }.mon-stage-grid dd, .mon-inline dd { margin: var(--space-1) 0 0; color: var(--color-text-primary); font-weight: 650; }.mon-stage-grid .mon-stage-meta { display: block; font-weight: 400; }
 .mon-evidence-stack { display: flex; flex-direction: column; gap: var(--space-4); }.mon-evidence-stack h3 { margin: 0 0 var(--space-2); font-size: 14px; }.mon-inline { display: flex; flex-wrap: wrap; gap: var(--space-4); margin: 0; }.mon-actions { display: flex; flex-direction: column; gap: var(--space-2); margin: 0; padding: 0; list-style: none; }
-.au-button { min-height: var(--control-height); padding: 0 var(--space-3); border: 1px solid var(--color-border-default); border-radius: var(--radius-base); background: var(--color-surface-bg); color: var(--color-text-primary); font: inherit; cursor: pointer; }.au-button:disabled { cursor: default; opacity: .6; }
+.au-button { min-height: var(--control-height); padding: 0 var(--space-3); border: 1px solid var(--color-border-default); border-radius: var(--radius-control); background: var(--color-surface-bg); color: var(--color-text-primary); font: inherit; cursor: pointer; }.au-button:disabled { cursor: default; opacity: .6; }
 @media (max-width: 700px) { .mon-evidence-grid, .mon-stage-grid { grid-template-columns: 1fr; } }
 </style>

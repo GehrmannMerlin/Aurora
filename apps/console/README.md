@@ -17,7 +17,7 @@ main.ts bootstrap
   ├─ pinia（stores/session.ts Session Context、stores/navigation.ts Navigation Context）
   ├─ router（router/index.ts 36 个 RouteTarget、guards、focus）
   └─ mount('#app')
-App.vue → components/shell/AppShell（TopBar + LayeredSidebar + ScopeSwitcher + ContentOutlet）
+App.vue → components/shell/AppShell（GlobalRail + ContextSidebar + ScopeSwitcher + ContentOutlet）
   └─ 状态页：RootView / WorkspaceHomeView / ForbiddenView / NotFoundView /
      UnavailableView / RouteErrorView / AuthUnavailableView
 ```
@@ -27,11 +27,15 @@ App.vue → components/shell/AppShell（TopBar + LayeredSidebar + ScopeSwitcher 
 - `src/components/aurora/`：基础 UI（AppButton/AppLink/AppDrawer/AppPageHeader/AppStatusBadge）。
 - `src/styles/`：设计令牌（`tokens.css`）与基础样式（`base.css`）。
 
+## 当前视觉实现状态
+
+`Calm Observability` 重设计代码已在本 feature branch 实施、未部署：深石墨窄全局栏、冷灰上下文侧栏、浅色画布与“状态 → 证据 → 行动”页面结构已替代旧琥珀橙侧栏/横向顶栏。Task 10 已生成并人工检查七张确定性视觉基线，且完成 Chromium 全量门禁、桌面 Chromium/Firefox/WebKit 矩阵分片与 Android axe 分片。最终移动可达性矩阵和最后整合复验因用户明确停止测试而未完成；不得把本分支写成已部署或完整发布验证通过。
+
 ## 导航壳层交互
 
-- 顶栏的“组织”和“项目”是与导航项一体化的菜单触发器，菜单仅列出 Navigation Context 下发的授权投影；点击外部或按 `Escape` 关闭，键盘焦点返回触发器。
-- 顶栏的工作空间、组织、项目、通知和账号安全均通过 `aria-current="page"` 与底部强调线标记当前入口；侧栏当前项使用浅琥珀底色和独立蓝色指示条，指示条不参与文字排版。
-- 桌面壳层锁定为 `100dvh`：顶栏固定在顶部，侧栏填满剩余高度，只有右侧 `.au-content` 独立纵向滚动。侧栏导航行最小高度 48px、文字水平居中；窄屏继续复用同一 `LayeredSidebar` 的 Drawer 模式。
+- 组织与项目范围控件位于上下文侧栏，菜单仅列出 Navigation Context 下发的授权投影；点击外部或按 `Escape` 关闭，键盘焦点返回触发器。
+- 全局栏的工作空间、通知和账号安全入口以及上下文侧栏当前项均通过 `aria-current="page"`、文字/图标与焦点状态表达；当前项使用冷灰/钴蓝关系，不使用琥珀橙导航面。
+- 桌面壳层锁定为 `100dvh`：64px 全局栏和 232px 上下文侧栏保持固定，只有 `.au-content` 独立纵向滚动；窄屏将全局/上下文导航合并为 Drawer。
 
 ## 命令
 

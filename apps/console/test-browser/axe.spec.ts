@@ -5,6 +5,11 @@ import { openResponsiveSidebar, waitForShell } from './shell-helpers';
 
 let server: { origin: string; close(): Promise<void> } | undefined;
 
+function requiredServer(): NonNullable<typeof server> {
+  if (server === undefined) throw new Error('SPA server was not started');
+  return server;
+}
+
 async function setProjectScope(page: Page): Promise<void> {
   await page.evaluate(() =>
     fetch('/__mock/scope', {
@@ -24,11 +29,12 @@ test.afterAll(async () => {
 });
 
 test('the authenticated shell passes axe auto-checks', async ({ page }) => {
-  await page.goto(`${server!.origin}/`);
+  await page.goto(`${requiredServer().origin}/`);
   await waitForShell(page);
   await setProjectScope(page);
-  await page.goto(`${server!.origin}/organizations/org_test_1/projects/prj_test_1/overview`);
-  await page.getByRole('button', { name: '组织：Acme' }).click();
+  await page.goto(`${requiredServer().origin}/organizations/org_test_1/projects/prj_test_1/overview`);
+  const sidebar = await openResponsiveSidebar(page);
+  await sidebar.getByRole('button', { name: '组织：Acme' }).click();
   await expect(page.getByRole('menu', { name: '选择组织' })).toBeVisible();
   const openMenuResults = await new AxeBuilder({ page }).analyze();
   expect(openMenuResults.violations).toEqual([]);
@@ -39,7 +45,7 @@ test('the authenticated shell passes axe auto-checks', async ({ page }) => {
 });
 
 test('the root route has one top-level main landmark and passes axe checks', async ({ page }) => {
-  await page.goto(`${server!.origin}/`);
+  await page.goto(`${requiredServer().origin}/`);
   await waitForShell(page);
 
   await expect(page.locator('main')).toHaveCount(1);
@@ -48,12 +54,12 @@ test('the root route has one top-level main landmark and passes axe checks', asy
 });
 
 test('project monitoring entry evidence surfaces pass axe auto-checks', async ({ page }) => {
-  await page.goto(`${server!.origin}/`);
+  await page.goto(`${requiredServer().origin}/`);
   await waitForShell(page);
   await setProjectScope(page);
 
   for (const path of ['onboarding', 'overview', 'data-status']) {
-    await page.goto(`${server!.origin}/organizations/org_test_1/projects/prj_test_1/${path}`);
+    await page.goto(`${requiredServer().origin}/organizations/org_test_1/projects/prj_test_1/${path}`);
     await expect(page.locator('main')).toBeVisible();
     const results = await new AxeBuilder({ page }).analyze();
     expect(results.violations).toEqual([]);

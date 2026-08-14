@@ -499,7 +499,7 @@ function backHref(): string {
   min-height: var(--control-height);
   padding: 0 var(--space-2);
   border: 1px solid var(--color-border-default);
-  border-radius: var(--radius-base);
+  border-radius: var(--radius-control);
   background-color: var(--color-surface-bg);
   color: var(--color-text-primary);
   font: inherit;
@@ -529,7 +529,7 @@ function backHref(): string {
 }
 .mon-confirm {
   border: 1px solid var(--color-status-warning);
-  border-radius: var(--radius-base);
+  border-radius: var(--radius-control);
   padding: var(--space-3);
   margin: 0;
 }
@@ -554,7 +554,7 @@ function backHref(): string {
   min-height: var(--control-height);
   padding: 0 var(--space-3);
   border: 1px solid var(--color-border-default);
-  border-radius: var(--radius-base);
+  border-radius: var(--radius-control);
   background-color: var(--color-surface-bg);
   color: var(--color-text-primary);
   cursor: pointer;

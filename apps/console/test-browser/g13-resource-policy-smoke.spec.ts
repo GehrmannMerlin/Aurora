@@ -4,6 +4,11 @@ import { startSpaServer } from './serve-spa';
 
 let server: { origin: string; close(): Promise<void> } | undefined;
 
+function requiredServer(): NonNullable<typeof server> {
+  if (server === undefined) throw new Error('SPA server was not started');
+  return server;
+}
+
 async function setSessionAuthenticated(page: Page, authenticated: boolean): Promise<void> {
   await page.evaluate(
     ({ origin, value }) =>
@@ -12,13 +17,13 @@ async function setSessionAuthenticated(page: Page, authenticated: boolean): Prom
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({ authenticated: value }),
       }),
-    { origin: server!.origin, value: authenticated },
+    { origin: requiredServer().origin, value: authenticated },
   );
 }
 
 /** Load the app once and wait for the MSW-backed shell so the worker is active. */
 async function primeApp(page: Page): Promise<void> {
-  await page.goto(`${server!.origin}/`);
+  await page.goto(`${requiredServer().origin}/`);
   await expect(page.getByRole('navigation', { name: '全局导航' })).toBeVisible();
 }
 
@@ -45,7 +50,7 @@ test('PLT-10c smoke: resource-policy page renders target picker and effective de
   await setSessionAuthenticated(page, true);
 
   // Normal navigation to the D2 platform resource-policy page.
-  await page.goto(`${server!.origin}/platform/resource-policies`);
+  await page.goto(`${requiredServer().origin}/platform/resource-policies`);
   await expect(page.getByTestId('resource-policy-view')).toBeVisible();
 
   // Capability probe resolved (platform admin in test fixture): the target

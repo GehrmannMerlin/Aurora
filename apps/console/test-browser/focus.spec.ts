@@ -4,6 +4,11 @@ import { openResponsiveSidebar, waitForShell } from './shell-helpers';
 
 let server: { origin: string; close(): Promise<void> } | undefined;
 
+function requiredServer(): NonNullable<typeof server> {
+  if (server === undefined) throw new Error('SPA server was not started');
+  return server;
+}
+
 async function setMockScope(
   page: Page,
   type: 'workspace' | 'organization' | 'project',
@@ -29,10 +34,12 @@ test.afterAll(async () => {
 });
 
 test('post-navigation focus lands on the newly rendered page title', async ({ page }) => {
-  await page.goto(`${server!.origin}/`);
+  await page.goto(`${requiredServer().origin}/`);
   await waitForShell(page);
   await setMockScope(page, 'project', 'prj_test_1');
-  await page.reload();
+  await page.goto(
+    `${requiredServer().origin}/organizations/org_test_1/projects/prj_test_1/overview`,
+  );
   const sidebar = await openResponsiveSidebar(page);
   await sidebar.getByRole('link', { name: '概览', exact: true }).click();
   await expect(page).toHaveURL(/\/organizations\/org_test_1\/projects\/prj_test_1\/overview$/);
@@ -42,10 +49,10 @@ test('post-navigation focus lands on the newly rendered page title', async ({ pa
 test('issue selection remains keyboard reachable and exposes the current-page selection summary', async ({
   page,
 }) => {
-  await page.goto(`${server!.origin}/`);
+  await page.goto(`${requiredServer().origin}/`);
   await waitForShell(page);
   await setMockScope(page, 'project', 'prj_test_1');
-  await page.goto(`${server!.origin}/organizations/org_test_1/projects/prj_test_1/issues`);
+  await page.goto(`${requiredServer().origin}/organizations/org_test_1/projects/prj_test_1/issues`);
 
   const selection = page.getByRole('checkbox', { name: /选择问题/ }).first();
   await selection.focus();
@@ -57,7 +64,7 @@ test('issue selection remains keyboard reachable and exposes the current-page se
 test('pagination clears the current-page issue selection and C5 endpoint selection supports Enter', async ({
   page,
 }) => {
-  await page.goto(`${server!.origin}/`);
+  await page.goto(`${requiredServer().origin}/`);
   await waitForShell(page);
   await setMockScope(page, 'project', 'prj_test_1');
   const issueList = page.waitForResponse(
@@ -65,7 +72,7 @@ test('pagination clears the current-page issue selection and C5 endpoint selecti
       response.url().includes('/api/platform/v1/organizations/org_test_1/projects/prj_test_1/issues') &&
       response.request().method() === 'GET',
   );
-  await page.goto(`${server!.origin}/organizations/org_test_1/projects/prj_test_1/issues?status=open`);
+  await page.goto(`${requiredServer().origin}/organizations/org_test_1/projects/prj_test_1/issues?status=open`);
   const issueListBody = (await issueList).json() as Promise<{
     readonly data: { readonly issues: { readonly pagination: { readonly nextCursor?: string } } };
   }>;
@@ -77,7 +84,7 @@ test('pagination clears the current-page issue selection and C5 endpoint selecti
   await page.getByTestId('issues-load-more').click();
   await expect(page.getByTestId('issues-selection-summary')).toContainText('已选择 0 个问题');
 
-  await page.goto(`${server!.origin}/organizations/org_test_1/projects/prj_test_1/requests`);
+  await page.goto(`${requiredServer().origin}/organizations/org_test_1/projects/prj_test_1/requests`);
   const endpoint = page.getByRole('button', { name: /GET.*\/api\/items/ });
   await endpoint.focus();
   await page.keyboard.press('Enter');

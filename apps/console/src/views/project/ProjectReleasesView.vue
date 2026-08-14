@@ -137,7 +137,7 @@ function releaseHref(releaseId: string): string {
 }
 .mon-release-item {
   border: 1px solid var(--color-border-default);
-  border-radius: var(--radius-base);
+  border-radius: var(--radius-control);
   padding: var(--space-3);
 }
 .mon-release-row {
@@ -152,7 +152,7 @@ function releaseHref(releaseId: string): string {
 .mon-badge {
   display: inline-block;
   padding: 1px var(--space-2);
-  border-radius: var(--radius-base);
+  border-radius: var(--radius-control);
   border: 1px solid var(--color-border-default);
   color: var(--color-text-secondary);
   font-size: 12px;

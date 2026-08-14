@@ -265,7 +265,7 @@ function selectEndpoint(endpointId: string): void {
 .mon-endpoint {
   width: 100%;
   border: 1px solid var(--color-border-default);
-  border-radius: var(--radius-base);
+  border-radius: var(--radius-control);
   padding: var(--space-3);
   background-color: var(--color-surface-bg);
   color: var(--color-text-primary);
@@ -295,7 +295,7 @@ function selectEndpoint(endpointId: string): void {
   min-height: var(--control-height);
   padding: 0 var(--space-3);
   border: 1px solid var(--color-border-default);
-  border-radius: var(--radius-base);
+  border-radius: var(--radius-control);
   background-color: var(--color-surface-bg);
   color: var(--color-text-primary);
   cursor: pointer;

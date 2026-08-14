@@ -734,6 +734,8 @@ git commit -m "feat(console): redesign account and notification surfaces"
 
 ### Task 10: Visual Regression, Cross-Viewport Verification, Legacy Cleanup, and Documentation
 
+> Closure status (2026-08-14): legacy cleanup, visual baselines, documentation, and the pre-stop evidence listed in the implementation report are complete. Final mobile reachability/integration verification remains partial: after a mobile test-stability fix, the user explicitly stopped all test execution before its rerun; the iOS shard was not started. This plan therefore does not claim a complete green matrix.
+
 **Files:**
 - Modify: `apps/console/src/styles/tokens.css`
 - Modify: `apps/console/test/styles/tokens.test.ts`
@@ -752,7 +754,7 @@ git commit -m "feat(console): redesign account and notification surfaces"
 - Consumes: all Tasks 1—9.
 - Produces: no legacy amber/topbar token aliases, committed deterministic visual baselines for the six representative surfaces, and authoritative `implemented-in-feature-branch` documentation only after verification passes.
 
-- [ ] **Step 1: Add failing legacy-token and screenshot regression gates**
+- [x] **Step 1: Add failing legacy-token and screenshot regression gates**
 
 Extend `tokens.test.ts` to reject `--color-topbar-*`, `--color-sidebar-*`, `#D47A16`, `.au-topbar`, and `.au-desktop-sidebar` outside superseded historical docs. Add screenshots for:
 
@@ -775,7 +777,7 @@ test('approved representative surfaces', async ({ page }) => {
 
 Add a 390×844 login screenshot and a 900×900 project overview screenshot. Mask only volatile server timestamps; do not mask layout, labels, states, or data completeness messages.
 
-- [ ] **Step 2: Run cleanup/screenshot tests and verify they fail**
+- [x] **Step 2: Run cleanup/screenshot tests and verify they fail**
 
 Run:
 
@@ -786,11 +788,11 @@ pnpm --filter @aurora/console exec playwright test --config playwright.config.ts
 
 Expected: token test FAIL if aliases remain; first screenshot run creates missing baselines and reports them as absent.
 
-- [ ] **Step 3: Remove every legacy alias/reference and approve the generated baselines visually**
+- [x] **Step 3: Remove every legacy alias/reference and approve the generated baselines visually**
 
 Use `git grep` to remove old token/class references from live Console code, then delete the compatibility aliases from `tokens.css`. Inspect each generated PNG at original resolution. Reject and fix any clipped text, oversized blank region, misplaced Drawer, raw primary status key, inaccessible focus indication, or fabricated chart before updating snapshots.
 
-- [ ] **Step 4: Run the complete Console quality chain**
+- [x] **Step 4: Run the available Console quality chain before the final mobile stability edits**
 
 Run:
 
@@ -806,15 +808,15 @@ pnpm --filter @aurora/console test:matrix
 
 Expected: all commands PASS. If the full matrix cannot run because a browser binary is unavailable, install the declared Playwright browser locally and rerun; do not mark implementation complete from Chromium-only evidence.
 
-- [ ] **Step 5: Perform manual browser verification at approved widths**
+- [ ] **Step 5: Perform manual browser verification at every approved width (partial)**
 
 Verify 1440×900, 1280×800, 1024×768, 900×900, 390×844, and 200% zoom. Check keyboard traversal, `Escape` Drawer/menu closure and focus return, reduced motion, long Chinese labels, long project names, empty/error/partial/stale/unavailable states, deep-link refresh, back/forward restoration, C2 no-trend rule, B1 no-health-metric rule, and absence of authenticated navigation on public routes.
 
-- [ ] **Step 6: Update implementation-status documentation only after evidence is green**
+- [x] **Step 6: Update implementation-status documentation with the partial-evidence caveat**
 
 Set the redesign document to `implementation-status: implemented-in-feature-branch`, check its plan/implementation/evidence items, and record the exact verification commands. Update Console README, frontend/shell architecture, docs index, AGENTS, and AURORA_RULES to distinguish “implemented in feature branch / not deployed”. Do not change Route Target, API, ADR, deployment, or product statuses.
 
-- [ ] **Step 7: Run documentation and repository checks**
+- [ ] **Step 7: Run final documentation and repository checks (not run after the stop instruction)**
 
 Run:
 
@@ -827,7 +829,7 @@ pnpm --filter @aurora/console test:package
 
 Expected: all commands PASS.
 
-- [ ] **Step 8: Commit final verification and documentation**
+- [x] **Step 8: Commit final documentation and partial-verification closure**
 
 ```powershell
 git add apps/console docs/architecture/platform-frontend.md docs/architecture/platform-frontend-shell.md docs/superpowers/specs/2026-08-14-aurora-console-ux-ui-redesign-design.md docs/README.md AGENTS.md AURORA_RULES.md

@@ -27,7 +27,6 @@ body {
 
 /* 禁止渐变：正式表面统一背景图关闭，仅 Dialog/Drawer/Popover 浮层可用统一轻量阴影 */
 body,
-.au-topbar,
 .au-sidebar,
 .au-surface {
   background-image: none;

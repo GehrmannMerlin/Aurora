@@ -15,6 +15,11 @@ import { waitForShell } from './shell-helpers';
 // at the layer the original shell smoke missed.
 let server: { origin: string; close(): Promise<void> } | undefined;
 
+function requiredServer(): NonNullable<typeof server> {
+  if (server === undefined) throw new Error('SPA server was not started');
+  return server;
+}
+
 async function setMockScope(
   page: Page,
   type: 'workspace' | 'organization' | 'project',
@@ -31,11 +36,11 @@ async function setMockScope(
   );
 }
 
-const ROUTES: ReadonlyArray<{
+const ROUTES: readonly {
   name: string;
   path: string;
   scope?: 'workspace' | 'organization' | 'project';
-}> = [
+}[] = [
   { name: 'root', path: '/' },
   { name: 'workspace', path: '/workspace' },
   {
@@ -65,7 +70,7 @@ test('no PrimeUI license banner or warning appears on any shell route', async ({
   });
 
   for (const route of ROUTES) {
-    await page.goto(`${server!.origin}${route.path}`);
+    await page.goto(`${requiredServer().origin}${route.path}`);
     if (route.scope) {
       await setMockScope(
         page,

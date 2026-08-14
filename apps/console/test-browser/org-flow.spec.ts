@@ -4,6 +4,11 @@ import { startSpaServer } from './serve-spa';
 
 let server: { origin: string; close(): Promise<void> } | undefined;
 
+function requiredServer(): NonNullable<typeof server> {
+  if (server === undefined) throw new Error('SPA server was not started');
+  return server;
+}
+
 async function setSessionAuthenticated(page: Page, authenticated: boolean): Promise<void> {
   await page.evaluate(
     ({ origin, value }) =>
@@ -12,7 +17,7 @@ async function setSessionAuthenticated(page: Page, authenticated: boolean): Prom
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({ authenticated: value }),
       }),
-    { origin: server!.origin, value: authenticated },
+    { origin: requiredServer().origin, value: authenticated },
   );
 }
 
@@ -26,11 +31,11 @@ test.afterAll(async () => {
 
 test('B1 workspace home lists projects and honors allowedActions', async ({ page }) => {
   // Prime the app so the MSW worker is active, then sign in.
-  await page.goto(`${server!.origin}/`);
+  await page.goto(`${requiredServer().origin}/`);
   await expect(page.getByRole('navigation', { name: '全局导航' })).toBeVisible();
   await setSessionAuthenticated(page, true);
 
-  await page.goto(`${server!.origin}/workspace?organizationId=org_test_1`);
+  await page.goto(`${requiredServer().origin}/workspace?organizationId=org_test_1`);
   await expect(page.getByTestId('workspace-home')).toBeVisible();
   await expect(page.getByRole('link', { name: 'Web', exact: true })).toBeVisible();
   await expect(page.getByTestId('create-project-button')).toBeVisible();
@@ -41,11 +46,11 @@ test('B1 workspace home lists projects and honors allowedActions', async ({ page
 });
 
 test('B5 usage page shows an honest unavailable state', async ({ page }) => {
-  await page.goto(`${server!.origin}/`);
+  await page.goto(`${requiredServer().origin}/`);
   await expect(page.getByRole('navigation', { name: '全局导航' })).toBeVisible();
   await setSessionAuthenticated(page, true);
 
-  await page.goto(`${server!.origin}/organizations/org_test_1/usage`);
+  await page.goto(`${requiredServer().origin}/organizations/org_test_1/usage`);
   await expect(page.getByTestId('usage-view')).toBeVisible();
   await expect(page.getByText('功能未提供')).toBeVisible();
   await expect(page.getByText(/不会显示任何模拟数据/)).toBeVisible();
@@ -56,11 +61,11 @@ test('B5 usage page shows an honest unavailable state', async ({ page }) => {
 });
 
 test('B2 create-project form succeeds and shows the public client key identifier', async ({ page }) => {
-  await page.goto(`${server!.origin}/`);
+  await page.goto(`${requiredServer().origin}/`);
   await expect(page.getByRole('navigation', { name: '全局导航' })).toBeVisible();
   await setSessionAuthenticated(page, true);
 
-  await page.goto(`${server!.origin}/organizations/org_test_1/projects/new`);
+  await page.goto(`${requiredServer().origin}/organizations/org_test_1/projects/new`);
   await expect(page.getByTestId('project-create-view')).toBeVisible();
   await page.getByTestId('project-name-input').fill('Web App');
   await page.getByTestId('project-framework-select').selectOption('react');
@@ -73,11 +78,11 @@ test('B2 create-project form succeeds and shows the public client key identifier
 });
 
 test('B3 members lists masked emails and invites a member', async ({ page }) => {
-  await page.goto(`${server!.origin}/`);
+  await page.goto(`${requiredServer().origin}/`);
   await expect(page.getByRole('navigation', { name: '全局导航' })).toBeVisible();
   await setSessionAuthenticated(page, true);
 
-  await page.goto(`${server!.origin}/organizations/org_test_1/members`);
+  await page.goto(`${requiredServer().origin}/organizations/org_test_1/members`);
   await expect(page.getByTestId('member-list')).toBeVisible();
   await expect(page.getByTestId('member-list').getByText('ow**@example.invalid')).toBeVisible();
   await expect(page.getByTestId('member-list').getByText('me**@example.invalid')).toBeVisible();
@@ -91,11 +96,11 @@ test('B3 members lists masked emails and invites a member', async ({ page }) => 
 });
 
 test('B4 timezone settings updates the organization timezone', async ({ page }) => {
-  await page.goto(`${server!.origin}/`);
+  await page.goto(`${requiredServer().origin}/`);
   await expect(page.getByRole('navigation', { name: '全局导航' })).toBeVisible();
   await setSessionAuthenticated(page, true);
 
-  await page.goto(`${server!.origin}/organizations/org_test_1/settings`);
+  await page.goto(`${requiredServer().origin}/organizations/org_test_1/settings`);
   await expect(page.getByTestId('settings-view')).toBeVisible();
   await page.getByTestId('timezone-input').fill('Asia/Shanghai');
   await page.getByTestId('timezone-submit').click();
@@ -107,11 +112,11 @@ test('B4 timezone settings updates the organization timezone', async ({ page }) 
 test('B6 tokens: list is metadata-only and the one-time plaintext is never re-displayed', async ({
   page,
 }) => {
-  await page.goto(`${server!.origin}/`);
+  await page.goto(`${requiredServer().origin}/`);
   await expect(page.getByRole('navigation', { name: '全局导航' })).toBeVisible();
   await setSessionAuthenticated(page, true);
 
-  await page.goto(`${server!.origin}/organizations/org_test_1/tokens`);
+  await page.goto(`${requiredServer().origin}/organizations/org_test_1/tokens`);
   await expect(page.getByTestId('token-list')).toBeVisible();
   await expect(page.getByTestId('token-name')).toHaveText('ci-token');
   // Metadata only: no digest/plaintext in the DOM before any create.
@@ -142,9 +147,9 @@ test('B6 tokens: list is metadata-only and the one-time plaintext is never re-di
     'aurora_pt_pt_test_2_abcdef1234567890',
   );
 
-  await page.goto(`${server!.origin}/organizations/org_test_1/members`);
+  await page.goto(`${requiredServer().origin}/organizations/org_test_1/members`);
   await expect(page.getByTestId('member-list')).toBeVisible();
-  await page.goto(`${server!.origin}/organizations/org_test_1/tokens`);
+  await page.goto(`${requiredServer().origin}/organizations/org_test_1/tokens`);
   await expect(page.getByTestId('token-list')).toBeVisible();
   await expect(page.getByTestId('token-plaintext')).toHaveCount(0);
   await expect(page.getByText(/aurora_pt_/)).toHaveCount(0);
@@ -152,11 +157,11 @@ test('B6 tokens: list is metadata-only and the one-time plaintext is never re-di
 });
 
 test('B7 audit shows a redacted security timeline', async ({ page }) => {
-  await page.goto(`${server!.origin}/`);
+  await page.goto(`${requiredServer().origin}/`);
   await expect(page.getByRole('navigation', { name: '全局导航' })).toBeVisible();
   await setSessionAuthenticated(page, true);
 
-  await page.goto(`${server!.origin}/organizations/org_test_1/audit`);
+  await page.goto(`${requiredServer().origin}/organizations/org_test_1/audit`);
   await expect(page.getByTestId('audit-list')).toBeVisible();
   await expect(page.getByTestId('audit-primary-action')).toHaveText('已邀请成员');
   await expect(page.getByTestId('audit-primary-result')).toHaveText('已完成');
@@ -168,11 +173,11 @@ test('B7 audit shows a redacted security timeline', async ({ page }) => {
 });
 
 test('B8 trash lists recoverable projects and restores one', async ({ page }) => {
-  await page.goto(`${server!.origin}/`);
+  await page.goto(`${requiredServer().origin}/`);
   await expect(page.getByRole('navigation', { name: '全局导航' })).toBeVisible();
   await setSessionAuthenticated(page, true);
 
-  await page.goto(`${server!.origin}/organizations/org_test_1/trash`);
+  await page.goto(`${requiredServer().origin}/organizations/org_test_1/trash`);
   await expect(page.getByTestId('trash-list')).toBeVisible();
   await expect(page.getByTestId('trash-name')).toHaveText('Legacy');
   await expect(page.getByTestId('trash-safety-note')).toContainText('不会被恢复');

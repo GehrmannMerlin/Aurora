@@ -72,6 +72,8 @@ function handleWorkspace(): void {
 .au-global-navigation :deep(.au-link) { position: relative; justify-content: center; width: 48px; height: 48px; min-height: 48px; padding: 0; border-radius: var(--radius-control); color: var(--color-rail-muted); }
 .au-global-navigation :deep(.au-link:hover), .au-global-navigation :deep(.au-link:focus-visible), .au-global-navigation :deep(.au-link--active) { background: rgb(255 255 255 / 12%); color: var(--color-rail-fg); }
 .au-global-navigation--expanded :deep(.au-link) { justify-content: flex-start; width: 100%; gap: var(--space-3); padding: 0 var(--space-3); }
+.au-global-navigation--expanded :deep(.au-link) { color: var(--color-text-secondary); }
+.au-global-navigation--expanded :deep(.au-link:hover), .au-global-navigation--expanded :deep(.au-link:focus-visible), .au-global-navigation--expanded :deep(.au-link--active) { background: var(--color-context-active-bg); color: var(--color-context-active-fg); }
 .au-global-unread { position: absolute; top: 5px; right: 5px; min-width: 16px; height: 16px; padding: 0 4px; border-radius: 999px; background: var(--color-status-danger); color: white; font-size: 10px; font-weight: 700; line-height: 16px; text-align: center; }
 .au-global-navigation--expanded .au-global-unread { position: static; margin-left: auto; }
 </style>

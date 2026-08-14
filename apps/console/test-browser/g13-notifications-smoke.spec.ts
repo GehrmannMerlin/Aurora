@@ -4,6 +4,11 @@ import { waitForShell } from './shell-helpers';
 
 let server: { origin: string; close(): Promise<void> } | undefined;
 
+function requiredServer(): NonNullable<typeof server> {
+  if (server === undefined) throw new Error('SPA server was not started');
+  return server;
+}
+
 async function setSessionAuthenticated(page: Page, authenticated: boolean): Promise<void> {
   await page.evaluate(
     ({ origin, value }) =>
@@ -12,13 +17,13 @@ async function setSessionAuthenticated(page: Page, authenticated: boolean): Prom
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({ authenticated: value }),
       }),
-    { origin: server!.origin, value: authenticated },
+    { origin: requiredServer().origin, value: authenticated },
   );
 }
 
 /** Load the app once and wait for the MSW-backed shell so the worker is active. */
 async function primeApp(page: Page): Promise<void> {
-  await page.goto(`${server!.origin}/`);
+  await page.goto(`${requiredServer().origin}/`);
   await waitForShell(page);
 }
 
@@ -43,18 +48,18 @@ test('PLT-09 smoke: notifications page renders, filters and marks read without f
   await setSessionAuthenticated(page, true);
 
   // Normal navigation to the D1 notification center.
-  await page.goto(`${server!.origin}/notifications`);
+  await page.goto(`${requiredServer().origin}/notifications`);
   await expect(page.getByTestId('notifications-view')).toBeVisible();
   await expect(page.getByText('新问题出现')).toBeVisible();
   await expect(page.getByText('错误数量过高 已触发')).toBeVisible();
 
   // Unread filter renders without a fatal error.
-  await page.goto(`${server!.origin}/notifications?read=unread`);
+  await page.goto(`${requiredServer().origin}/notifications?read=unread`);
   await expect(page.getByTestId('notifications-view')).toBeVisible();
   await expect(page.getByText('错误数量过高 已触发')).toBeVisible();
 
   // Mark-read action completes without a fatal error (fixture stays static).
-  await page.goto(`${server!.origin}/notifications`);
+  await page.goto(`${requiredServer().origin}/notifications`);
   const markButtons = page.getByTestId('mark-read');
   if ((await markButtons.count()) > 0) {
     await markButtons.first().click();

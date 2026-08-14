@@ -3,6 +3,11 @@ import { startSpaServer } from './serve-spa';
 
 let server: { origin: string; close(): Promise<void> } | undefined;
 
+function requiredServer(): NonNullable<typeof server> {
+  if (server === undefined) throw new Error('SPA server was not started');
+  return server;
+}
+
 async function setSessionAuthenticated(page: Page, authenticated: boolean): Promise<void> {
   await page.evaluate(
     ({ origin, value }) =>
@@ -11,7 +16,7 @@ async function setSessionAuthenticated(page: Page, authenticated: boolean): Prom
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({ authenticated: value }),
       }),
-    { origin: server!.origin, value: authenticated },
+    { origin: requiredServer().origin, value: authenticated },
   );
 }
 
@@ -27,12 +32,12 @@ test('register form validates with field-level hints and no fatal errors', async
   const pageErrors: string[] = [];
   page.on('pageerror', (error) => pageErrors.push(error.message));
 
-  await page.goto(`${server!.origin}/`);
+  await page.goto(`${requiredServer().origin}/`);
   // Prime the app so the MSW worker is active, then start signed out.
-  await expect(page.getByRole('navigation', { name: '侧栏导航' })).toBeVisible();
+  await expect(page.getByRole('navigation', { name: '全局导航' })).toBeVisible();
   await setSessionAuthenticated(page, false);
 
-  await page.goto(`${server!.origin}/register`);
+  await page.goto(`${requiredServer().origin}/register`);
   await expect(page.getByTestId('register-view')).toBeVisible();
 
   // The real password rule is visible ahead of input.

@@ -406,7 +406,7 @@ function keyTone(status: string): 'neutral' | 'success' | 'warning' | 'danger' {
   min-height: var(--control-height);
   padding: 0 var(--space-2);
   border: 1px solid var(--color-border-default);
-  border-radius: var(--radius-base);
+  border-radius: var(--radius-control);
   background-color: var(--color-surface-bg);
   color: var(--color-text-primary);
   font: inherit;
@@ -420,7 +420,7 @@ function keyTone(status: string): 'neutral' | 'success' | 'warning' | 'danger' {
 }
 .mon-secret {
   border: 1px solid var(--color-status-warning);
-  border-radius: var(--radius-base);
+  border-radius: var(--radius-control);
   padding: var(--space-3);
   max-width: 64ch;
 }
@@ -431,7 +431,7 @@ function keyTone(status: string): 'neutral' | 'success' | 'warning' | 'danger' {
 .mon-secret-value {
   display: block;
   padding: var(--space-2);
-  border-radius: var(--radius-base);
+  border-radius: var(--radius-control);
   background-color: var(--color-surface-muted);
   color: var(--color-text-primary);
   word-break: break-all;
@@ -513,7 +513,7 @@ function keyTone(status: string): 'neutral' | 'success' | 'warning' | 'danger' {
   min-height: var(--control-height);
   padding: 0 var(--space-3);
   border: 1px solid var(--color-border-default);
-  border-radius: var(--radius-base);
+  border-radius: var(--radius-control);
   background-color: var(--color-surface-bg);
   color: var(--color-text-primary);
   cursor: pointer;

@@ -479,7 +479,7 @@ function formatDate(value: string): string {
   margin-bottom: var(--space-6);
   padding: var(--space-4);
   border: 1px solid var(--color-border-default);
-  border-radius: var(--radius-base);
+  border-radius: var(--radius-control);
 }
 .au-secret-row {
   display: flex;
@@ -490,7 +490,7 @@ function formatDate(value: string): string {
 .au-secret-value {
   padding: var(--space-2) var(--space-3);
   border: 1px solid var(--color-border-default);
-  border-radius: var(--radius-base);
+  border-radius: var(--radius-control);
   background-color: var(--color-surface-bg);
   color: var(--color-text-primary);
   font-family: var(--font-mono);
@@ -546,7 +546,7 @@ function formatDate(value: string): string {
   height: var(--control-height);
   padding: 0 var(--space-3);
   border: 1px solid var(--color-border-default);
-  border-radius: var(--radius-base);
+  border-radius: var(--radius-control);
   background-color: var(--color-surface-bg);
   color: var(--color-text-primary);
   font: inherit;

@@ -23,16 +23,9 @@
   --motion-fast: 150ms;
   --motion-standard: 200ms;
 
-  /* Removed in Task 10 after every view migrates. */
-  --color-topbar-bg: var(--color-rail-bg);
-  --color-topbar-fg: var(--color-rail-fg);
-  --color-sidebar-bg: var(--color-context-bg);
-  --color-sidebar-fg: var(--color-text-primary);
-  --color-sidebar-active-bg: #E8EEFF;
-  --color-sidebar-active-fg: var(--color-action-primary);
-  --color-sidebar-active-indicator: var(--color-action-primary);
-  --radius-base: var(--radius-control);
-  --sidebar-width: var(--context-sidebar-width);
+  --color-context-active-bg: #E8EEFF;
+  --color-context-active-fg: var(--color-action-primary);
+  --color-context-active-indicator: var(--color-action-primary);
 
   --space-1: 4px;
   --space-2: 8px;

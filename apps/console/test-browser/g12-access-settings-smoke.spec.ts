@@ -4,6 +4,11 @@ import { startSpaServer } from './serve-spa';
 
 let server: { origin: string; close(): Promise<void> } | undefined;
 
+function requiredServer(): NonNullable<typeof server> {
+  if (server === undefined) throw new Error('SPA server was not started');
+  return server;
+}
+
 async function setMockScope(
   page: Page,
   type: 'workspace' | 'organization' | 'project',
@@ -28,13 +33,13 @@ async function setSessionAuthenticated(page: Page, authenticated: boolean): Prom
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({ authenticated: value }),
       }),
-    { origin: server!.origin, value: authenticated },
+    { origin: requiredServer().origin, value: authenticated },
   );
 }
 
 /** Load the app once and wait for the MSW-backed shell so the worker is active. */
 async function primeApp(page: Page): Promise<void> {
-  await page.goto(`${server!.origin}/`);
+  await page.goto(`${requiredServer().origin}/`);
   await expect(page.getByRole('navigation', { name: '全局导航' })).toBeVisible();
 }
 
@@ -58,24 +63,24 @@ test('PLT-08 smoke: access → client-keys → settings → lifecycle render rea
   await setSessionAuthenticated(page, true);
 
   // C13: access workspace renders the effective member list.
-  await page.goto(`${server!.origin}/organizations/org_test_1/projects/prj_test_1/access`);
+  await page.goto(`${requiredServer().origin}/organizations/org_test_1/projects/prj_test_1/access`);
   await expect(page.getByTestId('project-access-view')).toBeVisible();
   await expect(page.getByTestId('access-members')).toBeVisible();
 
   // C14: client-keys workspace renders the key list and the create form.
-  await page.goto(`${server!.origin}/organizations/org_test_1/projects/prj_test_1/client-keys`);
+  await page.goto(`${requiredServer().origin}/organizations/org_test_1/projects/prj_test_1/client-keys`);
   await expect(page.getByTestId('project-client-keys-view')).toBeVisible();
   await expect(page.getByTestId('client-key-list')).toBeVisible();
 
   // C15: settings workspace renders the general tab.
-  await page.goto(`${server!.origin}/organizations/org_test_1/projects/prj_test_1/settings`);
+  await page.goto(`${requiredServer().origin}/organizations/org_test_1/projects/prj_test_1/settings`);
   await expect(page.getByTestId('project-settings-view')).toBeVisible();
   await expect(page.getByTestId('settings-general-workspace')).toBeVisible();
   await expect(page.getByTestId('tab-general')).toBeVisible();
   await expect(page.getByTestId('tab-environments')).toBeVisible();
   await page.getByTestId('tab-environments').click();
   await expect(page.getByTestId('settings-environments-workspace')).toBeVisible();
-  await page.goto(`${server!.origin}/organizations/org_test_1/projects/prj_test_1/settings?tab=environments`);
+  await page.goto(`${requiredServer().origin}/organizations/org_test_1/projects/prj_test_1/settings?tab=environments`);
   await expect(page.getByTestId('tab-environments')).toHaveAttribute('aria-selected', 'true');
   await expect(page.getByTestId('settings-environments-workspace')).toBeVisible();
   await page.getByTestId('tab-environments').focus();
@@ -85,7 +90,7 @@ test('PLT-08 smoke: access → client-keys → settings → lifecycle render rea
   await expect(page.getByTestId('tab-general')).toBeFocused();
 
   // C16: lifecycle workspace renders the summary and high-risk action areas.
-  await page.goto(`${server!.origin}/organizations/org_test_1/projects/prj_test_1/settings/lifecycle`);
+  await page.goto(`${requiredServer().origin}/organizations/org_test_1/projects/prj_test_1/settings/lifecycle`);
   await expect(page.getByTestId('project-lifecycle-view')).toBeVisible();
   await expect(page.getByTestId('lifecycle-summary')).toBeVisible();
   await expect(page.getByTestId('lifecycle-archive-zone')).toBeVisible();

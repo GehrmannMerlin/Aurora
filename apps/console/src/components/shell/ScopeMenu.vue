@@ -48,7 +48,7 @@ const emit = defineEmits<{
 .au-scope-overlay { display: contents; }
 .au-scope-menu { position: fixed; z-index: 1000; width: max-content; min-width: 220px; max-width: min(320px, calc(100vw - 16px)); max-height: min(360px, calc(100vh - var(--nav-height) - 16px)); margin: 0; padding: var(--space-2); overflow-y: auto; border: 1px solid var(--color-border-default); border-radius: var(--radius-control); background: var(--color-surface-bg); box-shadow: 0 10px 24px rgb(15 23 42 / 16%); color: var(--color-text-primary); list-style: none; }
 .au-scope-option { display: flex; align-items: center; justify-content: space-between; width: 100%; min-height: var(--control-height); padding: 0 var(--space-3); border: 0; border-radius: var(--radius-control); background: transparent; color: inherit; font: inherit; text-align: left; cursor: pointer; }
-.au-scope-option:hover, .au-scope-option:focus-visible { background: var(--color-sidebar-active-bg); }
+.au-scope-option:hover, .au-scope-option:focus-visible { background: var(--color-context-active-bg); }
 .au-scope-current { margin-left: var(--space-3); color: var(--color-text-secondary); font-size: .8125rem; }
 .au-scope-message, .au-scope-error { max-width: 280px; padding: var(--space-3); color: var(--color-text-secondary); white-space: normal; }
 .au-scope-error { color: var(--color-status-danger); }

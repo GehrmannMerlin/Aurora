@@ -31,7 +31,7 @@ const classes = computed(() => ['au-link', { 'au-link--active': props.active }])
   background-image: none;
 }
 .au-link--active {
-  background-color: var(--color-sidebar-active-bg);
-  color: var(--color-sidebar-active-fg);
+  background-color: var(--color-context-active-bg);
+  color: var(--color-context-active-fg);
 }
 </style>
