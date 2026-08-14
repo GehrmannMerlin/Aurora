@@ -2,11 +2,11 @@
 title: ADR-031：管理平台邮件发送责任、端口与供应商
 status: accepted
 decision-status: accepted
-implementation-status: not-started
+implementation-status: in-progress
 approval-status: approved
 owner: product/operations/security
 date: 2026-08-08
-last-reviewed: 2026-08-09
+last-reviewed: 2026-08-14
 applies-to: 平台身份事务邮件（邮箱验证、密码重置、组织邀请）的发送责任边界、EmailDeliveryPort 契约、外部邮件供应商选择、发送记录与失败恢复；不覆盖 ingestion 或其他域邮件
 related:
   - ../../AURORA_RULES.md
@@ -89,12 +89,12 @@ G10 的 PLT-03（A1 邮箱验证、A3 密码重置、A4 组织邀请）都需要
 
 ### 候选比较
 
-| 维度 | A：单供应商+Outbox | B：双供应商 | C：自建 SMTP |
-|---|---|---|---|
-| 职责隔离 | 端口+Outbox | 同 A | 耦合 |
-| 送达可靠性 | Outbox 保证入队 | 同 A+故障切换 | 依赖 IP 信誉 |
-| 安全边界 | secret 服务端 | 同 A | 需自建 |
-| 第一版成本 | 中（一个供应商） | 高 | 低但质量差 |
+| 维度       | A：单供应商+Outbox | B：双供应商   | C：自建 SMTP |
+| ---------- | ------------------ | ------------- | ------------ |
+| 职责隔离   | 端口+Outbox        | 同 A          | 耦合         |
+| 送达可靠性 | Outbox 保证入队    | 同 A+故障切换 | 依赖 IP 信誉 |
+| 安全边界   | secret 服务端      | 同 A          | 需自建       |
+| 第一版成本 | 中（一个供应商）   | 高            | 低但质量差   |
 
 ## 最终决策（proposed）
 
@@ -188,3 +188,12 @@ G10 的 PLT-03（A1 邮箱验证、A3 密码重置、A4 组织邀请）都需要
 - 状态更新：`status: accepted`、`decision-status: accepted`、`approval-status: approved`、`implementation-status: not-started`；
 - 原 proposed 历史记录完整保留（"创建（proposed）"与"独立评审"各节均未删除或覆盖）；
 - 实施状态保持 `not-started`，直到 PLT-03 正式实施真正开始；本 ADR 不得在此时标记为 implemented 或 in-progress。
+
+### 2026-08-14：用户选择阿里云 DirectMail 并批准验证邮件重发设计
+
+- 用户明确选择阿里云 DirectMail 作为第一版单一外部邮件供应商；采用正式 `SingleSendMail` API 与官方 Node.js/TypeScript SDK，不采用 SMTP 直连；
+- 选择不改变本 ADR 已接受的 `EmailDeliveryPort + ADR-032 通用事务性 Outbox + Worker` 边界；供应商 SDK 只存在于 `packages/platform-email` 适配器与 `apps/platform-worker` composition root；
+- 用户已知并接受当前官方计费边界：新账号累计前 2,000 封免费、免费阶段每日最多 200 封；免费额度用尽后自动按量付费，当前标准 2 元/1,000 封。权威来源见[阿里云计费方式](https://help.aliyun.com/zh/direct-mail/billing-methods)与[使用限制](https://help.aliyun.com/zh/direct-mail/product-overview/limits/)；
+- 凭据优先使用 ECS RAM 角色/默认凭证链；回退长期 AccessKey 时必须最小权限并只存部署 secret，绝不进入 Git、聊天、日志、前端或构建产物；
+- 用户同时批准历史未验证账号只能在成功登录后重发，服务端从 Session 推导账号/邮箱，不开放任意邮箱输入；具体产品与实现约束见[邮箱验证真实交付与历史账号重发设计](../superpowers/specs/2026-08-14-email-verification-delivery-and-resend-design.md)；
+- 截至本记录，`EmailDeliveryPort`、Console adapter、通用 Outbox 与 Worker 消费骨架已经存在；阿里云适配器、重发 Command、Outbox 可靠性修复和真实发信部署尚未实施，因此 ADR 实施状态更新为 `in-progress`，不得标记 `implemented`。

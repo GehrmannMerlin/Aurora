@@ -69,6 +69,7 @@ maintenance: operational-snapshot
 - 五大系统边界、SDK 分层、同步可靠接收与异步处理、`event-schema` 单一来源和单向依赖的 approved 架构规则；
 - 已批准的管理平台前端 UX/UI、前端技术栈设计及逐项决策记录；
 - 已批准的 Console UX/UI 全面重设计：`Calm Observability`、深石墨窄全局栏、冷灰上下文侧栏、浅色内容区、状态→证据→行动和平衡证据密度；旧琥珀橙侧栏与横向深色顶栏规范已 superseded。业务、导航层级、权限、安全、数据和公共契约不在视觉授权内，新设计实现仍 `not-started`；
+- 已批准邮箱验证真实交付与历史账号重发设计：阿里云 DirectMail API 为第一版供应商；复用 `EmailDeliveryPort + PostgreSQL Outbox + platform-worker`；历史未验证账号仅在登录 Session 下重发，60 秒冷却、滚动 24 小时最多 5 次、最新链接唯一有效；阿里云 adapter、重发 Command、Outbox 可靠性修复和真实发信部署仍 `not-started`，下一门禁是独立实施计划；
 - 已批准的管理平台总体 OpenAPI 与实现约束设计：统一公开契约、内部领域模块化、生成单一 Platform OpenAPI，31 个页面设计映射 36 个稳定 Route Target，并强制壳层与真实 UI 可达性先行；
 - 用户已批准前四个基础专题中可追溯的既有设计基线，批准边界和未决内容由独立正式文档记录。
 - 已批准的测试/部署/发布完整设计，包括 `TD-001=A`、`TD-002=A`、`TD-003=A` 和 `TDR-DERIVED-001`；
@@ -160,7 +161,7 @@ maintenance: operational-snapshot
 
 前端技术、后端领域/技术栈、总体机器契约结构和测试/部署/发布设计均已批准并分别进入正式架构、测试、发布与运维文档；精确版本、命令和配置是 `implementation-detail`，机器契约制品第一增量已实现（Platform OpenAPI v1、`@aurora/platform-contract`、漂移门禁），其余精确领域 Schema 与平台数据模型仍 `deferred`/absent，容量/兼容/性能证据是 `requires-benchmark`，长期技术选择是 `requires-accepted-adr`。
 
-A5-001—A5-011 已批准，长期规则见[账号注销与数据生命周期](docs/security/account-deletion-and-data-lifecycle.md)。D2 平台管理员身份/平台级审计与平台资源策略管理已 implemented-in-feature-branch（见 §3 G13 PLT-10a/PLT-10b/PLT-10c）；邮件/运营责任和 A5 之外的保留规则仍留在统一阻塞清单；按用户指令本轮不展开新的专题讨论。
+A5-001—A5-011 已批准，长期规则见[账号注销与数据生命周期](docs/security/account-deletion-and-data-lifecycle.md)。D2 平台管理员身份/平台级审计与平台资源策略管理已 implemented-in-feature-branch（见 §3 G13 PLT-10a/PLT-10b/PLT-10c）；邮箱验证真实交付与历史账号重发已形成 approved 设计并选择阿里云 DirectMail，实施仍须独立计划；其他运营责任和 A5 之外的保留规则仍留在统一阻塞清单。
 
 有限决策清单的全部单项一旦获得用户明确批准，即按整体批准同步，不再重复请求完整方案批准；只有权威冲突或不可逆安全、隐私、数据丢失风险可以重新阻断。
 
