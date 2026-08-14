@@ -260,12 +260,8 @@ function onBack(): void {
           <span v-if="state.issue.data.priority !== undefined"
             >优先级 {{ issuePriorityLabel(state.issue.data.priority) }}</span
           >
-          <span v-if="state.issue.data.assigneeAccountId !== undefined"
-            >负责人 {{ state.issue.data.assigneeAccountId }}</span
-          >
-          <span v-if="state.issue.data.mergedIntoIssueId !== undefined"
-            >已合并到 {{ state.issue.data.mergedIntoIssueId }}</span
-          >
+          <span v-if="state.issue.data.assigneeAccountId !== undefined">已分配负责人</span>
+          <span v-if="state.issue.data.mergedIntoIssueId !== undefined">已合并到其他问题</span>
         </div>
       </AppSection>
 
@@ -380,10 +376,11 @@ function onBack(): void {
       <template v-else>
         <ul v-if="state.samples.data.length > 0" class="mon-sample-list">
           <li v-for="sample in state.samples.data" :key="sample.sampleId" class="mon-sample">
-            <span class="mon-meta"
-              >{{ sample.sampleKind }} · {{ formatUtc(sample.occurredAt) }}</span
+            <span class="mon-meta">代表样本 · {{ formatUtc(sample.occurredAt) }}</span>
+            <AppTechnicalDetails summary="样本技术详情"
+              >sampleId: {{ sample.sampleId }} sampleKind: {{ sample.sampleKind }} sampleBody:
+              {{ JSON.stringify(sample.sampleBody) }}</AppTechnicalDetails
             >
-            <pre class="mon-code"><code>{{ JSON.stringify(sample.sampleBody) }}</code></pre>
           </li>
         </ul>
         <p v-else class="mon-hint">没有保留的代表样本。</p>
@@ -399,7 +396,13 @@ function onBack(): void {
       <AppTechnicalDetails summary="技术详情"
         >issueId: {{ state.issue.data.issueId }} fingerprintVersion:
         {{ state.issue.data.fingerprintVersion }} version:
-        {{ state.issue.data.version }}</AppTechnicalDetails
+        {{ state.issue.data.version }}
+        <template v-if="state.issue.data.assigneeAccountId !== undefined">
+          assigneeAccountId: {{ state.issue.data.assigneeAccountId }}
+        </template>
+        <template v-if="state.issue.data.mergedIntoIssueId !== undefined">
+          mergedIntoIssueId: {{ state.issue.data.mergedIntoIssueId }}
+        </template></AppTechnicalDetails
       >
     </AppSection>
 
@@ -414,11 +417,13 @@ function onBack(): void {
             :key="`${entry.activityType}-${index}`"
             class="mon-tl-item"
           >
-            <span class="mon-meta"
-              >{{ entry.activityType }} · {{ formatUtc(entry.createdAt)
-              }}<template v-if="entry.actorAccountId !== undefined">
-                · {{ entry.actorAccountId }}</template
-              ></span
+            <span class="mon-meta">活动记录 · {{ formatUtc(entry.createdAt) }}</span>
+            <AppTechnicalDetails summary="活动技术详情"
+              >activityType: {{ entry.activityType }}
+              <template v-if="entry.actorAccountId !== undefined">
+                actorAccountId: {{ entry.actorAccountId }}
+              </template>
+              details: {{ JSON.stringify(entry.details) }}</AppTechnicalDetails
             >
           </div>
         </div>
@@ -426,9 +431,7 @@ function onBack(): void {
         <ul v-if="state.activity.data.notes.length > 0" class="mon-note-list">
           <li v-for="note in state.activity.data.notes" :key="note.noteId" class="mon-note">
             <div class="mon-note-head">
-              <span class="mon-meta"
-                >备注 · {{ formatUtc(note.createdAt) }} · {{ note.authorAccountId }}</span
-              >
+              <span class="mon-meta">备注 · {{ formatUtc(note.createdAt) }}</span>
               <button
                 v-if="
                   note.deletedAt === undefined &&
@@ -445,6 +448,10 @@ function onBack(): void {
             </div>
             <p v-if="note.deletedAt !== undefined" class="mon-hint">（备注已删除）</p>
             <p v-else-if="note.content !== undefined" class="mon-note-body">{{ note.content }}</p>
+            <AppTechnicalDetails summary="备注技术详情"
+              >noteId: {{ note.noteId }} authorAccountId:
+              {{ note.authorAccountId }}</AppTechnicalDetails
+            >
           </li>
         </ul>
         <div class="com-row">

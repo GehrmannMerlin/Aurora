@@ -51,10 +51,12 @@ const selectedCount = computed(() => selectedIssueIds.value.length);
 async function load(reset: boolean): Promise<void> {
   loading.value = true;
   error.value = null;
+  // Selection is scoped to the current result page. Clear it before every
+  // fetch, including a failed next-page request, so it cannot target stale rows.
+  selectedIssueIds.value = [];
   if (reset) {
     items.value = [];
     nextCursor.value = null;
-    selectedIssueIds.value = [];
   }
   try {
     const page = await fetchIssueList(
@@ -245,16 +247,17 @@ function clearSelection(): void {
               <span v-if="issue.priority !== undefined"
                 >优先级 {{ issuePriorityLabel(issue.priority) }}</span
               >
-              <span v-if="issue.assigneeAccountId !== undefined"
-                >负责人 {{ issue.assigneeAccountId }}</span
-              >
+              <span v-if="issue.assigneeAccountId !== undefined">已分配负责人</span>
               <span class="mon-meta"
                 >首次 {{ formatUtc(issue.firstSeenAt) }} · 最近
                 {{ formatUtc(issue.lastSeenAt) }}</span
               >
             </div>
             <AppTechnicalDetails summary="技术详情"
-              >issueId: {{ issue.issueId }}</AppTechnicalDetails
+              >issueId: {{ issue.issueId }}
+              <template v-if="issue.assigneeAccountId !== undefined">
+                assigneeAccountId: {{ issue.assigneeAccountId }}
+              </template></AppTechnicalDetails
             >
           </div>
         </li>
