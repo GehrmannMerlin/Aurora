@@ -1,6 +1,7 @@
 import AxeBuilder from '@axe-core/playwright';
 import { expect, test, type Page } from '@playwright/test';
 import { startSpaServer } from './serve-spa';
+import { waitForShell } from './shell-helpers';
 
 let server: { origin: string; close(): Promise<void> } | undefined;
 
@@ -27,11 +28,14 @@ test.afterAll(async () => {
 test('register → verify → login → logout full walk with real Vue components', async ({ page }) => {
   // Prime the app so the MSW worker is active, then start signed out.
   await page.goto(`${server!.origin}/`);
-  await expect(page.getByRole('navigation', { name: '侧栏导航' })).toBeVisible();
+  await waitForShell(page);
   await setSessionAuthenticated(page, false);
 
   // A1 register
   await page.goto(`${server!.origin}/register`);
+  await expect(page.getByTestId('auth-shell')).toBeVisible();
+  await expect(page.getByRole('navigation', { name: '全局导航' })).toHaveCount(0);
+  await expect(page.getByRole('navigation', { name: /(?:项目|组织)导航/ })).toHaveCount(0);
   await expect(page.getByTestId('register-view')).toBeVisible();
   await expect(new AxeBuilder({ page }).analyze()).resolves.toHaveProperty('violations', []);
   await page.getByLabel('邮箱').fill('user@example.invalid');
@@ -56,6 +60,8 @@ test('register → verify → login → logout full walk with real Vue component
   // A2 login (fresh signed-out visit so the login form is reachable)
   await setSessionAuthenticated(page, false);
   await page.goto(`${server!.origin}/login`);
+  await expect(page.getByTestId('auth-shell')).toBeVisible();
+  await expect(page.getByRole('navigation', { name: '全局导航' })).toHaveCount(0);
   await expect(page.getByTestId('login-view')).toBeVisible();
   await expect(new AxeBuilder({ page }).analyze()).resolves.toHaveProperty('violations', []);
   await page.getByLabel('邮箱').fill('user@example.invalid');

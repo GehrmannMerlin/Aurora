@@ -126,6 +126,35 @@ describe('app shell', () => {
     }
   });
 
+  it('uses the focused public shell without authenticated navigation on every auth route', async () => {
+    handlerControls.sessionAuthenticated = false;
+    useSessionStore(pinia).reset();
+    useNavigationStore(pinia).clear();
+    render(App, { global: { plugins: [pinia, router] } });
+
+    const publicRoutes = [
+      ['/login', '登录'],
+      ['/register', '注册'],
+      ['/forgot-password', '忘记密码'],
+      ['/reset-password', '重置密码'],
+      ['/verify-email', '邮箱验证'],
+      ['/verify-email/confirm', '确认邮箱验证'],
+      ['/invitations/accept', '接受邀请'],
+      ['/account/deletion-cancel', '撤销账号注销'],
+      ['/account/deletion-confirm', '注销账号确认'],
+    ] as const;
+
+    for (const [path, heading] of publicRoutes) {
+      await router.push(path);
+      await router.isReady();
+      expect(await screen.findByTestId('auth-shell')).toBeTruthy();
+      expect(screen.getAllByRole('heading', { level: 1, name: heading })).toHaveLength(1);
+      expect(screen.queryByRole('navigation', { name: '全局导航' })).toBeNull();
+      expect(screen.queryByRole('navigation', { name: /(?:项目|组织)导航/ })).toBeNull();
+      expect(screen.queryByRole('button', { name: /^(?:组织|项目)：/ })).toBeNull();
+    }
+  });
+
   it('sets a stable page title after navigation', async () => {
     render(App, { global: { plugins: [pinia, router] } });
     await router.push('/workspace');

@@ -14,6 +14,7 @@ import ForgotPasswordView from '../../src/views/auth/ForgotPasswordView.vue';
 import ResetPasswordView from '../../src/views/auth/ResetPasswordView.vue';
 import InvitationAcceptView from '../../src/views/auth/InvitationAcceptView.vue';
 import AccountSecurityView from '../../src/views/account/AccountSecurityView.vue';
+import App from '../../src/App.vue';
 
 const REGISTRATION: RegisterResult = {
   accountId: 'acct_test_1',
@@ -156,6 +157,23 @@ describe('VerifyEmailConfirmView', () => {
 });
 
 describe('LoginView', () => {
+  it('keeps the existing labels and submit behavior inside the public authentication shell', async () => {
+    await router.push('/login');
+    await router.isReady();
+    render(App, { global: { plugins: [pinia, router] } });
+
+    expect(await screen.findByTestId('auth-shell')).toBeTruthy();
+    expect(screen.getByLabelText('邮箱')).toBeTruthy();
+    expect(screen.getByLabelText('密码')).toBeTruthy();
+    await fireEvent.update(screen.getByLabelText('邮箱'), 'user@example.invalid');
+    await fireEvent.update(screen.getByLabelText('密码'), 's3cure-Passw0rd!');
+    await fireEvent.click(screen.getByRole('button', { name: '登录' }));
+
+    await waitFor(() => {
+      expect(handlerControls.loginRequests).toBe(1);
+    });
+  });
+
   it('submits identityLogin, applies the session and navigates to the workspace', async () => {
     await router.push('/login');
     await router.isReady();

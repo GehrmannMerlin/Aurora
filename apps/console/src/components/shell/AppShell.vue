@@ -6,6 +6,7 @@ import { useNavigationStore } from '../../stores/navigation';
 import { useSessionStore } from '../../stores/session';
 import AppButton from '../aurora/AppButton.vue';
 import AppDrawer from '../aurora/AppDrawer.vue';
+import AuthShell from '../auth/AuthShell.vue';
 import ContentOutlet from './ContentOutlet.vue';
 import GlobalLoading from './GlobalLoading.vue';
 import ContextSidebar from './ContextSidebar.vue';
@@ -40,7 +41,10 @@ function closeDrawer(): void {
 </script>
 
 <template>
-  <div class="au-shell" :class="{ 'au-shell--global-only': !hasContext }">
+  <AuthShell v-if="route.meta.scope === 'public'">
+    <ContentOutlet />
+  </AuthShell>
+  <div v-else class="au-shell" :class="{ 'au-shell--global-only': !hasContext }">
     <GlobalRail class="au-desktop-rail" @navigate="closeDrawer" />
     <aside v-if="hasContext" class="au-desktop-context"><ContextSidebar @navigate="closeDrawer" /></aside>
     <main class="au-content">

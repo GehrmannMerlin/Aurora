@@ -334,11 +334,32 @@ test('auth routes render the real PLT-03 views (not unavailable stubs) when sign
   await primeApp(page);
   await setSessionAuthenticated(page, false);
   await page.goto(`${server!.origin}/login`);
+  await expect(page.getByTestId('auth-shell')).toBeVisible();
+  await expect(page.getByRole('navigation', { name: '全局导航' })).toHaveCount(0);
+  await expect(page.getByRole('navigation', { name: /(?:项目|组织)导航/ })).toHaveCount(0);
   await expect(page.getByTestId('login-view')).toBeVisible();
   await expect(page.getByRole('heading', { name: '登录', level: 1 })).toBeVisible();
   await page.goto(`${server!.origin}/register`);
+  await expect(page.getByTestId('auth-shell')).toBeVisible();
   await expect(page.getByTestId('register-view')).toBeVisible();
   await expect(page.getByRole('heading', { name: '注册', level: 1 })).toBeVisible();
+});
+
+test('the authentication shell uses a desktop brand panel and a compact mobile form layout', async ({
+  page,
+}) => {
+  await primeApp(page);
+  await setSessionAuthenticated(page, false);
+
+  await page.setViewportSize({ width: 1280, height: 800 });
+  await page.goto(`${server!.origin}/login`);
+  await expect(page.locator('.au-auth-shell__brand')).toBeVisible();
+  await expect(page.locator('.au-auth-shell__form-region')).toHaveCSS('width', '420px');
+
+  await page.setViewportSize({ width: 390, height: 844 });
+  await expect(page.locator('.au-auth-shell__brand')).toBeHidden();
+  await expect(page.locator('.au-auth-shell__compact-brand')).toBeVisible();
+  await expect(page.getByTestId('login-view')).toBeVisible();
 });
 
 test('an authenticated user visiting an auth-only route is redirected to the workspace', async ({
