@@ -16,7 +16,7 @@ related:
   - ../adr/ADR-006-one-way-dependencies.md
   - ../superpowers/specs/2026-07-27-aurora-frontend-ux-ui-design.md
   - ../superpowers/specs/2026-07-28-aurora-frontend-technology-stack-design.md
-  - ../superpowers/specs/2026-07-30-aurora-console-visual-language-design.md
+  - ../superpowers/specs/2026-08-14-aurora-console-ux-ui-redesign-design.md
   - ../superpowers/specs/2026-07-30-aurora-platform-openapi-and-implementation-design.md
 supersedes: none
 review-cycle: frontend-stack-or-release
@@ -77,7 +77,7 @@ Command 使用唯一业务操作上下文、幂等键和资源版本；提交期
 - PrimeVue 组件需要统一封装焦点、错误关联、密度、主题和语义，不把视觉状态当业务枚举；
 - WCAG 2.2 AA、键盘顺序、焦点恢复、缩放、屏幕阅读器和非颜色状态表达是发布门禁。
 
-批准视觉语言为单一浅色主题：深石墨顶栏、`#D47A16` 纯色琥珀橙侧栏与 `#17120D` 深色前景、浅色内容区、中高信息密度；当前路由使用浅色选中行和蓝色标识。侧栏与正式表面禁止渐变、纹理、光晕和玻璃拟态。完整令牌、状态和 Agent 低风险收口边界见[控制台视觉语言设计](../superpowers/specs/2026-07-30-aurora-console-visual-language-design.md)。视觉方向已批准，但令牌代码、PrimeVue/Aurora UI 主题、组件与真实浏览器证据仍不存在。
+当前批准视觉语言为单一浅色 `Calm Observability`：`#101828` 深石墨窄全局栏、`#F2F4F7` 冷灰组织/项目上下文侧栏、`#F7F8FA` 浅色画布、白色工作表面、钴蓝主操作与独立语义色；内容遵循“状态 → 证据 → 行动”和平衡证据密度。正式表面禁止装饰性渐变、纹理、光晕和玻璃拟态。完整令牌、双层壳层、页面族、状态和适配边界见[Console UX/UI 全面重设计](../superpowers/specs/2026-08-14-aurora-console-ux-ui-redesign-design.md)。方向已批准，新设计代码实现和浏览器证据仍 `not-started`；当前旧壳层实现不得被误写为目标已完成。
 
 ## 6. 质量与性能
 

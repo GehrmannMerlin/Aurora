@@ -1,6 +1,6 @@
 ---
 title: Aurora 管理平台控制台视觉语言设计
-status: approved
+status: superseded
 owner: platform/design
 created: 2026-07-30
 last-reviewed: 2026-07-30
@@ -18,10 +18,13 @@ related:
   - ./2026-07-28-aurora-frontend-technology-stack-design.md
   - ./2026-07-30-aurora-platform-openapi-and-implementation-design.md
 supersedes: none
-design-stage: approved-design-implementation-absent
+superseded-by: ./2026-08-14-aurora-console-ux-ui-redesign-design.md
+design-stage: superseded
 ---
 
 # Aurora 管理平台控制台视觉语言设计
+
+> 本文已被 [Aurora Console UX/UI 全面重设计](2026-08-14-aurora-console-ux-ui-redesign-design.md) 替代，仅保留为历史批准与既有实现追溯依据。新实现不得继续以本文的琥珀橙侧栏和横向深色顶栏作为当前视觉目标。
 
 ## 1. 定位与批准状态
 

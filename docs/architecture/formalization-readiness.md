@@ -30,7 +30,7 @@ related:
   - ../superpowers/specs/2026-07-28-aurora-foundation-topic-approval-baseline.md
   - ../superpowers/specs/2026-07-27-aurora-frontend-ux-ui-design.md
   - ../superpowers/specs/2026-07-28-aurora-frontend-technology-stack-design.md
-  - ../superpowers/specs/2026-07-30-aurora-console-visual-language-design.md
+  - ../superpowers/specs/2026-08-14-aurora-console-ux-ui-redesign-design.md
   - ../superpowers/specs/2026-07-28-aurora-platform-backend-design.md
   - ../superpowers/specs/2026-07-30-aurora-platform-openapi-and-implementation-design.md
   - ../superpowers/specs/2026-07-28-aurora-testing-deployment-release-design.md
@@ -65,7 +65,7 @@ review-cycle: milestone-or-30-days
 
 - 核心业务规则已冻结；
 - 前四基础专题批准的是可追溯业务/高层架构基线，不是完整实施规格；
-- 管理平台完整 UX/UI、控制台视觉语言、前端技术栈、后端设计和测试/部署/发布完整设计均已批准；控制台采用浅色内容区、纯色琥珀橙侧栏且禁止渐变，同方向低风险视觉细节可由 Agent 直接收口；
+- 管理平台完整 UX/UI、Console UX/UI 全面重设计、前端技术栈、后端设计和测试/部署/发布完整设计均已批准；当前视觉采用 `Calm Observability`、深石墨窄全局栏、冷灰上下文侧栏、浅色内容区与状态→证据→行动，旧琥珀橙侧栏/横向顶栏设计已 superseded；
 - 六专题总结已确认作为 ADR、正式文档、机器契约、缺口和实施就绪审查的输入；
 - A5-001—A5-011 账号注销与数据生命周期完整方案已批准并进入正式安全文档；
 - ADR-001—ADR-007 已完成独立非作者和所需领域评审；ADR-001/003/005/006 为 `accepted / in-progress`，ADR-007 为 `accepted / implemented`，ADR-002、ADR-004 为 `accepted / not-started`；
@@ -516,4 +516,4 @@ D2、邮件、Session、A5 之外保留、AWS 区域、运营责任、行为事�
 
 **生产 Worker composition root 第一增量（DAT-11，2026-08-07）已实施**：`apps/ingestion-worker` 已实施 `createProductionIngestionWorker`（接线三个真实 processor `createErrorEventProcessor`/`createRequestEventProcessor`/`createPerformanceEventProcessor`、DAT-07 真实 adapter `createRequestProcessingRulesAdapter` + `DEFAULT_REQUEST_PROCESSING_RULES`、DAT-10 Router `createEventProcessorRouter`，Router 作为 `IngestionEventProcessor` 返回；三个真实 persist 函数从 `@aurora/processing-store` 包根注入；不创建/关闭 Pool（调用方拥有）；`close` 幂等；无 fake/noop processor；Performance Processor V1 不调用 `persistPerformanceEventSample`，正式规格 [production-worker-composition-root.md](../architecture/production-worker-composition-root.md) approved + implemented），通过单元测试（2 个）与真实 PostgreSQL 17.10 端到端集成测试（3 个：Error→`error_event_occurrences`、Request→`request_metric_buckets`、Performance→`performance_metric_buckets` 且无样本）与全仓质量门禁。**G01 数据处理生产链闭合**：Error/Request/Performance 三类事件经同一 Router 进入真实 Worker production composition，请求分类来自 DAT-07 真实 adapter，性能聚合写入 DAT-08 真实 Store。**无需新 ADR**。未修改 event-schema/performance-event-contract/ingestion-api/Worker runtime/retry/backoff/replay；未增加 Migration；`@aurora/ingestion-worker` 未新增依赖。**状态记录**：production worker composition implemented；event processor router implemented；performance event processor core implemented；performance aggregate and bounded sample store implemented；performance query projection not-started（DAT-17）；ADR-021 保持 `accepted / implemented`；CI/RDS/IaC not-started。
 
-管理平台控制台视觉语言已于 2026-07-30 批准：浅色内容区、深石墨顶栏、纯色琥珀橙侧栏、深色前景、中高信息密度且禁止渐变。后续同方向、且不改变产品、权限、安全、数据或公共契约的低风险视觉细节可由 Agent 直接批准并同步；设计令牌代码、主题、组件和浏览器证据仍不存在，不因此自动进入实施计划。
+管理平台 Console UX/UI 全面重设计已于 2026-08-14 最终批准：`Calm Observability`、深石墨窄全局栏、冷灰上下文侧栏、浅色内容区、状态→证据→行动、平衡证据密度、认证独立外壳和统一页面族。2026-07-30 琥珀橙视觉与 2026-08-14 顶栏作用域菜单优化均已 superseded；当前旧视觉代码不代表新设计完成。新设计令牌、壳层、组件迁移和浏览器证据为 `not-started`，须按独立实施计划推进。

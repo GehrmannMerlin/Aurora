@@ -1,8 +1,8 @@
 ---
 title: Aurora Console UX/UI 全面重设计
-status: draft
+status: approved
 implementation-status: not-started
-approval-status: section-approved-awaiting-final-review
+approval-status: approved
 owner: platform/frontend
 created: 2026-08-14
 last-reviewed: 2026-08-14
@@ -18,8 +18,10 @@ related:
   - ./2026-07-27-aurora-frontend-ux-ui-design.md
   - ./2026-07-30-aurora-console-visual-language-design.md
   - ./2026-08-14-console-navigation-shell-polish-design.md
-supersedes: none
-design-stage: section-approved-awaiting-final-review
+supersedes:
+  - ./2026-07-30-aurora-console-visual-language-design.md
+  - ./2026-08-14-console-navigation-shell-polish-design.md
+design-stage: approved-design-implementation-not-started
 ---
 
 # Aurora Console UX/UI 全面重设计
@@ -38,18 +40,18 @@ design-stage: section-approved-awaiting-final-review
 6. 第 2 章“页面族与信息架构”；
 7. 第 3 章“状态、交互与适配标准”。
 
-本文当前处于最终整体复核前的 `draft`。它不授权代码实现，也不改变任何 Route Target、业务规则、权限、安全模型、数据生命周期、Query/Command、API 或协议。只有用户完成整体最终批准后，本文才转为 `approved` 并成为新的视觉实施依据。
+用户于 2026-08-14 完成整体最终批准。本文现为 `approved`，是新的视觉实施依据。它不改变任何 Route Target、业务规则、权限、安全模型、数据生命周期、Query/Command、API 或协议；代码实现仍为 `not-started`，必须先形成独立实施计划。
 
 ## 2. 替代关系与长期权威边界
 
-本文最终批准后：
+本文批准后：
 
 - 替代 [Aurora 管理平台控制台视觉语言设计](2026-07-30-aurora-console-visual-language-design.md) 中的琥珀橙侧栏、顶栏结构、颜色、形状、密度和相关视觉条款；
 - 替代 [Aurora Console 顶栏作用域菜单与固定侧栏优化设计](2026-08-14-console-navigation-shell-polish-design.md) 中依赖原深色顶栏、琥珀橙侧栏和顶栏组织/项目菜单的视觉与壳层条款；
 - 不替代 [Aurora 第一版管理平台前端 UX/UI 设计](2026-07-27-aurora-frontend-ux-ui-design.md) 中 A1—D2、`NAV-A`、`AUDIT-A`、权限、页面状态、用户流程和业务边界；
 - 不替代核心 PRD、平台产品业务域、Platform OpenAPI、Session、Navigation Context 或后端授权目标。
 
-最终批准时，两个被替代的视觉设计文档必须保留历史原文、改为 `superseded`，并反向链接本文。批准前不提前修改其正式状态，避免用草案覆盖当前有效设计。
+两个被替代的视觉设计文档保留历史原文、标记为 `superseded`，并反向链接本文。历史实现计划继续作为已发生工作的证据，不再作为新视觉实现依据。
 
 ## 3. 问题定义
 
@@ -411,10 +413,10 @@ C2 不展示趋势图、健康评分、预测、排名、推荐操作卡片或�
 - [x] 新增跨页面 UX/UI 重设计草案；
 - [x] 记录与旧视觉设计的计划替代关系；
 - [x] 保留完整 UX/UI、PRD、权限和公共契约边界；
-- [ ] 用户完成整体最终批准；
-- [ ] 将本文状态改为 `approved`；
-- [ ] 将两个旧视觉设计文档改为 `superseded` 并添加反向链接；
-- [ ] 同步 `AGENTS.md`、`AURORA_RULES.md` 和正式文档索引中的当前视觉基线；
+- [x] 用户完成整体最终批准；
+- [x] 将本文状态改为 `approved`；
+- [x] 将两个旧视觉设计文档改为 `superseded` 并添加反向链接；
+- [x] 同步 `AGENTS.md`、`AURORA_RULES.md` 和正式文档索引中的当前视觉基线；
 - [ ] 在批准后使用 `writing-plans` 形成实施计划；
 - [ ] 实施代码、测试和浏览器证据。
 
@@ -425,4 +427,4 @@ C2 不展示趋势图、健康评分、预测、排名、推荐操作卡片或�
 - C2、B1、D1、A5 和认证页面的关键非目标已保留；
 - 视觉、状态、响应式和无障碍规则可在实施阶段验证；
 - 与旧琥珀橙视觉基线的冲突已显式记录，批准前未静默覆盖正式文档；
-- 当前状态仍为 `draft / implementation not-started`，未把设计批准写成代码完成。
+- 当前状态为 `approved / implementation not-started`，未把设计批准写成代码完成。

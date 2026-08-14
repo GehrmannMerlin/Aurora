@@ -23,7 +23,7 @@ related:
   - ../architecture/platform-contract-foundation.md
   - ../architecture/formalization-readiness.md
   - ../superpowers/specs/2026-07-28-aurora-frontend-technology-stack-design.md
-  - ../superpowers/specs/2026-07-30-aurora-console-visual-language-design.md
+  - ../superpowers/specs/2026-08-14-aurora-console-ux-ui-redesign-design.md
   - ../superpowers/specs/2026-07-30-aurora-platform-openapi-and-implementation-design.md
   - ../superpowers/specs/2026-07-27-aurora-frontend-ux-ui-design.md
   - ../prd/platform-product-domains.md
@@ -49,7 +49,7 @@ review-cycle: frontend-shell-router-or-accessibility-change
 1. 让 `https://aurora.ah.cn` 从静态 Preview 状态页演进为真实 Aurora Vue SPA 管理平台壳层；
 2. 落实"应用壳先行"门禁：Session 恢复、Route Target 解析、Vue Router 注册表、顶栏和分层侧栏、作用域切换、权限/生命周期安全退出、统一 API Client、错误映射和 Query 基础状态；
 3. 建立 Session Context、Navigation Context、RouteTarget 的真实契约消费者边界；
-4. 落实批准视觉令牌（浅色内容区、深石墨顶栏、纯色琥珀橙侧栏、深色前景、中高信息密度、禁止渐变）；
+4. 落实批准的 `Calm Observability` 视觉令牌与双层壳层（深石墨窄全局栏、冷灰上下文侧栏、浅色内容区、状态→证据→行动、平衡证据密度、禁止装饰性渐变）；
 5. 建立 loading/error/forbidden/unavailable/not-found 等真实状态基础与真实浏览器可达性门禁。
 
 ### 2.2 非目标
@@ -161,23 +161,22 @@ review-cycle: frontend-shell-router-or-accessibility-change
 - stable page title；
 - focus management（导航后聚焦页面标题/错误摘要，键盘顺序与视觉顺序一致）；
 - keyboard accessibility（WCAG 2.2 AA 方向，axe 自动检查 + 人工键盘/焦点）；
-- responsive minimum（窄屏顶栏/侧栏收为可关闭 Drawer，同一琥珀橙纯色与同一入口顺序）。
+- responsive minimum（小于 960px 时全局与上下文导航收为可关闭 Drawer，保持同一入口顺序、焦点管理与范围清理语义）。
 
 ## 11. 视觉语言合规
 
-必须遵守 approved 控制台视觉语言：
+必须遵守 approved [Console UX/UI 全面重设计](../superpowers/specs/2026-08-14-aurora-console-ux-ui-redesign-design.md)：
 
-- 浅色内容区（`#F8FAFC`）、白色工作表面（`#FFFFFF`）；
-- 深石墨顶栏（`#111827`，前景 `#F8FAFC`）；
-- 纯色琥珀橙侧栏（`#D47A16`，前景 `#17120D`）；当前路由浅奶油选中行背景（`#FFF4DC`）＋选中行前景（`#172033`）＋左侧蓝色 3px 标识（`#1D4ED8`）；
-- 默认边界（`#CBD5E1`）用于控件和分区的 1px 边界；
-- 深色前景（`#111827`）/辅助文字（`#475569`）；
-- 主操作蓝 `#2563EB`、异常红 `#D92D20`、成功绿 `#15803D`；
-- 中高信息密度；基础间距 4/8/12/16/24/32px；常规控件 40px、主导航 44px；圆角 6px 基线；系统无衬线字体栈（`system-ui`、`Segoe UI`、`PingFang SC`、`Microsoft YaHei`）；
-- **禁止渐变**：侧栏及正式表面 `background-image: none`，无纹理、噪点、光晕、玻璃拟态、半透明叠色或模拟灯光明暗；只有 Dialog/Drawer/Popover 等真实浮层可用统一轻量阴影；
-- 不重新设计品牌方向；不采用大面积渐变、随机蓝紫 SaaS 模板、过度卡片化、巨大留白 landing-page 风。
+- 深石墨窄全局栏（`#101828`，前景 `#F9FAFB`）；
+- 冷灰组织/项目上下文侧栏（`#F2F4F7`），不再使用琥珀橙整面导航；
+- 浅色画布（`#F7F8FA`）、白色工作表面（`#FFFFFF`）、默认边界（`#D0D5DD`）；
+- 主文字 `#101828`、辅助文字 `#475467`、主操作/焦点 `#3157D5`，成功/警告/危险/信息使用独立语义色；
+- “状态 → 证据 → 行动”的平衡证据密度；基础间距 4/8/12/16/24/32/40px；常规控件 40px、紧凑工具栏最低 36px、触控目标至少 44px；控件圆角 8px、工作表面 10—12px；系统无衬线字体栈；
+- 正式表面无装饰性渐变、纹理、噪点、光晕或玻璃拟态；只有 Dialog/Drawer/Popover 等真实浮层使用统一轻量阴影；
+- 桌面使用窄全局栏 + 有标签上下文侧栏；小于 960px 合并为可关闭 Drawer；认证页面不渲染登录后壳层；
+- 不采用随机蓝紫 SaaS 模板、过度卡片化、巨大留白或无数据装饰图表。
 
-低风险尺寸/spacing/hover/detail 可由 Agent 按批准方向直接收口并同步；业务、权限、导航层级、契约不得借视觉实现改变。
+业务、权限、导航层级、Route Target 与契约不得借视觉实现改变。
 
 ## 12. 测试
 
@@ -251,7 +250,7 @@ PLT-02 完成当且仅当：
 3. Navigation Context 消费契约，不复制角色权限，作用域切换清理语义真实；
 4. 36 个 RouteTarget 全部在注册表声明并映射；未实现业务目标可解析/保护/表示，且不通过手输隐藏 URL 才能进入；
 5. 后续模块页面只显示 feature/dependency/permission unavailable 或 not-found，无 fake data/lorem ipsum；
-6. 视觉语言合规：浅色内容区、深石墨顶栏、纯色琥珀橙侧栏（`#D47A16`）、选中行前景 `#172033`、边界 `#CBD5E1`、深色前景、中高信息密度、禁止渐变；令牌不散落页面；
+6. 视觉语言合规：`#101828` 深石墨窄全局栏、`#F2F4F7` 冷灰上下文侧栏、`#F7F8FA` 浅色画布、白色工作表面、`#3157D5` 主操作与“状态 → 证据 → 行动”；无琥珀橙整面导航、无装饰性渐变，令牌不散落页面；
 7. 测试覆盖 bootstrap/router/route-target/navigation/unauthorized/unauthenticated/unavailable/404/keyboard/focus/axe/responsive/no-fake-data/client-consumption/reachability；**每个壳层渲染的导航入口经真实 UI 操作到达（Playwright 交互断言，非 `page.goto()` 直达）**；Playwright 真实浏览器通过；axe 通过；
 8. 构建：`vue-tsc`、ESLint、Vite production build 通过；`index.html` no-cache、assets 可缓存；
 9. Preview serving 从静态状态页切换为真实 built SPA，`ingest.aurora.ah.cn` 回归不破坏；

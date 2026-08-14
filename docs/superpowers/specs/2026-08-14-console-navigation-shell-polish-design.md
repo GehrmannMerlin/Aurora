@@ -1,8 +1,8 @@
 ---
 title: Aurora Console 顶栏作用域菜单与固定侧栏优化设计
-status: approved
-implementation-status: not-started
-approval-status: approved
+status: superseded
+implementation-status: superseded
+approval-status: superseded
 owner: platform/frontend
 created: 2026-08-14
 last-reviewed: 2026-08-14
@@ -17,10 +17,13 @@ related:
   - ./2026-07-27-aurora-frontend-ux-ui-design.md
   - ./2026-07-30-aurora-console-visual-language-design.md
 supersedes: none
-design-stage: approved-design-implementation-not-started
+superseded-by: ./2026-08-14-aurora-console-ux-ui-redesign-design.md
+design-stage: superseded
 ---
 
 # Aurora Console 顶栏作用域菜单与固定侧栏优化设计
+
+> 本文已被 [Aurora Console UX/UI 全面重设计](2026-08-14-aurora-console-ux-ui-redesign-design.md) 替代，仅保留为历史设计与既有实现追溯依据。新的范围切换、全局栏和上下文侧栏以替代设计为准。
 
 ## 1. 定位与批准状态
 
@@ -207,4 +210,3 @@ Aurora | 工作空间 | 组织 [当前组织] ▾ | 项目 [当前项目] ▾ | 
 | 是否可访问 | 是；设计包含键盘、焦点、ARIA、非颜色状态和 Drawer 规则 |
 | 是否有模糊占位 | 否 |
 | 是否需要新 ADR | 否；未改变 accepted 前端技术栈、公共 API 或高迁移成本架构决策 |
-
