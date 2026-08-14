@@ -7,7 +7,7 @@
  * `evaluation_paused` 显示暂停原因而非恢复。新建/编辑入口前端不隐藏，每次
  * Command 由服务端按 project_admin 重鉴权（403 就地显示）。
  */
-import { computed, onMounted, ref } from 'vue';
+import { computed, nextTick, onMounted, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { describeRequestError } from '../../api/feedback.js';
 import { formatUtc } from '../../monitoring/format.js';
@@ -34,6 +34,8 @@ const tab = computed<'rules' | 'instances'>(() => {
 const data = ref<AlertsData | null>(null);
 const loading = ref(false);
 const error = ref<string | null>(null);
+const instancesTab = ref<HTMLButtonElement | null>(null);
+const rulesTab = ref<HTMLButtonElement | null>(null);
 
 async function load(): Promise<void> {
   loading.value = true;
@@ -60,9 +62,13 @@ const state = computed(() =>
   }),
 );
 
-function setTab(next: 'rules' | 'instances'): void {
-  if (next === tab.value) return;
-  void router.push({ query: { ...route.query, tab: next } });
+async function setTab(next: 'rules' | 'instances', moveFocus = false): Promise<void> {
+  if (next !== tab.value) {
+    await router.push({ query: { ...route.query, tab: next } });
+  }
+  if (!moveFocus) return;
+  await nextTick();
+  (next === 'instances' ? instancesTab.value : rulesTab.value)?.focus();
 }
 
 function onTabKeydown(event: KeyboardEvent, current: 'rules' | 'instances'): void {
@@ -82,7 +88,7 @@ function onTabKeydown(event: KeyboardEvent, current: 'rules' | 'instances'): voi
             : null;
   if (next === null) return;
   event.preventDefault();
-  setTab(next);
+  void setTab(next, true);
 }
 
 function readableRuleName(name: string | undefined): string {
@@ -151,6 +157,7 @@ function instanceTone(stateName: string): 'neutral' | 'warning' | 'danger' {
         type="button"
         role="tab"
         id="tab-instances"
+        ref="instancesTab"
         :aria-selected="tab === 'instances'"
         aria-controls="alert-instances-panel"
         :tabindex="tab === 'instances' ? 0 : -1"
@@ -165,6 +172,7 @@ function instanceTone(stateName: string): 'neutral' | 'warning' | 'danger' {
         type="button"
         role="tab"
         id="tab-rules"
+        ref="rulesTab"
         :aria-selected="tab === 'rules'"
         aria-controls="alert-rules-panel"
         :tabindex="tab === 'rules' ? 0 : -1"
