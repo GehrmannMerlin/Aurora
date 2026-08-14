@@ -4,6 +4,8 @@
 
 The redesign implementation, legacy-token cleanup, visual baseline generation and documentation closure are committed in the feature branch and are not deployed. Final verification is deliberately **partial**: the user explicitly stopped all further test and verification execution after mobile browser test-stability edits. This report does not claim that unrun gates passed.
 
+Post-closure read-only review corrected the design document's checklist/list formatting and stale self-check wording, plus one mock-handler signature whitespace defect. Those corrections were committed without running tests or other verification commands.
+
 ## TDD and visual evidence
 
 - `pnpm --filter @aurora/console test -- test/styles/tokens.test.ts`: first RED run had 1 failing / 3 passing tests; the remaining legacy `--color-sidebar-*` consumer was then migrated.
