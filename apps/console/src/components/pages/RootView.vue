@@ -17,12 +17,14 @@ const view = computed<'workspace' | 'unavailable' | 'auth'>(() => {
 </script>
 
 <template>
-  <WorkspaceHomeView v-if="view === 'workspace'" />
-  <UnavailableView
-    v-else-if="view === 'unavailable'"
-    title="认证能力未提供"
-    reason="capability-not-provided"
-    detail="平台认证后端尚未实现；会话以安全不可用状态展示，不会伪造登录。"
-  />
-  <AuthUnavailableView v-else />
+  <main class="root-view" aria-live="polite">
+    <WorkspaceHomeView v-if="view === 'workspace'" />
+    <UnavailableView
+      v-else-if="view === 'unavailable'"
+      title="认证能力未提供"
+      reason="capability-not-provided"
+      detail="平台认证后端尚未实现；会话以安全不可用状态展示，不会伪造登录。"
+    />
+    <AuthUnavailableView v-else />
+  </main>
 </template>

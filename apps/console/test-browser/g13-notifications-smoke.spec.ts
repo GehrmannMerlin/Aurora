@@ -1,5 +1,6 @@
 import { expect, test, type Page } from '@playwright/test';
 import { startSpaServer } from './serve-spa';
+import { waitForShell } from './shell-helpers';
 
 let server: { origin: string; close(): Promise<void> } | undefined;
 
@@ -18,7 +19,7 @@ async function setSessionAuthenticated(page: Page, authenticated: boolean): Prom
 /** Load the app once and wait for the MSW-backed shell so the worker is active. */
 async function primeApp(page: Page): Promise<void> {
   await page.goto(`${server!.origin}/`);
-  await expect(page.getByRole('navigation', { name: '侧栏导航' })).toBeVisible();
+  await waitForShell(page);
 }
 
 test.beforeAll(async () => {

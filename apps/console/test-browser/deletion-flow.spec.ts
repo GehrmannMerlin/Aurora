@@ -1,6 +1,7 @@
 import AxeBuilder from '@axe-core/playwright';
 import { expect, test, type Page } from '@playwright/test';
 import { startSpaServer } from './serve-spa';
+import { waitForShell } from './shell-helpers';
 
 let server: { origin: string; close(): Promise<void> } | undefined;
 
@@ -39,7 +40,7 @@ test.afterAll(async () => {
 test('A5 blocked preflight shows the blocking org list and no delete submit', async ({ page }) => {
   // Prime the app so the MSW worker is active, then set the blocked projection.
   await page.goto(`${server!.origin}/`);
-  await expect(page.getByRole('navigation', { name: '侧栏导航' })).toBeVisible();
+  await waitForShell(page);
   await setSessionAuthenticated(page, true);
   await setDeletionPreflight(page, 'blocked');
 
@@ -56,7 +57,7 @@ test('A5 blocked preflight shows the blocking org list and no delete submit', as
 
 test('A5 cancel page: valid link, submit password, land on login', async ({ page }) => {
   await page.goto(`${server!.origin}/`);
-  await expect(page.getByRole('navigation', { name: '侧栏导航' })).toBeVisible();
+  await waitForShell(page);
   await setSessionAuthenticated(page, false);
   await setDeletionPreflight(page, 'ready');
 

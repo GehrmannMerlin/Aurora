@@ -98,6 +98,6 @@ export function notificationTypeLabel(type: string): string {
     case 'issue_assigned_to_me':
       return '分配给我';
     default:
-      return type;
+      return '通知';
   }
 }

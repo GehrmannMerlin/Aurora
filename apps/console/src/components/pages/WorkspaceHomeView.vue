@@ -6,6 +6,7 @@ import { useSessionStore } from '../../stores/session';
 import { resolveRouteTarget } from '../../contracts/route-registry';
 import AppLink from '../aurora/AppLink.vue';
 import AppPageHeader from '../aurora/AppPageHeader.vue';
+import AppSection from '../aurora/AppSection.vue';
 import UnavailableView from './UnavailableView.vue';
 
 const session = useSessionStore();
@@ -35,22 +36,20 @@ function orgHref(organizationId: string, routeId: string): string {
     detail="导航上下文尚未就绪；不会伪造组织或项目入口。"
   />
   <section v-else data-testid="workspace-home" class="au-surface">
-    <AppPageHeader title="工作空间" />
-    <p class="au-hint">选择组织或项目以进入对应作用域。</p>
-    <ul class="au-org-list">
-      <li v-for="org in organizations" :key="org.organizationId">
-        <AppLink :to="orgHref(org.organizationId, org.entry.routeId)">
-          {{ org.name }}
-        </AppLink>
-      </li>
-    </ul>
+    <AppPageHeader title="工作空间" description="选择组织或项目以进入对应作用域。" />
+    <AppSection title="可访问的组织" description="名称和入口均来自当前会话的导航上下文。">
+      <ul class="au-org-list">
+        <li v-for="org in organizations" :key="org.organizationId">
+          <AppLink :to="orgHref(org.organizationId, org.entry.routeId)">
+            {{ org.name }}
+          </AppLink>
+        </li>
+      </ul>
+    </AppSection>
   </section>
 </template>
 
 <style scoped>
-.au-hint {
-  color: var(--color-text-secondary);
-}
 .au-org-list {
   list-style: none;
   margin: 0;
