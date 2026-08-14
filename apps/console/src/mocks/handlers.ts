@@ -587,7 +587,6 @@ function mockAlertInstanceDetail(instanceId: string) {
         triggerDurationMinutes: 2,
         recoveryThreshold: 60,
         recoveryDurationMinutes: 2,
-        minSampleCount: 0,
         cooldownMinutes: 10,
       },
       evidence: {
@@ -598,7 +597,6 @@ function mockAlertInstanceDetail(instanceId: string) {
         numerator: 120,
         denominator: 1,
         sampleCount: 120,
-        minSampleRequirement: 0,
         watermarkAt: '2026-08-10T08:30:00.000Z',
         completeness: 'complete',
         appliedFilters: { environment: [], release: [], pageOrEndpoint: [], errorSeverity: [] },

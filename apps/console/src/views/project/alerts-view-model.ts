@@ -119,7 +119,7 @@ export function ruleStateLabel(state: string): string {
     case 'evaluation_paused':
       return '计算暂停';
     default:
-      return state;
+      return '评估状态未知';
   }
 }
 
@@ -135,6 +135,6 @@ export function instanceStateLabel(state: string): string {
     case 'evaluation_paused':
       return '计算暂停';
     default:
-      return state;
+      return '实例状态未知';
   }
 }

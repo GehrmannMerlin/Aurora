@@ -1,3 +1,4 @@
+import AxeBuilder from '@axe-core/playwright';
 import { expect, test, type Page } from '@playwright/test';
 import { startSpaServer } from './serve-spa';
 
@@ -69,6 +70,12 @@ test('PLT-07 smoke: releases → source maps → alerts render real views', asyn
   await expect(page.getByTestId('project-source-maps-view')).toBeVisible();
   await expect(page.getByTestId('source-map-files')).toBeVisible();
   await expect(page.getByTestId('source-map-file-actions')).toBeVisible();
+  const sourceMapFile = page.getByTestId('source-map-file-sm_test_1');
+  await expect(sourceMapFile).toHaveAttribute('aria-pressed', 'false');
+  await sourceMapFile.focus();
+  await page.keyboard.press('Enter');
+  await expect(sourceMapFile).toHaveAttribute('aria-pressed', 'true');
+  await expect(page.getByTestId('source-map-selected-file')).toContainText('/assets/app.js');
 
   // C10: alerts workspace renders both tabs with real projections.
   await page.goto(`${server!.origin}/organizations/org_test_1/projects/prj_test_1/alerts`);
@@ -76,9 +83,29 @@ test('PLT-07 smoke: releases → source maps → alerts render real views', asyn
   await expect(page.getByTestId('tab-instances')).toBeVisible();
   await expect(page.getByTestId('tab-rules')).toBeVisible();
   await expect(page.getByTestId('alert-instances-toolbar')).toBeVisible();
-  await page.getByTestId('tab-rules').click();
+  await page.getByTestId('tab-instances').focus();
+  await page.keyboard.press('ArrowRight');
   await expect(page).toHaveURL(/tab=rules/);
   await expect(page.getByTestId('alert-rules-toolbar')).toBeVisible();
+  await expect(page.getByTestId('tab-rules')).toHaveAttribute('aria-selected', 'true');
+
+  // C11 remains reachable from the rules tab; the C12 instance view is read-only.
+  await page.getByTestId('alert-rule-create-link').click();
+  await expect(page.getByTestId('project-alert-rule-form-view')).toBeVisible();
+  await expect(page.getByTestId('alert-rule-form')).toBeVisible();
+  await page.goto(
+    `${server!.origin}/organizations/org_test_1/projects/prj_test_1/alerts/instances/instance_test_1`,
+  );
+  await expect(page.getByTestId('project-alert-instance-detail-view')).toBeVisible();
+  await expect(page.getByTestId('alert-instance-evidence')).toBeVisible();
+  await expect(page.getByTestId('project-alert-instance-detail-view').getByRole('button')).toHaveCount(0);
+
+  // The delivery workspace remains usable on a narrow viewport and has no axe violations.
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto(`${server!.origin}/organizations/org_test_1/projects/prj_test_1/releases/release_test_1`);
+  await expect(page.getByTestId('delivery-list')).toBeVisible();
+  await expect(page.getByTestId('delivery-detail')).toBeVisible();
+  await expect(new AxeBuilder({ page }).analyze()).resolves.toHaveProperty('violations', []);
 
   // No fatal page error and no capability-not-provided stub on the visited pages.
   expect(pageErrors).toEqual([]);

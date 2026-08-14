@@ -101,7 +101,7 @@ export function reparseStateLabel(state: string): string {
     case 'failed':
       return '处理失败';
     default:
-      return state;
+      return '处理状态未知';
   }
 }
 
@@ -113,6 +113,6 @@ export function sourceMapStatusLabel(status: string): string {
     case 'replaced':
       return '已替换';
     default:
-      return status;
+      return '文件状态未知';
   }
 }

@@ -22,6 +22,7 @@ import {
 import AppPageHeader from '../../components/aurora/AppPageHeader.vue';
 import AppLink from '../../components/aurora/AppLink.vue';
 import AppStatusBadge from '../../components/aurora/AppStatusBadge.vue';
+import AppTechnicalDetails from '../../components/aurora/AppTechnicalDetails.vue';
 import SectionNotice from '../../components/monitoring/SectionNotice.vue';
 
 const route = useRoute();
@@ -69,6 +70,21 @@ function backHref(): string {
   return `/organizations/${organizationId}/projects/${projectId}/alerts`;
 }
 
+const alertReasonLabels: Readonly<Record<string, string>> = Object.freeze({
+  triggered: '观测值满足触发条件',
+  recovered: '观测值满足恢复条件',
+  evaluation_paused: '评估已暂停',
+  evaluation_resumed: '评估已恢复',
+});
+
+function readableRuleName(name: string | undefined): string {
+  return name?.trim() || '未命名告警规则';
+}
+
+function alertReasonLabel(reason: string): string {
+  return alertReasonLabels[reason] ?? '服务端未提供可读说明';
+}
+
 function filtersText(filters: {
   readonly environment: readonly string[];
   readonly release: readonly string[];
@@ -108,9 +124,7 @@ function filtersText(filters: {
           <AppStatusBadge :tone="instanceTone(state.instance.data.state)">
             {{ instanceStateLabel(state.instance.data.state) }}
           </AppStatusBadge>
-          <span class="mon-rule-name">{{
-            state.instance.data.ruleName ?? state.instance.data.ruleId
-          }}</span>
+          <span class="mon-rule-name">{{ readableRuleName(state.instance.data.ruleName) }}</span>
         </div>
         <dl class="mon-dl">
           <dt>指标</dt>
@@ -123,14 +137,20 @@ function filtersText(filters: {
           </template>
           <template v-if="state.instance.data.pauseReason !== undefined">
             <dt>暂停原因</dt>
-            <dd>{{ state.instance.data.pauseReason }}</dd>
+            <dd>{{ alertReasonLabel(state.instance.data.pauseReason) }}</dd>
           </template>
         </dl>
+        <AppTechnicalDetails summary="实例技术详情">
+          instanceId: {{ state.instance.data.instanceId }}
+          ruleId: {{ state.instance.data.ruleId }}
+          state: {{ state.instance.data.state }}
+          directReason: {{ state.instance.data.directReason }}
+        </AppTechnicalDetails>
       </section>
 
       <section class="mon-block mon-instance-reason" data-testid="alert-instance-reason">
         <h2 class="mon-title">触发原因</h2>
-        <p>{{ state.instance.data.directReason }}</p>
+        <p>{{ alertReasonLabel(state.instance.data.directReason) }}</p>
       </section>
 
       <section class="mon-block" data-testid="alert-instance-rule-snapshot">
@@ -214,7 +234,7 @@ function filtersText(filters: {
             </template>
             <template v-if="state.evidence.data.pauseReason !== undefined">
               <dt>暂停原因</dt>
-              <dd>{{ state.evidence.data.pauseReason }}</dd>
+              <dd>{{ alertReasonLabel(state.evidence.data.pauseReason) }}</dd>
             </template>
             <dt>筛选范围</dt>
             <dd>{{ filtersText(state.evidence.data.appliedFilters) }}</dd>
@@ -239,7 +259,7 @@ function filtersText(filters: {
                 {{ instanceStateLabel(transition.to) }}</span
               >
               <span class="mon-meta"
-                >{{ transition.reason }} · {{ formatUtc(transition.occurredAt) }}</span
+                >{{ alertReasonLabel(transition.reason) }} · {{ formatUtc(transition.occurredAt) }}</span
               >
             </li>
           </ol>
@@ -302,6 +322,7 @@ function filtersText(filters: {
   flex-direction: column;
   gap: var(--space-2);
 }
+
 .mon-instance-reason {
   padding: var(--space-3);
   border-left: 3px solid var(--color-status-info);
