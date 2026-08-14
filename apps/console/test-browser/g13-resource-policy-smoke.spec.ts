@@ -18,7 +18,7 @@ async function setSessionAuthenticated(page: Page, authenticated: boolean): Prom
 /** Load the app once and wait for the MSW-backed shell so the worker is active. */
 async function primeApp(page: Page): Promise<void> {
   await page.goto(`${server!.origin}/`);
-  await expect(page.getByRole('navigation', { name: '侧栏导航' })).toBeVisible();
+  await expect(page.getByRole('navigation', { name: '全局导航' })).toBeVisible();
 }
 
 test.beforeAll(async () => {
@@ -52,7 +52,7 @@ test('PLT-10c smoke: resource-policy page renders target picker and effective de
   await expect(page.getByTestId('rp-target-picker')).toBeVisible();
   await expect(page.getByTestId('rp-target-select')).toBeVisible();
   await expect(page.getByTestId('rp-effective-policy')).toBeVisible();
-  await expect(page.getByTestId('rp-fields-table')).toBeVisible();
+  await expect(page.getByTestId('rp-policy-evidence-table')).toBeVisible();
   await expect(page.getByRole('cell', { name: '周期配额' })).toBeVisible();
 
   // Target search resolves into selectable options (no fatal error); selecting

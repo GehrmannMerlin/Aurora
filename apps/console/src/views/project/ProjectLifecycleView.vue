@@ -187,8 +187,8 @@ function statusTone(status: string): 'neutral' | 'success' | 'warning' | 'danger
     <template v-if="lifecycle !== null">
       <section
         v-if="canArchive(lifecycle.status)"
-        class="mon-block"
-        data-testid="lifecycle-archive"
+        class="lifecycle-danger-zone lifecycle-danger-zone--archive"
+        data-testid="lifecycle-archive-zone"
       >
         <h2 class="mon-title">归档项目</h2>
         <p class="mon-hint">归档后停止接收新事件，告警停止，历史数据保留；可随时从归档恢复。</p>
@@ -223,8 +223,8 @@ function statusTone(status: string): 'neutral' | 'success' | 'warning' | 'danger
 
       <section
         v-if="canMoveToTrash(lifecycle.status)"
-        class="mon-block mon-danger-zone"
-        data-testid="lifecycle-trash"
+        class="lifecycle-danger-zone lifecycle-danger-zone--delete"
+        data-testid="lifecycle-delete-zone"
       >
         <h2 class="mon-title">移入回收站</h2>
         <p class="mon-hint">
@@ -304,10 +304,17 @@ function statusTone(status: string): 'neutral' | 'success' | 'warning' | 'danger
   font-size: 14px;
   color: var(--color-text-primary);
 }
-.mon-danger-zone {
-  border: 1px solid var(--color-status-danger);
-  border-radius: var(--radius-base);
+.lifecycle-danger-zone {
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-surface);
   padding: var(--space-3);
+  margin-bottom: var(--space-5);
+}
+.lifecycle-danger-zone--archive {
+  border-left: 3px solid var(--color-status-warning);
+}
+.lifecycle-danger-zone--delete {
+  border-left: 3px solid var(--color-status-danger);
 }
 .mon-field {
   display: inline-flex;

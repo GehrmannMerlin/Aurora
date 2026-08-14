@@ -34,7 +34,7 @@ async function setSessionAuthenticated(page: Page, authenticated: boolean): Prom
 /** Load the app once and wait for the MSW-backed shell so the worker is active. */
 async function primeApp(page: Page): Promise<void> {
   await page.goto(`${server!.origin}/`);
-  await expect(page.getByRole('navigation', { name: '侧栏导航' })).toBeVisible();
+  await expect(page.getByRole('navigation', { name: '全局导航' })).toBeVisible();
 }
 
 test.beforeAll(async () => {
@@ -69,13 +69,18 @@ test('PLT-08 smoke: access → client-keys → settings → lifecycle render rea
   // C15: settings workspace renders the general tab.
   await page.goto(`${server!.origin}/organizations/org_test_1/projects/prj_test_1/settings`);
   await expect(page.getByTestId('project-settings-view')).toBeVisible();
+  await expect(page.getByTestId('settings-general-workspace')).toBeVisible();
   await expect(page.getByTestId('tab-general')).toBeVisible();
   await expect(page.getByTestId('tab-environments')).toBeVisible();
+  await page.getByTestId('tab-environments').click();
+  await expect(page.getByTestId('settings-environments-workspace')).toBeVisible();
 
   // C16: lifecycle workspace renders the summary and high-risk action areas.
   await page.goto(`${server!.origin}/organizations/org_test_1/projects/prj_test_1/settings/lifecycle`);
   await expect(page.getByTestId('project-lifecycle-view')).toBeVisible();
   await expect(page.getByTestId('lifecycle-summary')).toBeVisible();
+  await expect(page.getByTestId('lifecycle-archive-zone')).toBeVisible();
+  await expect(page.getByTestId('lifecycle-delete-zone')).toBeVisible();
 
   expect(pageErrors).toEqual([]);
   await expect(page.getByText('capability-not-provided')).toHaveCount(0);

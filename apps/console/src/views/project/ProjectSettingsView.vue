@@ -184,7 +184,7 @@ async function submitCreateEnvironment(): Promise<void> {
     </nav>
 
     <template v-if="tab === 'general'">
-      <section class="mon-block" data-testid="settings-general">
+      <section class="settings-workspace" data-testid="settings-general-workspace">
         <template v-if="state.project.kind === 'loading'">
           <p class="mon-hint" role="status">正在加载设置…</p>
         </template>
@@ -228,7 +228,7 @@ async function submitCreateEnvironment(): Promise<void> {
     </template>
 
     <template v-else>
-      <section class="mon-block" data-testid="settings-environments">
+      <section class="settings-workspace" data-testid="settings-environments-workspace">
         <h2 class="mon-title">运行环境</h2>
         <template v-if="state.environments.kind === 'loading'">
           <p class="mon-hint" role="status">正在加载环境…</p>
@@ -237,17 +237,27 @@ async function submitCreateEnvironment(): Promise<void> {
           <SectionNotice :view="state.environments" />
         </template>
         <template v-else>
-          <ul v-if="state.environments.data.length > 0" class="mon-env-list">
-            <li
-              v-for="env in state.environments.data"
-              :key="env.environmentId"
-              class="mon-env-item"
-            >
-              <span class="mon-env-name">{{ env.name }}</span>
-              <span v-if="env.isDefault === 'true'" class="mon-badge">默认</span>
-              <span class="mon-meta">{{ env.environmentId }}</span>
-            </li>
-          </ul>
+          <div v-if="state.environments.data.length > 0" class="environment-table-wrap">
+            <table class="environment-table" data-testid="settings-environment-table">
+              <thead>
+                <tr>
+                  <th>环境</th>
+                  <th>状态</th>
+                  <th>技术标识</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="env in state.environments.data" :key="env.environmentId">
+                  <td class="mon-env-name">{{ env.name }}</td>
+                  <td>
+                    <span v-if="env.isDefault === 'true'" class="mon-badge">默认</span>
+                    <span v-else class="mon-meta">可用</span>
+                  </td>
+                  <td class="mon-meta"><code>{{ env.environmentId }}</code></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
           <p v-else class="mon-hint">项目尚无环境。</p>
 
           <div class="mon-env-create">
@@ -299,7 +309,7 @@ async function submitCreateEnvironment(): Promise<void> {
   color: var(--color-text-primary);
   border-bottom-color: var(--color-action-primary);
 }
-.mon-block {
+.settings-workspace {
   margin-bottom: var(--space-5);
 }
 .mon-title {
@@ -337,21 +347,30 @@ async function submitCreateEnvironment(): Promise<void> {
   color: var(--color-text-primary);
   font: inherit;
 }
-.mon-env-list {
-  list-style: none;
-  margin: 0 0 var(--space-3);
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-2);
-}
-.mon-env-item {
+.environment-table-wrap {
+  overflow-x: auto;
   border: 1px solid var(--color-border-default);
-  border-radius: var(--radius-base);
-  padding: var(--space-2) var(--space-3);
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
+  border-radius: var(--radius-surface);
+  margin-bottom: var(--space-3);
+}
+.environment-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 520px;
+}
+.environment-table th,
+.environment-table td {
+  padding: var(--space-3);
+  border-bottom: 1px solid var(--color-border-default);
+  text-align: left;
+}
+.environment-table th {
+  color: var(--color-text-secondary);
+  font-size: 12px;
+  font-weight: 600;
+}
+.environment-table tbody tr:last-child td {
+  border-bottom: 0;
 }
 .mon-env-name {
   font-weight: 600;
