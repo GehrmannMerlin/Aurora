@@ -36,6 +36,11 @@ describe('monitoring entry presentation', () => {
     expect(onboardingSource).toContain('class="mon-code"');
   });
 
+  it('does not claim a concrete environment when the onboarding projection is unavailable', () => {
+    expect(onboardingSource).toContain('真实密钥投影尚未提供');
+    expect(onboardingSource).not.toContain('environment: "production"');
+  });
+
   it('groups C7 authority, reason, stages, trust evidence, and action targets', () => {
     for (const target of ['ds-authority', 'ds-stages', 'ds-actions']) {
       expect(dataStatusSource).toContain(`test-id="${target}"`);

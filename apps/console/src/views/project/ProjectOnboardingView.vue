@@ -72,7 +72,7 @@ const actionTargets = computed(() => {
 
 Aurora.init({{ '{' }}
   clientKey: "（未提供：密钥投影能力尚未开放）",
-  environment: "production"
+  environment: "（未提供：运行环境投影能力尚未开放）"
 {{ '}' }});</code></pre></div></li>
         <li><span class="mon-step-number">3</span><div><h3>发送测试错误</h3><p>测试错误需完成接收、校验、存储并聚合为问题；测试事件状态查询未提供，页面不会宣称接入成功。</p><pre class="mon-code"><code>import {{ '{' }} Aurora {{ '}' }} from "@aurora/browser";
 
