@@ -40,9 +40,22 @@ test('register → verify → login → logout full walk with real Vue component
   await expect(page).toHaveURL(/\/verify-email$/);
   await expect(page.getByTestId('verify-email-view')).toBeVisible();
   await expect(page.getByText('us**@example.invalid')).toBeVisible();
-  await expect(page.getByTestId('verify-status')).toContainText('email_verification_pending');
+  await expect(page.getByText(/正在等待邮箱验证/)).toBeVisible();
   // resend respects the server cooldown (resendAvailableAt is in the future)
   await expect(page.getByTestId('resend-button')).toBeDisabled();
+
+  // Refresh proves the page restores a historical pending account from Session,
+  // without relying on the in-memory registration handoff. Native button
+  // keyboard activation sends the real resend command.
+  await page.reload();
+  await expect(page.getByText('us**@example.invalid')).toBeVisible();
+  const resendButton = page.getByTestId('resend-button');
+  await expect(resendButton).toBeEnabled();
+  await resendButton.focus();
+  await page.keyboard.press('Enter');
+  const resendResult = page.getByText(/新的验证邮件已加入发送队列/);
+  await expect(resendResult).toBeVisible();
+  await expect(resendResult.locator('..')).toBeFocused();
 
   // A1 verify via the intent-link confirm page
   await page.goto(`${server!.origin}/verify-email/confirm?token=raw_token`);

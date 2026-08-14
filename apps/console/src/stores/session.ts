@@ -10,6 +10,8 @@ export type SessionStatus =
 export interface AccountSummary {
   accountId: string;
   email: string;
+  /** Always present in get-session; omitted only by the narrower login handoff. */
+  emailMasked?: string;
   verified: boolean;
 }
 
@@ -37,8 +39,10 @@ export const useSessionStore = defineStore('session', () => {
   const csrf = ref<string | null>(null);
   const error = ref<string | null>(null);
 
-  async function restore(): Promise<void> {
-    if (status.value === 'loading' || status.value === 'authenticated') return;
+  async function restore(options: { readonly force?: boolean } = {}): Promise<void> {
+    if (status.value === 'loading') return;
+    if (status.value === 'authenticated' && options.force !== true) return;
+    if (options.force === true) invalidateScope({ type: 'account' });
     status.value = 'loading';
     error.value = null;
     const startedEpoch = epoch;

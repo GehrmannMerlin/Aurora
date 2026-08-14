@@ -1,4 +1,5 @@
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/vue';
+import { http, HttpResponse, type JsonBodyType } from 'msw';
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { router } from '../../src/router';
 import { pinia } from '../../src/stores';
@@ -34,10 +35,14 @@ beforeEach(async () => {
   useSessionStore().reset();
   useAuthStore().clear();
   handlerControls.sessionAuthenticated = false;
+  handlerControls.sessionVerified = true;
+  handlerControls.sessionRequests = 0;
+  handlerControls.delayMs = 0;
   handlerControls.registerRequests = 0;
   handlerControls.loginRequests = 0;
   handlerControls.logoutRequests = 0;
   handlerControls.confirmEmailRequests = 0;
+  handlerControls.resendEmailVerificationRequests = 0;
   handlerControls.requestPasswordResetRequests = 0;
   handlerControls.confirmPasswordResetRequests = 0;
   handlerControls.changePasswordRequests = 0;
@@ -112,18 +117,191 @@ describe('RegisterView', () => {
 });
 
 describe('VerifyEmailView', () => {
-  it('renders the masked email, verification status and disabled resend during cooldown', async () => {
-    useAuthStore().setRegistration(REGISTRATION);
+  const pendingSession = {
+    account: {
+      accountId: 'acct_history_1',
+      email: 'history@tests.invalid',
+      emailMasked: 'h***@tests.invalid',
+      verified: false,
+    },
+    authentication: 'pending_verification',
+    session: { expiresAt: '2026-08-15T01:00:00.000Z' },
+    csrf: 'csrf_history_test',
+    navigation: [],
+  };
+
+  function usePendingSession(): void {
+    handlerControls.sessionAuthenticated = true;
+    mockServer.use(
+      http.get('/api/platform/v1/session', async () => {
+        handlerControls.sessionRequests += 1;
+        if (handlerControls.delayMs > 0) {
+          await new Promise<void>((resolve) => setTimeout(resolve, handlerControls.delayMs));
+        }
+        return HttpResponse.json(pendingSession as JsonBodyType);
+      }),
+    );
+  }
+
+  async function renderVerifyEmail(): Promise<void> {
     await router.push('/verify-email');
     await router.isReady();
     render(VerifyEmailView, { global: { plugins: [pinia, router] } });
-    expect(screen.getByText('us**@example.invalid')).toBeTruthy();
-    expect(screen.getByTestId('verify-status').textContent).toContain('email_verification_pending');
-    expect(screen.getByTestId('verify-server-time').textContent).toContain(
-      '2026-08-09T01:00:00.000Z',
-    );
+  }
+
+  it('renders loading before the forced Session restoration completes', async () => {
+    usePendingSession();
+    handlerControls.delayMs = 50;
+    await renderVerifyEmail();
+    expect(screen.getByText(/正在恢复验证状态/)).toBeTruthy();
+    await screen.findByText('h***@tests.invalid');
+    handlerControls.delayMs = 0;
+  });
+
+  it('restores a historical pending account without registration memory and exposes no email input', async () => {
+    usePendingSession();
+    await renderVerifyEmail();
+    expect(await screen.findByText('h***@tests.invalid')).toBeTruthy();
+    expect(useAuthStore().registration).toBeNull();
+    expect(screen.queryByRole('textbox')).toBeNull();
+    expect(screen.getByTestId<HTMLButtonElement>('resend-button').disabled).toBe(false);
+  });
+
+  it('renders the registration cooldown using an absolute server-time countdown', async () => {
+    usePendingSession();
+    useAuthStore().setRegistration(REGISTRATION);
+    await renderVerifyEmail();
+    expect(await screen.findByText('h***@tests.invalid')).toBeTruthy();
     const resend = screen.getByTestId<HTMLButtonElement>('resend-button');
     expect(resend.disabled).toBe(true);
+    expect(resend.textContent).toContain('300 秒');
+  });
+
+  it('queues a resend command, prevents duplicate in-flight submission, and focuses its result', async () => {
+    usePendingSession();
+    let resolveResend: (() => void) | undefined;
+    mockServer.use(
+      http.post('/api/platform/v1/auth/email/resend', async () => {
+        handlerControls.resendEmailVerificationRequests += 1;
+        await new Promise<void>((resolve) => {
+          resolveResend = resolve;
+        });
+        return HttpResponse.json({
+          emailMasked: 'h***@tests.invalid',
+          deliveryStatus: 'queued',
+          resendAvailableAt: '2026-08-14T01:01:00.000Z',
+          serverTime: '2026-08-14T01:00:00.000Z',
+        } as JsonBodyType);
+      }),
+    );
+    await renderVerifyEmail();
+    const resend = await screen.findByTestId<HTMLButtonElement>('resend-button');
+    await fireEvent.click(resend);
+    expect(resend.disabled).toBe(true);
+    await fireEvent.click(resend);
+    expect(handlerControls.resendEmailVerificationRequests).toBe(1);
+    resolveResend?.();
+    const result = await screen.findByText(/新的验证邮件已加入发送队列/);
+    expect(result.closest('[tabindex="-1"]')).toBe(document.activeElement);
+    expect(resend.textContent).toContain('60 秒');
+  });
+
+  it('shows the rolling 24-hour limit from a 429 response', async () => {
+    usePendingSession();
+    mockServer.use(
+      http.post('/api/platform/v1/auth/email/resend', () =>
+        HttpResponse.json(
+          {
+            type: 'about:blank',
+            title: 'Resend limit reached',
+            status: 429,
+            detail: 'Try again later.',
+            code: 'rate_limited',
+            requestId: 'req_rate_limit_test',
+            retryAfter: 3600,
+            resendAvailableAt: '2026-08-14T02:00:00.000Z',
+          } as JsonBodyType,
+          { status: 429 },
+        ),
+      ),
+    );
+    await renderVerifyEmail();
+    await fireEvent.click(await screen.findByTestId('resend-button'));
+    expect(await screen.findByText(/24 小时内的重新发送次数已达上限/)).toBeTruthy();
+  });
+
+  it('refreshes Session and shows verified when resend reports a state conflict', async () => {
+    usePendingSession();
+    let sessionReads = 0;
+    mockServer.use(
+      http.get('/api/platform/v1/session', () => {
+        sessionReads += 1;
+        return HttpResponse.json(
+          sessionReads <= 2
+            ? (pendingSession as JsonBodyType)
+            : ({
+                ...pendingSession,
+                account: { ...pendingSession.account, verified: true },
+                authentication: 'authenticated',
+              } as JsonBodyType),
+        );
+      }),
+      http.post('/api/platform/v1/auth/email/resend', () =>
+        HttpResponse.json(
+          {
+            type: 'about:blank',
+            title: 'Email already verified',
+            status: 409,
+            detail: 'The account is already active.',
+            code: 'state_machine_conflict',
+            requestId: 'req_verified_test',
+          } as JsonBodyType,
+          { status: 409 },
+        ),
+      ),
+    );
+    handlerControls.sessionAuthenticated = true;
+    await renderVerifyEmail();
+    await fireEvent.click(await screen.findByTestId('resend-button'));
+    expect(await screen.findByText(/邮箱已经完成验证/)).toBeTruthy();
+    expect(sessionReads).toBe(3);
+  });
+
+  it('shows verified from authoritative Session state', async () => {
+    handlerControls.sessionAuthenticated = true;
+    await renderVerifyEmail();
+    expect(await screen.findByText(/邮箱已经完成验证/)).toBeTruthy();
+    expect(screen.queryByTestId('resend-button')).toBeNull();
+  });
+
+  it('shows a login recovery action when the Session expired', async () => {
+    handlerControls.sessionAuthenticated = false;
+    await renderVerifyEmail();
+    expect(await screen.findByText(/登录状态已失效/)).toBeTruthy();
+    expect(screen.getByRole('link', { name: '重新登录' })).toBeTruthy();
+  });
+
+  it('shows a retryable provider-unavailable result', async () => {
+    usePendingSession();
+    mockServer.use(
+      http.post('/api/platform/v1/auth/email/resend', () =>
+        HttpResponse.json(
+          {
+            type: 'about:blank',
+            title: 'Email provider unavailable',
+            status: 503,
+            detail: 'Retry later.',
+            code: 'authority_unavailable',
+            requestId: 'req_provider_test',
+          } as JsonBodyType,
+          { status: 503 },
+        ),
+      ),
+    );
+    await renderVerifyEmail();
+    await fireEvent.click(await screen.findByTestId('resend-button'));
+    expect(await screen.findByText(/邮件服务暂时不可用/)).toBeTruthy();
+    expect(screen.getByTestId<HTMLButtonElement>('resend-button').disabled).toBe(false);
   });
 });
 

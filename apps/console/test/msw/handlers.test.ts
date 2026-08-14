@@ -4,6 +4,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 const SCOPE_KEY = '__aurora_mock_scope';
 const CONTEXT_URL = new URL('/api/platform/v1/navigation/context', window.location.origin).href;
 const SCOPE_URL = new URL('/__mock/scope', window.location.origin).href;
+const RESEND_URL = new URL('/api/platform/v1/auth/email/resend', window.location.origin).href;
 
 interface ScopeProjection {
   type: string;
@@ -45,6 +46,24 @@ afterEach(() => {
 });
 
 describe('mock platform handlers', () => {
+  it('provides the real resend contract shape without exposing an address or token', async () => {
+    const server = await freshServer();
+    try {
+      const response = await fetch(RESEND_URL, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json', 'x-aurora-csrf': 'csrf_test' },
+        body: JSON.stringify({ idempotencyKey: 'k'.repeat(36) }),
+      });
+      expect(response.status).toBe(200);
+      const body = (await response.json()) as Record<string, unknown>;
+      expect(body).toMatchObject({ deliveryStatus: 'queued', emailMasked: 'ne**@example.invalid' });
+      expect(JSON.stringify(body)).not.toContain('token=');
+      expect(body).not.toHaveProperty('email');
+    } finally {
+      server.close();
+    }
+  });
+
   it('defaults to the project scope when nothing is stored', async () => {
     expect(await currentScopeWithStored(null)).toEqual({
       type: 'project',

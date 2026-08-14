@@ -16,6 +16,7 @@ import {
   validNavigationSamples,
   validRegisterSamples,
   validRequestPasswordResetSamples,
+  validResendEmailVerificationResponseSamples,
   validRestoreProjectSamples,
   validSessionSamples,
 } from '@aurora/platform-contract/contract-testkit';
@@ -27,6 +28,7 @@ export interface MockScope {
 
 const MOCK_SCOPE_STORAGE_KEY = '__aurora_mock_scope';
 const MOCK_SESSION_STORAGE_KEY = '__aurora_mock_session_authenticated';
+const MOCK_SESSION_VERIFIED_STORAGE_KEY = '__aurora_mock_session_verified';
 const MOCK_DELETION_PREFLIGHT_STORAGE_KEY = '__aurora_mock_deletion_preflight';
 
 function readStoredScope(): MockScope {
@@ -56,6 +58,16 @@ function readStoredSessionAuthenticated(): boolean {
     if (raw !== null) return raw === 'true';
   } catch {
     // storage may be unavailable; default to an authenticated session
+  }
+  return true;
+}
+
+function readStoredSessionVerified(): boolean {
+  try {
+    const raw = sessionStorage.getItem(MOCK_SESSION_VERIFIED_STORAGE_KEY);
+    if (raw !== null) return raw === 'true';
+  } catch {
+    // storage may be unavailable; default to a verified account
   }
   return true;
 }
@@ -882,6 +894,7 @@ export const handlerControls = {
   loginRequests: 0,
   logoutRequests: 0,
   confirmEmailRequests: 0,
+  resendEmailVerificationRequests: 0,
   requestPasswordResetRequests: 0,
   confirmPasswordResetRequests: 0,
   changePasswordRequests: 0,
@@ -940,6 +953,8 @@ export const handlerControls = {
   moveToTrashRequests: 0,
   /** Toggle for the session projection: true = authenticated, false = 401. */
   sessionAuthenticated: readStoredSessionAuthenticated(),
+  /** Current mock account verification projection. */
+  sessionVerified: readStoredSessionVerified(),
   /** Toggle for the A5 deletion preflight projection: ready = no blocker. */
   deletionPreflightStatus: readStoredDeletionPreflight(),
 };
@@ -957,6 +972,15 @@ function persistSessionAuthenticated(value: boolean): void {
   handlerControls.sessionAuthenticated = value;
   try {
     sessionStorage.setItem(MOCK_SESSION_STORAGE_KEY, String(value));
+  } catch {
+    // storage unavailable; the module flag still applies for this page lifetime
+  }
+}
+
+function persistSessionVerified(value: boolean): void {
+  handlerControls.sessionVerified = value;
+  try {
+    sessionStorage.setItem(MOCK_SESSION_VERIFIED_STORAGE_KEY, String(value));
   } catch {
     // storage unavailable; the module flag still applies for this page lifetime
   }
@@ -1074,7 +1098,23 @@ export function createPlatformHandlers() {
       if (!handlerControls.sessionAuthenticated) {
         return HttpResponse.json(unauthenticatedProblem as JsonBodyType, { status: 401 });
       }
-      return HttpResponse.json(validSessionSamples[0] as JsonBodyType, { status: 200 });
+      return HttpResponse.json(
+        (handlerControls.sessionVerified
+          ? validSessionSamples[0]
+          : {
+              account: {
+                accountId: 'acct_test_1',
+                email: 'user@example.invalid',
+                emailMasked: 'us**@example.invalid',
+                verified: false,
+              },
+              authentication: 'pending_verification',
+              session: { expiresAt: '2026-08-15T01:00:00.000Z' },
+              csrf: 'csrf_test_token',
+              navigation: [],
+            }) as JsonBodyType,
+        { status: 200 },
+      );
     }),
     http.get('/api/platform/v1/navigation/context', async () => {
       await maybeDelay();
@@ -1088,12 +1128,14 @@ export function createPlatformHandlers() {
     http.post('/api/platform/v1/auth/register', async () => {
       handlerControls.registerRequests += 1;
       persistSessionAuthenticated(true);
+      persistSessionVerified(false);
       await maybeDelay();
       return HttpResponse.json(validRegisterSamples[0] as JsonBodyType, { status: 200 });
     }),
     http.post('/api/platform/v1/auth/login', async () => {
       handlerControls.loginRequests += 1;
       persistSessionAuthenticated(true);
+      persistSessionVerified(true);
       await maybeDelay();
       return HttpResponse.json(validLoginSamples[0] as JsonBodyType, { status: 200 });
     }),
@@ -1106,8 +1148,16 @@ export function createPlatformHandlers() {
     http.post('/api/platform/v1/auth/email/confirm', async () => {
       handlerControls.confirmEmailRequests += 1;
       persistSessionAuthenticated(true);
+      persistSessionVerified(true);
       await maybeDelay();
       return HttpResponse.json(validConfirmEmailVerificationSamples[0] as JsonBodyType, {
+        status: 200,
+      });
+    }),
+    http.post('/api/platform/v1/auth/email/resend', async () => {
+      handlerControls.resendEmailVerificationRequests += 1;
+      await maybeDelay();
+      return HttpResponse.json(validResendEmailVerificationResponseSamples[0] as JsonBodyType, {
         status: 200,
       });
     }),
@@ -1793,8 +1843,9 @@ export function createPlatformHandlers() {
       },
     ),
     http.post('/__mock/session', async ({ request }) => {
-      const body = (await request.json()) as { authenticated?: boolean };
+      const body = (await request.json()) as { authenticated?: boolean; verified?: boolean };
       persistSessionAuthenticated(body.authenticated ?? true);
+      if (body.verified !== undefined) persistSessionVerified(body.verified);
       return new HttpResponse(null, { status: 204 });
     }),
     http.post('/__mock/deletion-preflight', async ({ request }) => {

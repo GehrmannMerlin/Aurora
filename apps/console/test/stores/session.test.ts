@@ -16,6 +16,7 @@ beforeEach(() => {
   mockServer.resetHandlers();
   handlerControls.sessionRequests = 0;
   handlerControls.delayMs = 0;
+  handlerControls.sessionVerified = true;
 });
 afterEach(() => {
   invalidateScope({ type: 'account' });
@@ -83,6 +84,39 @@ describe('Session Context consumer', () => {
     await store.restore();
     expect(store.status).toBe('authenticated');
     expect(handlerControls.sessionRequests).toBe(1);
+  });
+
+  it('force-restores authoritative account state even while authenticated', async () => {
+    const store = useSessionStore();
+    await store.restore();
+    expect(store.account?.verified).toBe(true);
+
+    mockServer.use(
+      http.get('/api/platform/v1/session', () => {
+        handlerControls.sessionRequests += 1;
+        return HttpResponse.json({
+          account: {
+            accountId: 'acct_history_1',
+            email: 'history@tests.invalid',
+            emailMasked: 'h***@tests.invalid',
+            verified: false,
+          },
+          authentication: 'pending_verification',
+          session: { expiresAt: '2026-08-15T01:00:00.000Z' },
+          csrf: 'csrf_history_test',
+          navigation: [],
+        } as JsonBodyType);
+      }),
+    );
+    await store.restore({ force: true });
+
+    expect(handlerControls.sessionRequests).toBe(2);
+    expect(store.account).toMatchObject({
+      accountId: 'acct_history_1',
+      emailMasked: 'h***@tests.invalid',
+      verified: false,
+    });
+    expect(store.csrf).toBe('csrf_history_test');
   });
 
   it('does not resurrect cleared session state when reset() runs during an in-flight restore', async () => {

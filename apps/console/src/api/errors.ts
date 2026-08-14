@@ -26,6 +26,7 @@ export class ApiError extends Error {
   readonly status: number | null;
   readonly requestId?: string;
   readonly retryAfter?: number;
+  readonly resendAvailableAt?: string;
   readonly fieldErrors?: readonly ApiFieldError[];
 
   constructor(options: {
@@ -34,6 +35,7 @@ export class ApiError extends Error {
     status?: number | null;
     requestId?: string | undefined;
     retryAfter?: number | undefined;
+    resendAvailableAt?: string | undefined;
     fieldErrors?: readonly ApiFieldError[] | undefined;
   }) {
     super(options.message);
@@ -42,6 +44,9 @@ export class ApiError extends Error {
     this.status = options.status ?? null;
     if (options.requestId !== undefined) this.requestId = options.requestId;
     if (options.retryAfter !== undefined) this.retryAfter = options.retryAfter;
+    if (options.resendAvailableAt !== undefined) {
+      this.resendAvailableAt = options.resendAvailableAt;
+    }
     if (options.fieldErrors !== undefined) this.fieldErrors = options.fieldErrors;
   }
 }
@@ -70,6 +75,7 @@ interface NormalizedProblem {
   status: number;
   requestId?: string;
   retryAfter?: number;
+  resendAvailableAt?: string;
   fieldErrors?: readonly { field: string; reason: string }[];
 }
 
@@ -90,5 +96,8 @@ export function normalizeProblem(raw: unknown, status: number): ApiError {
     requestId: problem.requestId,
     retryAfter: problem.retryAfter,
     ...(problem.fieldErrors === undefined ? {} : { fieldErrors: problem.fieldErrors }),
+    ...(problem.resendAvailableAt === undefined
+      ? {}
+      : { resendAvailableAt: problem.resendAvailableAt }),
   });
 }

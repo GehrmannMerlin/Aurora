@@ -15,6 +15,16 @@ async function setProjectScope(page: Page): Promise<void> {
   );
 }
 
+async function setPendingVerificationSession(page: Page): Promise<void> {
+  await page.evaluate(() =>
+    fetch('/__mock/session', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ authenticated: true, verified: false }),
+    }),
+  );
+}
+
 test.beforeAll(async () => {
   server = await startSpaServer();
 });
@@ -34,6 +44,16 @@ test('the authenticated shell passes axe auto-checks', async ({ page }) => {
   expect(openMenuResults.violations).toEqual([]);
   await page.keyboard.press('Escape');
   await openResponsiveSidebar(page);
+  const results = await new AxeBuilder({ page }).analyze();
+  expect(results.violations).toEqual([]);
+});
+
+test('the Session-backed email verification page passes axe auto-checks', async ({ page }) => {
+  await page.goto(`${server!.origin}/`);
+  await waitForShell(page);
+  await setPendingVerificationSession(page);
+  await page.goto(`${server!.origin}/verify-email`);
+  await expect(page.getByTestId('resend-button')).toBeEnabled();
   const results = await new AxeBuilder({ page }).analyze();
   expect(results.violations).toEqual([]);
 });

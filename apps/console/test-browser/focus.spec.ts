@@ -38,3 +38,22 @@ test('post-navigation focus lands on the newly rendered page title', async ({ pa
   await expect(page).toHaveURL(/\/organizations\/org_test_1\/projects\/prj_test_1\/overview$/);
   await expect(page.locator('#page-title')).toBeFocused();
 });
+
+test('keyboard resend moves focus to the action status summary', async ({ page }) => {
+  await page.goto(`${server!.origin}/`);
+  await waitForShell(page);
+  await page.evaluate(() =>
+    fetch('/__mock/session', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ authenticated: true, verified: false }),
+    }),
+  );
+  await page.goto(`${server!.origin}/verify-email`);
+  const resend = page.getByTestId('resend-button');
+  await expect(resend).toBeEnabled();
+  await resend.focus();
+  await page.keyboard.press('Enter');
+  const status = page.getByText(/新的验证邮件已加入发送队列/).locator('..');
+  await expect(status).toBeFocused();
+});
