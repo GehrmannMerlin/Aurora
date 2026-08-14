@@ -73,9 +73,9 @@ describe('common contracts', () => {
     };
 
     expect(auroraProblem.zod.safeParse(problem).success).toBe(true);
-    expect(auroraProblem.zod.safeParse({ ...problem, retryAt: problem.resendAvailableAt }).success).toBe(
-      false,
-    );
+    expect(
+      auroraProblem.zod.safeParse({ ...problem, retryAt: problem.resendAvailableAt }).success,
+    ).toBe(false);
   });
 
   it('freezes all 38 route target ids as a closed enum', () => {
