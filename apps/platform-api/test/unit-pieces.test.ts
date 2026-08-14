@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { loadPlatformApiConfig } from '../src/config.js';
+import { sanitizePlatformRequestUrl } from '../src/app.js';
 import { problem } from '../src/error-mapper.js';
 import { maskEmail } from '../src/routes/register.js';
 import { parseIntentCookie, serializeIntentCookie } from '../src/intent-cookie.js';
@@ -12,6 +13,33 @@ import {
 const { idempotencyLookupMock } = vi.hoisted(() => ({ idempotencyLookupMock: vi.fn() }));
 vi.mock('@aurora/platform-identity', () => ({ findIdempotencyRecord: idempotencyLookupMock }));
 import { lookupIdempotency } from '../src/idempotency.js';
+
+describe('sanitizePlatformRequestUrl', () => {
+  it.each([
+    ['/api/platform/v1/auth/verify/verification-secret', '/api/platform/v1/auth/verify/:token'],
+    ['/api/platform/v1/auth/reset/reset-secret', '/api/platform/v1/auth/reset/:token'],
+    [
+      '/api/platform/v1/auth/invitations/invitation-secret',
+      '/api/platform/v1/auth/invitations/:token',
+    ],
+    [
+      '/api/platform/v1/account/deletion/intent/deletion-secret',
+      '/api/platform/v1/account/deletion/intent/:token',
+    ],
+    [
+      '/api/platform/v1/account/deletion/cancel/intent/cancel-secret',
+      '/api/platform/v1/account/deletion/cancel/intent/:token',
+    ],
+  ])('replaces the secret path segment for %s', (rawUrl, expected) => {
+    expect(sanitizePlatformRequestUrl(rawUrl)).toBe(expected);
+  });
+
+  it('drops query strings from logged URLs', () => {
+    expect(sanitizePlatformRequestUrl('/api/platform/v1/session?token=query-secret')).toBe(
+      '/api/platform/v1/session',
+    );
+  });
+});
 
 describe('maskEmail', () => {
   it('masks the local part and keeps the domain', () => {

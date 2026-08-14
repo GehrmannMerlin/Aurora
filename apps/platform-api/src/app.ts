@@ -153,6 +153,29 @@ export interface PlatformApiDependencies {
   readonly now?: () => Date;
 }
 
+const SENSITIVE_LINK_ROUTES = [
+  '/api/platform/v1/auth/verify/',
+  '/api/platform/v1/auth/reset/',
+  '/api/platform/v1/auth/invitations/',
+  '/api/platform/v1/account/deletion/intent/',
+  '/api/platform/v1/account/deletion/cancel/intent/',
+] as const;
+
+/**
+ * Keep request logging useful without retaining bearer-like link secrets.
+ * Query strings are never logged because their contents are not part of the
+ * stable route identity and may contain credentials supplied by callers.
+ */
+export function sanitizePlatformRequestUrl(rawUrl: string): string {
+  const pathname = rawUrl.split('?', 1)[0] ?? '';
+  for (const routePrefix of SENSITIVE_LINK_ROUTES) {
+    if (pathname.startsWith(routePrefix)) {
+      return `${routePrefix}:token`;
+    }
+  }
+  return pathname;
+}
+
 /**
  * Build the Fastify platform application. Accepts external dependencies and
  * never creates or closes the caller-provided Pool or Redis session store
@@ -185,7 +208,20 @@ export function buildPlatformApi(deps: PlatformApiDependencies): FastifyInstance
   };
 
   const app = Fastify({
-    logger: deps.config.logEnabled,
+    logger: deps.config.logEnabled
+      ? {
+          serializers: {
+            req(request) {
+              return {
+                method: request.method,
+                url: sanitizePlatformRequestUrl(request.raw.url ?? request.url),
+                host: request.hostname,
+                remoteAddress: request.ip,
+              };
+            },
+          },
+        }
+      : false,
     bodyLimit: 256 * 1024,
   });
 
