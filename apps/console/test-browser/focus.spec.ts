@@ -38,3 +38,18 @@ test('post-navigation focus lands on the newly rendered page title', async ({ pa
   await expect(page).toHaveURL(/\/organizations\/org_test_1\/projects\/prj_test_1\/overview$/);
   await expect(page.locator('#page-title')).toBeFocused();
 });
+
+test('issue selection remains keyboard reachable and exposes the current-page selection summary', async ({
+  page,
+}) => {
+  await page.goto(`${server!.origin}/`);
+  await waitForShell(page);
+  await setMockScope(page, 'project', 'prj_test_1');
+  await page.goto(`${server!.origin}/organizations/org_test_1/projects/prj_test_1/issues`);
+
+  const selection = page.getByRole('checkbox', { name: /选择问题/ }).first();
+  await selection.focus();
+  await page.keyboard.press('Space');
+  await expect(page.getByTestId('issues-selection-summary')).toContainText('已选择 1 个问题');
+  await expect(page.getByTestId('issues-selection-bar')).toBeVisible();
+});

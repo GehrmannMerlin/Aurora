@@ -13,6 +13,8 @@ import { formatUtc } from '../../monitoring/format.js';
 import { fetchPerformancePages, type PerformancePagesData } from '../../monitoring/queries.js';
 import { toSectionView } from '../../monitoring/section.js';
 import AppPageHeader from '../../components/aurora/AppPageHeader.vue';
+import AppSection from '../../components/aurora/AppSection.vue';
+import AppTechnicalDetails from '../../components/aurora/AppTechnicalDetails.vue';
 import SectionNotice from '../../components/monitoring/SectionNotice.vue';
 import { buildPerformanceView, metricLabel, metricUnit } from './performance-view-model.js';
 
@@ -60,44 +62,53 @@ const state = computed(() =>
   <section class="au-surface" data-testid="project-performance-view">
     <AppPageHeader title="性能" />
 
-    <section class="mon-block" data-testid="performance-metrics">
-      <h2 class="mon-title">页面性能指标</h2>
-      <template v-if="state.metrics.kind !== 'available'">
-        <SectionNotice :view="state.metrics" />
-      </template>
-      <template v-else>
-        <dl v-if="state.metrics.data.metrics.length > 0" class="mon-inline">
-          <div
-            v-for="metric in state.metrics.data.metrics"
-            :key="metric.metricName"
-            class="mon-metric"
-          >
-            <dt>{{ metricLabel(metric.metricName) }}</dt>
-            <dd>
-              {{ metric.mean }} {{ metricUnit(metric.unit) }}
-              <span class="mon-meta"
-                >（样本 {{ metric.observedCount }} · 最大 {{ metric.valueMax }}）</span
+    <div class="investigation-workspace">
+      <AppSection title="页面" description="安全页面维度仅在服务端投影可用时列出。">
+        <div data-testid="investigation-list">
+          <div data-testid="performance-pages"><SectionNotice :view="state.pages" /></div>
+        </div>
+      </AppSection>
+
+      <div data-testid="investigation-detail">
+        <AppSection title="页面性能指标" data-testid="performance-metrics">
+          <template v-if="state.metrics.kind !== 'available'">
+            <SectionNotice :view="state.metrics" />
+          </template>
+          <template v-else>
+            <dl v-if="state.metrics.data.metrics.length > 0" class="mon-inline">
+              <div
+                v-for="metric in state.metrics.data.metrics"
+                :key="metric.metricName"
+                class="mon-metric"
               >
-            </dd>
-          </div>
-        </dl>
-        <p v-else class="mon-hint">窗口内没有性能指标。</p>
-        <p v-if="state.metrics.data.dataThrough" class="mon-meta">
-          数据至 {{ formatUtc(state.metrics.data.dataThrough) }}
-          <template v-if="state.metrics.data.isPartial"> · 部分结果</template>
-        </p>
-      </template>
-    </section>
-
-    <section class="mon-block" data-testid="performance-pages">
-      <h2 class="mon-title">页面维度</h2>
-      <SectionNotice :view="state.pages" />
-    </section>
-
-    <section class="mon-block" data-testid="performance-percentiles">
-      <h2 class="mon-title">百分位</h2>
-      <SectionNotice :view="state.percentiles" />
-    </section>
+                <dt>{{ metricLabel(metric.metricName) }}</dt>
+                <dd>
+                  {{ metric.mean }} {{ metricUnit(metric.unit) }}
+                  <span class="mon-meta"
+                    >（样本 {{ metric.observedCount }} · 最大 {{ metric.valueMax }}）</span
+                  >
+                </dd>
+              </div>
+            </dl>
+            <p v-else class="mon-hint">窗口内没有性能指标。</p>
+            <p v-if="state.metrics.data.dataThrough" class="mon-meta">
+              数据至 {{ formatUtc(state.metrics.data.dataThrough)
+              }}<template v-if="state.metrics.data.isPartial"> · 部分结果</template>
+            </p>
+            <AppTechnicalDetails summary="技术详情"
+              >聚合值来自服务端返回的指标桶；不代表百分位或页面级样本。</AppTechnicalDetails
+            >
+          </template>
+        </AppSection>
+        <AppSection
+          title="百分位与序列"
+          class="investigation-detail-section"
+          data-testid="performance-series-unavailable"
+        >
+          <SectionNotice :view="state.percentiles" />
+        </AppSection>
+      </div>
+    </div>
   </section>
 </template>
 
@@ -139,5 +150,19 @@ const state = computed(() =>
   font-size: 20px;
   font-weight: 600;
   color: var(--color-text-primary);
+}
+.investigation-workspace {
+  display: grid;
+  grid-template-columns: minmax(260px, 0.85fr) minmax(0, 1.35fr);
+  align-items: start;
+  gap: var(--space-4);
+}
+.investigation-detail-section {
+  margin-top: var(--space-4);
+}
+@media (max-width: 800px) {
+  .investigation-workspace {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }
 </style>

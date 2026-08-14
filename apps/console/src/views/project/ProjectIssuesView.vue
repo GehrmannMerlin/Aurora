@@ -6,7 +6,7 @@
  * 投影。`environments`/`releases` 恒 `unavailable`（契约缺口），空窗口 `empty`，
  * 缺失证据不以零值代替。行点击进入 C4 并保留返回上下文。
  */
-import { onMounted, ref } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { describeRequestError } from '../../api/feedback.js';
 import { formatUtc } from '../../monitoring/format.js';
@@ -18,6 +18,7 @@ import { resolveRouteTarget } from '../../contracts/route-registry.js';
 import AppLink from '../../components/aurora/AppLink.vue';
 import AppPageHeader from '../../components/aurora/AppPageHeader.vue';
 import AppStatusBadge from '../../components/aurora/AppStatusBadge.vue';
+import AppTechnicalDetails from '../../components/aurora/AppTechnicalDetails.vue';
 import SectionNotice from '../../components/monitoring/SectionNotice.vue';
 import {
   issueListQuery,
@@ -43,7 +44,9 @@ const countView = ref<SectionView<{ totalCount: number; totalCountStatus: string
 });
 
 const filters = ref<IssueFilters>(parseIssueFilters(route.query));
+const selectedIssueIds = ref<readonly string[]>([]);
 const scope = { organizationId, projectId };
+const selectedCount = computed(() => selectedIssueIds.value.length);
 
 async function load(reset: boolean): Promise<void> {
   loading.value = true;
@@ -51,6 +54,7 @@ async function load(reset: boolean): Promise<void> {
   if (reset) {
     items.value = [];
     nextCursor.value = null;
+    selectedIssueIds.value = [];
   }
   try {
     const page = await fetchIssueList(
@@ -120,13 +124,27 @@ function issueHref(issueId: string): string {
 function onLoadMore(): void {
   void load(false);
 }
+
+function isSelected(issueId: string): boolean {
+  return selectedIssueIds.value.includes(issueId);
+}
+
+function toggleIssueSelection(issueId: string, checked: boolean): void {
+  selectedIssueIds.value = checked
+    ? [...new Set([...selectedIssueIds.value, issueId])]
+    : selectedIssueIds.value.filter((current) => current !== issueId);
+}
+
+function clearSelection(): void {
+  selectedIssueIds.value = [];
+}
 </script>
 
 <template>
   <section class="au-surface" data-testid="project-issues-view">
-    <AppPageHeader title="问题" />
+    <AppPageHeader title="问题" description="按状态、优先级或负责人筛选当前时间窗口内的问题。" />
 
-    <div class="fil-row" data-testid="issues-filters">
+    <div class="issues-query-toolbar" data-testid="issues-query-toolbar">
       <label class="fil">
         状态
         <select
@@ -181,49 +199,83 @@ function onLoadMore(): void {
     />
     <SectionNotice v-if="countView.kind === 'empty'" :view="countView" />
 
-    <template v-if="countView.kind === 'available'">
-      <p class="mon-meta" data-testid="issues-total">
-        共 {{ countView.data.totalCount }} 个问题（{{ countView.data.totalCountStatus }}）
-      </p>
-    </template>
-
-    <ul v-if="items.length > 0" class="mon-issue-list" data-testid="issue-list">
-      <li v-for="issue in items" :key="issue.issueId" class="mon-issue-item">
-        <AppLink :to="issueHref(issue.issueId)" class="mon-issue-title">{{ issue.title }}</AppLink>
-        <div class="mon-issue-meta">
-          <AppStatusBadge :tone="issue.status === 'open' ? 'warning' : 'neutral'">
-            {{ issueStatusLabel(issue.status) }}
-          </AppStatusBadge>
-          <span>{{ issue.occurrenceCount }} 次</span>
-          <span v-if="issue.priority !== undefined"
-            >优先级 {{ issuePriorityLabel(issue.priority) }}</span
+    <section
+      class="issues-results-surface"
+      data-testid="issues-results-surface"
+      aria-label="问题结果"
+    >
+      <div class="issues-results-surface__summary">
+        <template v-if="countView.kind === 'available'">
+          <p class="mon-meta" data-testid="issues-total">
+            共 {{ countView.data.totalCount }} 个问题
+          </p>
+          <AppTechnicalDetails summary="总量技术状态"
+            >totalCountStatus: {{ countView.data.totalCountStatus }}</AppTechnicalDetails
           >
-          <span v-if="issue.assigneeAccountId !== undefined"
-            >负责人 {{ issue.assigneeAccountId }}</span
-          >
-          <span class="mon-meta"
-            >首次 {{ formatUtc(issue.firstSeenAt) }} · 最近 {{ formatUtc(issue.lastSeenAt) }}</span
-          >
-        </div>
-      </li>
-    </ul>
-
-    <div v-if="nextCursor !== null" class="mon-actions-row">
-      <button
-        type="button"
-        class="au-button"
-        data-testid="issues-load-more"
-        :disabled="loading"
-        @click="onLoadMore"
-      >
-        加载更多
-      </button>
-    </div>
+        </template>
+        <p class="mon-meta" data-testid="issues-selection-summary">
+          当前页已选择 {{ selectedCount }} 个问题
+        </p>
+      </div>
+      <div v-if="selectedCount > 0" class="issues-selection-bar" data-testid="issues-selection-bar">
+        <p>已选择 {{ selectedCount }} 个当前页问题。批量处理尚未提供；可打开问题执行已授权操作。</p>
+        <button type="button" class="au-button" @click="clearSelection">清除选择</button>
+      </div>
+      <ul v-if="items.length > 0" class="mon-issue-list" data-testid="issue-list">
+        <li v-for="issue in items" :key="issue.issueId" class="mon-issue-item">
+          <label class="issues-select">
+            <input
+              type="checkbox"
+              :checked="isSelected(issue.issueId)"
+              :aria-label="`选择问题：${issue.title}`"
+              @change="
+                toggleIssueSelection(issue.issueId, ($event.target as HTMLInputElement).checked)
+              "
+            />
+          </label>
+          <div class="mon-issue-item__content">
+            <AppLink :to="issueHref(issue.issueId)" class="mon-issue-title">{{
+              issue.title
+            }}</AppLink>
+            <div class="mon-issue-meta">
+              <AppStatusBadge :tone="issue.status === 'open' ? 'warning' : 'neutral'">
+                {{ issueStatusLabel(issue.status) }}
+              </AppStatusBadge>
+              <span>{{ issue.occurrenceCount }} 次</span>
+              <span v-if="issue.priority !== undefined"
+                >优先级 {{ issuePriorityLabel(issue.priority) }}</span
+              >
+              <span v-if="issue.assigneeAccountId !== undefined"
+                >负责人 {{ issue.assigneeAccountId }}</span
+              >
+              <span class="mon-meta"
+                >首次 {{ formatUtc(issue.firstSeenAt) }} · 最近
+                {{ formatUtc(issue.lastSeenAt) }}</span
+              >
+            </div>
+            <AppTechnicalDetails summary="技术详情"
+              >issueId: {{ issue.issueId }}</AppTechnicalDetails
+            >
+          </div>
+        </li>
+      </ul>
+      <div v-if="nextCursor !== null" class="mon-actions-row">
+        <button
+          type="button"
+          class="au-button"
+          data-testid="issues-load-more"
+          :disabled="loading"
+          @click="onLoadMore"
+        >
+          加载更多
+        </button>
+      </div>
+    </section>
   </section>
 </template>
 
 <style scoped>
-.fil-row {
+.issues-query-toolbar {
   display: flex;
   flex-wrap: wrap;
   gap: var(--space-3);
@@ -256,15 +308,56 @@ function onLoadMore(): void {
 .mon-issue-list {
   list-style: none;
   margin: 0;
-  padding: 0;
+  padding: var(--space-3);
   display: flex;
   flex-direction: column;
   gap: var(--space-2);
 }
 .mon-issue-item {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
   border: 1px solid var(--color-border-default);
   border-radius: var(--radius-base);
   padding: var(--space-3);
+}
+.mon-issue-item__content {
+  min-width: 0;
+  flex: 1;
+}
+.issues-select {
+  padding-top: 2px;
+}
+.issues-results-surface {
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-surface);
+  background-color: var(--color-surface-bg);
+}
+.issues-results-surface__summary {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+  border-bottom: 1px solid var(--color-border-default);
+}
+.issues-selection-bar {
+  position: sticky;
+  top: var(--space-2);
+  z-index: 1;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border-bottom: 1px solid var(--color-border-default);
+  background-color: var(--color-surface-muted);
+}
+.issues-selection-bar p {
+  margin: 0;
+  color: var(--color-text-secondary);
+  font-size: 13px;
 }
 .mon-issue-title {
   font-weight: 600;
