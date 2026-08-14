@@ -7,6 +7,7 @@ import {
   findPasswordResetIntentByDigest,
   insertEmailVerificationIntent,
   insertPasswordResetIntent,
+  supersedeEmailVerificationIntents,
 } from '../../src/index.js';
 import {
   assertIsTestDatabase,
@@ -188,5 +189,45 @@ describeDb('platform-identity intents repository (real PostgreSQL 17)', () => {
       now: new Date(),
     });
     expect(wrong).toEqual({ status: 'not_found' });
+  });
+
+  it('supersedes only unused email verification intents for the same account', async () => {
+    const accountId = await createFreshAccountId();
+    const otherAccountId = await createFreshAccountId();
+    const expiresAt = new Date('2026-08-15T03:00:00.000Z');
+    const first = await insertEmailVerificationIntent(pool, {
+      accountId,
+      tokenDigest: crypto.randomUUID().replaceAll('-', '').repeat(2),
+      expiresAt,
+    });
+    const alreadyConsumed = await insertEmailVerificationIntent(pool, {
+      accountId,
+      tokenDigest: crypto.randomUUID().replaceAll('-', '').repeat(2),
+      expiresAt,
+    });
+    const otherAccount = await insertEmailVerificationIntent(pool, {
+      accountId: otherAccountId,
+      tokenDigest: crypto.randomUUID().replaceAll('-', '').repeat(2),
+      expiresAt,
+    });
+    const consumedAt = new Date('2026-08-14T00:00:00.000Z');
+    await consumeIntent(pool, {
+      kind: 'email_verification',
+      intentId: alreadyConsumed.intentId,
+      now: consumedAt,
+    });
+
+    const supersededAt = new Date('2026-08-14T01:00:00.000Z');
+    await supersedeEmailVerificationIntents(pool, { accountId, now: supersededAt });
+
+    const rows = await pool.query<{ intent_id: string; consumed_at: string | null }>(
+      `SELECT intent_id, consumed_at FROM email_verification_intents
+       WHERE intent_id = ANY($1::uuid[]) ORDER BY intent_id`,
+      [[first.intentId, alreadyConsumed.intentId, otherAccount.intentId]],
+    );
+    const byId = new Map(rows.rows.map((row) => [row.intent_id, toIso(row.consumed_at)]));
+    expect(byId.get(first.intentId)).toBe(supersededAt.toISOString());
+    expect(byId.get(alreadyConsumed.intentId)).toBe(consumedAt.toISOString());
+    expect(byId.get(otherAccount.intentId)).toBeNull();
   });
 });

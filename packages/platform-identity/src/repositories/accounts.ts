@@ -228,7 +228,10 @@ export async function updateAccountVerifiedAt(
 ): Promise<AccountMutationResult> {
   try {
     const result = await pool.query(
-      `UPDATE accounts SET verified_at = $2, updated_at = $2 WHERE account_id = $1 RETURNING account_id`,
+      `UPDATE accounts
+       SET verified_at = $2, status = 'active', updated_at = $2
+       WHERE account_id = $1 AND status = 'pending_verification'
+       RETURNING account_id`,
       [accountId, now.toISOString()],
     );
     return result.rows.length === 0 ? { status: 'not_found' } : { status: 'success' };

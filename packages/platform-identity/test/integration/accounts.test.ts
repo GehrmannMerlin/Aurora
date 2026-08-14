@@ -1,9 +1,10 @@
-import type { Pool } from 'pg';
+import type { Pool, PoolClient } from 'pg';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import {
   createAccount,
   findAccountByEmailNormalized,
   getAccountById,
+  getAccountByIdForUpdate,
   incrementSecurityVersion,
   updateAccountVerifiedAt,
   upsertAccountCredential,
@@ -163,25 +164,80 @@ describeDb('platform-identity accounts repository (real PostgreSQL 17)', () => {
     expect(missing).toBeNull();
   });
 
-  it('updateAccountVerifiedAt marks the account verified', async () => {
+  it('getAccountByIdForUpdate serializes concurrent account work', async () => {
     const email = await freshAccountEmail();
     const created = await createAccount(pool, {
       email,
       emailNormalized: email.toLowerCase(),
       passwordHash: 'hash',
-      status: 'active',
+      status: 'pending_verification',
+    });
+    if (created.status !== 'success') throw new Error('expected account creation');
+
+    const first: PoolClient = await pool.connect();
+    const second: PoolClient = await pool.connect();
+    try {
+      await first.query('BEGIN');
+      await second.query('BEGIN');
+      await getAccountByIdForUpdate(first, created.account.accountId);
+
+      let secondResolved = false;
+      const secondLock = getAccountByIdForUpdate(second, created.account.accountId).then((row) => {
+        secondResolved = true;
+        return row;
+      });
+      await new Promise((resolve) => setTimeout(resolve, 100));
+      expect(secondResolved).toBe(false);
+
+      await first.query('COMMIT');
+      expect((await secondLock)?.accountId).toBe(created.account.accountId);
+      await second.query('COMMIT');
+    } finally {
+      await first.query('ROLLBACK').catch(() => undefined);
+      await second.query('ROLLBACK').catch(() => undefined);
+      first.release();
+      second.release();
+    }
+  });
+
+  it('updateAccountVerifiedAt activates only a pending verification account', async () => {
+    const email = await freshAccountEmail();
+    const created = await createAccount(pool, {
+      email,
+      emailNormalized: email.toLowerCase(),
+      passwordHash: 'hash',
+      status: 'pending_verification',
     });
     if (created.status !== 'success') throw new Error('expected account creation');
     const now = new Date('2026-08-09T00:00:00.000Z');
     const updated = await updateAccountVerifiedAt(pool, created.account.accountId, now);
     expect(updated).toEqual({ status: 'success' });
-    const row = await queryRow<{ verified_at: string | null }>(
+    const row = await queryRow<{ verified_at: string | null; status: string }>(
       pool,
-      'SELECT verified_at FROM accounts WHERE account_id = $1',
+      'SELECT verified_at, status FROM accounts WHERE account_id = $1',
       [created.account.accountId],
     );
     expect(row?.verified_at).not.toBeNull();
     expect(toIso(row?.verified_at)).toBe(now.toISOString());
+    expect(row?.status).toBe('active');
+
+    const activeEmail = await freshAccountEmail();
+    const alreadyActive = await createAccount(pool, {
+      email: activeEmail,
+      emailNormalized: activeEmail.toLowerCase(),
+      passwordHash: 'hash',
+      status: 'active',
+    });
+    if (alreadyActive.status !== 'success') throw new Error('expected active account creation');
+    const rejected = await updateAccountVerifiedAt(pool, alreadyActive.account.accountId, now);
+    expect(rejected).toEqual({ status: 'not_found' });
+    const unchanged = await queryRow<{ verified_at: string | null; status: string }>(
+      pool,
+      'SELECT verified_at, status FROM accounts WHERE account_id = $1',
+      [alreadyActive.account.accountId],
+    );
+    expect(unchanged).toEqual({ verified_at: null, status: 'active' });
+
     const missing = await updateAccountVerifiedAt(pool, crypto.randomUUID(), now);
     expect(missing).toEqual({ status: 'not_found' });
   });

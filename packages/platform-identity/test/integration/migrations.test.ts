@@ -32,6 +32,7 @@ const IDENTITY_TABLES = [
   'outbox',
   'account_deletion_intents',
   'account_cleanup_handoffs',
+  'account_cleanup_steps',
 ];
 
 describeDb('platform-identity migrations (real PostgreSQL 17)', () => {
@@ -43,6 +44,7 @@ describeDb('platform-identity migrations (real PostgreSQL 17)', () => {
     // Deterministic start: the dedicated test database may hold state from a
     // prior run. Drop identity tables (children first) + pgmigrations so
     // "fresh up" semantics hold.
+    await pool.query('DROP TABLE IF EXISTS account_cleanup_steps CASCADE');
     await pool.query('DROP TABLE IF EXISTS outbox CASCADE');
     await pool.query('DROP TABLE IF EXISTS idempotency_records CASCADE');
     await pool.query('DROP TABLE IF EXISTS security_audit_events CASCADE');
@@ -78,6 +80,7 @@ describeDb('platform-identity migrations (real PostgreSQL 17)', () => {
       expect.arrayContaining([
         '1786233600000_create-platform-identity-tables',
         '1786244000000_account-deletion',
+        '1786665600000_email-verification-resend-and-outbox-reliability',
       ]),
     );
   });
@@ -97,7 +100,7 @@ describeDb('platform-identity migrations (real PostgreSQL 17)', () => {
   it('creates all identity tables', async () => {
     const tables = await queryRows<TableRow>(
       pool,
-      "SELECT tablename FROM pg_tables WHERE schemaname='public' AND tablename IN ('accounts','account_credentials','email_verification_intents','password_reset_intents','organizations','organization_members','organization_invitations','project_members','security_audit_events','idempotency_records','outbox','account_deletion_intents','account_cleanup_handoffs')",
+      "SELECT tablename FROM pg_tables WHERE schemaname='public' AND tablename IN ('accounts','account_credentials','email_verification_intents','password_reset_intents','organizations','organization_members','organization_invitations','project_members','security_audit_events','idempotency_records','outbox','account_deletion_intents','account_cleanup_handoffs','account_cleanup_steps')",
     );
     const tableNames = tables.map((row) => row.tablename).sort();
     expect(tableNames).toEqual([...IDENTITY_TABLES].sort());
@@ -116,6 +119,41 @@ describeDb('platform-identity migrations (real PostgreSQL 17)', () => {
       'deletion_requested_at',
       'deletion_terminated_at',
     ]);
+  });
+
+  it('adds fenced outbox delivery columns, indexes, and the superseded state', async () => {
+    const columns = await queryRows<{ column_name: string; data_type: string }>(
+      pool,
+      `SELECT column_name, data_type FROM information_schema.columns
+       WHERE table_name = 'outbox'
+         AND column_name IN ('claim_id','last_error_code','provider_request_id')
+       ORDER BY column_name`,
+    );
+    expect(columns).toEqual([
+      { column_name: 'claim_id', data_type: 'uuid' },
+      { column_name: 'last_error_code', data_type: 'text' },
+      { column_name: 'provider_request_id', data_type: 'text' },
+    ]);
+
+    const indexes = await queryRows<{ indexname: string }>(
+      pool,
+      `SELECT indexname FROM pg_indexes
+       WHERE tablename = 'outbox'
+         AND indexname IN ('outbox_claimable_idx','outbox_email_resend_window_idx')
+       ORDER BY indexname`,
+    );
+    expect(indexes.map((row) => row.indexname)).toEqual([
+      'outbox_claimable_idx',
+      'outbox_email_resend_window_idx',
+    ]);
+
+    await expect(
+      pool.query(
+        `INSERT INTO outbox (aggregate_type, payload, status)
+         VALUES ('email.verification', '{}'::jsonb, 'superseded')`,
+      ),
+    ).resolves.toBeDefined();
+    await pool.query("DELETE FROM outbox WHERE status = 'superseded'");
   });
 
   it('supports down then re-up symmetry', async () => {

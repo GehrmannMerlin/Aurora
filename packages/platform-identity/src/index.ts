@@ -50,6 +50,7 @@ export {
   findPasswordResetIntentByDigest,
   insertEmailVerificationIntent,
   insertPasswordResetIntent,
+  supersedeEmailVerificationIntents,
   type ConsumeIntentInput,
   type ConsumeIntentResult,
   type InsertIntentInput,
@@ -100,11 +101,15 @@ export {
 
 export {
   claimOutboxRows,
+  getEmailVerificationResendState,
   insertOutboxRow,
   markOutboxResult,
+  supersedePendingEmailVerificationOutbox,
   MAX_CLAIM_LIMIT,
   type ClaimOutboxRowsInput,
   type ClaimOutboxRowsResult,
+  type EmailVerificationResendState,
+  type GetEmailVerificationResendStateInput,
   type InsertOutboxRowInput,
   type InsertOutboxRowResult,
   type MarkOutboxResultInput,

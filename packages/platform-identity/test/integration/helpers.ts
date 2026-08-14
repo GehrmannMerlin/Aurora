@@ -6,6 +6,7 @@ const migrationsDir = fileURLToPath(new URL('../../migrations', import.meta.url)
 
 /** The platform-identity tables, in FK-safe drop order. */
 const IDENTITY_TABLES_DROP_ORDER = [
+  'account_cleanup_steps',
   'outbox',
   'idempotency_records',
   'security_audit_events',

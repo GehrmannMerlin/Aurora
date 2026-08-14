@@ -111,6 +111,23 @@ export async function insertPasswordResetIntent(
   return insertIntent(pool, 'password_reset', input);
 }
 
+/** Consume every still-unused email verification intent for one account. */
+export async function supersedeEmailVerificationIntents(
+  pool: Pool | PoolClient,
+  input: { readonly accountId: string; readonly now: Date },
+): Promise<void> {
+  try {
+    await pool.query(
+      `UPDATE email_verification_intents
+       SET consumed_at = $2
+       WHERE account_id = $1 AND consumed_at IS NULL`,
+      [input.accountId, input.now.toISOString()],
+    );
+  } catch (error) {
+    throw toStableError(error);
+  }
+}
+
 const SELECT_BY_DIGEST_SQL = `
   SELECT intent_id, account_id, token_digest, expires_at, consumed_at, created_at
   FROM %s
