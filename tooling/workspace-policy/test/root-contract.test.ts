@@ -1,8 +1,5 @@
 import { readFile } from 'node:fs/promises';
-import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
-
-const rootDir = fileURLToPath(new URL('../../../', import.meta.url));
 
 async function readRootFile(path: string): Promise<string> {
   return readFile(new URL(`../../../${path}`, import.meta.url), 'utf8');
@@ -19,9 +16,9 @@ describe('root Workspace contract', () => {
     const engines = isRecord(parsed.engines) ? parsed.engines : {};
 
     await expect(readRootFile('.node-version')).resolves.toBe('24.18.0\n');
+    expect(parsed.name).toBe('@aurora/root');
     expect(parsed.packageManager).toBe('pnpm@11.17.0');
     expect(engines.node).toBe('>=24.18.0 <25');
-    expect(rootDir.replace(/[/\\]$/, '').endsWith('Aurora')).toBe(true);
   });
 
   it('declares every stable root command', async () => {
