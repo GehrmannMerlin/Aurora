@@ -18,6 +18,7 @@ related:
   - ./2026-07-27-aurora-frontend-ux-ui-design.md
   - ./2026-07-30-aurora-console-visual-language-design.md
   - ./2026-08-14-console-navigation-shell-polish-design.md
+  - ../plans/2026-08-14-aurora-console-ux-ui-redesign.md
 supersedes:
   - ./2026-07-30-aurora-console-visual-language-design.md
   - ./2026-08-14-console-navigation-shell-polish-design.md
@@ -417,7 +418,7 @@ C2 不展示趋势图、健康评分、预测、排名、推荐操作卡片或�
 - [x] 将本文状态改为 `approved`；
 - [x] 将两个旧视觉设计文档改为 `superseded` 并添加反向链接；
 - [x] 同步 `AGENTS.md`、`AURORA_RULES.md` 和正式文档索引中的当前视觉基线；
-- [ ] 在批准后使用 `writing-plans` 形成实施计划；
+- [x] 使用 `writing-plans` 形成[实施计划](../plans/2026-08-14-aurora-console-ux-ui-redesign.md)；
 - [ ] 实施代码、测试和浏览器证据。
 
 ### 18.2 当前自检结论
