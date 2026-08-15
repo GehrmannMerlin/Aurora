@@ -55,19 +55,19 @@ describe('built processing-store package entry', () => {
     }
   });
 
-  it('declares pg as a production dependency and event-schema as a devDependency', async () => {
+  it('declares every runtime import as a production dependency', async () => {
     const manifest: unknown = JSON.parse(
       await readFile(new URL('../package.json', import.meta.url), 'utf8'),
     );
     expect(manifest).toMatchObject({
-      dependencies: { pg: '8.22.0' },
+      dependencies: { '@aurora/event-schema': 'workspace:*', pg: '8.22.0' },
       aurora: { layer: 'data' },
     });
     if (typeof manifest !== 'object' || manifest === null || Array.isArray(manifest)) {
       throw new TypeError('manifest must be an object');
     }
     const devDependencies = (manifest as { devDependencies?: unknown }).devDependencies;
-    expect(devDependencies).toMatchObject({ '@aurora/event-schema': 'workspace:*' });
+    expect(devDependencies).not.toMatchObject({ '@aurora/event-schema': 'workspace:*' });
   });
 
   it('never exposes private paths through the package exports map', async () => {
