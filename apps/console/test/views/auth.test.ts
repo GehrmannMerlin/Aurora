@@ -15,6 +15,7 @@ import ForgotPasswordView from '../../src/views/auth/ForgotPasswordView.vue';
 import ResetPasswordView from '../../src/views/auth/ResetPasswordView.vue';
 import InvitationAcceptView from '../../src/views/auth/InvitationAcceptView.vue';
 import AccountSecurityView from '../../src/views/account/AccountSecurityView.vue';
+import App from '../../src/App.vue';
 
 const REGISTRATION: RegisterResult = {
   accountId: 'acct_test_1',
@@ -334,6 +335,16 @@ describe('VerifyEmailConfirmView', () => {
 });
 
 describe('LoginView', () => {
+  it('keeps login inside the public Calm Observability authentication shell', async () => {
+    await router.push('/login');
+    await router.isReady();
+    render(App, { global: { plugins: [pinia, router] } });
+
+    expect(await screen.findByTestId('auth-shell')).toBeTruthy();
+    expect(screen.queryByRole('navigation')).toBeNull();
+    expect(screen.getByText('把异常、请求与性能证据放回同一个调查上下文')).toBeTruthy();
+  });
+
   it('submits identityLogin, applies the session and navigates to the workspace', async () => {
     await router.push('/login');
     await router.isReady();
