@@ -37,6 +37,14 @@ describe('built console production output', () => {
     expect(index).toMatch(/<script[^>]+src="\/assets\/[^"]+-[A-Za-z0-9_-]+\.js"/);
   });
 
+  it('publishes and references the Aurora browser icon', () => {
+    const index = readFileSync(join(dist, 'index.html'), 'utf8');
+    expect(index).toMatch(/<link[^>]+rel="icon"[^>]+href="\/icons\/aurora-app-icon\.png"[^>]*>/);
+
+    const icon = readFileSync(join(dist, 'icons', 'aurora-app-icon.png'));
+    expect([...icon.subarray(0, 8)]).toEqual([137, 80, 78, 71, 13, 10, 26, 10]);
+  });
+
   it('emits no source maps (no leak through Preview static serving)', () => {
     expect(files.filter((file) => file.endsWith('.map'))).toHaveLength(0);
   });
