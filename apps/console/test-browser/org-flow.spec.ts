@@ -75,12 +75,10 @@ test('B2 create-project form keeps client-key plaintext out of the browser respo
   await page.getByTestId('project-website-input').fill('https://example.com');
   await page.getByTestId('create-project-submit').click();
 
-  await expect(page.getByTestId('create-success')).toBeVisible();
-  await expect(page.getByTestId('client-key-public-identifier')).toHaveText('ck_pub_test_12345');
+  await expect(page).toHaveURL(/\/projects\/prj_created_1\/onboarding$/);
+  await expect(page.getByTestId('project-onboarding-view')).toBeVisible();
+  await expect(page.getByText(/没有可恢复的完整 Client Key/)).toBeVisible();
   await expect(page.locator('body')).not.toContainText('aurora_ingest_');
-  await page.getByTestId('enter-project-button').click();
-  await expect(page).toHaveURL(/\/projects\/prj_created_1\/overview$/);
-  await expect(page.getByTestId('project-overview-view')).toBeVisible();
   await expect(new AxeBuilder({ page }).analyze()).resolves.toHaveProperty('violations', []);
 });
 

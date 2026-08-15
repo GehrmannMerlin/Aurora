@@ -298,6 +298,19 @@ describeDb('email verification resend flow (real PostgreSQL 17 + Redis)', () => 
       { aggregate_type: 'email.verification', n: 1 },
       { aggregate_type: 'email.verification.resend', n: 5 },
     ]);
+
+    const session = await app.inject({
+      method: 'GET',
+      url: '/api/platform/v1/session',
+      headers: { cookie: `aurora_session=${actor.cookie}` },
+    });
+    expect(session.statusCode).toBe(200);
+    expect(
+      session.json<{ emailVerification: { resendAvailableAt: string } }>().emailVerification,
+    ).toEqual({
+      serverTime: currentNow.toISOString(),
+      resendAvailableAt: new Date(BASE_NOW.getTime() + 61_000 + 86_400_000).toISOString(),
+    });
     await app.close();
   });
 

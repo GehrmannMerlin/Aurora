@@ -152,7 +152,7 @@ describe('B2 create project (7B)', () => {
     expect(screen.getByTestId('project-settings-section')).toBeTruthy();
   });
 
-  it('submits the form without exposing a client-key secret and enters the project', async () => {
+  it('submits the form without exposing a client-key secret and enters onboarding', async () => {
     await router.push('/organizations/org_test_1/projects/new');
     await router.isReady();
     render(ProjectCreateView, { global: { plugins: [pinia, router] } });
@@ -164,15 +164,12 @@ describe('B2 create project (7B)', () => {
     await fireEvent.update(screen.getByTestId('project-website-input'), 'https://example.com');
     await fireEvent.click(screen.getByTestId('create-project-submit'));
 
-    expect(await screen.findByTestId('create-success')).toBeTruthy();
-    expect(screen.getByTestId('client-key-public-identifier').textContent).toBe(
-      'ck_pub_test_12345',
-    );
-    expect(document.body.textContent).not.toContain('aurora_ingest_');
-    await fireEvent.click(screen.getByTestId('enter-project-button'));
     await waitFor(() => {
-      expect(router.currentRoute.value.name).toBe('project.overview');
+      expect(router.currentRoute.value.name).toBe('project.onboarding');
     });
+    const handoff = window.history.state as Record<string, unknown>;
+    expect(handoff.clientKey).toBeUndefined();
+    expect(JSON.stringify(handoff)).not.toContain('aurora_ingest_');
     expect(handlerControls.createProjectRequests).toBeGreaterThanOrEqual(1);
   });
 

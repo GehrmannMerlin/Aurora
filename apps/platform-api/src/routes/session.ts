@@ -56,11 +56,18 @@ export async function handleGetSession(
         cooldownMs: deps.config.emailResendCooldownMs,
         rollingWindowMs: deps.config.emailResendRollingWindowMs,
       });
-      if (resendState.lastAcceptedAt !== null) {
-        resendAvailableAt = new Date(
-          Date.parse(resendState.lastAcceptedAt) + deps.config.emailResendCooldownMs,
-        ).toISOString();
-      }
+      const cooldownAvailableAt =
+        resendState.lastAcceptedAt === null
+          ? null
+          : Date.parse(resendState.lastAcceptedAt) + deps.config.emailResendCooldownMs;
+      const quotaAvailableAt =
+        resendState.resendCount < deps.config.emailResendMaxPerWindow ||
+        resendState.oldestResendAt === null
+          ? null
+          : Date.parse(resendState.oldestResendAt) + deps.config.emailResendRollingWindowMs;
+      const effectiveAvailableAt = Math.max(cooldownAvailableAt ?? 0, quotaAvailableAt ?? 0);
+      if (effectiveAvailableAt > 0)
+        resendAvailableAt = new Date(effectiveAvailableAt).toISOString();
     }
   } catch (error) {
     const mapped = mapErrorToProblem(requestId, error);

@@ -196,6 +196,27 @@ describe('VerifyEmailView', () => {
     expect(screen.getByTestId('resend-button').textContent).toContain('60 秒');
   });
 
+  it('keeps resend disabled after refresh while the rolling quota is exhausted', async () => {
+    const serverTime = new Date();
+    handlerControls.sessionAuthenticated = true;
+    mockServer.use(
+      http.get('/api/platform/v1/session', () =>
+        HttpResponse.json({
+          ...pendingSession,
+          emailVerification: {
+            serverTime: serverTime.toISOString(),
+            resendAvailableAt: new Date(serverTime.getTime() + 3_600_000).toISOString(),
+          },
+        } as JsonBodyType),
+      ),
+    );
+    await renderVerifyEmail();
+    await waitFor(() => {
+      expect(screen.getByTestId<HTMLButtonElement>('resend-button').disabled).toBe(true);
+    });
+    expect(screen.getByTestId('resend-button').textContent).toContain('3600 秒');
+  });
+
   it('renders the registration cooldown using an absolute server-time countdown', async () => {
     useAuthStore().setRegistration(REGISTRATION);
     handlerControls.sessionAuthenticated = true;
