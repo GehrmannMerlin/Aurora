@@ -1,62 +1,96 @@
----
+<!--
 title: Aurora 仓库入口
 status: approved
 owner: documentation
-last-reviewed: 2026-07-30
-applies-to: Aurora 仓库文档、未来代码模块与贡献入口
-related:
-  - AGENTS.md
-  - AURORA_RULES.md
-  - docs/README.md
-  - docs/architecture/system-overview.md
-  - docs/architecture/formalization-readiness.md
-  - docs/adr/README.md
+last-reviewed: 2026-08-15
+applies-to: Aurora 用户、部署者与贡献者
+related: CHANGELOG.md, docs/README.md, docs/architecture/system-overview.md
 supersedes: none
-review-cycle: milestone-or-release
----
+-->
 
 # Aurora
 
-Aurora 是面向前端应用的监控 SDK 与管理平台。第一版业务范围和设计已经形成批准基线，ADR-001—ADR-009 已完成正式审批（ADR-009 于 2026-08-01 批准数据接入公开传输与客户端上报密钥语义）；首个私有 Monorepo 根 Workspace 与最小本地工程工具模块已实施，`@aurora/event-schema` 协议基础第一增量（版本化公共信封、运行时边界校验、稳定错误和共享契约样本）及其错误事件协议契约第一增量（JavaScript 运行时错误、未处理 Promise 拒绝和资源加载错误正文、错误信封解析器与错误契约样本）、请求事件协议契约第一增量（请求方法/结果常量、安全请求正文、请求信封解析器与请求契约样本）、性能事件协议契约第一增量（PRD 5.1.9 批准的 LCP/INP/CLS/页面加载耗时指标）与数据接入批次/接收结果协议第一增量（批次请求正文、请求级/逐事件接收结果、稳定状态枚举与稳定错误码）已实施为第二个真实内部包，`@aurora/core` SDK Core 生命周期与插件编排基础第一增量（环境无关 Core、显式生命周期、最小配置、插件注册与顺序编排、异常隔离、事件入口和多实例隔离）已实施为第三个真实内部包，`@aurora/browser` 浏览器环境能力与页面生命周期基础第一增量（安全环境与能力探测、脱敏页面快照、`visibilitychange`/`pagehide`/`pageshow` 生命周期订阅、幂等释放、异常隔离和多实例隔离）、错误源订阅能力第一增量、请求观测能力第一增量（安全 fetch/XHR 观测、请求事实投影、共享代理 + 引用计数与宿主恢复）与性能事实观测能力第一增量（原生 `PerformanceObserver` 观测 PRD 5.1.9 批准的四项页面性能事实、冻结最小只读投影、页面隐藏收尾）已实施为第四个真实内部包，`@aurora/plugin-error` 浏览器错误采集插件第一增量（JavaScript、未处理 Promise 拒绝和资源加载错误采集，经 event-schema 校验后以最小草稿提交 Core）已实施为第五个真实内部包和首个具体采集插件，`@aurora/plugin-request` 浏览器请求采集插件第一增量（fetch 与 XMLHttpRequest 请求事实采集，经 event-schema 请求正文解析器校验后以最小草稿提交 Core）已实施为第六个真实内部包和第二个具体采集插件，`@aurora/plugin-performance` 浏览器性能采集插件第一增量（LCP/INP/CLS/页面加载耗时性能事实采集，经 event-schema 性能正文解析器校验后以最小草稿提交 Core）已实施为第七个真实内部包和第三个具体采集插件，数据接入 OpenAPI 机器契约第一增量（`POST /v1/batches`、`ClientIngestionKey` security scheme、完整 HTTP 状态映射）已实施为第八个真实内部包 `@aurora/ingestion-openapi-contract` 的漂移门禁。
+> See what broke. Understand why. Fix with evidence.
 
-真实 SDK 包现包括 `@aurora/core`、`@aurora/browser`、`@aurora/plugin-error`、`@aurora/plugin-request` 与 `@aurora/plugin-performance`：Browser 的浏览器环境能力、页面生命周期基础、错误源订阅能力、请求观测能力第一增量（安全 fetch/XHR 观测、请求事实投影、共享代理 + 引用计数与宿主恢复）与性能事实观测能力第一增量（原生 PerformanceObserver 观测 PRD 5.1.9 批准的四项页面性能事实）已经实现，错误插件通过公开错误源、错误正文解析器和 Core 草稿入口组合采集三类错误，请求插件通过公开请求源、请求正文解析器和 Core 草稿入口组合采集 fetch 与 XMLHttpRequest 请求事实，性能插件通过公开性能源、性能正文解析器和 Core 草稿入口组合采集四项性能事实；`@aurora/event-schema` 已具备公共信封、版本、运行时边界校验、共享契约样本、错误事件协议契约第一增量、请求事件协议契约第一增量、性能事件协议契约第一增量与数据接入批次/接收结果协议第一增量（批次请求正文、请求级/逐事件接收结果、稳定状态枚举与稳定错误码），但通用资源、行为事件正文仍不存在；行为采集插件与框架适配仍不存在。数据接入 OpenAPI 机器契约第一增量已实施（`docs/api/ingestion.openapi.yaml` OpenAPI 3.1 + `tooling/ingestion-openapi-contract` 漂移门禁，`POST /v1/batches` + `ClientIngestionKey`）。仓库目前有 `@aurora/workspace-policy`、`@aurora/event-schema`（协议基础加错误、请求、性能事件契约与批次/接收结果协议第一增量）、`@aurora/core` 基础增量、`@aurora/browser` 基础增量（浏览器环境、生命周期、错误源、请求观测与性能观测）、`@aurora/plugin-error` 错误插件第一增量、`@aurora/plugin-request` 请求插件第一增量、`@aurora/plugin-performance` 性能插件第一增量与 `@aurora/ingestion-openapi-contract` 契约漂移 tooling 八个真实内部包；`@aurora/sdk` 可靠发送链（SDK-15/16）已实施：有界内存队列（默认 256）、批次构造、eventId 去重、error-first 优先级、重试分类（PRD §6.3）、有界退避、交付链（enqueue→batch→transport→receipt 逐事件处理、flush/best-effort、宿主安全、有界诊断）；没有行为采集插件、框架适配、浏览器持久化离线队列、错误去重、分组、指纹、Source Map、采样算法外推、SDK 发布、服务端、管理平台代码、Inbox 数据模型、机器 Platform OpenAPI、可执行数据模型、CI 工作流、IaC、云资源或部署。文档中的模块名、Query、Command、路径和技术方向不得被描述为已有实现。
+Aurora 是面向前端应用的可自托管可观测平台。它通过 TypeScript SDK 捕获错误、请求与 Web 性能事实，并在管理控制台中把分散信号组织成可调查、可协作、可追溯的证据。
 
-## 阅读入口
+[在线体验](https://aurora.ah.cn/) · [项目文档](docs/README.md) · [更新日志](CHANGELOG.md)
 
-- Agent 固定入口：[AGENTS.md](AGENTS.md) 与 [AURORA_RULES.md](AURORA_RULES.md)；
-- 正式文档及权威映射：[docs/README.md](docs/README.md)；
-- 第一版范围：[核心业务 PRD](Auroa-PRD-业务逻辑汇总-v2.1-核心业务定稿版.md)；
-- 系统边界：[系统架构与模块边界](docs/architecture/system-overview.md)；
-- ADR 状态：[ADR 索引](docs/adr/README.md)；
-- 正式化与阻塞：[实施就绪追踪](docs/architecture/formalization-readiness.md)。
+## 为什么选择 Aurora
 
-## 本地工程命令
+前端故障往往散落在浏览器错误、失败请求、性能指标和发布记录之间。Aurora 将采集、可靠接收、异步处理、问题聚合与团队处置连接为一条完整链路，让团队从“哪里坏了”继续追到“为什么发生”和“下一步做什么”。
 
-首次设置：
+## 核心能力
+
+| 能力       | 说明                                                                                      |
+| ---------- | ----------------------------------------------------------------------------------------- |
+| 错误追踪   | 捕获 JavaScript 运行时错误、未处理 Promise 拒绝与资源加载错误，聚合为可处理的 Issue。     |
+| 请求监控   | 观测 `fetch` 与 `XMLHttpRequest` 的安全请求事实，识别失败和慢请求，不采集请求体或响应体。 |
+| Web 性能   | 采集 LCP、INP、CLS 与页面加载耗时，提供可查询的聚合指标和有界诊断样本。                   |
+| 调查与响应 | 关联发布与 Source Map，支持 Issue 生命周期、告警、站内通知和审计轨迹。                    |
+| 团队治理   | 提供账号、组织、项目、成员权限、客户端密钥、资源策略与数据状态管理。                      |
+| 自托管部署 | 通过 provider-neutral Docker Compose 运行 Console、API、Worker、PostgreSQL 与 Redis。     |
+
+## 从源码开始
+
+环境要求：Node.js `24.18.x`、pnpm `11.17.0`。
 
 ```bash
 corepack enable pnpm
 pnpm install --frozen-lockfile
+pnpm build
 ```
 
-质量命令（全部非交互、跨平台）：
+Aurora 当前提供单主机 Docker Compose 部署路径。部署拓扑、TLS、备份和回滚说明见[单主机部署文档](docs/operations/public-preview-single-host-deployment.md)。公开 API 契约位于 [`docs/api`](docs/api/)。
 
-| 命令                    | 职责                                                                                                                          |
-| ----------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
-| `pnpm format:check`     | 检查受管文件的格式                                                                                                            |
-| `pnpm lint`             | ESLint 类型化规则                                                                                                             |
-| `pnpm typecheck`        | 严格 TypeScript 编译检查                                                                                                      |
-| `pnpm test`             | 运行全部包测试                                                                                                                |
-| `pnpm test:coverage`    | 运行 `@aurora/event-schema`、`@aurora/core`、`@aurora/browser`、`@aurora/plugin-error` 与 `@aurora/plugin-request` 覆盖率门禁 |
-| `pnpm check:boundaries` | 执行 Workspace 依赖边界检查                                                                                                   |
-| `pnpm build`            | 构建内部包                                                                                                                    |
-| `pnpm check`            | 依次执行格式、Lint、类型、测试、边界和构建                                                                                    |
-| `pnpm check:ci`         | 复用 `check` 的非交互语义，供未来 CI 调用                                                                                     |
+> SDK 公共包的发布工程已经就绪，但正式 npm 发布凭据尚未配置；在可验证的包版本发布前，README 不提供 npm 安装命令。
 
-当前没有 CI 工作流，`check:ci` 只是未来 CI 复用的本地非交互入口。
+## 工作原理
 
-包级执行使用 `pnpm --filter <package-name> <script>`。
+```mermaid
+flowchart LR
+  App["浏览器应用"] --> SDK["Aurora TypeScript SDK"]
+  SDK --> Ingestion["Ingestion API"]
+  Ingestion --> Inbox[("PostgreSQL Inbox")]
+  Inbox --> Worker["Ingestion Worker"]
+  Worker --> Store[("Processing Store")]
+  Store --> Platform["Platform API"]
+  Platform --> Console["Aurora Console"]
+```
 
-## 当前门禁
+接入 API 在事务提交后才确认可靠接收；Worker 通过租约、fencing、重试预算和死信机制异步处理事件。Console 只通过公开 Platform API 读取和修改业务状态，不直连存储。
 
-ADR-001 与 ADR-006 为 `accepted / in-progress`，ADR-007 为 `accepted / implemented`，ADR-005 现为 `accepted / in-progress`（信封基础、错误事件契约、请求事件契约与性能事件契约第一增量已实施），ADR-003 现为 `accepted / in-progress`（Core 基础第一增量、Browser 浏览器环境能力与页面生命周期基础第一增量、错误源订阅能力第一增量、请求观测能力第一增量、性能事实观测能力第一增量、浏览器错误采集插件第一增量、浏览器请求采集插件第一增量及浏览器性能采集插件第一增量已实施，其他具体插件与传输仍未实现），ADR-002、ADR-004 仍为 `accepted / not-started`。真实内部包为 `@aurora/workspace-policy`、`@aurora/event-schema`（协议基础加错误、请求与性能事件契约第一增量）、`@aurora/core`（仅 Core 基础增量）、`@aurora/browser`（浏览器环境、生命周期、错误源、请求观测与性能观测基础增量）、`@aurora/plugin-error`（错误采集插件第一增量）、`@aurora/plugin-request`（请求采集插件第一增量）与 `@aurora/plugin-performance`（性能采集插件第一增量）。行为采集插件、机器契约、其余业务模块、运行角色、IaC 和云资源仍缺失并继续阻塞各自下游模块。
+## 当前 Preview
+
+- 全面采用 `Calm Observability` 控制台界面，围绕“状态 → 证据 → 行动”组织调查流程；
+- 接入阿里云 DirectMail 邮箱验证投递，并为历史未验证账号提供受限重发；
+- 修复部署后的首次引导、邮箱重发冷却与额度状态保持问题。
+
+完整增量与 Bug 修复记录见 [CHANGELOG.md](CHANGELOG.md)。正式版本发布后，本节只保留最新版本摘要。
+
+## 隐私与部署边界
+
+Aurora 默认不采集请求体、响应体、Cookie、Authorization、表单内容、密码或验证码、完整 DOM、完整页面文本、完整 IP 或设备指纹。隐私过滤发生在事件进入发送链之前，服务端存储继续使用受协议约束的安全投影。
+
+当前公开实例运行在 provider-neutral 单主机架构上，定位为 MVP / early-production：可部署、可回滚、可备份，但不宣称 Multi-AZ、自动故障转移或跨区域灾备。
+
+## 文档
+
+- [正式文档索引](docs/README.md)
+- [系统架构与模块边界](docs/architecture/system-overview.md)
+- [SDK 可靠发送链](docs/sdk/sdk-reliable-delivery-chain.md)
+- [数据接入 OpenAPI](docs/api/ingestion.openapi.yaml)
+- [管理平台 OpenAPI](docs/api/platform-openapi-v1.yaml)
+- [部署、Migration 与回滚](docs/releases/release-migration-and-rollback.md)
+- [架构决策记录](docs/adr/README.md)
+
+## 开发
+
+```bash
+pnpm format:check
+pnpm typecheck
+pnpm test
+pnpm check
+```
+
+包级任务使用 `pnpm --filter <package-name> <script>`。仓库规则与 Agent 入口见 [AGENTS.md](AGENTS.md) 和 [AURORA_RULES.md](AURORA_RULES.md)。

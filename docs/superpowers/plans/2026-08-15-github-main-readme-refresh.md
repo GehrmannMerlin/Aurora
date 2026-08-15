@@ -199,6 +199,9 @@ Expected: Prettier reports both files matched; `git diff --check` exits 0; the d
 **Files:**
 - Modify: `docs/superpowers/specs/2026-08-15-github-main-readme-refresh-design.md`
 - Modify: `docs/superpowers/plans/2026-08-15-github-main-readme-refresh.md`
+- Modify: `packages/platform-email/test/documentation.test.ts`
+- Modify: `tooling/workspace-policy/test/documentation-contract.test.ts`
+- Modify: `packages/browser/test/documentation-contract.test.ts`
 - Test: repository-wide documented quality commands
 
 **Interfaces:**
@@ -246,7 +249,7 @@ git diff --cached --stat
 git commit -m "docs(repo): refresh Aurora project homepage"
 ```
 
-Expected: the commit contains exactly README, CHANGELOG, the license-wording correction in the approved design, and this implementation plan.
+Expected: the commit contains exactly README, CHANGELOG, this updated implementation plan, and the three stale documentation-contract corrections proven by red→green targeted tests: the email Runbook deployment status, the obsolete “no CI” root-README assertion, and the Browser implementation-ledger assertion that no longer belongs on the project homepage. The approved design's license-wording correction already exists in the preceding plan checkpoint commit.
 
 ### Task 3: Fast-Forward GitHub Main and Update About Metadata
 

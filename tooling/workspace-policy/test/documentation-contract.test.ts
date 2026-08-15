@@ -6,11 +6,11 @@ async function rootFile(path: string): Promise<string> {
 }
 
 describe('Monorepo foundation documentation contract', () => {
-  it('documents real commands without claiming CI or business modules exist', async () => {
+  it('documents real workspace commands without stale implementation claims', async () => {
     const readme = await rootFile('README.md');
     expect(readme).toContain('pnpm install --frozen-lockfile');
-    expect(readme).toContain('pnpm check:ci');
-    expect(readme).toContain('当前没有 CI 工作流');
+    expect(readme).toContain('pnpm check');
+    expect(readme).not.toContain('当前没有 CI 工作流');
     expect(readme).not.toContain(
       '仓库目前没有 SDK、服务端或管理平台代码，没有机器 OpenAPI、事件 Schema、可执行数据模型、CI、IaC、云资源或部署。',
     );

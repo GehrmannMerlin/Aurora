@@ -35,7 +35,6 @@ describe('Browser documentation contract', () => {
 
   it('records Browser as implemented without overstating plugins or the whole SDK', async () => {
     for (const path of [
-      'README.md',
       'docs/architecture/system-overview.md',
       'docs/architecture/sdk-architecture.md',
       'docs/architecture/formalization-readiness.md',

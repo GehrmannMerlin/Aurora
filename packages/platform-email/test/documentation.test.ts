@@ -33,7 +33,7 @@ describe('platform email operator documentation', () => {
       '停止 platform-worker',
       'verified',
       'consumed',
-      'implemented-in-feature-branch / deployment-blocked',
+      'deployed / complete',
     ]) {
       expect(runbook).toContain(required);
     }
