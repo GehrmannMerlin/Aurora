@@ -26,6 +26,27 @@ describe('identityGetSession', () => {
     ).toBe(false);
   });
 
+  it('accepts authoritative resend timing for a pending verification session', () => {
+    expect(
+      identityGetSessionResponse.zod.safeParse({
+        account: {
+          accountId: 'acct_1',
+          email: 'a@b.c',
+          emailMasked: 'a***@b.c',
+          verified: false,
+        },
+        authentication: 'pending_verification',
+        session: { expiresAt: '2026-08-08T01:00:00.000Z' },
+        emailVerification: {
+          serverTime: '2026-08-08T00:00:30.000Z',
+          resendAvailableAt: '2026-08-08T00:01:00.000Z',
+        },
+        csrf: 'tok',
+        navigation: [],
+      }).success,
+    ).toBe(true);
+  });
+
   it('rejects a leaked session id or password field', () => {
     expect(
       identityGetSessionResponse.zod.safeParse({

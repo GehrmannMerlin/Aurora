@@ -17,10 +17,16 @@ const sessionInfo = obj({
   rotationDueAt: optional(utcTimestamp),
 });
 
+const emailVerificationTiming = obj({
+  serverTime: utcTimestamp,
+  resendAvailableAt: optional(utcTimestamp),
+});
+
 export const identityGetSessionResponse = obj({
   account: accountSummary,
   authentication: enum_(['pending_verification', 'authenticated', 'restricted']),
   session: sessionInfo,
+  emailVerification: optional(emailVerificationTiming),
   csrf: str(1, 256),
   navigation: navigationTargets,
 });

@@ -103,6 +103,10 @@ describe('Session Context consumer', () => {
           },
           authentication: 'pending_verification',
           session: { expiresAt: '2026-08-15T01:00:00.000Z' },
+          emailVerification: {
+            serverTime: '2026-08-14T00:00:30.000Z',
+            resendAvailableAt: '2026-08-14T00:01:00.000Z',
+          },
           csrf: 'csrf_history_test',
           navigation: [],
         } as JsonBodyType);
@@ -117,6 +121,10 @@ describe('Session Context consumer', () => {
       verified: false,
     });
     expect(store.csrf).toBe('csrf_history_test');
+    expect(store.emailVerification).toEqual({
+      serverTime: '2026-08-14T00:00:30.000Z',
+      resendAvailableAt: '2026-08-14T00:01:00.000Z',
+    });
   });
 
   it('does not resurrect cleared session state when reset() runs during an in-flight restore', async () => {

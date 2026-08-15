@@ -1,5 +1,9 @@
 import type { FastifyReply, FastifyRequest } from 'fastify';
-import { getAccountById, type AccountRow } from '@aurora/platform-identity';
+import {
+  getAccountById,
+  getEmailVerificationResendState,
+  type AccountRow,
+} from '@aurora/platform-identity';
 import { OPERATION_ID_SESSION } from '@aurora/platform-contract';
 import { serializeOutput, type OperationDef } from '@aurora/platform-contract/server';
 import { operationById } from '../operations.js';
@@ -40,9 +44,24 @@ export async function handleGetSession(
   }
 
   const session = request.sessionPayload;
+  const now = deps.now();
   let account: AccountRow | null;
+  let resendAvailableAt: string | undefined;
   try {
     account = await getAccountById(deps.pool, session.accountId);
+    if (account?.verifiedAt === null) {
+      const resendState = await getEmailVerificationResendState(deps.pool, {
+        accountId: account.accountId,
+        now,
+        cooldownMs: deps.config.emailResendCooldownMs,
+        rollingWindowMs: deps.config.emailResendRollingWindowMs,
+      });
+      if (resendState.lastAcceptedAt !== null) {
+        resendAvailableAt = new Date(
+          Date.parse(resendState.lastAcceptedAt) + deps.config.emailResendCooldownMs,
+        ).toISOString();
+      }
+    }
   } catch (error) {
     const mapped = mapErrorToProblem(requestId, error);
     await reply.code(mapped.status).send(mapped.problem);
@@ -77,6 +96,14 @@ export async function handleGetSession(
       expiresAt: session.expiresAt,
       ...(session.rotationDueAt === null ? {} : { rotationDueAt: session.rotationDueAt }),
     },
+    ...(account.verifiedAt === null
+      ? {
+          emailVerification: {
+            serverTime: now.toISOString(),
+            ...(resendAvailableAt === undefined ? {} : { resendAvailableAt }),
+          },
+        }
+      : {}),
     csrf: session.csrfSecret,
     navigation: buildNavigationTargets(account),
   };

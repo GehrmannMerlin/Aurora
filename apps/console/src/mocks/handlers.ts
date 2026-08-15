@@ -29,6 +29,7 @@ export interface MockScope {
 const MOCK_SCOPE_STORAGE_KEY = '__aurora_mock_scope';
 const MOCK_SESSION_STORAGE_KEY = '__aurora_mock_session_authenticated';
 const MOCK_SESSION_VERIFIED_STORAGE_KEY = '__aurora_mock_session_verified';
+const MOCK_EMAIL_RESEND_AVAILABLE_AT_STORAGE_KEY = '__aurora_mock_email_resend_available_at';
 const MOCK_DELETION_PREFLIGHT_STORAGE_KEY = '__aurora_mock_deletion_preflight';
 
 function readStoredScope(): MockScope {
@@ -70,6 +71,14 @@ function readStoredSessionVerified(): boolean {
     // storage may be unavailable; default to a verified account
   }
   return true;
+}
+
+function readStoredEmailResendAvailableAt(): string | null {
+  try {
+    return sessionStorage.getItem(MOCK_EMAIL_RESEND_AVAILABLE_AT_STORAGE_KEY);
+  } catch {
+    return null;
+  }
 }
 
 function readStoredDeletionPreflight(): 'ready' | 'blocked' {
@@ -988,6 +997,14 @@ function persistSessionVerified(value: boolean): void {
   }
 }
 
+function persistEmailResendAvailableAt(value: string): void {
+  try {
+    sessionStorage.setItem(MOCK_EMAIL_RESEND_AVAILABLE_AT_STORAGE_KEY, value);
+  } catch {
+    // storage unavailable; the next Session projection simply reports ready
+  }
+}
+
 function persistDeletionPreflight(status: 'ready' | 'blocked'): void {
   handlerControls.deletionPreflightStatus = status;
   try {
@@ -1104,6 +1121,14 @@ export function createPlatformHandlers() {
         (handlerControls.sessionVerified
           ? validSessionSamples[0]
           : {
+              ...(readStoredEmailResendAvailableAt() === null
+                ? {}
+                : {
+                    emailVerification: {
+                      serverTime: new Date().toISOString(),
+                      resendAvailableAt: readStoredEmailResendAvailableAt(),
+                    },
+                  }),
               account: {
                 accountId: 'acct_test_1',
                 email: 'user@example.invalid',
@@ -1131,6 +1156,7 @@ export function createPlatformHandlers() {
       handlerControls.registerRequests += 1;
       persistSessionAuthenticated(true);
       persistSessionVerified(false);
+      persistEmailResendAvailableAt(new Date(Date.now() + 60_000).toISOString());
       await maybeDelay();
       return HttpResponse.json(validRegisterSamples[0] as JsonBodyType, { status: 200 });
     }),
@@ -1158,6 +1184,7 @@ export function createPlatformHandlers() {
     }),
     http.post('/api/platform/v1/auth/email/resend', async () => {
       handlerControls.resendEmailVerificationRequests += 1;
+      persistEmailResendAvailableAt(new Date(Date.now() + 60_000).toISOString());
       await maybeDelay();
       return HttpResponse.json(validResendEmailVerificationResponseSamples[0] as JsonBodyType, {
         status: 200,
@@ -1222,8 +1249,6 @@ export function createPlatformHandlers() {
         {
           projectId: 'prj_created_1',
           clientKeyPublicIdentifier: 'ck_pub_test_12345',
-          clientKey:
-            'aurora_ingest_AAAAAAAAAAAAAAAAAAAAAA_BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB',
           defaultEnvironment: 'production',
           onboardingStatus: 'not_started',
           navigationTargets: [],

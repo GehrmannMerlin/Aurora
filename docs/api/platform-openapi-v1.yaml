@@ -3048,6 +3048,14 @@ components:
           additionalProperties: false
           required:
             - expiresAt
+        emailVerification:
+          type: object
+          properties:
+            serverTime: *a7
+            resendAvailableAt: *a7
+          additionalProperties: false
+          required:
+            - serverTime
         csrf:
           type: string
           minLength: 1
@@ -3654,10 +3662,6 @@ components:
           type: string
           minLength: 11
           maxLength: 128
-        clientKey:
-          type: string
-          minLength: 32
-          maxLength: 256
         defaultEnvironment:
           type: string
           minLength: 1

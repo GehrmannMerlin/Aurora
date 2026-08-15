@@ -61,7 +61,9 @@ test('B5 usage page shows the authoritative usage projection', async ({ page }) 
   await expect(new AxeBuilder({ page }).analyze()).resolves.toHaveProperty('violations', []);
 });
 
-test('B2 create-project form enters onboarding with the one-time client key', async ({ page }) => {
+test('B2 create-project form keeps client-key plaintext out of the browser response', async ({
+  page,
+}) => {
   await page.goto(`${requiredServer().origin}/`);
   await expect(page.getByRole('navigation', { name: '全局导航' })).toBeVisible();
   await setSessionAuthenticated(page, true);
@@ -73,9 +75,12 @@ test('B2 create-project form enters onboarding with the one-time client key', as
   await page.getByTestId('project-website-input').fill('https://example.com');
   await page.getByTestId('create-project-submit').click();
 
-  await expect(page).toHaveURL(/\/projects\/prj_created_1\/onboarding$/);
-  await expect(page.getByTestId('project-onboarding-view')).toBeVisible();
-  await expect(page.getByTestId('onboarding-init-code')).toContainText('aurora_ingest_');
+  await expect(page.getByTestId('create-success')).toBeVisible();
+  await expect(page.getByTestId('client-key-public-identifier')).toHaveText('ck_pub_test_12345');
+  await expect(page.locator('body')).not.toContainText('aurora_ingest_');
+  await page.getByTestId('enter-project-button').click();
+  await expect(page).toHaveURL(/\/projects\/prj_created_1\/overview$/);
+  await expect(page.getByTestId('project-overview-view')).toBeVisible();
   await expect(new AxeBuilder({ page }).analyze()).resolves.toHaveProperty('violations', []);
 });
 

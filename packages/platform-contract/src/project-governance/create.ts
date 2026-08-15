@@ -9,9 +9,8 @@ export const organizationCreateProjectPathParams = obj({
   organizationId: OrganizationId,
 });
 
-// B2 atomic project creation. The browser-safe ingestion key is generated
-// server-side, stored only as a digest, and delivered once in the first
-// successful response so the user can complete SDK onboarding.
+// B2 atomic project creation. The client key is generated server-side and only its PUBLIC
+// identifier is returned — the key secret is never exposed through this contract.
 export const organizationCreateProjectRequest = obj({
   name: str(2, 50),
   frameworkType: enum_(['javascript', 'react', 'vue', 'other']),
@@ -22,7 +21,6 @@ export const organizationCreateProjectRequest = obj({
 export const organizationCreateProjectResponse = obj({
   projectId: ProjectId,
   clientKeyPublicIdentifier: str(11, 128),
-  clientKey: optional(str(32, 256)),
   defaultEnvironment: str(1, 32),
   onboardingStatus: enum_(['not_started', 'in_progress', 'completed']),
   navigationTargets,

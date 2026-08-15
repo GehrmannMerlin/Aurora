@@ -61,6 +61,14 @@ test('register → verify → login → logout full walk with real Vue component
   await page.reload();
   await expect(page.getByText('us**@example.invalid')).toBeVisible();
   const resendButton = page.getByTestId('resend-button');
+  await expect(resendButton).toBeDisabled();
+  await page.evaluate(() => {
+    window.sessionStorage.setItem(
+      '__aurora_mock_email_resend_available_at',
+      new Date(0).toISOString(),
+    );
+  });
+  await page.reload();
   await expect(resendButton).toBeEnabled();
   await resendButton.focus();
   await page.keyboard.press('Enter');

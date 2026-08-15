@@ -52,12 +52,6 @@ describeDb('production worker composition (real PostgreSQL 17)', () => {
     await pool.query('DELETE FROM performance_metric_event_applications');
     await pool.query('DELETE FROM performance_metric_buckets');
     await pool.query('DELETE FROM performance_event_samples');
-    await pool.query('DELETE FROM project_onboarding');
-    await pool.query(
-      `INSERT INTO project_onboarding (project_id, status, current_step)
-       VALUES ($1, 'not_started', 0)`,
-      [projectA],
-    );
     await clearEventInbox(pool);
   });
 
@@ -69,7 +63,6 @@ describeDb('production worker composition (real PostgreSQL 17)', () => {
     await pool.query('DELETE FROM performance_metric_event_applications').catch(() => undefined);
     await pool.query('DELETE FROM performance_metric_buckets').catch(() => undefined);
     await pool.query('DELETE FROM performance_event_samples').catch(() => undefined);
-    await pool.query('DELETE FROM project_onboarding').catch(() => undefined);
     await clearEventInbox(pool).catch(() => undefined);
     await pool.end();
   });
@@ -179,12 +172,6 @@ describeDb('production worker composition (real PostgreSQL 17)', () => {
     );
     expect(rows).toHaveLength(1);
     expect(rows[0]?.error_category).toBe('javascript');
-    const onboarding = await queryRow<{ status: string; current_step: number }>(
-      pool,
-      'SELECT status, current_step FROM project_onboarding WHERE project_id = $1',
-      [projectA],
-    );
-    expect(onboarding).toEqual({ status: 'completed', current_step: 3 });
   });
 
   it('processes a request event end-to-end into request_metric_buckets', async () => {

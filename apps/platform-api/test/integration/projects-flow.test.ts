@@ -24,7 +24,6 @@ const FIXED_NOW = new Date('2026-08-09T00:00:00.000Z');
 interface CreateProjectBody {
   projectId?: string;
   clientKeyPublicIdentifier?: string;
-  clientKey?: string;
   defaultEnvironment?: string;
   onboardingStatus?: string;
   navigationTargets?: readonly { routeId: string }[];
@@ -34,6 +33,10 @@ interface ProblemBody {
   code?: string;
   detail?: string;
 }
+
+/** A base64url/hex run of 40+ chars: only a secret (43), digest (64) or public
+ * identifier would reach this length — UUIDs (36) and route ids never do. */
+const SECRET_LIKE = /[A-Za-z0-9_-]{40,}/;
 
 describeDb('B2 create-project flow (real PostgreSQL 17 + in-memory session authority)', () => {
   let pool: Pool;
@@ -117,7 +120,7 @@ describeDb('B2 create-project flow (real PostgreSQL 17 + in-memory session autho
     return { status: response.statusCode, body: response.json() };
   }
 
-  it('owner creates project + environment + real ingestion key + onboarding atomically', async () => {
+  it('owner creates a project atomically: project + env + client key + onboarding, no secret returned', async () => {
     const app = buildApp();
     const owner = await registerActor(app, `owner-${randomUUID()}@example.com`);
 
@@ -134,13 +137,12 @@ describeDb('B2 create-project flow (real PostgreSQL 17 + in-memory session autho
     expect(created.defaultEnvironment).toBe('production');
     expect(created.onboardingStatus).toBe('not_started');
     expect(created.clientKeyPublicIdentifier).toMatch(/^aurora_key_/);
-    expect(created.clientKey).toMatch(/^aurora_ingest_/);
     expect(
       created.navigationTargets?.some((t) => t.routeId === 'organization.project-create'),
     ).toBe(true);
 
-    // The complete browser-safe ingestion key is delivered once, but its raw
-    // value and database digest are never persisted together or echoed elsewhere.
+    // The client-key secret is never returned: the response must not contain any
+    // secret-like base64url token beyond the public identifier itself.
     const raw = JSON.stringify(created);
     const digestColumns = await pool.query<{ key_digest: string }>(
       'SELECT key_digest FROM client_keys WHERE project_id = $1',
@@ -150,6 +152,7 @@ describeDb('B2 create-project flow (real PostgreSQL 17 + in-memory session autho
     const digest = digestColumns.rows[0]?.key_digest;
     expect(digest).toMatch(/^[0-9a-f]{64}$/);
     expect(raw).not.toContain(digest ?? '');
+    expect(SECRET_LIKE.exec(raw) ?? []).toEqual([]);
 
     // DB rows: project + default production env + client key + onboarding.
     const project = await pool.query<{ name: string; framework_type: string; status: string }>(
@@ -174,13 +177,6 @@ describeDb('B2 create-project flow (real PostgreSQL 17 + in-memory session autho
     );
     expect(key.rows[0]?.public_identifier).toBe(created.clientKeyPublicIdentifier);
     expect(key.rows[0]?.enabled).toBe(true);
-
-    const ingestionKey = await pool.query<{ key_id: string; status: string }>(
-      'SELECT key_id, status FROM ingestion_client_credentials WHERE project_id = $1',
-      [created.projectId],
-    );
-    expect(ingestionKey.rows).toHaveLength(1);
-    expect(ingestionKey.rows[0]?.status).toBe('active');
 
     const onboarding = await pool.query<{ status: string; current_step: number }>(
       'SELECT status, current_step FROM project_onboarding WHERE project_id = $1',
@@ -280,8 +276,6 @@ describeDb('B2 create-project flow (real PostgreSQL 17 + in-memory session autho
     const secondBody = second.body as CreateProjectBody;
     expect(secondBody.projectId).toBe(firstBody.projectId);
     expect(secondBody.clientKeyPublicIdentifier).toBe(firstBody.clientKeyPublicIdentifier);
-    expect(firstBody.clientKey).toMatch(/^aurora_ingest_/);
-    expect(secondBody.clientKey).toBe('secret-not-recoverable-000000000000');
 
     const count = await pool.query<{ n: string }>(
       'SELECT count(*)::text AS n FROM projects WHERE organization_id = $1',

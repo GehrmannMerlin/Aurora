@@ -127,6 +127,10 @@ describe('VerifyEmailView', () => {
     },
     authentication: 'pending_verification',
     session: { expiresAt: '2026-08-15T01:00:00.000Z' },
+    emailVerification: {
+      serverTime: '2026-08-14T00:01:00.000Z',
+      resendAvailableAt: '2026-08-14T00:01:00.000Z',
+    },
     csrf: 'csrf_history_test',
     navigation: [],
   };
@@ -168,9 +172,44 @@ describe('VerifyEmailView', () => {
     expect(screen.getByTestId<HTMLButtonElement>('resend-button').disabled).toBe(false);
   });
 
+  it('restores the authoritative cooldown from Session without registration memory', async () => {
+    const serverTime = new Date();
+    const resendAvailableAt = new Date(serverTime.getTime() + 60_000);
+    handlerControls.sessionAuthenticated = true;
+    mockServer.use(
+      http.get('/api/platform/v1/session', () =>
+        HttpResponse.json({
+          ...pendingSession,
+          emailVerification: {
+            serverTime: serverTime.toISOString(),
+            resendAvailableAt: resendAvailableAt.toISOString(),
+          },
+        } as JsonBodyType),
+      ),
+    );
+    await renderVerifyEmail();
+    expect(await screen.findByText('h***@tests.invalid')).toBeTruthy();
+    expect(useAuthStore().registration).toBeNull();
+    await waitFor(() => {
+      expect(screen.getByTestId<HTMLButtonElement>('resend-button').disabled).toBe(true);
+    });
+    expect(screen.getByTestId('resend-button').textContent).toContain('60 秒');
+  });
+
   it('renders the registration cooldown using an absolute server-time countdown', async () => {
-    usePendingSession();
     useAuthStore().setRegistration(REGISTRATION);
+    handlerControls.sessionAuthenticated = true;
+    mockServer.use(
+      http.get('/api/platform/v1/session', () =>
+        HttpResponse.json({
+          ...pendingSession,
+          emailVerification: {
+            serverTime: REGISTRATION.serverTime,
+            resendAvailableAt: REGISTRATION.resendAvailableAt,
+          },
+        } as JsonBodyType),
+      ),
+    );
     await renderVerifyEmail();
     expect(await screen.findByText('h***@tests.invalid')).toBeTruthy();
     expect(screen.getByTestId('verify-status').textContent).toContain('等待邮箱验证');

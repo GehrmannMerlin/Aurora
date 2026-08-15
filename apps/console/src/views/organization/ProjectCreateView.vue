@@ -21,7 +21,6 @@ type FrameworkType = (typeof FRAMEWORK_TYPES)[number];
 interface CreateProjectResult {
   readonly projectId: string;
   readonly clientKeyPublicIdentifier: string;
-  readonly clientKey: string;
   readonly defaultEnvironment: string;
 }
 
@@ -41,6 +40,7 @@ const frameworkType = ref<FrameworkType>('javascript');
 const websiteUrl = ref('');
 const creating = ref(false);
 const createError = ref<string | null>(null);
+const createResult = ref<CreateProjectResult | null>(null);
 
 // ---- UX-only owner/admin gate (the server re-checks authoritatively). ----
 // The create-page contract exposes no allowedActions of its own, so the page
@@ -113,9 +113,9 @@ function describeCreateError(caught: unknown): string {
   return describeRequestError(caught);
 }
 
-function onboardingHref(projectId: string): string {
+function projectHref(projectId: string): string {
   const result = resolveRouteTarget({
-    routeId: 'project.onboarding',
+    routeId: 'project.overview',
     pathParams: { organizationId: organizationId.value ?? '', projectId },
     query: {},
   });
@@ -143,19 +143,17 @@ async function onCreateProject(): Promise<void> {
     );
     navigation.clear();
     await navigation.load();
+    createResult.value = data;
     creating.value = false;
-    await router.push({
-      path: onboardingHref(data.projectId),
-      state: {
-        clientKey: data.clientKey,
-        frameworkType: frameworkType.value,
-        environment: data.defaultEnvironment,
-      },
-    });
   } catch (caught) {
     creating.value = false;
     createError.value = describeCreateError(caught);
   }
+}
+
+function onEnterProject(): void {
+  if (createResult.value === null) return;
+  void router.push(projectHref(createResult.value.projectId));
 }
 </script>
 
@@ -179,7 +177,27 @@ async function onCreateProject(): Promise<void> {
     />
 
     <template v-else>
-      <form class="au-create-form" novalidate @submit.prevent="onCreateProject">
+      <AppSection
+        v-if="createResult !== null"
+        title="项目已创建"
+        description="项目和默认生产环境已经就绪。"
+        test-id="create-success"
+      >
+        <div class="au-create-success">
+          <AppStatusBadge tone="success">创建成功</AppStatusBadge>
+          <p class="au-success-text">
+            客户端密钥公钥标识：<code data-testid="client-key-public-identifier">{{
+              createResult.clientKeyPublicIdentifier
+            }}</code>
+          </p>
+          <p class="au-success-text">默认环境：{{ createResult.defaultEnvironment }}</p>
+          <AppButton variant="primary" data-testid="enter-project-button" @click="onEnterProject">
+            进入项目
+          </AppButton>
+        </div>
+      </AppSection>
+
+      <form v-else class="au-create-form" novalidate @submit.prevent="onCreateProject">
         <AppSection
           title="基本信息"
           description="名称用于在组织内识别项目。"
@@ -283,5 +301,15 @@ async function onCreateProject(): Promise<void> {
   margin: 0;
   color: var(--color-status-danger);
   font-size: 13px;
+}
+.au-create-success {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-3);
+}
+.au-success-text {
+  margin: 0;
+  color: var(--color-text-secondary);
 }
 </style>

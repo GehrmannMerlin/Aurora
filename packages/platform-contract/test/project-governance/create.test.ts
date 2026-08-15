@@ -8,7 +8,6 @@ import {
 const validResponse = {
   projectId: 'prj_123',
   clientKeyPublicIdentifier: 'aurora_key_abcdefgh',
-  clientKey: 'aurora_ingest_AAAAAAAAAAAAAAAAAAAAAA_BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB',
   defaultEnvironment: 'production',
   onboardingStatus: 'not_started',
   navigationTargets: [],
@@ -74,7 +73,7 @@ describe('organizationCreateProject contract', () => {
     expect(organizationCreateProjectResponse.zod.safeParse(validResponse).success).toBe(true);
   });
 
-  it('rejects an undeclared second secret field', () => {
+  it('rejects a response leaking the client-key plaintext', () => {
     expect(
       organizationCreateProjectResponse.zod.safeParse({
         ...validResponse,

@@ -19,6 +19,7 @@ interface SessionResponse {
   account: AccountSummary;
   authentication: 'pending_verification' | 'authenticated' | 'restricted';
   session: { expiresAt: string };
+  emailVerification?: { serverTime: string; resendAvailableAt?: string };
   csrf: string;
   navigation: readonly unknown[];
 }
@@ -37,6 +38,7 @@ export const useSessionStore = defineStore('session', () => {
   const account = ref<AccountSummary | null>(null);
   const expiresAt = ref<string | null>(null);
   const csrf = ref<string | null>(null);
+  const emailVerification = ref<SessionResponse['emailVerification'] | null>(null);
   const error = ref<string | null>(null);
 
   async function restore(options: { readonly force?: boolean } = {}): Promise<void> {
@@ -56,6 +58,7 @@ export const useSessionStore = defineStore('session', () => {
       account.value = data.account;
       expiresAt.value = data.session.expiresAt;
       csrf.value = data.csrf;
+      emailVerification.value = data.emailVerification ?? null;
       status.value = 'authenticated';
     } catch (caught) {
       if (startedEpoch !== epoch) return; // do not overwrite a post-reset state
@@ -76,6 +79,7 @@ export const useSessionStore = defineStore('session', () => {
     account.value = null;
     expiresAt.value = null;
     csrf.value = null;
+    emailVerification.value = null;
     error.value = null;
   }
 
@@ -90,9 +94,20 @@ export const useSessionStore = defineStore('session', () => {
     account.value = data.account;
     expiresAt.value = data.session.expiresAt;
     csrf.value = data.csrf;
+    emailVerification.value = data.emailVerification ?? null;
     status.value = 'authenticated';
     error.value = null;
   }
 
-  return { status, account, expiresAt, csrf, error, restore, reset, applyAuthenticated };
+  return {
+    status,
+    account,
+    expiresAt,
+    csrf,
+    emailVerification,
+    error,
+    restore,
+    reset,
+    applyAuthenticated,
+  };
 });

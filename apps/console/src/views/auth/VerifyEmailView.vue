@@ -33,7 +33,7 @@ type ActionResult =
 const authStore = useAuthStore();
 const sessionStore = useSessionStore();
 const { registration } = storeToRefs(authStore);
-const { status: sessionStatus, account, csrf } = storeToRefs(sessionStore);
+const { status: sessionStatus, account, csrf, emailVerification } = storeToRefs(sessionStore);
 
 const now = ref(new Date());
 const inFlight = ref(false);
@@ -142,6 +142,14 @@ onMounted(async () => {
     now.value = new Date();
   }, 1000);
   await sessionStore.restore({ force: true });
+  const sessionTiming = emailVerification.value;
+  if (sessionTiming !== null && sessionTiming !== undefined) {
+    const serverTime = sessionTiming.serverTime;
+    applyServerCooldown({
+      serverTime,
+      resendAvailableAt: sessionTiming.resendAvailableAt ?? serverTime,
+    });
+  }
 });
 
 onBeforeUnmount(() => {

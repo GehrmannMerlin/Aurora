@@ -105,8 +105,16 @@ describeDb('email verification resend flow (real PostgreSQL 17 + Redis)', () => 
       headers: { cookie: `aurora_session=${cookie}` },
     });
     expect(session.statusCode).toBe(200);
-    const sessionBody: { csrf: string; account: { emailMasked: string } } = session.json();
+    const sessionBody: {
+      csrf: string;
+      account: { emailMasked: string };
+      emailVerification: { serverTime: string; resendAvailableAt: string };
+    } = session.json();
     expect(sessionBody.account.emailMasked).toBe(body.emailMasked);
+    expect(sessionBody.emailVerification).toEqual({
+      serverTime: currentNow.toISOString(),
+      resendAvailableAt: new Date(currentNow.getTime() + 60_000).toISOString(),
+    });
     return {
       accountId: body.accountId,
       cookie,
