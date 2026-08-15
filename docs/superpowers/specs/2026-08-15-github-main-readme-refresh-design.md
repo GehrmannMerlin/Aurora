@@ -121,7 +121,7 @@ README 不包含：
 
 GitHub 仓库 About 更新为：
 
-- **Description**：`面向前端应用的开源可观测平台：错误、请求与性能监控，配套 TypeScript SDK 与自托管控制台。`
+- **Description**：`面向前端应用的可自托管可观测平台：错误、请求与性能监控，配套 TypeScript SDK 与管理控制台。`
 - **Website**：`https://aurora.ah.cn/`
 - **Topics**：`observability`、`monitoring`、`error-tracking`、`performance-monitoring`、`typescript`、`javascript`、`vue`、`react`、`self-hosted`、`web-vitals`。
 
