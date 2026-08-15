@@ -27,7 +27,7 @@ beforeEach(async () => {
   useNavigationStore(pinia).clear();
   await useSessionStore(pinia).restore();
   await useNavigationStore(pinia).load();
-  await router.push('/');
+  await router.push('/organizations/org_test_1/projects/prj_test_1/overview');
   await router.isReady();
 });
 afterEach(() => {
@@ -41,7 +41,7 @@ afterAll(() => {
 describe('responsive shell + keyboard foundation', () => {
   it('renders every shell nav entry as a keyboard-reachable link', async () => {
     render(App, { global: { plugins: [pinia, router], stubs: { Drawer: DrawerStub } } });
-    await screen.findByRole('navigation', { name: '侧栏导航' });
+    await screen.findByRole('navigation', { name: '项目导航' });
     await screen.findByRole('link', { name: '接入' });
     for (const label of ['接入', '概览', '问题', '请求', '数据状态', '发布', '告警', '访问']) {
       const link = screen.getByRole('link', { name: label });
@@ -49,21 +49,27 @@ describe('responsive shell + keyboard foundation', () => {
     }
   });
 
-  it('integrates organization and project switchers into top-level menu buttons', async () => {
+  it('integrates organization and project switchers into the context sidebar', async () => {
     render(App, { global: { plugins: [pinia, router], stubs: { Drawer: DrawerStub } } });
-    await screen.findByRole('navigation', { name: '侧栏导航' });
+    const contextSidebar = await screen.findByRole('navigation', { name: '项目导航' });
     expect(screen.queryByRole('combobox')).toBeNull();
     expect(screen.getByRole('button', { name: '组织：Acme' })).toBeTruthy();
     expect(screen.getByRole('button', { name: '项目：Web' })).toBeTruthy();
+    expect(contextSidebar.contains(screen.getByRole('button', { name: '组织：Acme' }))).toBe(true);
   });
 
-  it('opens the narrow-screen drawer with the same sidebar entries', async () => {
+  it('opens the narrow-screen drawer with expanded global and contextual navigation', async () => {
     render(App, { global: { plugins: [pinia, router], stubs: { Drawer: DrawerStub } } });
-    await screen.findByRole('navigation', { name: '侧栏导航' });
+    await screen.findByRole('navigation', { name: '项目导航' });
     const trigger = screen.getByRole('button', { name: '导航' });
     await fireEvent.click(trigger);
     expect(screen.getByTestId('drawer')).toBeTruthy();
-    // the drawer reuses the same LayeredSidebar, so the same amber entry order appears
+    expect(screen.getAllByRole('navigation', { name: '全局导航' }).length).toBeGreaterThanOrEqual(
+      2,
+    );
+    expect(screen.getAllByRole('navigation', { name: '项目导航' }).length).toBeGreaterThanOrEqual(
+      2,
+    );
     expect(screen.getAllByRole('link', { name: '概览' }).length).toBeGreaterThanOrEqual(1);
   });
 });

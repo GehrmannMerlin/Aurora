@@ -246,7 +246,11 @@ function backHref(): string {
         规则详情契约未返回触发持续时间/冷却/最小样本等字段，保存将以当前表单值为准。
       </p>
 
-      <form class="mon-form" data-testid="alert-rule-form" @submit.prevent="submit">
+      <form
+        class="mon-form alert-rule-form-grid"
+        data-testid="alert-rule-form"
+        @submit.prevent="submit"
+      >
         <label class="mon-field">
           指标
           <select :value="draft.metric" data-testid="alert-rule-metric" @change="onMetricSelect">
@@ -274,144 +278,154 @@ function backHref(): string {
             <template v-if="selectedCapability?.isRatio"> · 需要最小样本数</template>
           </p>
 
-          <label class="mon-field">
-            统计窗口
-            <select
-              :value="draft.windowMinutes"
-              data-testid="alert-rule-window"
-              @change="
-                patchDraft({ windowMinutes: Number(($event.target as HTMLSelectElement).value) })
-              "
-            >
-              <option v-for="window in capability.windowsMinutes" :key="window" :value="window">
-                最近 {{ window }} 分钟
-              </option>
-            </select>
-            <span v-if="fieldErrors.windowMinutes" class="mon-error">{{
-              fieldErrors.windowMinutes
-            }}</span>
-          </label>
-
-          <label class="mon-field">
-            触发阈值
-            <input
-              type="number"
-              min="0"
-              :value="draft.triggerThreshold"
-              data-testid="alert-rule-trigger-threshold"
-              @change="
-                patchDraft({ triggerThreshold: Number(($event.target as HTMLInputElement).value) })
-              "
-            />
-          </label>
-
-          <label class="mon-field">
-            触发持续时间
-            <select
-              :value="draft.triggerDurationMinutes"
-              data-testid="alert-rule-trigger-duration"
-              @change="
-                patchDraft({
-                  triggerDurationMinutes: Number(($event.target as HTMLSelectElement).value),
-                })
-              "
-            >
-              <option
-                v-for="duration in capability.triggerDurationsMinutes"
-                :key="duration"
-                :value="duration"
+          <div class="alert-rule-group" data-testid="alert-rule-threshold-group">
+            <label class="mon-field">
+              统计窗口
+              <select
+                :value="draft.windowMinutes"
+                data-testid="alert-rule-window"
+                @change="
+                  patchDraft({ windowMinutes: Number(($event.target as HTMLSelectElement).value) })
+                "
               >
-                {{ duration === 0 ? '立即' : `${duration} 分钟` }}
-              </option>
-            </select>
-            <span v-if="fieldErrors.triggerDurationMinutes" class="mon-error">{{
-              fieldErrors.triggerDurationMinutes
-            }}</span>
-          </label>
+                <option v-for="window in capability.windowsMinutes" :key="window" :value="window">
+                  最近 {{ window }} 分钟
+                </option>
+              </select>
+              <span v-if="fieldErrors.windowMinutes" class="mon-error">{{
+                fieldErrors.windowMinutes
+              }}</span>
+            </label>
 
-          <label class="mon-field">
-            恢复阈值
-            <input
-              type="number"
-              min="0"
-              :value="draft.recoveryThreshold"
-              data-testid="alert-rule-recovery-threshold"
-              @change="
-                patchDraft({ recoveryThreshold: Number(($event.target as HTMLInputElement).value) })
-              "
-            />
-          </label>
+            <label class="mon-field">
+              触发阈值
+              <input
+                type="number"
+                min="0"
+                :value="draft.triggerThreshold"
+                data-testid="alert-rule-trigger-threshold"
+                @change="
+                  patchDraft({
+                    triggerThreshold: Number(($event.target as HTMLInputElement).value),
+                  })
+                "
+              />
+            </label>
+          </div>
 
-          <label v-if="selectedCapability?.isRatio" class="mon-field">
-            最小样本数
-            <input
-              type="number"
-              min="1"
-              :value="draft.minSampleCount ?? ''"
-              data-testid="alert-rule-min-sample"
-              @change="
-                patchDraft({ minSampleCount: Number(($event.target as HTMLInputElement).value) })
-              "
-            />
-            <span v-if="fieldErrors.minSampleCount" class="mon-error">{{
-              fieldErrors.minSampleCount
-            }}</span>
-          </label>
-
-          <label class="mon-field">
-            冷却时间
-            <select
-              :value="draft.cooldownMinutes"
-              data-testid="alert-rule-cooldown"
-              @change="
-                patchDraft({ cooldownMinutes: Number(($event.target as HTMLSelectElement).value) })
-              "
-            >
-              <option
-                v-for="cooldown in capability.cooldownsMinutes"
-                :key="cooldown"
-                :value="cooldown"
+          <div class="alert-rule-group" data-testid="alert-rule-delivery-group">
+            <label class="mon-field">
+              触发持续时间
+              <select
+                :value="draft.triggerDurationMinutes"
+                data-testid="alert-rule-trigger-duration"
+                @change="
+                  patchDraft({
+                    triggerDurationMinutes: Number(($event.target as HTMLSelectElement).value),
+                  })
+                "
               >
-                {{ cooldown }} 分钟
-              </option>
-            </select>
-            <span v-if="fieldErrors.cooldownMinutes" class="mon-error">{{
-              fieldErrors.cooldownMinutes
-            }}</span>
-          </label>
+                <option
+                  v-for="duration in capability.triggerDurationsMinutes"
+                  :key="duration"
+                  :value="duration"
+                >
+                  {{ duration === 0 ? '立即' : `${duration} 分钟` }}
+                </option>
+              </select>
+              <span v-if="fieldErrors.triggerDurationMinutes" class="mon-error">{{
+                fieldErrors.triggerDurationMinutes
+              }}</span>
+            </label>
 
-          <label class="mon-field">
-            规则名称（可选）
-            <input
-              type="text"
-              :value="draft.name ?? ''"
-              data-testid="alert-rule-name"
-              @change="onNameInput"
-            />
-          </label>
+            <label class="mon-field">
+              恢复阈值
+              <input
+                type="number"
+                min="0"
+                :value="draft.recoveryThreshold"
+                data-testid="alert-rule-recovery-threshold"
+                @change="
+                  patchDraft({
+                    recoveryThreshold: Number(($event.target as HTMLInputElement).value),
+                  })
+                "
+              />
+            </label>
 
-          <fieldset class="mon-field">
-            <legend>接收成员（至少一个）</legend>
-            <div v-if="capability.recipients.length > 0" class="mon-recipients">
-              <label
-                v-for="recipient in capability.recipients"
-                :key="recipient.accountId"
-                class="mon-check"
+            <label v-if="selectedCapability?.isRatio" class="mon-field">
+              最小样本数
+              <input
+                type="number"
+                min="1"
+                :value="draft.minSampleCount ?? ''"
+                data-testid="alert-rule-min-sample"
+                @change="
+                  patchDraft({ minSampleCount: Number(($event.target as HTMLInputElement).value) })
+                "
+              />
+              <span v-if="fieldErrors.minSampleCount" class="mon-error">{{
+                fieldErrors.minSampleCount
+              }}</span>
+            </label>
+
+            <label class="mon-field">
+              冷却时间
+              <select
+                :value="draft.cooldownMinutes"
+                data-testid="alert-rule-cooldown"
+                @change="
+                  patchDraft({
+                    cooldownMinutes: Number(($event.target as HTMLSelectElement).value),
+                  })
+                "
               >
-                <input
-                  type="checkbox"
-                  :checked="draft.recipientAccountIds.includes(recipient.accountId)"
-                  :data-testid="`recipient-${recipient.accountId}`"
-                  @change="onRecipientToggle(recipient.accountId, $event)"
-                />
-                {{ recipient.maskedEmail }}
-              </label>
-            </div>
-            <p v-else class="mon-hint">没有可选的接收成员。</p>
-            <span v-if="fieldErrors.recipientAccountIds" class="mon-error">{{
-              fieldErrors.recipientAccountIds
-            }}</span>
-          </fieldset>
+                <option
+                  v-for="cooldown in capability.cooldownsMinutes"
+                  :key="cooldown"
+                  :value="cooldown"
+                >
+                  {{ cooldown }} 分钟
+                </option>
+              </select>
+              <span v-if="fieldErrors.cooldownMinutes" class="mon-error">{{
+                fieldErrors.cooldownMinutes
+              }}</span>
+            </label>
+
+            <label class="mon-field">
+              规则名称（可选）
+              <input
+                type="text"
+                :value="draft.name ?? ''"
+                data-testid="alert-rule-name"
+                @change="onNameInput"
+              />
+            </label>
+
+            <fieldset class="mon-field">
+              <legend>接收成员（至少一个）</legend>
+              <div v-if="capability.recipients.length > 0" class="mon-recipients">
+                <label
+                  v-for="recipient in capability.recipients"
+                  :key="recipient.accountId"
+                  class="mon-check"
+                >
+                  <input
+                    type="checkbox"
+                    :checked="draft.recipientAccountIds.includes(recipient.accountId)"
+                    :data-testid="`recipient-${recipient.accountId}`"
+                    @change="onRecipientToggle(recipient.accountId, $event)"
+                  />
+                  {{ recipient.maskedEmail }}
+                </label>
+              </div>
+              <p v-else class="mon-hint">没有可选的接收成员。</p>
+              <span v-if="fieldErrors.recipientAccountIds" class="mon-error">{{
+                fieldErrors.recipientAccountIds
+              }}</span>
+            </fieldset>
+          </div>
 
           <p class="mon-hint" data-testid="alert-rule-filter-note">
             筛选维度当前无事件侧数据源（服务端返回 unavailable），本版规则作用于项目全部事件。
@@ -470,6 +484,19 @@ function backHref(): string {
   gap: var(--space-3);
   max-width: 52ch;
 }
+.alert-rule-form-grid {
+  max-width: 72ch;
+}
+.alert-rule-group {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-3);
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--color-border-default);
+}
+.alert-rule-group > :first-child:last-child {
+  grid-column: 1 / -1;
+}
 .mon-field {
   display: inline-flex;
   flex-direction: column;
@@ -482,7 +509,7 @@ function backHref(): string {
   min-height: var(--control-height);
   padding: 0 var(--space-2);
   border: 1px solid var(--color-border-default);
-  border-radius: var(--radius-base);
+  border-radius: var(--radius-control);
   background-color: var(--color-surface-bg);
   color: var(--color-text-primary);
   font: inherit;
@@ -512,7 +539,7 @@ function backHref(): string {
 }
 .mon-confirm {
   border: 1px solid var(--color-status-warning);
-  border-radius: var(--radius-base);
+  border-radius: var(--radius-control);
   padding: var(--space-3);
   margin: 0;
 }
@@ -537,7 +564,7 @@ function backHref(): string {
   min-height: var(--control-height);
   padding: 0 var(--space-3);
   border: 1px solid var(--color-border-default);
-  border-radius: var(--radius-base);
+  border-radius: var(--radius-control);
   background-color: var(--color-surface-bg);
   color: var(--color-text-primary);
   cursor: pointer;
@@ -550,5 +577,10 @@ function backHref(): string {
 .au-button:disabled {
   opacity: 0.6;
   cursor: default;
+}
+@media (max-width: 640px) {
+  .alert-rule-group {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }
 </style>

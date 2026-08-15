@@ -66,6 +66,16 @@ describe('AccountSecurityView deletion danger zone', () => {
     expect(await screen.findByTestId('delete-account-button')).toBeTruthy();
   });
 
+  it('uses an account work area with separate password, session and danger sections', async () => {
+    await renderSecurity();
+
+    expect(screen.getByRole('heading', { name: '账号安全' })).toBeTruthy();
+    expect(screen.getByTestId('account-security-password-section')).toBeTruthy();
+    expect(screen.getByTestId('account-security-session-section')).toBeTruthy();
+    expect(screen.getByTestId('deletion-section')).toBeTruthy();
+    expect(screen.queryByTestId('auth-card')).toBeNull();
+  });
+
   it('shows the blocking org list with a transfer link, no submit, and rechecks', async () => {
     handlerControls.deletionPreflightStatus = 'blocked';
     await renderSecurity();

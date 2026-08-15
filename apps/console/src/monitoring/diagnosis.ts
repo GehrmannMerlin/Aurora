@@ -113,3 +113,25 @@ export function actionTargetHref(target: ActionTarget): string | null {
   });
   return resolved.path ?? null;
 }
+
+/** Readable navigation copy for an already-authorized action target. */
+export function actionTargetLabel(routeId: RouteTargetId): string {
+  switch (routeId) {
+    case 'project.onboarding':
+      return '查看接入指引';
+    case 'project.overview':
+      return '查看项目概览';
+    case 'project.issues':
+      return '查看问题列表';
+    case 'project.requests':
+      return '查看请求证据';
+    case 'project.performance':
+      return '查看性能证据';
+    case 'project.data-status':
+      return '打开数据诊断';
+    case 'project.client-keys':
+      return '管理客户端密钥';
+    default:
+      return '查看获授权目标';
+  }
+}

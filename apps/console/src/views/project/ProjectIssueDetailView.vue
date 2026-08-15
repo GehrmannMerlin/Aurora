@@ -25,7 +25,9 @@ import { useSessionStore } from '../../stores/session.js';
 import { issuePriorityLabel, issueStatusLabel } from '../../monitoring/issue-workspace.js';
 import { buildIssueDetailView, type IssueDetailViewState } from './issue-detail-view-model.js';
 import AppPageHeader from '../../components/aurora/AppPageHeader.vue';
+import AppSection from '../../components/aurora/AppSection.vue';
 import AppStatusBadge from '../../components/aurora/AppStatusBadge.vue';
+import AppTechnicalDetails from '../../components/aurora/AppTechnicalDetails.vue';
 import SectionNotice from '../../components/monitoring/SectionNotice.vue';
 
 const route = useRoute();
@@ -238,8 +240,7 @@ function onBack(): void {
     </template>
 
     <template v-if="state.issue.kind === 'available'">
-      <section class="mon-block" data-testid="issue-aggregate">
-        <h2 class="mon-title">问题</h2>
+      <AppSection title="问题身份" class="mon-block" data-testid="issue-identity">
         <div class="mon-meta">
           <AppStatusBadge
             :tone="state.issue.data.status === 'open' ? 'warning' : 'neutral'"
@@ -259,17 +260,12 @@ function onBack(): void {
           <span v-if="state.issue.data.priority !== undefined"
             >优先级 {{ issuePriorityLabel(state.issue.data.priority) }}</span
           >
-          <span v-if="state.issue.data.assigneeAccountId !== undefined"
-            >负责人 {{ state.issue.data.assigneeAccountId }}</span
-          >
-          <span v-if="state.issue.data.mergedIntoIssueId !== undefined"
-            >已合并到 {{ state.issue.data.mergedIntoIssueId }}</span
-          >
+          <span v-if="state.issue.data.assigneeAccountId !== undefined">已分配负责人</span>
+          <span v-if="state.issue.data.mergedIntoIssueId !== undefined">已合并到其他问题</span>
         </div>
-      </section>
+      </AppSection>
 
-      <section class="mon-block" data-testid="issue-commands">
-        <h2 class="mon-title">处理</h2>
+      <AppSection title="处理" class="mon-block" data-testid="issue-lifecycle-actions">
         <div class="com-row">
           <button
             type="button"
@@ -361,29 +357,56 @@ function onBack(): void {
         <p v-if="actionError !== null" class="com-error" data-testid="command-error" role="alert">
           {{ actionError }}
         </p>
-      </section>
+      </AppSection>
+
+      <AppSection title="证据" class="mon-block" data-testid="issue-evidence">
+        <p class="mon-meta">
+          {{ state.issue.data.occurrenceCount }} 次发生 ·
+          {{ state.issue.data.sampleCount }} 个保留样本 · 首次
+          {{ formatUtc(state.issue.data.firstSeenAt) }} · 最近
+          {{ formatUtc(state.issue.data.lastSeenAt) }}
+        </p>
+      </AppSection>
     </template>
 
-    <section class="mon-block" data-testid="issue-samples">
-      <h2 class="mon-title">代表样本</h2>
+    <AppSection title="代表样本与堆栈" class="mon-block" data-testid="issue-samples">
       <template v-if="state.samples.kind !== 'available'">
         <SectionNotice :view="state.samples" />
       </template>
       <template v-else>
         <ul v-if="state.samples.data.length > 0" class="mon-sample-list">
           <li v-for="sample in state.samples.data" :key="sample.sampleId" class="mon-sample">
-            <span class="mon-meta"
-              >{{ sample.sampleKind }} · {{ formatUtc(sample.occurredAt) }}</span
+            <span class="mon-meta">代表样本 · {{ formatUtc(sample.occurredAt) }}</span>
+            <AppTechnicalDetails summary="样本技术详情"
+              >sampleId: {{ sample.sampleId }} sampleKind: {{ sample.sampleKind }} sampleBody:
+              {{ JSON.stringify(sample.sampleBody) }}</AppTechnicalDetails
             >
-            <pre class="mon-code"><code>{{ JSON.stringify(sample.sampleBody) }}</code></pre>
           </li>
         </ul>
         <p v-else class="mon-hint">没有保留的代表样本。</p>
       </template>
-    </section>
+    </AppSection>
 
-    <section class="mon-block" data-testid="issue-activity">
-      <h2 class="mon-title">活动与备注</h2>
+    <AppSection
+      v-if="state.issue.kind === 'available'"
+      title="技术字段"
+      class="mon-block"
+      data-testid="issue-technical-details"
+    >
+      <AppTechnicalDetails summary="技术详情"
+        >issueId: {{ state.issue.data.issueId }} fingerprintVersion:
+        {{ state.issue.data.fingerprintVersion }} version:
+        {{ state.issue.data.version }}
+        <template v-if="state.issue.data.assigneeAccountId !== undefined">
+          assigneeAccountId: {{ state.issue.data.assigneeAccountId }}
+        </template>
+        <template v-if="state.issue.data.mergedIntoIssueId !== undefined">
+          mergedIntoIssueId: {{ state.issue.data.mergedIntoIssueId }}
+        </template></AppTechnicalDetails
+      >
+    </AppSection>
+
+    <AppSection title="活动与备注" class="mon-block" data-testid="issue-activity">
       <template v-if="state.activity.kind !== 'available'">
         <SectionNotice :view="state.activity" />
       </template>
@@ -394,11 +417,13 @@ function onBack(): void {
             :key="`${entry.activityType}-${index}`"
             class="mon-tl-item"
           >
-            <span class="mon-meta"
-              >{{ entry.activityType }} · {{ formatUtc(entry.createdAt)
-              }}<template v-if="entry.actorAccountId !== undefined">
-                · {{ entry.actorAccountId }}</template
-              ></span
+            <span class="mon-meta">活动记录 · {{ formatUtc(entry.createdAt) }}</span>
+            <AppTechnicalDetails summary="活动技术详情"
+              >activityType: {{ entry.activityType }}
+              <template v-if="entry.actorAccountId !== undefined">
+                actorAccountId: {{ entry.actorAccountId }}
+              </template>
+              details: {{ JSON.stringify(entry.details) }}</AppTechnicalDetails
             >
           </div>
         </div>
@@ -406,9 +431,7 @@ function onBack(): void {
         <ul v-if="state.activity.data.notes.length > 0" class="mon-note-list">
           <li v-for="note in state.activity.data.notes" :key="note.noteId" class="mon-note">
             <div class="mon-note-head">
-              <span class="mon-meta"
-                >备注 · {{ formatUtc(note.createdAt) }} · {{ note.authorAccountId }}</span
-              >
+              <span class="mon-meta">备注 · {{ formatUtc(note.createdAt) }}</span>
               <button
                 v-if="
                   note.deletedAt === undefined &&
@@ -425,6 +448,10 @@ function onBack(): void {
             </div>
             <p v-if="note.deletedAt !== undefined" class="mon-hint">（备注已删除）</p>
             <p v-else-if="note.content !== undefined" class="mon-note-body">{{ note.content }}</p>
+            <AppTechnicalDetails summary="备注技术详情"
+              >noteId: {{ note.noteId }} authorAccountId:
+              {{ note.authorAccountId }}</AppTechnicalDetails
+            >
           </li>
         </ul>
         <div class="com-row">
@@ -445,7 +472,7 @@ function onBack(): void {
           </button>
         </div>
       </template>
-    </section>
+    </AppSection>
   </section>
 </template>
 
@@ -495,7 +522,7 @@ function onBack(): void {
 .com select,
 .mon-textarea {
   border: 1px solid var(--color-border-default);
-  border-radius: var(--radius-base);
+  border-radius: var(--radius-control);
   background-color: var(--color-surface-bg);
   color: var(--color-text-primary);
   font: inherit;
@@ -525,14 +552,14 @@ function onBack(): void {
 .mon-sample,
 .mon-note {
   border: 1px solid var(--color-border-default);
-  border-radius: var(--radius-base);
+  border-radius: var(--radius-control);
   padding: var(--space-3);
 }
 .mon-code {
   margin: var(--space-1) 0 0;
   padding: var(--space-2);
   border: 1px solid var(--color-border-default);
-  border-radius: var(--radius-base);
+  border-radius: var(--radius-control);
   overflow-x: auto;
   background-color: var(--color-surface-bg);
 }
@@ -558,7 +585,7 @@ function onBack(): void {
   min-height: var(--control-height);
   padding: 0 var(--space-3);
   border: 1px solid var(--color-border-default);
-  border-radius: var(--radius-base);
+  border-radius: var(--radius-control);
   background-color: var(--color-surface-bg);
   color: var(--color-text-primary);
   cursor: pointer;

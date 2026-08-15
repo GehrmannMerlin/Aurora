@@ -1,7 +1,7 @@
 ---
 title: Aurora 管理平台前端壳层（PLT-02）正式规格
 status: approved
-implementation-status: not-started
+implementation-status: implemented-in-feature-branch / final-verification-partial
 approval-status: approved
 owner: platform/frontend
 created: 2026-08-08
@@ -38,7 +38,7 @@ review-cycle: frontend-shell-router-or-accessibility-change
 
 本文冻结管理平台前端壳层第一增量（PLT-02）的正式规格。它把已批准前端技术栈（FE-STACK-001—004）、控制台视觉语言、总体 OpenAPI 与实现约束设计的"应用壳先行"门禁（§15.1）落实为真实 Vue 3 SPA 壳层：Session Context 消费边界、Navigation Context、RouteTarget 映射、Vue Router 注册表、分层顶栏/侧栏、内容出口、页面状态基础与真实浏览器可达性。
 
-**当前状态**：本文为用户于 2026-08-08 批准的正式规格（`status: approved`、`approval-status: approved`）。它是已批准前端技术栈（FE-STACK-001—004）、控制台视觉语言、总体 OpenAPI 与实现约束设计"应用壳先行"门禁与 accepted ADR-025/026/028 的形式化产物，不是新设计。`implementation-status` 保持 `not-started`：正式实施需 PLT-01（契约基础）独立通过、PLT-02 实施计划（writing-plans）经自检后按 SDD 执行；未创建 `apps/console` 正式代码、主题令牌、组件或进入实施前不得标记 implemented。
+**当前状态**：本文为用户于 2026-08-08 批准的正式规格（`status: approved`、`approval-status: approved`）。`apps/console` 壳层与 `Calm Observability` 迁移代码已在 feature branch 实施、未部署；Chromium 全量门禁和桌面 Chromium/Firefox/WebKit 矩阵分片已有证据。最终移动可达性矩阵与整合复验仍 partial（用户明确停止测试），因此不得描述为完整发布验证通过。
 
 **声明边界**：本文冻结的是**真实 SPA 壳层**，不是完整管理平台。G09 不实现 A1—A5 身份业务、B1—B8 组织治理、C1—C16 业务页面或 D1/D2 页面。后续模块页面只以明确 `unavailable`/`blocked`/`forbidden` 状态表示，禁止 mock 数据、伪造登录、假用户、假项目、假图表或 lorem ipsum 冒充已实现功能。
 

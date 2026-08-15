@@ -51,6 +51,36 @@ describeDb('ingestion-credentials lifecycle create (real PostgreSQL 17)', () => 
     expect(auth.status).toBe('authorized');
   });
 
+  it('composes with a caller-owned transaction without connecting or committing it', async () => {
+    const client = await pool.connect();
+    try {
+      await client.query('BEGIN');
+      const result = await createIngestionClientCredential(client, {
+        projectId: projectA,
+        origins: [ORIGIN_A],
+        environments: [ENV],
+        allowNonBrowser: true,
+        expiresAt: null,
+      });
+      expect(result.status).toBe('success');
+      if (result.status !== 'success') return;
+      const inside = await client.query<{ n: number }>(
+        'SELECT count(*)::int AS n FROM ingestion_client_credentials WHERE key_id = $1',
+        [result.metadata.keyId],
+      );
+      expect(inside.rows[0]?.n).toBe(1);
+      await client.query('ROLLBACK');
+      const outside = await pool.query<{ n: number }>(
+        'SELECT count(*)::int AS n FROM ingestion_client_credentials WHERE key_id = $1',
+        [result.metadata.keyId],
+      );
+      expect(outside.rows[0]?.n).toBe(0);
+    } finally {
+      await client.query('ROLLBACK').catch(() => undefined);
+      client.release();
+    }
+  });
+
   it('stores no raw secret or full key in the database', async () => {
     await createIngestionClientCredential(pool, {
       projectId: projectA,

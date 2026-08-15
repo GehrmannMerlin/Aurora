@@ -97,11 +97,12 @@ describe('labels', () => {
     expect(reparseStateLabel('processing')).toBe('处理中');
     expect(reparseStateLabel('completed')).toBe('已完成');
     expect(reparseStateLabel('failed')).toBe('处理失败');
-    expect(reparseStateLabel('unknown')).toBe('unknown');
+    expect(reparseStateLabel('unknown')).toBe('处理状态未知');
   });
 
   it('maps file status labels', () => {
     expect(sourceMapStatusLabel('active')).toBe('当前有效');
     expect(sourceMapStatusLabel('replaced')).toBe('已替换');
+    expect(sourceMapStatusLabel('unknown')).toBe('文件状态未知');
   });
 });

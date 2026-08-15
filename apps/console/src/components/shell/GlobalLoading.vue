@@ -10,7 +10,7 @@
   padding: var(--space-2) var(--space-4);
   background-color: var(--color-surface-bg);
   border: 1px solid var(--color-border-default);
-  border-radius: var(--radius-base);
+  border-radius: var(--radius-control);
   color: var(--color-text-primary);
   background-image: none;
 }

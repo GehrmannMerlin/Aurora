@@ -166,7 +166,7 @@ function mockDataStatus(organizationId: string, projectId: string) {
   };
 }
 
-function mockIssueList() {
+function mockIssueList(nextCursor?: string) {
   return {
     data: {
       issues: {
@@ -194,7 +194,11 @@ function mockIssueList() {
             version: 1,
           },
         ],
-        pagination: { totalCount: 2, totalCountStatus: 'available' },
+        pagination: {
+          totalCount: 2,
+          totalCountStatus: 'available',
+          ...(nextCursor === undefined ? {} : { nextCursor }),
+        },
       },
       filters: { status: 'available' },
       summary: { status: 'available' },
@@ -595,7 +599,6 @@ function mockAlertInstanceDetail(instanceId: string) {
         triggerDurationMinutes: 2,
         recoveryThreshold: 60,
         recoveryDurationMinutes: 2,
-        minSampleCount: 0,
         cooldownMinutes: 10,
       },
       evidence: {
@@ -606,7 +609,6 @@ function mockAlertInstanceDetail(instanceId: string) {
         numerator: 120,
         denominator: 1,
         sampleCount: 120,
-        minSampleRequirement: 0,
         watermarkAt: '2026-08-10T08:30:00.000Z',
         completeness: 'complete',
         appliedFilters: { environment: [], release: [], pageOrEndpoint: [], errorSeverity: [] },
@@ -1191,6 +1193,28 @@ export function createPlatformHandlers() {
       await maybeDelay();
       return HttpResponse.json(validListProjectsSamples[0] as JsonBodyType, { status: 200 });
     }),
+    http.get('/api/platform/v1/organizations/:organizationId/usage', async ({ params }) => {
+      await maybeDelay();
+      return HttpResponse.json(
+        {
+          data: {
+            organizationId: String(params.organizationId),
+            periodStart: '2026-07-13T00:00:00.000Z',
+            periodEnd: '2026-08-12T00:00:00.000Z',
+            acceptedEvents: 12,
+            processedEvents: 10,
+            quotaAcceptedEvents: 1000000,
+            ratio: 0.000012,
+            stage: 'normal',
+            note: 'usage from real processed data; performance/slow sample counts unavailable',
+          },
+          meta: { requestId: 'req_test_usage', readAt: '2026-08-12T00:00:00.000Z' },
+          allowedActions: ['read'],
+          navigationTargets: [],
+        } as JsonBodyType,
+        { status: 200 },
+      );
+    }),
     http.post('/api/platform/v1/organizations/:organizationId/projects', async () => {
       handlerControls.createProjectRequests += 1;
       await maybeDelay();
@@ -1198,6 +1222,8 @@ export function createPlatformHandlers() {
         {
           projectId: 'prj_created_1',
           clientKeyPublicIdentifier: 'ck_pub_test_12345',
+          clientKey:
+            'aurora_ingest_AAAAAAAAAAAAAAAAAAAAAA_BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB',
           defaultEnvironment: 'production',
           onboardingStatus: 'not_started',
           navigationTargets: [],
@@ -1424,10 +1450,15 @@ export function createPlatformHandlers() {
     ),
     http.get(
       '/api/platform/v1/organizations/:organizationId/projects/:projectId/issues',
-      async () => {
+      async ({ request }) => {
         handlerControls.listIssuesRequests += 1;
         await maybeDelay();
-        return HttpResponse.json(mockIssueList() as JsonBodyType, { status: 200 });
+        const search = new URL(request.url).searchParams;
+        // The filtered fixture has a second page so browser tests can exercise
+        // the public cursor protocol without altering production behavior.
+        const nextCursor =
+          search.get('status') === 'open' && search.get('cursor') === null ? 'cursor_2' : undefined;
+        return HttpResponse.json(mockIssueList(nextCursor) as JsonBodyType, { status: 200 });
       },
     ),
     http.get(

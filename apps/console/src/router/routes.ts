@@ -10,7 +10,7 @@ export const appRoutes: readonly RouteRecordRaw[] = [
       {
         path: '',
         name: 'root',
-        component: () => import('../components/pages/RootView.vue'),
+        redirect: { name: 'workspace.home' },
         meta: { label: '工作空间', routeId: 'workspace.home', scope: 'workspace' },
       },
       ...ROUTE_REGISTRY.map((entry) => {

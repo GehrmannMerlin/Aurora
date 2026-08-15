@@ -173,6 +173,9 @@ describe('VerifyEmailView', () => {
     useAuthStore().setRegistration(REGISTRATION);
     await renderVerifyEmail();
     expect(await screen.findByText('h***@tests.invalid')).toBeTruthy();
+    expect(screen.getByTestId('verify-status').textContent).toContain('等待邮箱验证');
+    expect(screen.getByText(/验证状态键: email_verification_pending/)).toBeTruthy();
+    expect(screen.getByTestId('verify-server-time').textContent).toContain('2026-08-09 01:00 UTC');
     const resend = screen.getByTestId<HTMLButtonElement>('resend-button');
     expect(resend.disabled).toBe(true);
     expect(resend.textContent).toContain('300 秒');
@@ -264,22 +267,22 @@ describe('VerifyEmailView', () => {
     handlerControls.sessionAuthenticated = true;
     await renderVerifyEmail();
     await fireEvent.click(await screen.findByTestId('resend-button'));
-    expect(await screen.findByText(/邮箱已经完成验证/)).toBeTruthy();
+    expect(await screen.findByText(/当前账号邮箱已验证/)).toBeTruthy();
     expect(sessionReads).toBe(3);
   });
 
   it('shows verified from authoritative Session state', async () => {
     handlerControls.sessionAuthenticated = true;
     await renderVerifyEmail();
-    expect(await screen.findByText(/邮箱已经完成验证/)).toBeTruthy();
+    expect(await screen.findByText(/当前账号邮箱已验证/)).toBeTruthy();
     expect(screen.queryByTestId('resend-button')).toBeNull();
   });
 
   it('shows a login recovery action when the Session expired', async () => {
     handlerControls.sessionAuthenticated = false;
     await renderVerifyEmail();
-    expect(await screen.findByText(/登录状态已失效/)).toBeTruthy();
-    expect(screen.getByRole('link', { name: '重新登录' })).toBeTruthy();
+    expect(await screen.findByText(/未找到可用的注册交接或登录会话/)).toBeTruthy();
+    expect(screen.getByRole('link', { name: '返回登录' })).toBeTruthy();
   });
 
   it('shows a retryable provider-unavailable result', async () => {
@@ -303,6 +306,25 @@ describe('VerifyEmailView', () => {
     await fireEvent.click(await screen.findByTestId('resend-button'));
     expect(await screen.findByText(/邮件服务暂时不可用/)).toBeTruthy();
     expect(screen.getByTestId<HTMLButtonElement>('resend-button').disabled).toBe(false);
+  });
+
+  it('uses the authenticated session as the recovery path when registration handoff is lost', async () => {
+    handlerControls.sessionAuthenticated = true;
+    await useSessionStore().restore();
+    await router.push('/verify-email');
+    await router.isReady();
+    render(VerifyEmailView, { global: { plugins: [pinia, router] } });
+    expect(screen.getByText(/当前账号邮箱已验证/)).toBeTruthy();
+    expect(screen.getByRole('link', { name: '继续工作空间' })).toBeTruthy();
+    expect(screen.queryByText('未找到注册信息。')).toBeNull();
+  });
+
+  it('offers login and registration when neither session nor handoff exists', async () => {
+    await router.push('/verify-email');
+    await router.isReady();
+    render(VerifyEmailView, { global: { plugins: [pinia, router] } });
+    expect(screen.getByRole('link', { name: '返回登录' })).toBeTruthy();
+    expect(screen.getByRole('link', { name: '重新注册' })).toBeTruthy();
   });
 });
 
@@ -343,6 +365,15 @@ describe('LoginView', () => {
     expect(await screen.findByTestId('auth-shell')).toBeTruthy();
     expect(screen.queryByRole('navigation')).toBeNull();
     expect(screen.getByText('把异常、请求与性能证据放回同一个调查上下文')).toBeTruthy();
+    expect(screen.getByLabelText('邮箱')).toBeTruthy();
+    expect(screen.getByLabelText('密码')).toBeTruthy();
+    await fireEvent.update(screen.getByLabelText('邮箱'), 'user@example.invalid');
+    await fireEvent.update(screen.getByLabelText('密码'), 's3cure-Passw0rd!');
+    await fireEvent.click(screen.getByRole('button', { name: '登录' }));
+
+    await waitFor(() => {
+      expect(handlerControls.loginRequests).toBe(1);
+    });
   });
 
   it('submits identityLogin, applies the session and navigates to the workspace', async () => {

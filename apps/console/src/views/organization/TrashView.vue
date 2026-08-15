@@ -13,6 +13,8 @@ import { describeRequestError } from '../../api/feedback.js';
 import { useSessionStore } from '../../stores/session.js';
 import AppButton from '../../components/aurora/AppButton.vue';
 import AppPageHeader from '../../components/aurora/AppPageHeader.vue';
+import AppSection from '../../components/aurora/AppSection.vue';
+import AppSkeleton from '../../components/aurora/AppSkeleton.vue';
 import AppStatusBadge from '../../components/aurora/AppStatusBadge.vue';
 
 type OrgRole = 'owner' | 'admin' | 'member';
@@ -211,7 +213,10 @@ function formatDate(value: string): string {
 
 <template>
   <section class="au-surface" data-testid="trash-view">
-    <AppPageHeader title="回收站" />
+    <AppPageHeader
+      title="回收站"
+      description="仅管理仍在恢复窗口内的项目，恢复命令由服务端再次校验。"
+    />
 
     <AppStatusBadge v-if="gateError !== null" tone="danger" data-testid="trash-gate-error">
       {{ gateError }}
@@ -222,21 +227,30 @@ function formatDate(value: string): string {
     </p>
 
     <template v-else-if="!gateLoading">
-      <p class="au-hint" data-testid="trash-safety-note">
-        回收站遵循平台安全规则：仅可恢复回收窗口内的项目本体；告警规则、已被吊销的令牌和已禁用的客户端密钥不会被恢复。
-      </p>
-
-      <AppStatusBadge v-if="loadError !== null" tone="danger" data-testid="trash-error">
-        {{ loadError }}
-      </AppStatusBadge>
-
-      <p v-else-if="loading" class="au-hint" role="status" data-testid="trash-loading">
-        正在加载回收站…
-      </p>
-
-      <template v-else>
-        <section class="au-section">
-          <h2 class="au-section-title">可恢复项目</h2>
+      <AppSection
+        title="可恢复项目"
+        description="仅可恢复窗口内的项目本体；告警规则、已被吊销的令牌和已禁用的客户端密钥不会被恢复。"
+        tone="danger"
+        data-testid="trash-recovery-section"
+      >
+        <template #actions>
+          <div class="au-list-toolbar" role="toolbar" aria-label="回收站操作">
+            <AppButton variant="secondary" :disabled="loading" @click="void loadTrash()"
+              >刷新回收站</AppButton
+            >
+          </div>
+        </template>
+        <p class="au-hint" data-testid="trash-safety-note">被撤销或禁用的安全凭证不会被恢复。</p>
+        <AppStatusBadge v-if="loadError !== null" tone="danger" data-testid="trash-error">{{
+          loadError
+        }}</AppStatusBadge>
+        <AppSkeleton
+          v-else-if="loading"
+          label="正在加载回收站…"
+          :lines="4"
+          data-testid="trash-loading"
+        />
+        <template v-else>
           <ul v-if="projects.length > 0" class="au-trash-list" data-testid="trash-list">
             <li
               v-for="project in projects"
@@ -263,23 +277,22 @@ function formatDate(value: string): string {
             </li>
           </ul>
           <p v-else class="au-hint">回收站为空。</p>
-        </section>
-
-        <AppStatusBadge
-          v-if="restoreInfo !== null"
-          tone="success"
-          data-testid="trash-restore-success"
-        >
-          {{ restoreInfo }}
-        </AppStatusBadge>
-        <AppStatusBadge
-          v-if="restoreError !== null"
-          tone="danger"
-          data-testid="trash-restore-error"
-        >
-          {{ restoreError }}
-        </AppStatusBadge>
-      </template>
+          <AppStatusBadge
+            v-if="restoreInfo !== null"
+            tone="success"
+            data-testid="trash-restore-success"
+          >
+            {{ restoreInfo }}
+          </AppStatusBadge>
+          <AppStatusBadge
+            v-if="restoreError !== null"
+            tone="danger"
+            data-testid="trash-restore-error"
+          >
+            {{ restoreError }}
+          </AppStatusBadge>
+        </template>
+      </AppSection>
     </template>
   </section>
 </template>
@@ -292,10 +305,9 @@ function formatDate(value: string): string {
 .au-section {
   margin-bottom: var(--space-4);
 }
-.au-section-title {
-  margin: 0 0 var(--space-3);
-  font-size: 16px;
-  color: var(--color-text-primary);
+.au-list-toolbar {
+  display: flex;
+  gap: var(--space-2);
 }
 .au-trash-list {
   list-style: none;

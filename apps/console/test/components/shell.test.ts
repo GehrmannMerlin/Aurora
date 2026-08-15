@@ -1,7 +1,7 @@
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/vue';
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import App from '../../src/App.vue';
-import TopBar from '../../src/components/shell/TopBar.vue';
+import ScopeSwitcher from '../../src/components/shell/ScopeSwitcher.vue';
 import { router } from '../../src/router';
 import { pinia } from '../../src/stores';
 import { handlerControls, setMockScope } from '../../src/mocks/handlers';
@@ -19,7 +19,7 @@ beforeEach(async () => {
   useNavigationStore(pinia).clear();
   await useSessionStore(pinia).restore();
   await useNavigationStore(pinia).load();
-  await router.push('/');
+  await router.push('/organizations/org_test_1/projects/prj_test_1/overview');
   await router.isReady();
 });
 afterEach(() => {
@@ -32,15 +32,19 @@ afterAll(() => {
 });
 
 describe('app shell', () => {
-  it('renders the top bar entries when authenticated (real session projection)', async () => {
+  it('renders layered global and project navigation for an authenticated project route', async () => {
     render(App, { global: { plugins: [pinia, router] } });
+    expect(await screen.findByRole('navigation', { name: '全局导航' })).toBeTruthy();
+    expect(screen.getByRole('navigation', { name: '项目导航' })).toBeTruthy();
+    for (const label of ['接入', '观测', '交付', '告警', '治理']) {
+      expect(screen.getByRole('heading', { name: label }), label).toBeTruthy();
+    }
     expect(await screen.findByRole('button', { name: '组织：Acme' })).toBeTruthy();
-    expect(screen.getByRole('link', { name: '工作空间' }).getAttribute('aria-current')).toBe(
+    expect(screen.getByRole('button', { name: '项目：Web' })).toBeTruthy();
+    expect(document.querySelector('.au-topbar')).toBeNull();
+    expect(screen.getByRole('button', { name: '项目：Web' }).getAttribute('aria-current')).toBe(
       'page',
     );
-    expect(
-      screen.getByRole('button', { name: '项目：Web' }).getAttribute('aria-current'),
-    ).toBeNull();
     expect(screen.getByRole('link', { name: '通知' })).toBeTruthy();
     expect(screen.getByRole('link', { name: '账号安全' })).toBeTruthy();
   });
@@ -56,6 +60,9 @@ describe('app shell', () => {
     await waitFor(() => {
       expect(router.currentRoute.value.path).toBe('/workspace');
     });
+
+    await router.push('/organizations/org_test_1/members');
+    await router.isReady();
 
     const projectTrigger = await screen.findByRole('button', { name: '项目：请选择' });
     await fireEvent.click(projectTrigger);
@@ -102,7 +109,10 @@ describe('app shell', () => {
 
   it('keeps an empty organization menu operable with an explicit explanation', async () => {
     useNavigationStore(pinia).clear();
-    render(TopBar, { global: { plugins: [pinia, router] } });
+    render(ScopeSwitcher, {
+      props: { organizationActive: false, projectActive: false },
+      global: { plugins: [pinia, router] },
+    });
 
     await fireEvent.click(screen.getByRole('button', { name: '组织：暂无组织' }));
     expect(screen.getByRole('menu', { name: '选择组织' }).textContent).toContain(
@@ -110,11 +120,41 @@ describe('app shell', () => {
     );
   });
 
-  it('renders the project sidebar entries in project scope', async () => {
+  it('does not render a context sidebar for global-only routes', async () => {
     render(App, { global: { plugins: [pinia, router] } });
-    expect(await screen.findByRole('navigation', { name: '侧栏导航' })).toBeTruthy();
-    for (const label of ['接入', '概览', '问题', '请求', '数据状态', '发布', '告警', '访问']) {
-      expect(screen.getByRole('link', { name: label }), label).toBeTruthy();
+    for (const path of ['/workspace', '/notifications', '/account/security']) {
+      await router.push(path);
+      await router.isReady();
+      expect(screen.queryByRole('navigation', { name: /(?:项目|组织)导航/ })).toBeNull();
+    }
+  });
+
+  it('uses the focused public shell without authenticated navigation on every auth route', async () => {
+    handlerControls.sessionAuthenticated = false;
+    useSessionStore(pinia).reset();
+    useNavigationStore(pinia).clear();
+    render(App, { global: { plugins: [pinia, router] } });
+
+    const publicRoutes = [
+      ['/login', '登录'],
+      ['/register', '注册'],
+      ['/forgot-password', '忘记密码'],
+      ['/reset-password', '重置密码'],
+      ['/verify-email', '邮箱验证'],
+      ['/verify-email/confirm', '确认邮箱验证'],
+      ['/invitations/accept', '接受邀请'],
+      ['/account/deletion-cancel', '撤销账号注销'],
+      ['/account/deletion-confirm', '注销账号确认'],
+    ] as const;
+
+    for (const [path, heading] of publicRoutes) {
+      await router.push(path);
+      await router.isReady();
+      expect(await screen.findByTestId('auth-shell')).toBeTruthy();
+      expect(screen.getAllByRole('heading', { level: 1, name: heading })).toHaveLength(1);
+      expect(screen.queryByRole('navigation', { name: '全局导航' })).toBeNull();
+      expect(screen.queryByRole('navigation', { name: /(?:项目|组织)导航/ })).toBeNull();
+      expect(screen.queryByRole('button', { name: /^(?:组织|项目)：/ })).toBeNull();
     }
   });
 

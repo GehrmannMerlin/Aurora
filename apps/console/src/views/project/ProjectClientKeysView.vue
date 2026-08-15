@@ -51,12 +51,16 @@ const createPhase = ref<CreateKeyPhase>({ kind: 'idle' });
 const actionBusy = ref<string | null>(null);
 const actionError = ref<string | null>(null);
 const copyState = ref<'idle' | 'copied'>('idle');
+const selectedKeyId = ref<string | null>(null);
 
 async function load(): Promise<void> {
   loading.value = true;
   error.value = null;
   try {
     data.value = await fetchClientKeys(scope);
+    if (selectedKeyId.value === null && data.value.keys.status === 'available') {
+      selectedKeyId.value = data.value.keys.data.items[0]?.keyId ?? null;
+    }
   } catch (caught) {
     error.value = describeRequestError(caught);
   } finally {
@@ -76,6 +80,15 @@ const state = computed(() =>
     create: createPhase.value,
   }),
 );
+
+const selectedKey = computed(() => {
+  if (state.value.keys.kind !== 'available') return null;
+  return (
+    state.value.keys.data.find((key) => key.keyId === selectedKeyId.value) ??
+    state.value.keys.data[0] ??
+    null
+  );
+});
 
 function describeCommandError(caught: unknown): string {
   if (caught instanceof ApiError) {
@@ -188,7 +201,7 @@ function keyTone(status: string): 'neutral' | 'success' | 'warning' | 'danger' {
     <section class="mon-block" data-testid="client-key-create">
       <h2 class="mon-title">创建上报密钥</h2>
       <template v-if="createPhase.kind === 'revealed'">
-        <div class="mon-secret" role="status" data-testid="client-key-secret">
+        <div class="mon-secret" role="status" data-testid="client-key-secret-delivery">
           <p class="mon-secret-title">密钥已创建 — 现在保存，关闭后无法再次查看。</p>
           <code class="mon-secret-value" data-testid="client-key-secret-value">{{
             createPhase.clientKey
@@ -263,57 +276,101 @@ function keyTone(status: string): 'neutral' | 'success' | 'warning' | 'danger' {
         <SectionNotice :view="state.keys" />
       </template>
       <template v-else>
-        <ul v-if="state.keys.data.length > 0" class="mon-key-list">
-          <li v-for="key in state.keys.data" :key="key.credentialId" class="mon-key-item">
-            <div class="mon-key-row">
-              <span class="mon-key-id">{{ key.keyId }}</span>
-              <AppStatusBadge :tone="keyTone(key.status)">
-                {{ clientKeyStatusLabel(key.status) }}
-              </AppStatusBadge>
-            </div>
-            <div class="mon-meta">
-              来源 {{ key.origins.length > 0 ? key.origins.join(', ') : '（未限定）' }} · 环境
-              {{ key.environments.length > 0 ? key.environments.join(', ') : '（未限定）' }}
-            </div>
-            <div class="mon-meta">
-              {{ key.allowNonBrowser ? '允许非浏览器' : '仅浏览器' }}
-              <template v-if="key.expiresAt !== undefined"> · 过期 {{ key.expiresAt }}</template>
-            </div>
+        <div v-if="state.keys.data.length > 0" class="key-workspace">
+          <div class="key-list-surface">
+            <table class="governance-table" data-testid="client-key-list-table">
+              <thead>
+                <tr>
+                  <th>密钥标识</th>
+                  <th>状态</th>
+                  <th><span class="sr-only">选择密钥</span></th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr
+                  v-for="key in state.keys.data"
+                  :key="key.credentialId"
+                  :class="{ 'is-selected': selectedKey?.keyId === key.keyId }"
+                >
+                  <td class="mon-key-id">{{ key.keyId }}</td>
+                  <td>
+                    <AppStatusBadge :tone="keyTone(key.status)">
+                      {{ clientKeyStatusLabel(key.status) }}
+                    </AppStatusBadge>
+                  </td>
+                  <td>
+                    <button
+                      type="button"
+                      class="au-button au-button--compact"
+                      :aria-pressed="selectedKey?.keyId === key.keyId"
+                      @click="selectedKeyId = key.keyId"
+                    >
+                      查看
+                    </button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <aside v-if="selectedKey !== null" class="key-detail" data-testid="client-key-detail">
+            <p class="key-detail-label">所选密钥</p>
+            <code class="mon-key-id">{{ selectedKey.keyId }}</code>
+            <dl class="key-detail-evidence">
+              <dt>来源</dt>
+              <dd>
+                {{ selectedKey.origins.length > 0 ? selectedKey.origins.join(', ') : '（未限定）' }}
+              </dd>
+              <dt>环境</dt>
+              <dd>
+                {{
+                  selectedKey.environments.length > 0
+                    ? selectedKey.environments.join(', ')
+                    : '（未限定）'
+                }}
+              </dd>
+              <dt>接入方式</dt>
+              <dd>{{ selectedKey.allowNonBrowser ? '允许非浏览器' : '仅浏览器' }}</dd>
+              <template v-if="selectedKey.expiresAt !== undefined">
+                <dt>过期</dt>
+                <dd>{{ selectedKey.expiresAt }}</dd>
+              </template>
+            </dl>
             <div class="mon-actions-row">
               <button
-                v-if="key.status === 'active'"
+                v-if="selectedKey.status === 'active'"
                 type="button"
                 class="au-button"
                 :disabled="actionBusy !== null"
-                :data-testid="`disable-key-${key.keyId}`"
-                @click="disable(key)"
+                :data-testid="`disable-key-${selectedKey.keyId}`"
+                @click="disable(selectedKey)"
               >
                 停用
               </button>
               <button
-                v-if="key.status === 'disabled'"
+                v-if="selectedKey.status === 'disabled'"
                 type="button"
                 class="au-button"
                 :disabled="actionBusy !== null"
-                :data-testid="`enable-key-${key.keyId}`"
-                @click="enable(key)"
+                :data-testid="`enable-key-${selectedKey.keyId}`"
+                @click="enable(selectedKey)"
               >
                 重新启用
               </button>
               <button
-                v-if="!isRevoked(key)"
+                v-if="!isRevoked(selectedKey)"
                 type="button"
                 class="au-button au-button--danger"
                 :disabled="actionBusy !== null"
-                :data-testid="`revoke-key-${key.keyId}`"
-                @click="revoke(key)"
+                :data-testid="`revoke-key-${selectedKey.keyId}`"
+                @click="revoke(selectedKey)"
               >
                 撤销
               </button>
-              <span v-if="isRevoked(key)" class="mon-meta">已撤销，不可恢复</span>
+              <span v-if="isRevoked(selectedKey)" class="mon-meta">已撤销，不可恢复</span>
             </div>
-          </li>
-        </ul>
+          </aside>
+        </div>
         <p v-else class="mon-hint">项目尚无客户端上报密钥。</p>
       </template>
       <p v-if="actionError !== null" class="mon-notice mon-notice--error" role="status">
@@ -357,7 +414,7 @@ function keyTone(status: string): 'neutral' | 'success' | 'warning' | 'danger' {
   min-height: var(--control-height);
   padding: 0 var(--space-2);
   border: 1px solid var(--color-border-default);
-  border-radius: var(--radius-base);
+  border-radius: var(--radius-control);
   background-color: var(--color-surface-bg);
   color: var(--color-text-primary);
   font: inherit;
@@ -371,7 +428,7 @@ function keyTone(status: string): 'neutral' | 'success' | 'warning' | 'danger' {
 }
 .mon-secret {
   border: 1px solid var(--color-status-warning);
-  border-radius: var(--radius-base);
+  border-radius: var(--radius-control);
   padding: var(--space-3);
   max-width: 64ch;
 }
@@ -382,29 +439,71 @@ function keyTone(status: string): 'neutral' | 'success' | 'warning' | 'danger' {
 .mon-secret-value {
   display: block;
   padding: var(--space-2);
-  border-radius: var(--radius-base);
+  border-radius: var(--radius-control);
   background-color: var(--color-surface-muted);
   color: var(--color-text-primary);
   word-break: break-all;
   font-size: 13px;
 }
-.mon-key-list {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-2);
+.key-workspace {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(240px, 0.8fr);
+  gap: var(--space-4);
+  align-items: start;
 }
-.mon-key-item {
+.key-list-surface,
+.key-detail {
   border: 1px solid var(--color-border-default);
-  border-radius: var(--radius-base);
+  border-radius: var(--radius-surface);
+  background-color: var(--color-surface-bg);
+}
+.key-list-surface {
+  overflow-x: auto;
+}
+.governance-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 380px;
+}
+.governance-table th,
+.governance-table td {
+  padding: var(--space-3);
+  border-bottom: 1px solid var(--color-border-default);
+  text-align: left;
+  vertical-align: middle;
+}
+.governance-table th {
+  color: var(--color-text-secondary);
+  font-size: 12px;
+  font-weight: 600;
+}
+.governance-table tbody tr:last-child td {
+  border-bottom: 0;
+}
+.governance-table tr.is-selected {
+  background-color: var(--color-context-bg);
+}
+.key-detail {
   padding: var(--space-3);
 }
-.mon-key-row {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
+.key-detail-label {
+  margin: 0 0 var(--space-1);
+  color: var(--color-text-secondary);
+  font-size: 12px;
+}
+.key-detail-evidence {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: var(--space-1) var(--space-3);
+  margin: var(--space-3) 0 0;
+}
+.key-detail-evidence dt {
+  color: var(--color-text-secondary);
+  font-size: 12px;
+}
+.key-detail-evidence dd {
+  margin: 0;
+  overflow-wrap: anywhere;
 }
 .mon-key-id {
   font-weight: 600;
@@ -422,7 +521,7 @@ function keyTone(status: string): 'neutral' | 'success' | 'warning' | 'danger' {
   min-height: var(--control-height);
   padding: 0 var(--space-3);
   border: 1px solid var(--color-border-default);
-  border-radius: var(--radius-base);
+  border-radius: var(--radius-control);
   background-color: var(--color-surface-bg);
   color: var(--color-text-primary);
   cursor: pointer;
@@ -439,6 +538,26 @@ function keyTone(status: string): 'neutral' | 'success' | 'warning' | 'danger' {
 .au-button--danger {
   border-color: var(--color-status-danger);
   color: var(--color-status-danger);
+}
+.au-button--compact {
+  min-height: var(--compact-control-height);
+  padding: 0 var(--space-2);
+}
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+@media (max-width: 760px) {
+  .key-workspace {
+    grid-template-columns: 1fr;
+  }
 }
 .mon-notice {
   margin: var(--space-2) 0 0;

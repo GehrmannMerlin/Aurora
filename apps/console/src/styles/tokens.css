@@ -1,19 +1,31 @@
 :root {
-  --color-topbar-bg: #111827;
-  --color-topbar-fg: #F8FAFC;
-  --color-sidebar-bg: #D47A16;
-  --color-sidebar-fg: #17120D;
-  --color-sidebar-active-bg: #FFF4DC;
-  --color-sidebar-active-fg: #172033;
-  --color-sidebar-active-indicator: #1D4ED8;
-  --color-page-bg: #F8FAFC;
+  --color-rail-bg: #101828;
+  --color-rail-fg: #F9FAFB;
+  --color-rail-muted: #98A2B3;
+  --color-context-bg: #F2F4F7;
+  --color-page-bg: #F7F8FA;
   --color-surface-bg: #FFFFFF;
-  --color-border-default: #CBD5E1;
-  --color-text-primary: #111827;
-  --color-text-secondary: #475569;
-  --color-action-primary: #2563EB;
-  --color-status-danger: #D92D20;
-  --color-status-success: #15803D;
+  --color-border-default: #D0D5DD;
+  --color-text-primary: #101828;
+  --color-text-secondary: #475467;
+  --color-action-primary: #3157D5;
+  --color-status-success: #067647;
+  --color-status-warning: #B54708;
+  --color-status-danger: #B42318;
+  --color-status-info: #175CD3;
+
+  --global-rail-width: 64px;
+  --context-sidebar-width: 232px;
+  --control-height: 40px;
+  --compact-control-height: 36px;
+  --radius-control: 8px;
+  --radius-surface: 12px;
+  --motion-fast: 150ms;
+  --motion-standard: 200ms;
+
+  --color-context-active-bg: #E8EEFF;
+  --color-context-active-fg: var(--color-action-primary);
+  --color-context-active-indicator: var(--color-action-primary);
 
   --space-1: 4px;
   --space-2: 8px;
@@ -22,11 +34,9 @@
   --space-5: 24px;
   --space-6: 32px;
 
-  --control-height: 40px;
   --nav-height: 44px;
-  --sidebar-width: 240px;
   --sidebar-row-height: 48px;
-  --radius-base: 6px;
 
   --font-family-base: system-ui, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  --font-family-mono: 'Cascadia Mono', 'JetBrains Mono', 'SFMono-Regular', Consolas, monospace;
 }

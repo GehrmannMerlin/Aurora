@@ -13,6 +13,7 @@ import { applyCookieSessionPlugin } from './plugins/cookie-session.js';
 import { applyCsrfPlugin } from './plugins/csrf.js';
 import { applyOriginPlugin } from './plugins/origin.js';
 import { handleGetSession } from './routes/session.js';
+import { handleGetNavigationContext } from './routes/navigation.js';
 import { handleRegister } from './routes/register.js';
 import { handleLogin } from './routes/login.js';
 import { handleLogout } from './routes/logout.js';
@@ -245,6 +246,10 @@ export function buildPlatformApi(deps: PlatformApiDependencies): FastifyInstance
 
   app.get('/api/platform/v1/session', async (request, reply) => {
     await handleGetSession(request, reply, routeContext);
+  });
+
+  app.get('/api/platform/v1/navigation/context', async (request, reply) => {
+    await handleGetNavigationContext(request, reply, routeContext);
   });
 
   app.post('/api/platform/v1/auth/register', async (request, reply) => {

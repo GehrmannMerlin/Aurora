@@ -45,21 +45,30 @@ export function endpointsSectionToPage(section: {
     readonly totalCount?: number;
     readonly totalCountStatus?: string;
   };
+  readonly data?: {
+    readonly items?: readonly RequestEndpointSummary[];
+    readonly pagination?: {
+      readonly nextCursor?: string;
+      readonly totalCount?: number;
+      readonly totalCountStatus?: string;
+    };
+  };
 }): SectionView<EndpointPage> {
   if (section.status === 'available') {
+    const payload = section.data ?? section;
     const data: {
       items: readonly RequestEndpointSummary[];
       nextCursor?: string;
       totalCount?: number;
       totalCountStatus: string;
     } = {
-      items: section.items ?? [],
-      totalCountStatus: section.pagination?.totalCountStatus ?? 'unavailable',
+      items: payload.items ?? [],
+      totalCountStatus: payload.pagination?.totalCountStatus ?? 'unavailable',
     };
-    if (section.pagination?.nextCursor !== undefined)
-      data.nextCursor = section.pagination.nextCursor;
-    if (section.pagination?.totalCount !== undefined)
-      data.totalCount = section.pagination.totalCount;
+    if (payload.pagination?.nextCursor !== undefined)
+      data.nextCursor = payload.pagination.nextCursor;
+    if (payload.pagination?.totalCount !== undefined)
+      data.totalCount = payload.pagination.totalCount;
     return { kind: 'available', data };
   }
   if (section.status === 'empty') {

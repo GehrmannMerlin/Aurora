@@ -6,7 +6,7 @@
     "module": "ESNext",
     "moduleResolution": "bundler",
     "jsx": "preserve",
-    "types": ["vite/client", "vitest/globals"],
+    "types": ["node", "vite/client", "vitest/globals"],
     "skipLibCheck": true,
     "paths": {
       "@aurora/platform-contract": ["../../packages/platform-contract/src/index.ts"],
@@ -20,6 +20,7 @@
     "src/**/*.ts",
     "src/**/*.vue",
     "test/**/*.ts",
+    "test-browser/**/*.ts",
     "vite.config.ts",
     "vitest.config.ts",
     "playwright.config.ts"

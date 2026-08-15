@@ -40,6 +40,7 @@ describe('console router', () => {
   it('resolves every child route lazy loader to a Vue component', async () => {
     const root = rootRoute();
     for (const child of root.children ?? []) {
+      if (child.name === 'root') continue;
       const loader = child.component as LazyComponent;
       const mod = await loader();
       expect(mod.default, String(child.name)).toBeDefined();

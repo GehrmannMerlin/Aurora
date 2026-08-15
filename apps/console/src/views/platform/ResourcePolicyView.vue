@@ -418,7 +418,7 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div class="resource-policy-page" data-testid="resource-policy-view">
+  <div class="resource-policy-workspace" data-testid="resource-policy-view">
     <AppPageHeader title="资源策略" />
 
     <SectionNotice v-if="state.capability !== 'ready'" :view="state.projection" />
@@ -467,16 +467,20 @@ onBeforeUnmount(() => {
             <dt>目标</dt>
             <dd>{{ targetLabel }}</dd>
             <dt>策略来源</dt>
-            <dd v-if="orgPolicy !== null">{{ policySourceLabel(orgPolicy.source) }}</dd>
-            <dd v-else-if="projectPolicy !== null">
+            <dd v-if="orgPolicy !== null" data-testid="rp-policy-source">
+              {{ policySourceLabel(orgPolicy.source) }}
+            </dd>
+            <dd v-else-if="projectPolicy !== null" data-testid="rp-policy-source">
               {{ policySourceLabel(projectPolicy.source) }}
             </dd>
             <dt>版本</dt>
             <dd v-if="orgPolicy !== null">{{ orgPolicy.version }}</dd>
             <dd v-else-if="projectPolicy !== null">{{ projectPolicy.version }}</dd>
             <dt>传播状态</dt>
-            <dd v-if="orgPolicy !== null">{{ propagationLabel(orgPolicy.propagation.status) }}</dd>
-            <dd v-else-if="projectPolicy !== null">
+            <dd v-if="orgPolicy !== null" data-testid="rp-policy-propagation">
+              {{ propagationLabel(orgPolicy.propagation.status) }}
+            </dd>
+            <dd v-else-if="projectPolicy !== null" data-testid="rp-policy-propagation">
               {{ propagationLabel(projectPolicy.propagation.status) }}
             </dd>
             <template v-if="(orgPolicy?.updatedAt ?? projectPolicy?.updatedAt) !== undefined">
@@ -485,11 +489,12 @@ onBeforeUnmount(() => {
             </template>
           </dl>
 
-          <table v-if="orgPolicy !== null" class="rp-table" data-testid="rp-fields-table">
+          <table v-if="orgPolicy !== null" class="rp-table" data-testid="rp-policy-evidence-table">
             <thead>
               <tr>
-                <th>字段</th>
-                <th>已配置</th>
+                <th>策略字段</th>
+                <th>已配置值</th>
+                <th>来源</th>
                 <th>生效值</th>
               </tr>
             </thead>
@@ -497,15 +502,22 @@ onBeforeUnmount(() => {
               <tr v-for="field in FIVE_FIELD_KEYS" :key="field.key">
                 <td>{{ field.label }}</td>
                 <td>{{ formatConfigValue(field.key, orgPolicy.configured[field.key]) }}</td>
+                <td>{{ policySourceLabel(orgPolicy.source) }}</td>
                 <td>{{ formatConfigValue(field.key, orgPolicy.effective[field.key]) }}</td>
               </tr>
             </tbody>
           </table>
 
-          <table v-else-if="projectPolicy !== null" class="rp-table" data-testid="rp-project-table">
+          <table
+            v-else-if="projectPolicy !== null"
+            class="rp-table"
+            data-testid="rp-policy-evidence-table"
+          >
             <thead>
               <tr>
-                <th>字段</th>
+                <th>策略字段</th>
+                <th>已配置值</th>
+                <th>来源</th>
                 <th>生效值</th>
               </tr>
             </thead>
@@ -519,9 +531,7 @@ onBeforeUnmount(() => {
                       : '未设置（继承）'
                   }}
                 </td>
-              </tr>
-              <tr>
-                <td>生效资源上限</td>
+                <td>{{ policySourceLabel(projectPolicy.source) }}</td>
                 <td>
                   {{
                     projectPolicy.effective.resourceLimit !== undefined
@@ -532,13 +542,21 @@ onBeforeUnmount(() => {
               </tr>
               <tr v-for="field in FIVE_FIELD_KEYS" :key="field.key">
                 <td>{{ field.label }}</td>
+                <td>未单独设置</td>
+                <td>{{ policySourceLabel(projectPolicy.source) }}</td>
                 <td>{{ formatConfigValue(field.key, projectPolicy.effective[field.key]) }}</td>
               </tr>
             </tbody>
           </table>
         </section>
 
-        <section v-if="orgPolicy !== null" class="rp-block" data-testid="rp-fields-form">
+        <section
+          v-if="orgPolicy !== null"
+          class="rp-block"
+          :data-testid="
+            target === 'default' ? 'rp-platform-default-editor' : 'rp-organization-override-editor'
+          "
+        >
           <h2 class="rp-title">{{ target === 'default' ? '平台默认策略' : '组织覆盖策略' }}</h2>
           <p class="rp-hint">
             保存将写入平台审计；降低上限、启用降级保护或改变保留期限需二次确认。
@@ -617,7 +635,11 @@ onBeforeUnmount(() => {
           </div>
         </section>
 
-        <section v-if="projectPolicy !== null" class="rp-block" data-testid="rp-project-form">
+        <section
+          v-if="projectPolicy !== null"
+          class="rp-block"
+          data-testid="rp-project-limit-editor"
+        >
           <h2 class="rp-title">项目资源上限</h2>
           <p class="rp-hint">
             设置项目专属资源上限；未设置时继承组织/平台默认。清除覆盖后回到继承状态。
@@ -668,7 +690,7 @@ onBeforeUnmount(() => {
 </template>
 
 <style scoped>
-.resource-policy-page {
+.resource-policy-workspace {
   max-width: 960px;
   margin: 0 auto;
 }
@@ -708,7 +730,7 @@ onBeforeUnmount(() => {
   min-height: var(--control-height);
   padding: 0 var(--space-2);
   border: 1px solid var(--color-border-default);
-  border-radius: var(--radius-base);
+  border-radius: var(--radius-control);
   background-color: var(--color-surface-bg);
   color: var(--color-text-primary);
   font: inherit;
@@ -767,7 +789,7 @@ onBeforeUnmount(() => {
   min-height: var(--control-height);
   padding: 0 var(--space-3);
   border: 1px solid var(--color-border-default);
-  border-radius: var(--radius-base);
+  border-radius: var(--radius-control);
   background-color: var(--color-surface-bg);
   color: var(--color-text-primary);
   cursor: pointer;

@@ -111,15 +111,20 @@ export async function handleGetUsageSummary(
   const stage = degradeForUsageRatio(ratio);
 
   const body = {
-    organizationId,
-    periodStart: startIso,
-    periodEnd: endIso,
-    acceptedEvents,
-    processedEvents,
-    quotaAcceptedEvents: quota,
-    ratio,
-    stage,
-    note: 'usage from real processed data; performance/slow sample counts unavailable',
+    data: {
+      organizationId,
+      periodStart: startIso,
+      periodEnd: endIso,
+      acceptedEvents,
+      processedEvents,
+      quotaAcceptedEvents: quota,
+      ratio,
+      stage,
+      note: 'usage from real processed data; performance/slow sample counts unavailable',
+    },
+    meta: { requestId, readAt: now.toISOString() },
+    allowedActions: ['read'],
+    navigationTargets: [],
   };
 
   const serialized = serializeOutput(GET_USAGE_SUMMARY_OPERATION, 200, body);

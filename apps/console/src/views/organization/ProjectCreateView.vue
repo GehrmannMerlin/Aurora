@@ -7,9 +7,12 @@ import { executeQuery } from '../../api/query.js';
 import { ApiError } from '../../api/errors.js';
 import { describeRequestError } from '../../api/feedback.js';
 import { resolveRouteTarget } from '../../contracts/route-registry.js';
+import { useNavigationStore } from '../../stores/navigation.js';
 import { useSessionStore } from '../../stores/session.js';
 import AppButton from '../../components/aurora/AppButton.vue';
 import AppPageHeader from '../../components/aurora/AppPageHeader.vue';
+import AppSection from '../../components/aurora/AppSection.vue';
+import AppSkeleton from '../../components/aurora/AppSkeleton.vue';
 import AppStatusBadge from '../../components/aurora/AppStatusBadge.vue';
 
 const FRAMEWORK_TYPES = ['javascript', 'react', 'vue', 'other'] as const;
@@ -18,12 +21,14 @@ type FrameworkType = (typeof FRAMEWORK_TYPES)[number];
 interface CreateProjectResult {
   readonly projectId: string;
   readonly clientKeyPublicIdentifier: string;
+  readonly clientKey: string;
   readonly defaultEnvironment: string;
 }
 
 const route = useRoute();
 const router = useRouter();
 const session = useSessionStore();
+const navigation = useNavigationStore();
 
 const organizationId = computed(() => {
   const raw = route.params.organizationId;
@@ -36,7 +41,6 @@ const frameworkType = ref<FrameworkType>('javascript');
 const websiteUrl = ref('');
 const creating = ref(false);
 const createError = ref<string | null>(null);
-const createResult = ref<CreateProjectResult | null>(null);
 
 // ---- UX-only owner/admin gate (the server re-checks authoritatively). ----
 // The create-page contract exposes no allowedActions of its own, so the page
@@ -109,9 +113,9 @@ function describeCreateError(caught: unknown): string {
   return describeRequestError(caught);
 }
 
-function projectHref(projectId: string): string {
+function onboardingHref(projectId: string): string {
   const result = resolveRouteTarget({
-    routeId: 'project.overview',
+    routeId: 'project.onboarding',
     pathParams: { organizationId: organizationId.value ?? '', projectId },
     query: {},
   });
@@ -137,24 +141,27 @@ async function onCreateProject(): Promise<void> {
       { pathParams: { organizationId: orgId }, body },
       { scope: { type: 'organization', id: orgId }, csrf: session.csrf },
     );
-    // The response carries only the PUBLIC client key identifier — never a secret.
-    createResult.value = data;
+    navigation.clear();
+    await navigation.load();
     creating.value = false;
+    await router.push({
+      path: onboardingHref(data.projectId),
+      state: {
+        clientKey: data.clientKey,
+        frameworkType: frameworkType.value,
+        environment: data.defaultEnvironment,
+      },
+    });
   } catch (caught) {
     creating.value = false;
     createError.value = describeCreateError(caught);
   }
 }
-
-function onEnterProject(): void {
-  if (createResult.value === null) return;
-  void router.push(projectHref(createResult.value.projectId));
-}
 </script>
 
 <template>
   <section class="au-surface" data-testid="project-create-view">
-    <AppPageHeader title="创建项目" />
+    <AppPageHeader title="创建项目" description="在当前组织范围内建立一个新的可观测项目。" />
 
     <AppStatusBadge v-if="gateError !== null" tone="danger" data-testid="create-gate-error">
       {{ gateError }}
@@ -164,63 +171,68 @@ function onEnterProject(): void {
       你没有权限在该组织内创建项目。
     </p>
 
-    <template v-else-if="!gateLoading">
-      <div v-if="createResult !== null" class="au-create-success" data-testid="create-success">
-        <AppStatusBadge tone="success">项目已创建</AppStatusBadge>
-        <p class="au-success-text">
-          客户端密钥（公钥标识，非密钥明文）：<code data-testid="client-key-public-identifier">{{
-            createResult.clientKeyPublicIdentifier
-          }}</code>
-        </p>
-        <p class="au-success-text">默认环境：{{ createResult.defaultEnvironment }}</p>
-        <AppButton variant="primary" data-testid="enter-project-button" @click="onEnterProject">
-          进入项目
-        </AppButton>
-      </div>
+    <AppSkeleton
+      v-else-if="gateLoading"
+      label="正在确认创建权限…"
+      :lines="3"
+      data-testid="create-gate-loading"
+    />
 
-      <form v-else class="au-create-form" novalidate @submit.prevent="onCreateProject">
-        <div class="au-field">
-          <label class="au-field__label" for="create-project-name">项目名称</label>
-          <input
-            id="create-project-name"
-            class="au-field__input"
-            type="text"
-            :value="name"
-            data-testid="project-name-input"
-            @input="name = ($event.target as HTMLInputElement).value"
-          />
-          <p v-if="nameError !== null" class="au-field-error" data-testid="name-error">
-            {{ nameError }}
-          </p>
-        </div>
+    <template v-else>
+      <form class="au-create-form" novalidate @submit.prevent="onCreateProject">
+        <AppSection
+          title="基本信息"
+          description="名称用于在组织内识别项目。"
+          test-id="project-basic-section"
+        >
+          <div class="au-field">
+            <label class="au-field__label" for="create-project-name">项目名称</label>
+            <input
+              id="create-project-name"
+              class="au-field__input"
+              type="text"
+              :value="name"
+              data-testid="project-name-input"
+              @input="name = ($event.target as HTMLInputElement).value"
+            />
+            <p v-if="nameError !== null" class="au-field-error" data-testid="name-error">
+              {{ nameError }}
+            </p>
+          </div>
+        </AppSection>
 
-        <div class="au-field">
-          <label class="au-field__label" for="create-project-framework">框架类型</label>
-          <select
-            id="create-project-framework"
-            class="au-field__input"
-            :value="frameworkType"
-            data-testid="project-framework-select"
-            @change="frameworkType = ($event.target as HTMLSelectElement).value as FrameworkType"
-          >
-            <option v-for="type in FRAMEWORK_TYPES" :key="type" :value="type">{{ type }}</option>
-          </select>
-        </div>
-
-        <div class="au-field">
-          <label class="au-field__label" for="create-project-website">网站地址（可选）</label>
-          <input
-            id="create-project-website"
-            class="au-field__input"
-            type="text"
-            :value="websiteUrl"
-            data-testid="project-website-input"
-            @input="websiteUrl = ($event.target as HTMLInputElement).value"
-          />
-          <p v-if="websiteUrlError !== null" class="au-field-error" data-testid="website-error">
-            {{ websiteUrlError }}
-          </p>
-        </div>
+        <AppSection
+          title="项目设置"
+          description="选择当前项目使用的框架，并可补充网站地址。"
+          test-id="project-settings-section"
+        >
+          <div class="au-field">
+            <label class="au-field__label" for="create-project-framework">框架类型</label>
+            <select
+              id="create-project-framework"
+              class="au-field__input"
+              :value="frameworkType"
+              data-testid="project-framework-select"
+              @change="frameworkType = ($event.target as HTMLSelectElement).value as FrameworkType"
+            >
+              <option v-for="type in FRAMEWORK_TYPES" :key="type" :value="type">{{ type }}</option>
+            </select>
+          </div>
+          <div class="au-field">
+            <label class="au-field__label" for="create-project-website">网站地址（可选）</label>
+            <input
+              id="create-project-website"
+              class="au-field__input"
+              type="text"
+              :value="websiteUrl"
+              data-testid="project-website-input"
+              @input="websiteUrl = ($event.target as HTMLInputElement).value"
+            />
+            <p v-if="websiteUrlError !== null" class="au-field-error" data-testid="website-error">
+              {{ websiteUrlError }}
+            </p>
+          </div>
+        </AppSection>
 
         <AppButton
           type="submit"
@@ -247,7 +259,7 @@ function onEnterProject(): void {
   display: flex;
   flex-direction: column;
   gap: var(--space-4);
-  max-width: 42ch;
+  max-width: 720px;
 }
 .au-field {
   display: flex;
@@ -262,7 +274,7 @@ function onEnterProject(): void {
   height: var(--control-height);
   padding: 0 var(--space-3);
   border: 1px solid var(--color-border-default);
-  border-radius: var(--radius-base);
+  border-radius: var(--radius-control);
   background-color: var(--color-surface-bg);
   color: var(--color-text-primary);
   font: inherit;
@@ -271,16 +283,5 @@ function onEnterProject(): void {
   margin: 0;
   color: var(--color-status-danger);
   font-size: 13px;
-}
-.au-create-success {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: var(--space-3);
-  max-width: 56ch;
-}
-.au-success-text {
-  margin: 0;
-  color: var(--color-text-secondary);
 }
 </style>

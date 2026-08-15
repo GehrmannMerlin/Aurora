@@ -362,4 +362,3 @@ Verify:
 - [ ] **Step 4: Record deployment result**
 
 Report the release ID, public verification result, exact test counts, and any remaining limitation. If any public verification fails, run the existing rollback command and report the actual state rather than claiming success.
-

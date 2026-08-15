@@ -1,7 +1,7 @@
 <script setup lang="ts">
 withDefaults(
   defineProps<{
-    tone?: 'neutral' | 'success' | 'danger' | 'warning';
+    tone?: 'neutral' | 'info' | 'success' | 'danger' | 'warning';
   }>(),
   { tone: 'neutral' },
 );
@@ -9,6 +9,7 @@ withDefaults(
 
 <template>
   <span :class="['au-badge', `au-badge--${tone}`]" role="status">
+    <span v-if="$slots.icon" class="au-badge__icon" aria-hidden="true"><slot name="icon" /></span>
     <slot />
   </span>
 </template>
@@ -21,7 +22,7 @@ withDefaults(
   min-height: 24px;
   padding: 0 var(--space-2);
   border: 1px solid var(--color-border-default);
-  border-radius: var(--radius-base);
+  border-radius: var(--radius-control);
   background-image: none;
   color: var(--color-text-primary);
 }
@@ -34,7 +35,11 @@ withDefaults(
   color: var(--color-status-danger);
 }
 .au-badge--warning {
-  border-color: var(--color-sidebar-bg);
-  color: var(--color-sidebar-fg);
+  border-color: var(--color-status-warning);
+  color: var(--color-status-warning);
+}
+.au-badge--info {
+  border-color: var(--color-status-info);
+  color: var(--color-status-info);
 }
 </style>

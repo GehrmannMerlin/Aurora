@@ -10,6 +10,8 @@ import AuthCard from '../../components/auth/AuthCard.vue';
 import AuthStatusBanner from '../../components/auth/AuthStatusBanner.vue';
 import AppButton from '../../components/aurora/AppButton.vue';
 import AppLink from '../../components/aurora/AppLink.vue';
+import AppTechnicalDetails from '../../components/aurora/AppTechnicalDetails.vue';
+import { formatUtc } from '../../monitoring/format.js';
 import {
   deriveResendState,
   estimateServerNow,
@@ -59,6 +61,9 @@ const resendState = computed(() =>
 const resendDisabled = computed(() => inFlight.value || resendState.value.kind === 'cooldown');
 const maskedEmail = computed(
   () => account.value?.emailMasked ?? registration.value?.emailMasked ?? '',
+);
+const verificationStatusLabel = computed(() =>
+  account.value?.verified === true ? '已验证' : '等待邮箱验证',
 );
 
 async function focusActionSummary(): Promise<void> {
@@ -151,8 +156,10 @@ onBeforeUnmount(() => {
     </AuthStatusBanner>
 
     <AuthStatusBanner v-else-if="sessionStatus === 'unauthenticated'" tone="warning">
-      登录状态已失效。
-      <AppLink to="/login" label="重新登录" />
+      未找到可用的注册交接或登录会话。
+      <AppLink to="/login" label="返回登录" />
+      或
+      <AppLink to="/register" label="重新注册" />
     </AuthStatusBanner>
 
     <AuthStatusBanner v-else-if="sessionStatus === 'unavailable'" tone="danger">
@@ -161,10 +168,10 @@ onBeforeUnmount(() => {
 
     <template v-else-if="account?.verified === true">
       <div ref="actionSummary" tabindex="-1" class="au-verify-focus-summary">
-        <AuthStatusBanner tone="success">邮箱已经完成验证。</AuthStatusBanner>
+        <AuthStatusBanner tone="success">当前账号邮箱已验证。</AuthStatusBanner>
       </div>
       <p class="au-auth-switch">
-        <AppLink to="/workspace" label="进入工作空间" />
+        <AppLink to="/workspace" label="继续工作空间" />
       </p>
     </template>
 
@@ -172,6 +179,27 @@ onBeforeUnmount(() => {
       <AuthStatusBanner tone="neutral">
         账户 <strong>{{ maskedEmail }}</strong> 正在等待邮箱验证。
       </AuthStatusBanner>
+      <dl class="au-verify-meta">
+        <div class="au-verify-meta__row">
+          <dt>验证状态</dt>
+          <dd data-testid="verify-status">{{ verificationStatusLabel }}</dd>
+        </div>
+        <div v-if="registration !== null" class="au-verify-meta__row">
+          <dt>服务器时间</dt>
+          <dd data-testid="verify-server-time">{{ formatUtc(registration.serverTime) }}</dd>
+        </div>
+        <div v-if="resendAvailableAt !== null" class="au-verify-meta__row">
+          <dt>可重新发送</dt>
+          <dd data-testid="verify-resend-at">{{ formatUtc(resendAvailableAt) }}</dd>
+        </div>
+      </dl>
+      <AppTechnicalDetails v-if="registration !== null" summary="技术详情"
+        >验证状态键: {{ registration.verificationStatus.reason }} 服务器时间 (UTC):
+        {{ registration.serverTime }}
+        <template v-if="resendAvailableAt !== null"
+          >可重新发送时间 (UTC): {{ resendAvailableAt }}</template
+        ></AppTechnicalDetails
+      >
       <p class="au-verify-help">如果没有收到邮件，可以在下方重新发送。最新验证链接唯一有效。</p>
       <AppButton
         variant="secondary"
@@ -206,6 +234,23 @@ onBeforeUnmount(() => {
 </template>
 
 <style scoped>
+.au-verify-meta {
+  margin: var(--space-4) 0;
+}
+.au-verify-meta__row {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-4);
+  padding: var(--space-2) 0;
+  border-bottom: 1px solid var(--color-border-default);
+}
+.au-verify-meta__row dt {
+  color: var(--color-text-secondary);
+}
+.au-verify-meta__row dd {
+  margin: 0;
+  color: var(--color-text-primary);
+}
 .au-verify-help {
   margin: var(--space-4) 0;
   color: var(--color-text-secondary);

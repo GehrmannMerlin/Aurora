@@ -1,4 +1,7 @@
 ---
+
+implementation-status: "implemented-in-feature-branch / final-verification-partial"
+implementation-status-note: "Detailed business requirements remain authoritative; Calm Observability supersedes the historical visual language. The production Navigation Context producer and D2 production discoverability remain blocked; no deployment is implied."
 title: Aurora 管理平台前端 UX/UI 设计
 status: approved
 owner: platform
@@ -140,7 +143,7 @@ Aurora 当前处于“核心业务规则冻结、工程实现准备”阶段。�
 
 ### 3.3 本文批准后仍独立处理的专题
 
-- Console UX/UI 全面重设计已经独立批准：`Calm Observability`、深石墨窄全局栏、冷灰上下文侧栏、浅色内容区、状态→证据→行动和平衡证据密度；精确实现见[Console UX/UI 全面重设计](./2026-08-14-aurora-console-ux-ui-redesign-design.md)。旧琥珀橙侧栏/横向顶栏视觉设计已 superseded，新设计代码与浏览器证据仍是后续实施门禁；
+- Console UX/UI 全面重设计已经独立批准：`Calm Observability`、深石墨窄全局栏、冷灰上下文侧栏、浅色内容区、状态→证据→行动和平衡证据密度；精确实现见[Console UX/UI 全面重设计](./2026-08-14-aurora-console-ux-ui-redesign-design.md)。旧琥珀橙侧栏/横向顶栏视觉设计已 superseded；新设计令牌、共享组件、业务页面和视觉基线已 `implemented-in-feature-branch / final-verification-partial`、未部署，最终移动验证仍为 residual gate；
 - 前端技术栈、管理平台后端设计及总体 OpenAPI/实现约束均已批准，但机器 OpenAPI、领域 Schema、数据模型、精确依赖、required ADR 和实现仍是独立门禁；
 - 测试/部署/发布的三个关键方向、完整派生方案、浏览器矩阵、量化预算、CI、AWS、迁移、恢复和 Runbook 设计已批准；它们仍不是现存实现或验证证据；
 - 六专题总结已确认作为正式化输入，后续还需按 ADR/文档规范完成正式化及最终跨专题、ADR 与实施就绪审查。
@@ -4235,7 +4238,7 @@ C16 不包含批量或计划生命周期操作、自定义恢复期、立即永�
 | FE-STACK-004 | 质量工具、浏览器验证与性能方法 | 使用 `vue-tsc`/ESLint/Vite build、Vitest/Vue Testing Library/MSW、Playwright/axe、有限截图和 Lighthouse CI；第一版不引入 Storybook；精确浏览器版本、性能数值和 CI 拓扑归入测试/部署/发布专题 | 以精简分层工具覆盖自建缓存、页面状态、真实浏览器、可访问性和性能回归，同时避免组件展示平台和全量视觉快照的第一版维护成本 | 用户已确认方案 A；需纳入前端技术栈 ADR 且不授权实现 | 全部管理平台页面、前端工程与后续测试/部署/发布专题 |
 | FE-STACK-005 | 整份管理平台前端技术栈设计批准 | 批准独立技术栈设计中的 FE-STACK-001—004、完整分层、Query/Command 数据流、安全/失败边界、质量策略、ADR 判断、后端缺口和明确延后内容 | 四项关键选择和全文自检已完成，可作为后续后端、测试/部署/发布与 ADR 设计的正式输入 | 用户已明确批准整份文档；不授权实现 | 全部管理平台页面、前端工程、后续专题 |
 | VISUAL-001 | 控制台视觉语言 | 浅色工作区＋深石墨顶栏＋纯色琥珀橙侧栏；深色导航前景、中高信息密度、蓝色主操作和选中标识；禁止渐变、纹理与页面私有主题 | 用户在 C2 完成态视觉方案中选择第一张橙色侧栏方向，并授权同方向低风险视觉细节由 Agent 直接收口 | `superseded`；由 VISUAL-002 与 2026-08-14 全面重设计替代，仅保留历史追溯 | A1—D2、NAV-A、公共壳层与 Aurora UI |
-| VISUAL-002 | Console UX/UI 全面重设计 | `Calm Observability`＋深石墨窄全局栏＋冷灰上下文侧栏＋浅色内容区；状态→证据→行动、平衡证据密度、认证独立外壳、统一页面族与适配状态 | 用户根据真实浏览器截图选择四项方案 A，并依次批准视觉壳层、页面族、状态/交互章节及整体设计 | `approved / implementation not-started`；替代 VISUAL-001 的视觉与壳层条款，不改变业务/权限/安全/数据/公共契约 | A1—D2、NAV-A、认证外壳、公共壳层与 Aurora UI |
+| VISUAL-002 | Console UX/UI 全面重设计 | `Calm Observability`＋深石墨窄全局栏＋冷灰上下文侧栏＋浅色内容区；状态→证据→行动、平衡证据密度、认证独立外壳、统一页面族与适配状态 | 用户根据真实浏览器截图选择四项方案 A，并依次批准视觉壳层、页面族、状态/交互章节及整体设计 | `implemented-in-feature-branch / final-verification-partial`；替代 VISUAL-001 的视觉与壳层条款，不改变业务/权限/安全/数据/公共契约；未部署，最终移动验证仍为 residual gate | A1—D2、NAV-A、认证外壳、公共壳层与 Aurora UI |
 
 FUX-003 的轮次合并只改变讨论和审查方式，不跳过三组页面各自的批准结果。A1 已通过 A1-003 单独批准；A-GROUP-001、B-GROUP-001 与 C-GROUP-001 分别记录 A、B、C 三组批准；D1/D2 随 FUX-004 获得整页批准。NAV-001 已收口跨页面规则，AUDIT-001 已完成阻塞式审计。FUX-004/FUX-005 不把页面能力名称或 PLAT-001—PLAT-008 写成已存在 API、accepted ADR 或已实现技术栈。
 
@@ -4358,7 +4361,7 @@ FUX-003 的轮次合并只改变讨论和审查方式，不跳过三组页面各
 | 占位标记和含糊承诺 | 通过；待处理内容均使用明确状态、Owner/领域和解除条件 |
 | 待确认内容是否误写为最终结论 | 通过；A1—D2 共 31 页、整份 UX/UI、前后端设计及总体契约结构均标明已批准；机器 OpenAPI、精确领域 Schema、数据模型和代码实现继续标为不存在/阻塞 |
 | 是否虚构 PRD 外功能 | 通过；第一版排除项集中记录且不提供入口 |
-| 视觉方向与实现状态 | 通过；`Calm Observability`、深石墨窄全局栏、冷灰上下文侧栏、浅色内容区和状态→证据→行动已经批准；旧琥珀橙视觉 superseded，新设计代码和浏览器证据标为 `not-started` |
+| 视觉方向与实现状态 | 通过；`Calm Observability`、深石墨窄全局栏、冷灰上下文侧栏、浅色内容区和状态→证据→行动已经批准；旧琥珀橙视觉 superseded，新设计代码、视觉基线和已记录浏览器证据为 `implemented-in-feature-branch / final-verification-partial`，未部署，最终移动验证仍为 residual gate |
 | 页面是否具有业务依据 | 通过；31 个页面均注明 PRD 章节并已获得用户批准；D1/D2 的最小整页方案随整份文档批准 |
 | 交互是否映射后端能力 | 通过；31 个已批准页面的行为均已映射，仓库无 API 文档的事实明确标注为阻塞 |
 | 页面状态是否覆盖异常和权限 | 通过；31 页均显式覆盖 `loading`、`empty`、`error`、`forbidden`、`processing`、`partial`、`stale` 和 `unavailable`，并按业务需要补充 `archived`、`deleted`、`conflict`、`propagating` 等状态 |
