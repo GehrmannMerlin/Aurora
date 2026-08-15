@@ -358,7 +358,7 @@ jobs:
     name: SDK Publish (${{ inputs.release_type }})
     runs-on: ubuntu-latest
     needs: [release-gate, sdk-release-gate]
-    if: inputs.release_type != '' && secrets.NPM_TOKEN != ''
+    if: inputs.release_type != ''
     environment: sdk-npm-publish
     permissions:
       contents: read
@@ -366,6 +366,7 @@ jobs:
     env:
       RELEASE_VERSION: ${{ inputs.version }}
       RELEASE_TYPE: ${{ inputs.release_type }}
+      NPM_TOKEN_CONFIGURED: ${{ secrets.NPM_TOKEN != '' }}
     steps:
       - name: Checkout exact release ref
         uses: actions/checkout@v4
@@ -392,6 +393,7 @@ jobs:
       - name: Apply independent version plan
         run: pnpm release:version
       - name: Publish (provenance, protected environment)
+        if: env.NPM_TOKEN_CONFIGURED == 'true'
         run: >-
           pnpm -r publish --no-git-checks --access public
           --tag ${{ inputs.release_type == 'prerelease' && 'next' || 'latest' }}
@@ -399,9 +401,13 @@ jobs:
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
       - name: Release evidence
+        if: env.NPM_TOKEN_CONFIGURED == 'true'
         run: |
           echo "release version: $RELEASE_VERSION"
           echo "release type: $RELEASE_TYPE"
           echo "dist-tag: ${{ inputs.release_type == 'prerelease' && 'next' || 'latest' }}"
           echo "committed SHA: $(git rev-parse HEAD)"
           echo "artifacts: see pack output above (pnpm -r publish packs each public package)"
+      - name: Publish skipped notice
+        if: env.NPM_TOKEN_CONFIGURED != 'true'
+        run: echo "SDK publish skipped because NPM_TOKEN is not configured."
