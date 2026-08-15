@@ -2,7 +2,7 @@
 title: ADR-031：管理平台邮件发送责任、端口与供应商
 status: accepted
 decision-status: accepted
-implementation-status: implemented-in-feature-branch / deployment-blocked
+implementation-status: implemented
 approval-status: approved
 owner: product/operations/security
 date: 2026-08-08
@@ -204,3 +204,11 @@ G10 的 PLT-03（A1 邮箱验证、A3 密码重置、A4 组织邀请）都需要
 - PostgreSQL Outbox 已实现失败重试、`processing` 超时回收、claim fencing、有界最大尝试次数和终态 token/payload 清理；事务、并发、冷却、滚动配额、幂等、旧链接失效和账号激活已通过真实 PostgreSQL 17.10/Redis 7.4 集成测试，自动化发信均使用假的 DirectMail client；
 - 全仓格式、lint、类型、测试、覆盖率、边界、OpenAPI/manifest 漂移、构建及 Chromium 门禁通过；脱敏实施证据见[2026-08-15 邮箱验证交付与重发实施证据](../testing/evidence/2026-08-15-email-verification-delivery-and-resend.md)；
 - 阿里云域名、DNS、发信地址、RAM 权限和两条公网真实发信检查仍需账号控制台权限，因此当前实施状态为 `implemented-in-feature-branch / deployment-blocked`，不得声称真实邮件交付已完成。
+
+### 2026-08-15：公网部署与真实交付由用户验收完成
+
+- 公网 Preview 已部署版本 `20260815-132409`（提交 `d6700af`），使用阿里云 DirectMail `aliyun` 交付模式；
+- 用户确认已收到真实交付邮件，并明确授权将本任务标记完成；该用户验收作为外部供应商边界后的真实交付证据，记录中不保存完整邮箱、token、邮件正文、AccessKey 或供应商原始错误体；
+- 用户明确取消原人工步骤中的费用/发送预警配置：基于当前应用使用量低，接受暂不配置预警的运营风险；该项不再作为实施或发布阻塞，若发送量、费用或运营责任发生显著变化再重新评估；
+- 既定的送达非承诺语义不变：应用响应 `queued` 与供应商 `accepted` 本身仍不承诺收件箱到达，本次完成状态来自用户实际收件确认；
+- ADR 当前状态更新为 `accepted / implemented`，邮箱验证真实交付与历史账号重发增量为 `deployed / complete`。

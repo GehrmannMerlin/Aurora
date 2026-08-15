@@ -847,6 +847,8 @@ After the user completes the runbook in Alibaba Cloud, deploy with `EMAIL_DELIVE
 
 Also verify the restricted workspace remains available before verification, the normal workspace is available afterward, terminal Outbox payloads are scrubbed, and logs contain neither full addresses nor tokens. Only after this checkpoint may status change from `deployment-blocked` to deployed/complete.
 
+**2026-08-15 completion record:** Public Preview release `20260815-132409` (commit `d6700af`) was deployed. The user confirmed receipt of a real DirectMail message and explicitly accepted the increment as complete. The previously listed cost/sending alert setup was explicitly cancelled for the current low-usage application and is no longer a completion gate. Full mailbox addresses, tokens, message bodies, credentials, and provider raw responses are intentionally absent from the evidence.
+
 ---
 
 ## Final Definition of Done

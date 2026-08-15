@@ -2,9 +2,9 @@
 
 ## 1. 状态与边界
 
-代码状态为 **implemented-in-feature-branch / deployment-blocked**。在阿里云控制台完成域名、发信地址、
-RAM 权限并通过两条受控公网验证前，不得声明真实邮件交付完成。注册/重发响应的 `queued` 只表示事务内
-可靠写入 Outbox；DirectMail `accepted` 只表示供应商 API 接受请求，都不代表收件箱已收到邮件。
+代码与公网部署状态为 **deployed / complete**。用户于 2026-08-15 确认已收到真实 DirectMail 交付邮件并
+验收完成。注册/重发响应的 `queued` 仍只表示事务内可靠写入 Outbox；DirectMail `accepted` 仍只表示供应商
+API 接受请求，都不能单独代替实际收件证据。
 
 自动化测试只注入假 `DirectMailClientPort`，禁止对公网真实发信。不得把 AccessKey、验证 token、完整收件
 地址、完整邮件正文或供应商原始错误体放入 Git、工单、聊天、日志或测试证据。
@@ -22,7 +22,8 @@ RAM 权限并通过两条受控公网验证前，不得声明真实邮件交付�
    允许所需的 DirectMail `SingleSendMail` 能力。不要把角色或权限授予 Console/Platform API；
 6. 若运行环境确实不能使用 ECS RAM 角色，才在服务器受限 secret 中设置长期 AccessKey；创建专用最小
    权限 RAM 用户并规划轮换。不要在聊天中发送凭据；
-7. 在阿里云费用中心设置 DirectMail 预算/费用告警，并为发送量、拒绝、退信、限流和鉴权失败配置运营告警。
+7. **当前豁免**：用户基于应用使用量低，明确取消费用/发送预警配置；该项不是部署或完成门禁。若发送量、
+   费用或运营责任显著增加，再评估预算、拒绝、退信、限流和鉴权失败预警。
 
 ## 3. Worker 配置
 
@@ -59,7 +60,7 @@ docker compose --env-file deploy/preview/.env.example -f deploy/preview/compose.
 4. 搜索本次差异，确认没有真实 AccessKey、完整收件地址、token、链接或供应商原始错误体；
 5. 先部署 Migration，再部署能识别 `superseded`/`claim_id`/诊断列的新 Platform API 和 Worker。
 
-## 5. 两条受控公网 Smoke
+## 5. 受控公网 Smoke（已验收；未来可选回归）
 
 只使用测试人员控制的收件箱，证据中记录掩码地址、稳定 request ID/状态和时间，不记录 token 或邮件正文。
 
@@ -69,8 +70,8 @@ docker compose --env-file deploy/preview/.env.example -f deploy/preview/compose.
    60 秒冷却和滚动 24 小时最多 5 次；连续重发后确认旧链接失效、最新链接成功并激活账号。
 
 同时检查 Outbox：成功/永久失败/预算耗尽等终态 payload 已清理；重试使用未来 `available_at`；超时
-processing 可回收；旧 claim 的 fencing 结算不能覆盖新 claim。只有两条 Smoke 都真实收信并完成验证，
-才可把部署状态从 `deployment-blocked` 更新为真实交付完成。
+processing 可回收；旧 claim 的 fencing 结算不能覆盖新 claim。用户已用实际收件确认完成本次公网交付验收；
+上述两条完整 Smoke 继续作为未来发布回归清单，但不再是本次完成状态的阻塞项。
 
 ## 6. 故障处置与回滚
 

@@ -1,6 +1,6 @@
 # Aurora 邮箱验证真实交付与历史账号重发实施证据（2026-08-15）
 
-> 当前状态：`implemented-in-feature-branch / deployment-blocked`。本证据证明功能分支实现和本地自动化门禁，不证明阿里云公网邮件已送达，也不包含完整邮箱、验证链接、token、邮件正文、AccessKey 或供应商原始错误体。
+> 当前状态：`deployed / complete`。本证据记录功能实现、自动化门禁、公网部署和用户真实收件验收；不包含完整邮箱、验证链接、token、邮件正文、AccessKey 或供应商原始错误体。
 
 ## 实施范围
 
@@ -53,14 +53,10 @@ git diff --cached --check
 - `3b4dc96`—`2efe365`：部署回滚安全、仓库门禁、Console 覆盖率与 linked-worktree/Chromium fixture 修复；
 - 本文件及当前状态快照由后续证据提交记录。
 
-## 部署阻塞与人工检查点
+## 公网部署与用户验收
 
-仍需拥有阿里云账号控制台权限的人员完成：
-
-1. 开通 DirectMail，添加 `notifications.aurora.ah.cn`，按控制台提供的精确记录配置 DNS 并等待验证；
-2. 审核发信地址 `support@notifications.aurora.ah.cn`；
-3. 为运行平台的 ECS 绑定最小权限 RAM 角色，使官方 SDK 默认凭据链优先使用角色；仅当运行环境不支持角色时，才通过服务端部署 secret 提供长期 AccessKey；
-4. 配置用量/费用告警并部署 `EMAIL_DELIVERY_MODE=aliyun`；
-5. 执行两条受控公网 smoke：新注册验证、历史未验证账号重发；确认旧链接失败、最新链接激活账号，并检查受限/正常工作空间切换、Outbox 终态清理及日志脱敏。
-
-上述检查点完成前，不得把状态更新为 deployed 或声称真实邮件交付完成。
+- 公网 Preview 已部署 release `20260815-132409`，对应提交 `d6700af`；线上 Console、Platform API、Ingestion API、PostgreSQL 和 Redis 健康检查通过；
+- 用户于 2026-08-15 确认已收到真实 DirectMail 交付邮件，并明确授权把本增量标记为完成；不在证据中保存收件地址、token、邮件正文或供应商原始响应；
+- 用户明确取消原人工步骤中的费用/发送预警配置。当前低使用量阶段暂不配置预警是已接受的运营取舍，不再是部署或完成阻塞；
+- 原两条公网 Smoke 保留为未来可选回归步骤，不再作为本次验收门禁；相关新注册、历史重发、旧链接失效、最新链接激活、配额和 Session 行为已有真实 PostgreSQL/Redis 与浏览器自动化覆盖；
+- 最终状态：`deployed / complete`。

@@ -69,7 +69,7 @@ maintenance: operational-snapshot
 - 五大系统边界、SDK 分层、同步可靠接收与异步处理、`event-schema` 单一来源和单向依赖的 approved 架构规则；
 - 已批准的管理平台前端 UX/UI、前端技术栈设计及逐项决策记录；
 - 已批准的 Console UX/UI 全面重设计：`Calm Observability`、深石墨窄全局栏、冷灰上下文侧栏、浅色内容区、状态→证据→行动和平衡证据密度；旧琥珀橙侧栏与横向深色顶栏规范已 superseded。业务、导航层级、权限、安全、数据和公共契约不在视觉授权内；真实令牌、共享组件、视觉截图基线和业务页面已在 feature branch 实施、尚未部署，状态为 `implemented-in-feature-branch / final-verification-partial`；最终移动端可达性矩阵及整合复验仍未完成，不得表述为全矩阵通过；
-- 已批准邮箱验证真实交付与历史账号重发设计：阿里云 DirectMail API 为第一版供应商；`SingleSendMail` adapter、默认凭据链、注册自动入队、Session 保护重发（60 秒冷却、滚动 24 小时最多 5 次）、最新链接唯一有效、Outbox 失败恢复/claim fencing/有界重试/终态脱敏与 Console Session 恢复已 `implemented-in-feature-branch / deployment-blocked`；域名/发信地址/RAM 权限与真实公网双 Smoke 仍需控制台权限；
+- 邮箱验证真实交付与历史账号重发已 `deployed / complete`：阿里云 DirectMail API 为第一版供应商；`SingleSendMail` adapter、默认凭据链、注册自动入队、Session 保护重发（60 秒冷却、滚动 24 小时最多 5 次）、最新链接唯一有效、Outbox 失败恢复/claim fencing/有界重试/终态脱敏与 Console Session 恢复均已实施并部署；用户于 2026-08-15 确认真实收件并验收完成，低使用量阶段的费用/发送预警经用户明确决定取消，不再构成发布或完成门禁；
 - 已批准的管理平台总体 OpenAPI 与实现约束设计：统一公开契约、内部领域模块化、生成单一 Platform OpenAPI，31 个页面设计映射 36 个稳定 Route Target，并强制壳层与真实 UI 可达性先行；
 - 用户已批准前四个基础专题中可追溯的既有设计基线，批准边界和未决内容由独立正式文档记录。
 - 已批准的测试/部署/发布完整设计，包括 `TD-001=A`、`TD-002=A`、`TD-003=A` 和 `TDR-DERIVED-001`；

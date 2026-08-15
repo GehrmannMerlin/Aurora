@@ -27,52 +27,50 @@ ADR-001—ADR-006 从已批准架构规范中的 ARCH-001—ARCH-006 提取，AD
 
 ## 当前 ADR
 
-| 编号                                                                                  | 标题                                                   | 决策状态 | 实施状态    | 关联规则                                      |
-| ------------------------------------------------------------------------------------- | ------------------------------------------------------ | -------- | ----------- | --------------------------------------------- |
-| [ADR-001](ADR-001-use-monorepo.md)                                                    | 使用统一 Monorepo                                      | accepted | in-progress | ARCH-001                                      |
-| [ADR-002](ADR-002-five-system-boundaries.md)                                          | 划分五大系统边界                                       | accepted | not-started | ARCH-002                                      |
-| [ADR-003](ADR-003-sdk-plugin-architecture.md)                                         | SDK 分层插件架构                                       | accepted | in-progress | ARCH-003                                      |
-| [ADR-004](ADR-004-asynchronous-event-processing.md)                                   | 可靠接收与异步处理                                     | accepted | not-started | ARCH-004                                      |
-| [ADR-005](ADR-005-event-schema-source-of-truth.md)                                    | event-schema 单一来源                                  | accepted | in-progress | ARCH-005                                      |
-| [ADR-006](ADR-006-one-way-dependencies.md)                                            | 单向依赖与自动约束                                     | accepted | in-progress | ARCH-006                                      |
-| [ADR-007](ADR-007-workspace-package-and-task-tooling.md)                              | pnpm Workspace 与原生任务入口                          | accepted | implemented | 首模块工程工具                                |
-| [ADR-008](ADR-008-ingestion-durable-buffering.md)                                     | 数据接入可靠缓冲与异步处理的物理技术                   | accepted | in-progress | 数据接入物理缓冲                              |
-| [ADR-009](ADR-009-ingestion-transport-and-client-credential.md)                       | 数据接入公开传输与客户端上报密钥安全语义               | accepted | in-progress | 数据接入传输/凭证                             |
-| [ADR-010](ADR-010-postgresql-access-and-migration-tooling.md)                         | 数据接入数据库访问与 Migration 工具链                  | accepted | implemented | 数据接入数据库工具                            |
-| [ADR-011](ADR-011-ingestion-http-service-runtime.md)                                  | 数据接入同步 HTTP 服务的运行时与应用边界               | accepted | in-progress | 数据接入 HTTP 服务                            |
-| [ADR-012](ADR-012-ingestion-worker-runtime.md)                                        | 数据接入 Worker 应用的运行时与应用边界                 | accepted | in-progress | 数据接入 Worker 运行时                        |
-| [ADR-013](ADR-013-ingestion-client-credential-storage-and-verification.md)            | 客户端上报凭证存储与验证                               | accepted | implemented | 数据接入凭证存储/验证                         |
-| [ADR-014](ADR-014-ingestion-client-credential-lifecycle.md)                           | 客户端上报凭证生命周期服务                             | accepted | implemented | 数据接入凭证生命周期                          |
-| [ADR-015](ADR-015-ingestion-worker-retry-budget-policy.md)                            | Worker 重试预算与自动死信策略                          | accepted | implemented | Worker retry policy                           |
-| [ADR-016](ADR-016-ingestion-worker-retry-backoff-schedule.md)                         | Worker 重试退避调度策略                                | accepted | implemented | Worker retry backoff                          |
-| [ADR-017](ADR-017-ingestion-dead-letter-manual-replay.md)                             | Worker 死信人工重放核心                                | accepted | implemented | Inbox dead-letter replay                      |
-| [ADR-018](ADR-018-error-event-occurrence-processing-storage.md)                       | 错误事件 occurrence 处理存储                           | accepted | implemented | processing-store occurrence                   |
-| [ADR-019](ADR-019-request-event-aggregation-and-bounded-diagnostic-sample-storage.md) | 请求事件聚合与有界诊断样本存储                         | accepted | in-progress | processing-store request sample               |
-| [ADR-020](ADR-020-idempotent-request-metric-bucket-aggregation.md)                    | 幂等请求指标桶聚合                                     | accepted | implemented | processing-store request metric               |
-| [ADR-021](ADR-021-performance-aggregate-and-bounded-sample-storage.md)                | 性能指标聚合与有界诊断样本存储                         | accepted | implemented | processing-store performance aggregate/sample |
-| [ADR-022](ADR-022-aws-account-region-network-and-iac.md)                              | AWS 账号、区域、网络与 IaC 基础设施基础                | superseded | in-progress | OPS-04 云基础设施基础（superseded by ADR-036）  |
+| 编号                                                                                  | 标题                                                   | 决策状态   | 实施状态    | 关联规则                                          |
+| ------------------------------------------------------------------------------------- | ------------------------------------------------------ | ---------- | ----------- | ------------------------------------------------- |
+| [ADR-001](ADR-001-use-monorepo.md)                                                    | 使用统一 Monorepo                                      | accepted   | in-progress | ARCH-001                                          |
+| [ADR-002](ADR-002-five-system-boundaries.md)                                          | 划分五大系统边界                                       | accepted   | not-started | ARCH-002                                          |
+| [ADR-003](ADR-003-sdk-plugin-architecture.md)                                         | SDK 分层插件架构                                       | accepted   | in-progress | ARCH-003                                          |
+| [ADR-004](ADR-004-asynchronous-event-processing.md)                                   | 可靠接收与异步处理                                     | accepted   | not-started | ARCH-004                                          |
+| [ADR-005](ADR-005-event-schema-source-of-truth.md)                                    | event-schema 单一来源                                  | accepted   | in-progress | ARCH-005                                          |
+| [ADR-006](ADR-006-one-way-dependencies.md)                                            | 单向依赖与自动约束                                     | accepted   | in-progress | ARCH-006                                          |
+| [ADR-007](ADR-007-workspace-package-and-task-tooling.md)                              | pnpm Workspace 与原生任务入口                          | accepted   | implemented | 首模块工程工具                                    |
+| [ADR-008](ADR-008-ingestion-durable-buffering.md)                                     | 数据接入可靠缓冲与异步处理的物理技术                   | accepted   | in-progress | 数据接入物理缓冲                                  |
+| [ADR-009](ADR-009-ingestion-transport-and-client-credential.md)                       | 数据接入公开传输与客户端上报密钥安全语义               | accepted   | in-progress | 数据接入传输/凭证                                 |
+| [ADR-010](ADR-010-postgresql-access-and-migration-tooling.md)                         | 数据接入数据库访问与 Migration 工具链                  | accepted   | implemented | 数据接入数据库工具                                |
+| [ADR-011](ADR-011-ingestion-http-service-runtime.md)                                  | 数据接入同步 HTTP 服务的运行时与应用边界               | accepted   | in-progress | 数据接入 HTTP 服务                                |
+| [ADR-012](ADR-012-ingestion-worker-runtime.md)                                        | 数据接入 Worker 应用的运行时与应用边界                 | accepted   | in-progress | 数据接入 Worker 运行时                            |
+| [ADR-013](ADR-013-ingestion-client-credential-storage-and-verification.md)            | 客户端上报凭证存储与验证                               | accepted   | implemented | 数据接入凭证存储/验证                             |
+| [ADR-014](ADR-014-ingestion-client-credential-lifecycle.md)                           | 客户端上报凭证生命周期服务                             | accepted   | implemented | 数据接入凭证生命周期                              |
+| [ADR-015](ADR-015-ingestion-worker-retry-budget-policy.md)                            | Worker 重试预算与自动死信策略                          | accepted   | implemented | Worker retry policy                               |
+| [ADR-016](ADR-016-ingestion-worker-retry-backoff-schedule.md)                         | Worker 重试退避调度策略                                | accepted   | implemented | Worker retry backoff                              |
+| [ADR-017](ADR-017-ingestion-dead-letter-manual-replay.md)                             | Worker 死信人工重放核心                                | accepted   | implemented | Inbox dead-letter replay                          |
+| [ADR-018](ADR-018-error-event-occurrence-processing-storage.md)                       | 错误事件 occurrence 处理存储                           | accepted   | implemented | processing-store occurrence                       |
+| [ADR-019](ADR-019-request-event-aggregation-and-bounded-diagnostic-sample-storage.md) | 请求事件聚合与有界诊断样本存储                         | accepted   | in-progress | processing-store request sample                   |
+| [ADR-020](ADR-020-idempotent-request-metric-bucket-aggregation.md)                    | 幂等请求指标桶聚合                                     | accepted   | implemented | processing-store request metric                   |
+| [ADR-021](ADR-021-performance-aggregate-and-bounded-sample-storage.md)                | 性能指标聚合与有界诊断样本存储                         | accepted   | implemented | processing-store performance aggregate/sample     |
+| [ADR-022](ADR-022-aws-account-region-network-and-iac.md)                              | AWS 账号、区域、网络与 IaC 基础设施基础                | superseded | in-progress | OPS-04 云基础设施基础（superseded by ADR-036）    |
 | [ADR-023](ADR-023-managed-compute-and-managed-data-services.md)                       | 托管计算与托管数据服务（ECS/Fargate、RDS、Redis 边界） | superseded | in-progress | OPS-04 托管计算/数据服务（superseded by ADR-036） |
-| [ADR-024](ADR-024-edge-dns-tls-secrets-and-encryption.md)                             | 边缘、DNS、TLS、秘密与加密                             | superseded | in-progress | OPS-04 边缘/安全基础（superseded by ADR-036）  |
-| [ADR-025](ADR-025-platform-frontend-technology-stack.md)                              | 管理平台前端技术栈                                     | accepted | not-started | PLT-02 前端工程基线                           |
-| [ADR-026](ADR-026-platform-backend-runtime-and-contract-chain.md)                     | 管理平台后端运行时与契约链                             | accepted | not-started | PLT-01/后续平台后端基线                       |
-| [ADR-027](ADR-027-platform-contract-codegen-tooling.md)                               | 管理平台契约生成工具链                                 | accepted | not-started | PLT-01 契约生成/漂移/兼容门禁                 |
-| [ADR-028](ADR-028-platform-session-csrf-security.md)                                  | 管理平台 Session、CSRF 与认证传输契约                 | accepted | not-started | PLT-01/PLT-02 Session/CSRF 传输契约形状       |
-| [ADR-029](ADR-029-platform-database-access-and-migration.md)                          | 管理平台数据库访问与 Migration 工具链                 | accepted | not-started | G10 平台数据模型/Migration 工具链            |
-| [ADR-030](ADR-030-platform-session-csrf-password-physical-parameters.md)              | 管理平台 Session、CSRF 与密码物理安全参数             | accepted | not-started | G10 身份/认证物理参数                         |
-| [ADR-031](ADR-031-platform-email-delivery.md)                                         | 管理平台邮件发送责任、端口与供应商                    | accepted | not-started | G10 邮箱验证/密码重置/邀请                    |
-| [ADR-032](ADR-032-platform-outbox-tasks-cache-objects.md)                             | 管理平台 Outbox、任务、缓存与对象存储基础设施         | accepted | not-started | G10 异步边界（邮件/删除交接）                 |
-| [ADR-033](ADR-033-issue-aggregate-data-model.md)                                      | Issue 聚合与有界代表样本数据模型                     | accepted | not-started | G03 Issue 主链（DAT-13 数据模型）             |
-| [ADR-034](ADR-034-platform-admin-and-platform-audit.md)                              | 平台管理员身份、授权与平台级审计                    | accepted | not-started | G13 PLT-10（D2 前置身份/审计）                 |
-| [ADR-035](ADR-035-platform-resource-policy-data-model.md)                           | 平台资源策略数据模型（最小分层策略）               | accepted | not-started | G13 PLT-10（D2 策略数据模型）                  |
-| [ADR-036](ADR-036-provider-neutral-single-host-deployment.md)                        | Provider-Neutral 单主机部署（Docker Compose）         | accepted | not-started | G16 部署方向；supersedes ADR-022/023/024         |
+| [ADR-024](ADR-024-edge-dns-tls-secrets-and-encryption.md)                             | 边缘、DNS、TLS、秘密与加密                             | superseded | in-progress | OPS-04 边缘/安全基础（superseded by ADR-036）     |
+| [ADR-025](ADR-025-platform-frontend-technology-stack.md)                              | 管理平台前端技术栈                                     | accepted   | not-started | PLT-02 前端工程基线                               |
+| [ADR-026](ADR-026-platform-backend-runtime-and-contract-chain.md)                     | 管理平台后端运行时与契约链                             | accepted   | not-started | PLT-01/后续平台后端基线                           |
+| [ADR-027](ADR-027-platform-contract-codegen-tooling.md)                               | 管理平台契约生成工具链                                 | accepted   | not-started | PLT-01 契约生成/漂移/兼容门禁                     |
+| [ADR-028](ADR-028-platform-session-csrf-security.md)                                  | 管理平台 Session、CSRF 与认证传输契约                  | accepted   | not-started | PLT-01/PLT-02 Session/CSRF 传输契约形状           |
+| [ADR-029](ADR-029-platform-database-access-and-migration.md)                          | 管理平台数据库访问与 Migration 工具链                  | accepted   | not-started | G10 平台数据模型/Migration 工具链                 |
+| [ADR-030](ADR-030-platform-session-csrf-password-physical-parameters.md)              | 管理平台 Session、CSRF 与密码物理安全参数              | accepted   | not-started | G10 身份/认证物理参数                             |
+| [ADR-031](ADR-031-platform-email-delivery.md)                                         | 管理平台邮件发送责任、端口与供应商                     | accepted   | implemented | G10 邮箱验证/密码重置/邀请；公网真实交付已验收    |
+| [ADR-032](ADR-032-platform-outbox-tasks-cache-objects.md)                             | 管理平台 Outbox、任务、缓存与对象存储基础设施          | accepted   | not-started | G10 异步边界（邮件/删除交接）                     |
+| [ADR-033](ADR-033-issue-aggregate-data-model.md)                                      | Issue 聚合与有界代表样本数据模型                       | accepted   | not-started | G03 Issue 主链（DAT-13 数据模型）                 |
+| [ADR-034](ADR-034-platform-admin-and-platform-audit.md)                               | 平台管理员身份、授权与平台级审计                       | accepted   | not-started | G13 PLT-10（D2 前置身份/审计）                    |
+| [ADR-035](ADR-035-platform-resource-policy-data-model.md)                             | 平台资源策略数据模型（最小分层策略）                   | accepted   | not-started | G13 PLT-10（D2 策略数据模型）                     |
+| [ADR-036](ADR-036-provider-neutral-single-host-deployment.md)                         | Provider-Neutral 单主机部署（Docker Compose）          | accepted   | not-started | G16 部署方向；supersedes ADR-022/023/024          |
 
 > 状态说明：ADR-034/035 于 2026-08-12 由 G13 PLT-10 正式化创建为 `proposed / not-started / awaiting-user-approval`；同日用户对 `G13_PLT10_APPROVAL_PACKAGE` 六项推荐整体批准并直接批准两份 ADR，转为 `accepted / not-started / approved`（未另派 reviewer subagent）。`implementation-status` 保持 not-started，直到 PLT-10 正式实施开始。
 
 > 状态说明：ADR-029—032 于 2026-08-08 由 G10（PLT-03/PLT-04/SEC-01）实施门禁创建为 `proposed / not-started / awaiting-review`；2026-08-09 完成独立评审（security/backend-ops/architecture 三路，ADR-030 初审 REJECT 后修复为最终 ACCEPT 版本）并由用户明确正式批准（`accepted / not-started / approved`）。ADR-032 附带用户 YAGNI 实施约束：只有当前 approved 叶子规格确实需要、存在真实 consumer、且 ADR 明确要求该资源时才实际 provision Redis/cache/object storage/background infrastructure；不得因 ADR 定义了未来基础设施边界就提前创建没有 consumer 的付费资源。批准仅覆盖各 ADR 已记录并经过评审修订的决策内容；`implementation-status` 保持 `not-started`，对应代码实施开始前不得标记 implemented。
 >
 > 状态说明：ADR-033 于 2026-08-10 由 G03 正式化扫掠创建为 `proposed / not-started / awaiting-user-approval`。用户 G03 readiness 规则明确 DAT-13 Issue 数据模型必须有 accepted ADR；评审（architecture/backend、database domain、privacy/data-governance 三路，记录用）见 ADR-033 追加记录。2026-08-10 用户对 G03 APPROVAL PACKAGE 整体批准，ADR-033 转为 `accepted / not-started / approved`；`implementation-status` 保持 not-started，直到 DAT-13 正式实施开始。
-
-
 
 > 状态说明：ADR-008 于 2026-08-01 由用户批准（`accepted / in-progress / approved`），推荐方案 A（PostgreSQL 事务性 Inbox），批准以六项校正为准。批次/接收结果协议、数据接入 OpenAPI 与 Inbox 数据模型已实施；接入服务、Worker 与容量证据未实现。
 

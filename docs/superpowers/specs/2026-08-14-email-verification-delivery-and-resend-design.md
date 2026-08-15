@@ -1,7 +1,7 @@
 ---
 title: Aurora 邮箱验证真实交付与历史账号重发设计
 status: approved
-implementation-status: implemented-in-feature-branch / deployment-blocked
+implementation-status: deployed / complete
 approval-status: approved
 owner: platform/identity/operations/security
 created: 2026-08-14
@@ -17,7 +17,7 @@ related:
   - ./2026-08-09-platform-identity-authentication-invitation.md
   - ./2026-08-14-aurora-console-ux-ui-redesign-design.md
 supersedes: none
-design-stage: approved-design-implemented-in-feature-branch-deployment-blocked
+design-stage: approved-design-deployed-complete
 ---
 
 # Aurora 邮箱验证真实交付与历史账号重发设计
@@ -209,3 +209,11 @@ Agent 可以完成代码、文档、配置模板、测试、构建和无需登�
 ## 9. 完成定义
 
 只有以下条件同时满足，才可声称功能完成：代码与机器契约已实施、全仓门禁通过、数据库 migration 已验证、Preview/生产使用 `aliyun` 模式、阿里云域名与发信地址生效、两条受控公网 E2E 均收到真实邮件并完成验证、仓库与日志中没有 secret/token 泄漏。若阿里云控制台配置尚未完成，代码只能标记为 implemented-in-feature-branch 或 deployment-blocked，不得称真实交付已完成。
+
+## 10. 2026-08-15 部署验收与运营取舍更新
+
+- 公网 Preview 已部署包含本设计实现的版本 `20260815-132409`（提交 `d6700af`），应用与服务健康检查通过；
+- 用户确认已在受控邮箱收到真实 DirectMail 交付邮件，并明确接受该结果作为本增量的公网交付验收；证据不保存完整邮箱、token、验证链接、邮件正文或供应商原始响应；
+- 用户明确将原人工步骤中的费用/发送预警配置取消：当前应用使用量低，不配置相关预警是已接受的运营取舍，不再作为发布、验收或完成门禁。本决定 supersedes §5.3 中“部署前必须配置告警”的强制解释；计费和发送限额事实保持不变；
+- 原两条受控公网 E2E 仍保留为未来回归 Runbook，但不再是本次完成状态的阻塞项；自动化 PostgreSQL/Redis/浏览器门禁继续覆盖新注册、历史账号重发、冷却、滚动配额、旧链接失效和账号激活；
+- 本设计实施状态更新为 `deployed / complete`。
