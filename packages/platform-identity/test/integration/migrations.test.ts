@@ -94,7 +94,7 @@ describeDb('platform-identity migrations (real PostgreSQL 17)', () => {
       log: () => undefined,
     });
     expect(remaining.map((migration) => migration.name)).toEqual([
-      '1786669200000_scrub-terminal-email-outbox-payloads',
+      '1897000000003_scrub-terminal-email-outbox-payloads',
     ]);
 
     const rows = await queryRows<{ outbox_id: string; aggregate_type: string; payload: unknown }>(
@@ -120,8 +120,8 @@ describeDb('platform-identity migrations (real PostgreSQL 17)', () => {
       expect.arrayContaining([
         '1786233600000_create-platform-identity-tables',
         '1786244000000_account-deletion',
-        '1786665600000_email-verification-resend-and-outbox-reliability',
-        '1786669200000_scrub-terminal-email-outbox-payloads',
+        '1897000000002_email-verification-resend-and-outbox-reliability',
+        '1897000000003_scrub-terminal-email-outbox-payloads',
       ]),
     );
   });

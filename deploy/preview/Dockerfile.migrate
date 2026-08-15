@@ -1,7 +1,7 @@
 # Aurora public-preview migration runner image.
-# Runs the repository's real formal migrations (inbox ×3, credentials ×1,
-# processing-store ×4) over the preview PostgreSQL. node-pg-migrate bundles
-# jiti, so the checked-in .ts migrations load without a separate TS runtime.
+# Runs every repository migration package over the preview PostgreSQL.
+# node-pg-migrate bundles jiti, so the checked-in .ts migrations load without
+# a separate TS runtime.
 FROM node:24.18.0-slim
 
 ENV PNPM_HOME=/pnpm

@@ -110,7 +110,7 @@ git commit -m "feat(contract): add email verification resend command"
 
 **Files:**
 
-- Create: `packages/platform-identity/migrations/1786665600000_email-verification-resend-and-outbox-reliability.ts`
+- Create: `packages/platform-identity/migrations/1897000000002_email-verification-resend-and-outbox-reliability.ts`（实施时按已冻结的生产迁移基线单调编号）
 - Modify: `packages/platform-identity/src/repositories/accounts.ts`
 - Modify: `packages/platform-identity/src/repositories/intents.ts`
 - Modify: `packages/platform-identity/src/repositories/outbox.ts`

@@ -16,8 +16,7 @@ export const up = (pgm: MigrationBuilder): void => {
     provider_request_id: { type: 'text' },
   });
   pgm.addConstraint('outbox', 'ck_outbox_status', {
-    check:
-      "status IN ('pending','processing','succeeded','failed','dead_lettered','superseded')",
+    check: "status IN ('pending','processing','succeeded','failed','dead_lettered','superseded')",
   });
   pgm.createIndex('outbox', ['status', 'available_at', 'outbox_id'], {
     name: 'outbox_claimable_idx',
