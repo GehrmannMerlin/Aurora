@@ -3,7 +3,7 @@ title: Aurora 单主机部署（Provider-Neutral Single-Host）
 status: approved
 owner: operations
 created: 2026-08-08
-last-reviewed: 2026-08-13
+last-reviewed: 2026-08-15
 applies-to: Aurora 临时公网预览桥接——现有阿里云单主机、Docker Compose、共享 nginx 边缘、固定 HTTPS 域名
 related:
   - ../../AGENTS.md
@@ -99,7 +99,7 @@ Docker Compose 编排真实存在的：
 | 服务               | 镜像             | 公网端口 | 说明                                                                             |
 | ------------------ | ---------------- | -------- | -------------------------------------------------------------------------------- |
 | `postgres`         | PostgreSQL 17.10 | 无       | named volume、private network、healthcheck                                       |
-| `migrate`          | 单次执行         | 无       | 合并正式 Migration 并执行（inbox×3 + credentials×1 + processing-store×4）        |
+| `migrate`          | 单次执行         | 无       | 动态发现并合并全部 workspace Migration；同一 advisory lock 内校验账本后执行      |
 | `ingestion-api`    | 多阶段构建       | 无       | 只经共享 Lumina nginx 反代；加入 `aurora-preview` 与 `lumina-prod-internal` 网络 |
 | `ingestion-worker` | 多阶段构建       | 无       | 无公网端口                                                                       |
 

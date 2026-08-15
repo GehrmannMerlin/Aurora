@@ -49,6 +49,7 @@ describe('root Workspace contract', () => {
       'release:version',
       'test',
       'test:coverage',
+      'test:preview-migrations',
       'typecheck',
     ]);
   });

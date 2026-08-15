@@ -52,8 +52,34 @@ test('rejects a backdated migration added after the production baseline', () => 
         [...sourceFiles, '1786665600000_email-verification-resend-and-outbox-reliability.ts'],
         [...LEGACY_PRODUCTION_ORDER],
       ),
-    /sorts before the frozen production baseline/u,
+    /frozen production baseline/u,
   );
+});
+
+test('rejects a future migration that reuses the frozen maximum timestamp', () => {
+  assert.throws(
+    () =>
+      analyzeMigrationOrder(
+        [...sourceFiles, '1897000000001_z-after-notifications.ts'],
+        [...LEGACY_PRODUCTION_ORDER],
+      ),
+    /timestamp must be strictly greater than the frozen production baseline/u,
+  );
+});
+
+test('rejects duplicate timestamps among future migrations', () => {
+  assert.throws(
+    () =>
+      analyzeMigrationOrder(
+        [...sourceFiles, '1897000000002_future-a.ts', '1897000000002_future-b.ts'],
+        [...LEGACY_PRODUCTION_ORDER],
+      ),
+    /duplicate future migration timestamp/u,
+  );
+});
+
+test('matches node-pg-migrate punctuation-insensitive tie ordering', () => {
+  assert.equal(compareMigrationNames('1897000000002_a-b', '1897000000002_ab'), 0);
 });
 
 test('rejects missing, duplicate, and unknown ledger entries', () => {

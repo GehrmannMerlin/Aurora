@@ -21,7 +21,7 @@
 
 - `postgres`：PostgreSQL 17，named volume，private network，无公网端口；
 - `redis`：ADR-030 Session 权威存储，内存态（`appendonly no`），仅 private network，无公网端口；重启会清空 Session（预览桥接可接受）；
-- `migrate`：一次性执行全部正式 Migration（ingestion ×8 + platform ×6，共 14 个）；
+- `migrate`：动态发现 `apps/*`、`packages/*`、`tooling/*` 下的全部正式 Migration；执行前在同一 advisory lock 内校验冻结生产账本与严格单调的新迁移；
 - `ingestion-api`：经共享 Lumina nginx 边缘反代（`ingest.aurora.ah.cn`）；
 - `ingestion-worker`：无公网端口，私有网络消费 Inbox；
 - `platform-api`：G10 平台 HTTP 服务（`/api/platform/v1/...`），与 Console 同源经共享 Lumina nginx 边缘反代，无公网端口；

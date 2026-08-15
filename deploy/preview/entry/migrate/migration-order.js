@@ -45,7 +45,12 @@ export function compareMigrationNames(left, right) {
   const rightTimestamp = timestampOf(right);
   if (leftTimestamp < rightTimestamp) return -1;
   if (leftTimestamp > rightTimestamp) return 1;
-  return left.localeCompare(right, 'en', { numeric: true });
+  return left.localeCompare(right, undefined, {
+    usage: 'sort',
+    numeric: true,
+    sensitivity: 'variant',
+    ignorePunctuation: true,
+  });
 }
 
 function assertUnique(names, label) {
@@ -95,14 +100,23 @@ export function analyzeMigrationOrder(sourceFilenames, executedNames) {
     }
   }
 
-  const legacyMax = LEGACY_PRODUCTION_ORDER.reduce((current, name) =>
-    compareMigrationNames(name, current) > 0 ? name : current,
-  );
+  const legacyMaxTimestamp = LEGACY_PRODUCTION_ORDER.reduce((current, name) => {
+    const timestamp = timestampOf(name);
+    return timestamp > current ? timestamp : current;
+  }, 0n);
   const futureNames = globallySorted.filter((name) => !LEGACY_PRODUCTION_ORDER.includes(name));
+  const futureTimestamps = new Set();
   for (const name of futureNames) {
-    if (compareMigrationNames(name, legacyMax) <= 0) {
-      throw new Error(`new migration sorts before the frozen production baseline: ${name}`);
+    const timestamp = timestampOf(name);
+    if (timestamp <= legacyMaxTimestamp) {
+      throw new Error(
+        `new migration timestamp must be strictly greater than the frozen production baseline: ${name}`,
+      );
     }
+    if (futureTimestamps.has(timestamp)) {
+      throw new Error(`duplicate future migration timestamp: ${name}`);
+    }
+    futureTimestamps.add(timestamp);
   }
 
   const executedFuture = executedNames.slice(LEGACY_PRODUCTION_ORDER.length);
