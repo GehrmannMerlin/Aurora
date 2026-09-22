@@ -303,6 +303,7 @@ describeDb('platform domain route coverage (real PostgreSQL 17)', () => {
     const malformedCommands: readonly {
       method: 'PATCH' | 'POST';
       url: string;
+      body?: unknown;
     }[] = [
       { method: 'PATCH', url: `${projectPath}/settings` },
       { method: 'POST', url: `${projectPath}/settings/environments` },
@@ -337,10 +338,12 @@ describeDb('platform domain route coverage (real PostgreSQL 17)', () => {
       {
         method: 'POST',
         url: `/api/platform/v1/organizations/${owner.organizationId}/invitations/${invitationId}/revoke`,
+        body: { idempotencyKey: 42 },
       },
       {
         method: 'POST',
         url: `/api/platform/v1/organizations/${owner.organizationId}/invitations/${invitationId}/resend`,
+        body: { idempotencyKey: 42 },
       },
       {
         method: 'POST',
@@ -374,7 +377,7 @@ describeDb('platform domain route coverage (real PostgreSQL 17)', () => {
     ];
 
     for (const command of malformedCommands) {
-      const response = await request(command.method, command.url, owner, {});
+      const response = await request(command.method, command.url, owner, command.body ?? {});
       expect(response.statusCode, `${command.method} ${command.url}`).toBe(400);
     }
   });
