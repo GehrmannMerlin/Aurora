@@ -295,6 +295,8 @@ describeDb('platform domain route coverage (real PostgreSQL 17)', () => {
     const projectPath = `/api/platform/v1/organizations/${owner.organizationId}/projects/${projectId}`;
     const accountId = randomUUID();
     const keyId = randomUUID();
+    const issueId = '1';
+    const noteId = '1';
     const malformedCommands: readonly {
       method: 'PATCH' | 'POST';
       url: string;
@@ -314,6 +316,15 @@ describeDb('platform domain route coverage (real PostgreSQL 17)', () => {
       { method: 'POST', url: `${projectPath}/source-maps` },
       { method: 'POST', url: `${projectPath}/releases/1/reparse` },
       { method: 'POST', url: `${projectPath}/releases/1/source-maps/1/replace` },
+      // Issue lifecycle commands must reject malformed bodies at the public
+      // contract boundary before authorization or database access.
+      { method: 'POST', url: `${projectPath}/issues/${issueId}/state` },
+      { method: 'POST', url: `${projectPath}/issues/${issueId}/assignee` },
+      { method: 'POST', url: `${projectPath}/issues/${issueId}/priority` },
+      { method: 'POST', url: `${projectPath}/issues/${issueId}/notes` },
+      { method: 'POST', url: `${projectPath}/issues/${issueId}/notes/${noteId}/delete` },
+      { method: 'POST', url: `${projectPath}/issues/${issueId}/merge` },
+      { method: 'POST', url: `${projectPath}/issues/batch` },
     ];
 
     for (const command of malformedCommands) {
