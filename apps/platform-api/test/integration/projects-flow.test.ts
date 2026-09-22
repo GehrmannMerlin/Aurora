@@ -309,6 +309,38 @@ describeDb('B2 create-project flow (real PostgreSQL 17 + in-memory session autho
     await app.close();
   });
 
+  it('falls back to the personal workspace when an account has no organization memberships', async () => {
+    const app = buildApp();
+    const owner = await registerActor(app, `owner-${randomUUID()}@example.com`);
+
+    await pool.query('DELETE FROM organization_members WHERE account_id = $1', [owner.accountId]);
+
+    const response = await app.inject({
+      method: 'GET',
+      url: '/api/platform/v1/navigation/context',
+      headers: { cookie: `aurora_session=${owner.cookie}` },
+    });
+
+    expect(response.statusCode).toBe(200);
+    const body = response.json<{
+      organizations: readonly unknown[];
+      currentScope: { type: string; id?: string; lifecycle: string };
+      defaultTarget: {
+        routeId: string;
+        pathParams: Record<string, string>;
+        query: Record<string, string>;
+      };
+    }>();
+    expect(body.organizations).toEqual([]);
+    expect(body.currentScope).toEqual({ type: 'workspace', lifecycle: 'active' });
+    expect(body.defaultTarget).toEqual({
+      routeId: 'workspace.home',
+      pathParams: {},
+      query: {},
+    });
+    await app.close();
+  });
+
   it('rejects the same idempotency key with a different request (409 idempotency_conflict)', async () => {
     const app = buildApp();
     const owner = await registerActor(app, `owner-${randomUUID()}@example.com`);
