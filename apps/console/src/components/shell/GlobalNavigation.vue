@@ -64,6 +64,7 @@ function handleWorkspace(): void {
     class="au-global-navigation"
     :class="{ 'au-global-navigation--expanded': props.expanded }"
     aria-label="全局导航"
+    :data-navigation-status="navigation.status"
   >
     <ul>
       <li v-for="item in items" :key="item.routeId">

@@ -17,6 +17,7 @@ import {
   createTestPool,
   queryRow,
   queryRows,
+  resetProcessingStoreSchema,
   testDatabaseUrl,
 } from './helpers.js';
 
@@ -82,6 +83,7 @@ describeDb('processing-store issue lifecycle repositories (real PostgreSQL 17)',
     await pool.query('DROP TABLE IF EXISTS performance_metric_buckets CASCADE');
     await pool.query('DROP TABLE IF EXISTS performance_event_samples CASCADE');
     await pool.query('DROP TABLE IF EXISTS pgmigrations CASCADE');
+    await resetProcessingStoreSchema(pool);
     await runner({
       databaseUrl: testDatabaseUrl(),
       dir: migrationsDir,
@@ -99,7 +101,7 @@ describeDb('processing-store issue lifecycle repositories (real PostgreSQL 17)',
   });
 
   it('transitions status, auto-assigns on start-processing, and writes activity', async () => {
-    const issueId = await seedIssue(pool,'lifecycle-auto-assign');
+    const issueId = await seedIssue(pool, 'lifecycle-auto-assign');
     await client.query('BEGIN');
     const result = await updateIssueState(client, {
       issueId,
@@ -125,7 +127,7 @@ describeDb('processing-store issue lifecycle repositories (real PostgreSQL 17)',
   });
 
   it('rejects an invalid transition', async () => {
-    const issueId = await seedIssue(pool,'lifecycle-invalid-transition');
+    const issueId = await seedIssue(pool, 'lifecycle-invalid-transition');
     await client.query('BEGIN');
     await updateIssueState(client, {
       issueId,
@@ -147,7 +149,7 @@ describeDb('processing-store issue lifecycle repositories (real PostgreSQL 17)',
   });
 
   it('returns conflict on stale version', async () => {
-    const issueId = await seedIssue(pool,'lifecycle-conflict');
+    const issueId = await seedIssue(pool, 'lifecycle-conflict');
     await client.query('BEGIN');
     const first = await updateIssueState(client, {
       issueId,
@@ -169,7 +171,7 @@ describeDb('processing-store issue lifecycle repositories (real PostgreSQL 17)',
   });
 
   it('updates assignee and priority and records activity', async () => {
-    const issueId = await seedIssue(pool,'lifecycle-assign-priority');
+    const issueId = await seedIssue(pool, 'lifecycle-assign-priority');
     await client.query('BEGIN');
     const assign = await updateIssueAssignee(client, {
       issueId,
@@ -186,7 +188,8 @@ describeDb('processing-store issue lifecycle repositories (real PostgreSQL 17)',
       actorAccountId: ACTOR,
     });
     await client.query('COMMIT');
-    expect(assign).toEqual({ status: 'succeeded', issueId });
+    expect(assign).toMatchObject({ status: 'succeeded', issueId });
+    expect(assign).toHaveProperty('previousAssigneeAccountId', null);
     expect(priority).toEqual({ status: 'succeeded', issueId });
     const issue = await getIssue(client, issueId);
     expect(issue?.assignee_account_id).toBe(ASSIGNEE);
@@ -194,7 +197,7 @@ describeDb('processing-store issue lifecycle repositories (real PostgreSQL 17)',
   });
 
   it('creates and soft-deletes a member note', async () => {
-    const issueId = await seedIssue(pool,'lifecycle-notes');
+    const issueId = await seedIssue(pool, 'lifecycle-notes');
     await client.query('BEGIN');
     const created = await createIssueNote(client, {
       issueId,
@@ -227,7 +230,7 @@ describeDb('processing-store issue lifecycle repositories (real PostgreSQL 17)',
   });
 
   it('does not let a non-author delete another member note', async () => {
-    const issueId = await seedIssue(pool,'lifecycle-note-perm');
+    const issueId = await seedIssue(pool, 'lifecycle-note-perm');
     await client.query('BEGIN');
     await createIssueNote(client, {
       issueId,
@@ -252,8 +255,8 @@ describeDb('processing-store issue lifecycle repositories (real PostgreSQL 17)',
   });
 
   it('merges issue counts into the primary and marks the source merged', async () => {
-    const sourceId = await seedIssue(pool,'lifecycle-merge-source', '2026-08-10T00:00:00.000Z');
-    const primaryId = await seedIssue(pool,'lifecycle-merge-primary', '2026-08-10T01:00:00.000Z');
+    const sourceId = await seedIssue(pool, 'lifecycle-merge-source', '2026-08-10T00:00:00.000Z');
+    const primaryId = await seedIssue(pool, 'lifecycle-merge-primary', '2026-08-10T01:00:00.000Z');
     await client.query('BEGIN');
     const merged = await mergeIssues(client, {
       issueId: sourceId,
@@ -272,8 +275,8 @@ describeDb('processing-store issue lifecycle repositories (real PostgreSQL 17)',
   });
 
   it('batch updates return per-item partial results', async () => {
-    const a = await seedIssue(pool,'lifecycle-batch-a');
-    const b = await seedIssue(pool,'lifecycle-batch-b');
+    const a = await seedIssue(pool, 'lifecycle-batch-a');
+    const b = await seedIssue(pool, 'lifecycle-batch-b');
     await client.query('BEGIN');
     const result = await batchUpdateIssues(client, {
       projectId: PROJECT,

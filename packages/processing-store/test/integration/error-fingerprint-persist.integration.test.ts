@@ -8,6 +8,7 @@ import {
   assertIsTestDatabase,
   createTestPool,
   queryRow,
+  resetProcessingStoreSchema,
   testDatabaseUrl,
 } from './helpers.js';
 
@@ -55,6 +56,7 @@ describeDb('processing-store error fingerprint persistence (real PostgreSQL 17)'
     await pool.query('DROP TABLE IF EXISTS performance_metric_buckets CASCADE');
     await pool.query('DROP TABLE IF EXISTS performance_event_samples CASCADE');
     await pool.query('DROP TABLE IF EXISTS pgmigrations CASCADE');
+    await resetProcessingStoreSchema(pool);
     await runner({
       databaseUrl: testDatabaseUrl(),
       dir: migrationsDir,
@@ -94,7 +96,10 @@ describeDb('processing-store error fingerprint persistence (real PostgreSQL 17)'
 
   it('stores the processor-passed fingerprint verbatim when provided', async () => {
     const eventId = 'evt-fp-0002';
-    const body = { category: 'javascript', error: { message: 'boom', stack: 'at f (https://cdn.test/app.js:7:3)' } };
+    const body = {
+      category: 'javascript',
+      error: { message: 'boom', stack: 'at f (https://cdn.test/app.js:7:3)' },
+    };
     const passed = computeErrorFingerprint({
       projectId: PROJECT_A,
       body: body as Parameters<typeof computeErrorFingerprint>[0]['body'],
@@ -119,7 +124,11 @@ describeDb('processing-store error fingerprint persistence (real PostgreSQL 17)'
   it('rejects an invalid passed fingerprint as invalid_input', async () => {
     const result = await persistErrorEventOccurrence(pool, {
       projectId: PROJECT_A,
-      eventEnvelope: envelope('evt-fp-0003', { category: 'javascript', error: { message: 'x' } }, 1800000004301),
+      eventEnvelope: envelope(
+        'evt-fp-0003',
+        { category: 'javascript', error: { message: 'x' } },
+        1800000004301,
+      ),
       fingerprint: '',
     });
     expect(result.status).toBe('invalid_input');

@@ -8,6 +8,7 @@ import {
   createTestPool,
   queryRow,
   queryRows,
+  resetProcessingStoreSchema,
   testDatabaseUrl,
 } from './helpers.js';
 
@@ -73,6 +74,7 @@ describeDb('processing-store issue aggregate contribution (real PostgreSQL 17)',
     await pool.query('DROP TABLE IF EXISTS error_occurrence_symbolizations CASCADE');
     await pool.query('DROP TABLE IF EXISTS notifications CASCADE');
     await pool.query('DROP TABLE IF EXISTS pgmigrations CASCADE');
+    await resetProcessingStoreSchema(pool);
     await runner({
       databaseUrl: testDatabaseUrl(),
       dir: migrationsDir,
@@ -88,10 +90,15 @@ describeDb('processing-store issue aggregate contribution (real PostgreSQL 17)',
   });
 
   it('first occurrence creates the Issue with count 1 and a first sample', async () => {
-    const result = await persistIssueContribution(pool, contribution('evt-issue-1', '2026-08-10T00:00:00.000Z'));
+    const result = await persistIssueContribution(
+      pool,
+      contribution('evt-issue-1', '2026-08-10T00:00:00.000Z'),
+    );
     expect(result.status).toBe('inserted');
 
-    const issue = await queryRow<IssueRow>(pool, `SELECT * FROM issues WHERE project_id = $1`, [PROJECT_A]);
+    const issue = await queryRow<IssueRow>(pool, `SELECT * FROM issues WHERE project_id = $1`, [
+      PROJECT_A,
+    ]);
     expect(issue?.occurrence_count).toBe('1');
     expect(issue?.sample_count).toBe(1);
     expect(new Date(issue?.first_seen_at ?? '').getTime()).toBe(
@@ -108,14 +115,19 @@ describeDb('processing-store issue aggregate contribution (real PostgreSQL 17)',
   });
 
   it('repeated distinct occurrences aggregate and keep first_seen stable', async () => {
-    await persistIssueContribution(pool, contribution('evt-issue-2a', '2026-08-10T00:00:00.000Z', 'boom'));
+    await persistIssueContribution(
+      pool,
+      contribution('evt-issue-2a', '2026-08-10T00:00:00.000Z', 'boom'),
+    );
     const applied = await persistIssueContribution(
       pool,
       contribution('evt-issue-2b', '2026-08-10T00:01:00.000Z', 'boom'),
     );
     expect(applied).toEqual({ status: 'applied' });
 
-    const issue = await queryRow<IssueRow>(pool, `SELECT * FROM issues WHERE project_id = $1`, [PROJECT_A]);
+    const issue = await queryRow<IssueRow>(pool, `SELECT * FROM issues WHERE project_id = $1`, [
+      PROJECT_A,
+    ]);
     expect(issue?.occurrence_count).toBe('3');
     expect(new Date(issue?.first_seen_at ?? '').toISOString()).toBe('2026-08-10T00:00:00.000Z');
   });
@@ -140,10 +152,18 @@ describeDb('processing-store issue aggregate contribution (real PostgreSQL 17)',
   });
 
   it('keeps last_seen monotonic under out-of-order processing', async () => {
-    await persistIssueContribution(pool, contribution('evt-issue-3a', '2026-08-10T00:10:00.000Z', 'boom'));
+    await persistIssueContribution(
+      pool,
+      contribution('evt-issue-3a', '2026-08-10T00:10:00.000Z', 'boom'),
+    );
     // An older occurredAt processed later must not regress last_seen_at.
-    await persistIssueContribution(pool, contribution('evt-issue-3b', '2026-08-10T00:05:00.000Z', 'boom'));
-    const issue = await queryRow<IssueRow>(pool, `SELECT * FROM issues WHERE project_id = $1`, [PROJECT_A]);
+    await persistIssueContribution(
+      pool,
+      contribution('evt-issue-3b', '2026-08-10T00:05:00.000Z', 'boom'),
+    );
+    const issue = await queryRow<IssueRow>(pool, `SELECT * FROM issues WHERE project_id = $1`, [
+      PROJECT_A,
+    ]);
     expect(new Date(issue?.last_seen_at ?? '').toISOString()).toBe('2026-08-10T00:10:00.000Z');
   });
 
@@ -156,7 +176,9 @@ describeDb('processing-store issue aggregate contribution (real PostgreSQL 17)',
         contribution(`evt-issue-b-${padded}`, `2026-08-10T01:00:${padded}.000Z`, 'boom'),
       );
     }
-    const issue = await queryRow<IssueRow>(pool, `SELECT * FROM issues WHERE project_id = $1`, [PROJECT_A]);
+    const issue = await queryRow<IssueRow>(pool, `SELECT * FROM issues WHERE project_id = $1`, [
+      PROJECT_A,
+    ]);
     expect(Number(issue?.sample_count)).toBeLessThanOrEqual(100);
     const firstStillThere = await queryRow<{ count: string }>(
       pool,
@@ -186,7 +208,10 @@ describeDb('processing-store issue aggregate contribution (real PostgreSQL 17)',
   });
 
   it('reopens a resolved issue on a later by_time event and bumps version', async () => {
-    await persistIssueContribution(pool, contribution('evt-issue-r1', '2026-08-10T03:00:00.000Z', 'reopen-me'));
+    await persistIssueContribution(
+      pool,
+      contribution('evt-issue-r1', '2026-08-10T03:00:00.000Z', 'reopen-me'),
+    );
     await pool.query(
       `UPDATE issues SET status = 'resolved', resolved_at = '2026-08-10T03:01:00.000Z', resolved_reason = 'by_time'
         WHERE project_id = $1 AND fingerprint = 'v1|javascript|TypeError|reopen-me'`,
@@ -239,7 +264,9 @@ describeDb('processing-store issue aggregate contribution (real PostgreSQL 17)',
        VALUES ($1, $2, 'kind-reappeared', '2026-08-10T10:00:00.500Z'::timestamptz, '{"category":"javascript","error":{"message":"kind-match"}}'::jsonb, 'reappeared')`,
       [issueId, PROJECT_A],
     );
-    await pool.query(`UPDATE issues SET sample_count = 100, occurrence_count = 100 WHERE id = $1`, [issueId]);
+    await pool.query(`UPDATE issues SET sample_count = 100, occurrence_count = 100 WHERE id = $1`, [
+      issueId,
+    ]);
 
     await persistIssueContribution(
       pool,
@@ -267,7 +294,10 @@ describeDb('processing-store issue aggregate contribution (real PostgreSQL 17)',
   });
 
   it('does not reopen when a resolved by_time event arrives before resolved_at', async () => {
-    await persistIssueContribution(pool, contribution('evt-issue-r3', '2026-08-10T05:00:00.000Z', 'reopen-late'));
+    await persistIssueContribution(
+      pool,
+      contribution('evt-issue-r3', '2026-08-10T05:00:00.000Z', 'reopen-late'),
+    );
     await pool.query(
       `UPDATE issues SET status = 'resolved', resolved_at = '2026-08-10T05:00:30.000Z', resolved_reason = 'by_time'
         WHERE project_id = $1 AND fingerprint = 'v1|javascript|TypeError|reopen-late'`,

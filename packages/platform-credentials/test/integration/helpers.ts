@@ -26,6 +26,7 @@ const CREDENTIALS_TABLES_DROP_ORDER = ['private_tokens'];
 
 /** The PLT-03 tables, in FK-safe drop order (same as the PLT-03 down migration). */
 const IDENTITY_TABLES_DROP_ORDER = [
+  'account_cleanup_steps',
   'outbox',
   'idempotency_records',
   'security_audit_events',

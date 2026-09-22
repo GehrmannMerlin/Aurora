@@ -13,6 +13,7 @@ import {
   createTestPool,
   queryRow,
   queryRows,
+  resetProcessingStoreSchema,
   testDatabaseUrl,
 } from './helpers.js';
 
@@ -71,6 +72,7 @@ describeDb('processing-store performance metric aggregation (real PostgreSQL 17)
     await pool.query('DROP TABLE IF EXISTS issue_event_applications CASCADE');
     await pool.query('DROP TABLE IF EXISTS issues CASCADE');
     await pool.query('DROP TABLE IF EXISTS pgmigrations CASCADE');
+    await resetProcessingStoreSchema(pool);
     await runner({
       databaseUrl: testDatabaseUrl(),
       dir: migrationsDir,
@@ -86,7 +88,10 @@ describeDb('processing-store performance metric aggregation (real PostgreSQL 17)
   });
 
   it('applies a first contribution and increments observed_count/sum/max', async () => {
-    const result = await persistPerformanceMetricContribution(pool, contribution({ eventId: 'evt-perf-first' }));
+    const result = await persistPerformanceMetricContribution(
+      pool,
+      contribution({ eventId: 'evt-perf-first' }),
+    );
     expect(result).toEqual({ status: 'applied' });
     const row = await queryRow<BucketRow>(
       pool,
@@ -101,8 +106,14 @@ describeDb('processing-store performance metric aggregation (real PostgreSQL 17)
   });
 
   it('accumulates value_sum and takes value_max across events', async () => {
-    await persistPerformanceMetricContribution(pool, contribution({ eventId: 'evt-perf-v1', value: 1000 }));
-    await persistPerformanceMetricContribution(pool, contribution({ eventId: 'evt-perf-v2', value: 3200 }));
+    await persistPerformanceMetricContribution(
+      pool,
+      contribution({ eventId: 'evt-perf-v1', value: 1000 }),
+    );
+    await persistPerformanceMetricContribution(
+      pool,
+      contribution({ eventId: 'evt-perf-v2', value: 3200 }),
+    );
     const row = await queryRow<BucketRow>(
       pool,
       `SELECT * FROM performance_metric_buckets WHERE project_id = '${projectA}' AND metric_name = 'lcp' AND unit = 'millisecond'`,
@@ -118,7 +129,10 @@ describeDb('processing-store performance metric aggregation (real PostgreSQL 17)
       pool,
       `SELECT * FROM performance_metric_buckets WHERE project_id = '${projectA}' AND metric_name = 'lcp' AND unit = 'millisecond'`,
     );
-    const result = await persistPerformanceMetricContribution(pool, contribution({ eventId: 'evt-perf-v1', value: 1000 }));
+    const result = await persistPerformanceMetricContribution(
+      pool,
+      contribution({ eventId: 'evt-perf-v1', value: 1000 }),
+    );
     expect(result).toEqual({ status: 'duplicate' });
     const after = await queryRow<BucketRow>(
       pool,
@@ -150,7 +164,13 @@ describeDb('processing-store performance metric aggregation (real PostgreSQL 17)
   it('does not merge different projects into the same bucket', async () => {
     await persistPerformanceMetricContribution(
       pool,
-      contribution({ projectId: projectB, eventId: 'evt-perf-proj-b', metricName: 'inp', unit: 'millisecond', value: 100 }),
+      contribution({
+        projectId: projectB,
+        eventId: 'evt-perf-proj-b',
+        metricName: 'inp',
+        unit: 'millisecond',
+        value: 100,
+      }),
     );
     const rows = await queryRows<BucketRow>(
       pool,
@@ -163,7 +183,14 @@ describeDb('processing-store performance metric aggregation (real PostgreSQL 17)
   it('does not merge across UTC minutes', async () => {
     await persistPerformanceMetricContribution(
       pool,
-      contribution({ projectId: projectB, eventId: 'evt-perf-min2', occurredAt: 1_800_000_060_000, metricName: 'inp', unit: 'millisecond', value: 200 }),
+      contribution({
+        projectId: projectB,
+        eventId: 'evt-perf-min2',
+        occurredAt: 1_800_000_060_000,
+        metricName: 'inp',
+        unit: 'millisecond',
+        value: 200,
+      }),
     );
     const rows = await queryRows<BucketRow>(
       pool,
@@ -178,7 +205,10 @@ describeDb('processing-store performance metric aggregation (real PostgreSQL 17)
   });
 
   it('rejects an invalid value without registering or writing a bucket', async () => {
-    const result = await persistPerformanceMetricContribution(pool, contribution({ eventId: 'evt-perf-bad', value: -5 }));
+    const result = await persistPerformanceMetricContribution(
+      pool,
+      contribution({ eventId: 'evt-perf-bad', value: -5 }),
+    );
     expect(result.status).toBe('invalid_input');
     const apps = await queryRows<ApplicationRow>(
       pool,
@@ -226,7 +256,14 @@ describeDb('processing-store performance metric aggregation (real PostgreSQL 17)
         eventId: 'evt-sample-perf-regress',
         eventType: 'request',
         occurredAt: 1_800_000_054_000,
-        body: { method: 'GET', url: 'https://api.example.test/orders', startedAt: 1_800_000_054_000, durationMs: 120, outcome: 'success', statusCode: 200 },
+        body: {
+          method: 'GET',
+          url: 'https://api.example.test/orders',
+          startedAt: 1_800_000_054_000,
+          durationMs: 120,
+          outcome: 'success',
+          statusCode: 200,
+        },
       },
     });
     expect(sampleResult.status).toBe('inserted');

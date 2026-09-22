@@ -129,9 +129,9 @@ function toFileSummary(file: SourceMapFileRow): Record<string, unknown> {
     status: file.status,
     reparse: {
       state: file.reparse.state ?? 'queued',
-      processedCount: file.reparse.processedCount,
-      totalCount: file.reparse.totalCount,
-      updatedAt: file.reparse.updatedAt === null ? undefined : file.reparse.updatedAt.toISOString(),
+      processedCount: file.reparse.processedCount ?? undefined,
+      totalCount: file.reparse.totalCount ?? undefined,
+      updatedAt: file.reparse.updatedAt?.toISOString(),
     },
     uploadedAt: file.uploadedAt.toISOString(),
     replacedAt: file.replacedAt === null ? undefined : file.replacedAt.toISOString(),

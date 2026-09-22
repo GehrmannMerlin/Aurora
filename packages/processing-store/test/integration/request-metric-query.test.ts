@@ -12,6 +12,7 @@ import { decodeEndpointCursor, endpointIdOf } from '../../src/request-metric-que
 import {
   assertIsTestDatabase,
   createTestPool,
+  resetProcessingStoreSchema,
   testDatabaseUrl,
 } from './helpers.js';
 
@@ -105,6 +106,7 @@ describeDb('processing-store request metric query repositories (real PostgreSQL 
     await pool.query('DROP TABLE IF EXISTS performance_metric_buckets CASCADE');
     await pool.query('DROP TABLE IF EXISTS performance_event_samples CASCADE');
     await pool.query('DROP TABLE IF EXISTS pgmigrations CASCADE');
+    await resetProcessingStoreSchema(pool);
     await runner({
       databaseUrl: testDatabaseUrl(),
       dir: migrationsDir,
@@ -155,11 +157,22 @@ describeDb('processing-store request metric query repositories (real PostgreSQL 
   it('aggregates failure and slow counts and their durations', async () => {
     await persistRequestMetricContribution(
       pool,
-      contribution({ eventId: 'q-get-fail', outcome: 'network_error', durationMs: 500, isFailure: true }),
+      contribution({
+        eventId: 'q-get-fail',
+        outcome: 'network_error',
+        durationMs: 500,
+        isFailure: true,
+      }),
     );
     await persistRequestMetricContribution(
       pool,
-      contribution({ eventId: 'q-post-slow', method: 'POST', outcome: 'timeout', durationMs: 5000, isSlow: true }),
+      contribution({
+        eventId: 'q-post-slow',
+        method: 'POST',
+        outcome: 'timeout',
+        durationMs: 5000,
+        isSlow: true,
+      }),
     );
 
     const summary = await queryRequestMetricSummary(pool, { projectId: projectA, ...WINDOW });
@@ -208,7 +221,14 @@ describeDb('processing-store request metric query repositories (real PostgreSQL 
       requestSample(
         projectA,
         'q-smp-1',
-        { method: 'GET', url: ORDERS_URL, startedAt: 1_800_000_054_000, durationMs: 120, outcome: 'success', statusCode: 200 },
+        {
+          method: 'GET',
+          url: ORDERS_URL,
+          startedAt: 1_800_000_054_000,
+          durationMs: 120,
+          outcome: 'success',
+          statusCode: 200,
+        },
         1_800_000_054_000,
       ),
     );
@@ -217,7 +237,14 @@ describeDb('processing-store request metric query repositories (real PostgreSQL 
       requestSample(
         projectA,
         'q-smp-2',
-        { method: 'GET', url: ORDERS_URL, startedAt: 1_800_000_054_500, durationMs: 130, outcome: 'success', statusCode: 200 },
+        {
+          method: 'GET',
+          url: ORDERS_URL,
+          startedAt: 1_800_000_054_500,
+          durationMs: 130,
+          outcome: 'success',
+          statusCode: 200,
+        },
         1_800_000_054_500,
       ),
     );
@@ -226,12 +253,22 @@ describeDb('processing-store request metric query repositories (real PostgreSQL 
       requestSample(
         projectA,
         'q-smp-3',
-        { method: 'POST', url: PAYMENTS_URL, startedAt: 1_800_000_054_100, durationMs: 5000, outcome: 'timeout' },
+        {
+          method: 'POST',
+          url: PAYMENTS_URL,
+          startedAt: 1_800_000_054_100,
+          durationMs: 5000,
+          outcome: 'timeout',
+        },
         1_800_000_054_100,
       ),
     );
 
-    const page = await queryRequestEndpointPage(pool, { projectId: projectA, ...WINDOW, limit: 50 });
+    const page = await queryRequestEndpointPage(pool, {
+      projectId: projectA,
+      ...WINDOW,
+      limit: 50,
+    });
     expect(page.totalCount).toBe(2);
     expect(page.nextCursor).toBeNull();
     expect(page.items).toHaveLength(2);
@@ -256,7 +293,11 @@ describeDb('processing-store request metric query repositories (real PostgreSQL 
   });
 
   it('paginates endpoints via a (method, url) keyset cursor', async () => {
-    const first = await queryRequestEndpointPage(pool, { projectId: projectA, ...WINDOW, limit: 1 });
+    const first = await queryRequestEndpointPage(pool, {
+      projectId: projectA,
+      ...WINDOW,
+      limit: 1,
+    });
     expect(first.items).toHaveLength(1);
     expect(first.items[0]?.url).toBe(ORDERS_URL);
     expect(first.totalCount).toBe(2);
@@ -286,12 +327,23 @@ describeDb('processing-store request metric query repositories (real PostgreSQL 
       requestSample(
         projectA,
         'q-smp-4',
-        { method: 'GET', url: ORDERS_URL, startedAt: 1_800_000_055_000, durationMs: 90, outcome: 'http_error', statusCode: 500 },
+        {
+          method: 'GET',
+          url: ORDERS_URL,
+          startedAt: 1_800_000_055_000,
+          durationMs: 90,
+          outcome: 'http_error',
+          statusCode: 500,
+        },
         1_800_000_055_000,
       ),
     );
 
-    const page = await queryRequestEndpointPage(pool, { projectId: projectA, ...WINDOW, limit: 50 });
+    const page = await queryRequestEndpointPage(pool, {
+      projectId: projectA,
+      ...WINDOW,
+      limit: 50,
+    });
     const orders = page.items.find((i) => i.url === ORDERS_URL);
     expect(orders?.sampleCount).toBe(3);
     // Ordered by outcome inside the aggregate: http_error < success.
@@ -313,7 +365,11 @@ describeDb('processing-store request metric query repositories (real PostgreSQL 
     expect(empty.nextCursor).toBeNull();
     expect(empty.totalCount).toBe(0);
 
-    const isolated = await queryRequestEndpointPage(pool, { projectId: projectB, ...WINDOW, limit: 50 });
+    const isolated = await queryRequestEndpointPage(pool, {
+      projectId: projectB,
+      ...WINDOW,
+      limit: 50,
+    });
     expect(isolated.items).toEqual([]);
     expect(isolated.totalCount).toBe(0);
   });
@@ -328,7 +384,14 @@ describeDb('processing-store request metric query repositories (real PostgreSQL 
       requestSample(
         projectB,
         'q-smp-long-1',
-        { method: 'GET', url: longUrl, startedAt: 1_800_000_054_000, durationMs: 120, outcome: 'success', statusCode: 200 },
+        {
+          method: 'GET',
+          url: longUrl,
+          startedAt: 1_800_000_054_000,
+          durationMs: 120,
+          outcome: 'success',
+          statusCode: 200,
+        },
         1_800_000_054_000,
       ),
     );
@@ -337,12 +400,23 @@ describeDb('processing-store request metric query repositories (real PostgreSQL 
       requestSample(
         projectB,
         'q-smp-long-2',
-        { method: 'POST', url: longUrl, startedAt: 1_800_000_054_500, durationMs: 400, outcome: 'success', statusCode: 201 },
+        {
+          method: 'POST',
+          url: longUrl,
+          startedAt: 1_800_000_054_500,
+          durationMs: 400,
+          outcome: 'success',
+          statusCode: 201,
+        },
         1_800_000_054_500,
       ),
     );
 
-    const first = await queryRequestEndpointPage(pool, { projectId: projectB, ...WINDOW, limit: 1 });
+    const first = await queryRequestEndpointPage(pool, {
+      projectId: projectB,
+      ...WINDOW,
+      limit: 1,
+    });
     expect(first.items).toHaveLength(1);
     expect(first.totalCount).toBe(2);
     expect(first.nextCursor).not.toBeNull();

@@ -9,6 +9,7 @@ import {
 import {
   assertIsTestDatabase,
   createTestPool,
+  resetProcessingStoreSchema,
   testDatabaseUrl,
 } from './helpers.js';
 
@@ -69,6 +70,7 @@ describeDb('processing-store performance metric query repository (real PostgreSQ
     await pool.query('DROP TABLE IF EXISTS issue_event_applications CASCADE');
     await pool.query('DROP TABLE IF EXISTS issues CASCADE');
     await pool.query('DROP TABLE IF EXISTS pgmigrations CASCADE');
+    await resetProcessingStoreSchema(pool);
     await runner({
       databaseUrl: testDatabaseUrl(),
       dir: migrationsDir,
@@ -116,7 +118,12 @@ describeDb('processing-store performance metric query repository (real PostgreSQ
     );
     await persistPerformanceMetricContribution(
       pool,
-      contribution({ eventId: 'q-page-load', metricName: 'page_load', unit: 'millisecond', value: 1500 }),
+      contribution({
+        eventId: 'q-page-load',
+        metricName: 'page_load',
+        unit: 'millisecond',
+        value: 1500,
+      }),
     );
 
     const summary = await queryPerformanceMetricSummary(pool, { projectId: projectA, ...WINDOW });
@@ -148,12 +155,18 @@ describeDb('processing-store performance metric query repository (real PostgreSQ
     const beforeMs = Date.now();
     await persistPerformanceMetricContribution(
       pool,
-      contribution({ eventId: 'q-data-through', metricName: 'inp', unit: 'millisecond', value: 300 }),
+      contribution({
+        eventId: 'q-data-through',
+        metricName: 'inp',
+        unit: 'millisecond',
+        value: 300,
+      }),
     );
 
     const summary = await queryPerformanceMetricSummary(pool, { projectId: projectA, ...WINDOW });
     expect(summary.dataThrough).toMatch(rfc3339Utc);
-    const dataThroughMs = summary.dataThrough === null ? 0 : new Date(summary.dataThrough).getTime();
+    const dataThroughMs =
+      summary.dataThrough === null ? 0 : new Date(summary.dataThrough).getTime();
     expect(dataThroughMs).toBeGreaterThanOrEqual(beforeMs - 1000);
   });
 
@@ -170,7 +183,13 @@ describeDb('processing-store performance metric query repository (real PostgreSQ
   it('does not leak another project buckets into the summary', async () => {
     await persistPerformanceMetricContribution(
       pool,
-      contribution({ projectId: projectB, eventId: 'q-isolated', metricName: 'inp', unit: 'millisecond', value: 200 }),
+      contribution({
+        projectId: projectB,
+        eventId: 'q-isolated',
+        metricName: 'inp',
+        unit: 'millisecond',
+        value: 200,
+      }),
     );
 
     // projectB's inp=200 bucket must not appear in projectA's summary.

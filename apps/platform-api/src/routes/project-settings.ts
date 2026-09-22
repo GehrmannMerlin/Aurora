@@ -328,7 +328,7 @@ export async function handleListProjectEnvironments(
               items: environments.map((environment) => ({
                 environmentId: environment.environmentId,
                 name: environment.name,
-                isDefault: environment.isDefault,
+                isDefault: environment.isDefault ? 'true' : 'false',
                 createdAt: environment.createdAt,
               })),
             },

@@ -85,8 +85,9 @@ export async function listProjectEffectiveMembers(
 ): Promise<EffectiveProjectMember[]> {
   try {
     const result = await pool.query<EffectiveMemberRowShape>(
-      `SELECT om.account_id, om.email, om.role AS org_role, pm.role AS project_role
+      `SELECT om.account_id, a.email, om.role AS org_role, pm.role AS project_role
        FROM organization_members om
+       JOIN accounts a ON a.account_id = om.account_id
        LEFT JOIN project_members pm
          ON pm.project_id = $2 AND pm.account_id = om.account_id
        WHERE om.organization_id = $1
@@ -109,7 +110,7 @@ async function runChangeProjectMemberRole(
   }
   const updated = await client.query<{ account_id: string }>(
     `UPDATE project_members pm
-     SET role = $4, updated_at = now()
+     SET role = $4
      FROM projects p
      WHERE pm.project_id = p.project_id
        AND p.organization_id = $1

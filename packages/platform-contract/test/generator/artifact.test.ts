@@ -11,7 +11,9 @@ describe('generated artifact', () => {
       new URL('../../../../docs/api/platform-openapi-v1.yaml', import.meta.url),
       'utf8',
     );
-    expect(committed.replace(/^# 由契约源码生成、禁止手工修改\n/, '')).toBe(fresh);
+    expect(
+      committed.replaceAll('\r\n', '\n').replace(/^# 由契约源码生成、禁止手工修改\n/, ''),
+    ).toBe(fresh);
   });
 
   it('manifest marks platform.resource-policies stable', () => {

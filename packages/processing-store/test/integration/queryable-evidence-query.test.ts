@@ -11,6 +11,7 @@ import {
 import {
   assertIsTestDatabase,
   createTestPool,
+  resetProcessingStoreSchema,
   testDatabaseUrl,
 } from './helpers.js';
 
@@ -78,6 +79,7 @@ describeDb('processing-store queryable evidence query (real PostgreSQL 17)', () 
     await pool.query('DROP TABLE IF EXISTS performance_metric_buckets CASCADE');
     await pool.query('DROP TABLE IF EXISTS performance_event_samples CASCADE');
     await pool.query('DROP TABLE IF EXISTS pgmigrations CASCADE');
+    await resetProcessingStoreSchema(pool);
     await runner({
       databaseUrl: testDatabaseUrl(),
       dir: migrationsDir,
@@ -96,8 +98,12 @@ describeDb('processing-store queryable evidence query (real PostgreSQL 17)', () 
     await pool.query('DELETE FROM error_event_occurrences WHERE project_id = $1', [projectA]);
     await pool.query('DELETE FROM request_metric_buckets WHERE project_id = $1', [projectA]);
     await pool.query('DELETE FROM performance_metric_buckets WHERE project_id = $1', [projectA]);
-    await pool.query('DELETE FROM request_metric_event_applications WHERE project_id = $1', [projectA]);
-    await pool.query('DELETE FROM performance_metric_event_applications WHERE project_id = $1', [projectA]);
+    await pool.query('DELETE FROM request_metric_event_applications WHERE project_id = $1', [
+      projectA,
+    ]);
+    await pool.query('DELETE FROM performance_metric_event_applications WHERE project_id = $1', [
+      projectA,
+    ]);
     await seedOneOfEach(pool, projectA);
 
     const evidence = await queryProjectQueryableEvidence(pool, { projectId: projectA });
@@ -136,8 +142,12 @@ describeDb('processing-store queryable evidence query (real PostgreSQL 17)', () 
     await pool.query('DELETE FROM error_event_occurrences WHERE project_id = $1', [projectA]);
     await pool.query('DELETE FROM request_metric_buckets WHERE project_id = $1', [projectA]);
     await pool.query('DELETE FROM performance_metric_buckets WHERE project_id = $1', [projectA]);
-    await pool.query('DELETE FROM request_metric_event_applications WHERE project_id = $1', [projectA]);
-    await pool.query('DELETE FROM performance_metric_event_applications WHERE project_id = $1', [projectA]);
+    await pool.query('DELETE FROM request_metric_event_applications WHERE project_id = $1', [
+      projectA,
+    ]);
+    await pool.query('DELETE FROM performance_metric_event_applications WHERE project_id = $1', [
+      projectA,
+    ]);
     await seedOneOfEach(pool, projectA);
     await seedOneOfEach(pool, projectB);
 

@@ -11,6 +11,9 @@ const organizationMigrationsDir = fileURLToPath(
 const projectGovernanceMigrationsDir = fileURLToPath(
   new URL('../../../../packages/platform-project-governance/migrations', import.meta.url),
 );
+const releasesMigrationsDir = fileURLToPath(
+  new URL('../../../../packages/platform-releases/migrations', import.meta.url),
+);
 const credentialsMigrationsDir = fileURLToPath(
   new URL('../../../../packages/platform-credentials/migrations', import.meta.url),
 );
@@ -94,6 +97,7 @@ export async function runAllMigrations(): Promise<void> {
   await runMigrations(identityMigrationsDir);
   await runMigrations(organizationMigrationsDir);
   await runMigrations(projectGovernanceMigrationsDir);
+  await runMigrations(releasesMigrationsDir);
   await runMigrations(credentialsMigrationsDir);
   await runMigrations(auditMigrationsDir);
   await runMigrations(platformAdminMigrationsDir);

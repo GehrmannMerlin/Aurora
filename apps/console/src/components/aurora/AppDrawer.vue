@@ -3,7 +3,7 @@ import { computed } from 'vue';
 import Drawer from 'primevue/drawer';
 
 const props = defineProps<{ open: boolean; title: string }>();
-const emit = defineEmits<{ (e: 'close'): void }>();
+const emit = defineEmits<{ (e: 'close'): void; (e: 'after-hide'): void }>();
 
 const visible = computed({
   get: () => props.open,
@@ -23,6 +23,7 @@ const visible = computed({
     :aria-label="title"
     :close-button-props="{ 'aria-label': '关闭导航' }"
     :pt="{ mask: { class: 'au-navigation-drawer-mask' } }"
+    @after-hide="emit('after-hide')"
   >
     <slot />
   </Drawer>

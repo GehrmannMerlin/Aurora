@@ -2,7 +2,14 @@ import { fileURLToPath } from 'node:url';
 import { runner } from 'node-pg-migrate';
 import type { Pool } from 'pg';
 import { beforeAll, afterAll, describe, expect, it } from 'vitest';
-import { assertIsTestDatabase, createTestPool, queryRow, queryRows, testDatabaseUrl } from './helpers.js';
+import {
+  assertIsTestDatabase,
+  createTestPool,
+  queryRow,
+  queryRows,
+  resetProcessingStoreSchema,
+  testDatabaseUrl,
+} from './helpers.js';
 
 const migrationsDir = fileURLToPath(new URL('../../migrations', import.meta.url));
 const hasDb = process.env.AURORA_TEST_DATABASE_URL !== undefined;
@@ -26,19 +33,7 @@ describeDb('processing-store migrations (real PostgreSQL 17)', () => {
     pool = createTestPool();
     // Deterministic start: the dedicated test database may hold state from a
     // prior run. Reset the processing-store objects so "fresh up" semantics hold.
-    await pool.query('DROP TABLE IF EXISTS request_metric_event_applications CASCADE');
-    await pool.query('DROP TABLE IF EXISTS request_metric_buckets CASCADE');
-    await pool.query('DROP TABLE IF EXISTS request_event_samples CASCADE');
-    await pool.query('DROP TABLE IF EXISTS error_event_occurrences CASCADE');
-    await pool.query('DROP TABLE IF EXISTS issue_samples CASCADE');
-    await pool.query('DROP TABLE IF EXISTS issue_activities CASCADE');
-    await pool.query('DROP TABLE IF EXISTS issue_notes CASCADE');
-    await pool.query('DROP TABLE IF EXISTS issue_event_applications CASCADE');
-    await pool.query('DROP TABLE IF EXISTS issues CASCADE');
-    await pool.query('DROP TABLE IF EXISTS performance_metric_event_applications CASCADE');
-    await pool.query('DROP TABLE IF EXISTS performance_metric_buckets CASCADE');
-    await pool.query('DROP TABLE IF EXISTS performance_event_samples CASCADE');
-    await pool.query('DROP TABLE IF EXISTS pgmigrations CASCADE');
+    await resetProcessingStoreSchema(pool);
   });
 
   afterAll(async () => {

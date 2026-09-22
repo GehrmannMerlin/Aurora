@@ -1,5 +1,26 @@
 import { Pool, type PoolClient, type QueryResult, type QueryResultRow } from 'pg';
 
+const PROCESSING_STORE_TABLES_DROP_ORDER = [
+  'alert_instance_transitions',
+  'alert_instance_evidence',
+  'alert_instances',
+  'alert_rules',
+  'error_occurrence_symbolizations',
+  'issue_notes',
+  'issue_activities',
+  'issue_samples',
+  'issue_event_applications',
+  'issues',
+  'request_metric_event_applications',
+  'request_metric_buckets',
+  'request_event_samples',
+  'error_event_occurrences',
+  'performance_metric_event_applications',
+  'performance_metric_buckets',
+  'performance_event_samples',
+  'notifications',
+] as const;
+
 export function testDatabaseUrl(): string {
   const url = process.env.AURORA_TEST_DATABASE_URL;
   if (url === undefined) {
@@ -20,6 +41,14 @@ export function createTestPool(): Pool {
   const url = testDatabaseUrl();
   assertIsTestDatabase(url);
   return new Pool({ connectionString: url });
+}
+
+/** Reset every processing-store object before replaying its full migration set. */
+export async function resetProcessingStoreSchema(pool: Pool): Promise<void> {
+  for (const table of PROCESSING_STORE_TABLES_DROP_ORDER) {
+    await pool.query(`DROP TABLE IF EXISTS ${table} CASCADE`);
+  }
+  await pool.query('DROP TABLE IF EXISTS pgmigrations CASCADE');
 }
 
 /** Run a query and return rows typed as T. */

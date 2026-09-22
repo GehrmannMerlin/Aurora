@@ -2,15 +2,13 @@ import { fileURLToPath } from 'node:url';
 import { runner } from 'node-pg-migrate';
 import type { Pool } from 'pg';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import {
-  persistErrorEventOccurrence,
-  persistRequestEventSample,
-} from '../../src/index.js';
+import { persistErrorEventOccurrence, persistRequestEventSample } from '../../src/index.js';
 import {
   assertIsTestDatabase,
   createTestPool,
   queryRow,
   queryRows,
+  resetProcessingStoreSchema,
   testDatabaseUrl,
 } from './helpers.js';
 
@@ -104,6 +102,7 @@ describeDb('processing-store request sample persistence (real PostgreSQL 17)', (
     await pool.query('DROP TABLE IF EXISTS performance_metric_buckets CASCADE');
     await pool.query('DROP TABLE IF EXISTS performance_event_samples CASCADE');
     await pool.query('DROP TABLE IF EXISTS pgmigrations CASCADE');
+    await resetProcessingStoreSchema(pool);
     await runner({
       databaseUrl: testDatabaseUrl(),
       dir: migrationsDir,

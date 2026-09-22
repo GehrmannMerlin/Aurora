@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, nextTick, onMounted, ref, watch } from 'vue';
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { storeToRefs } from 'pinia';
 import { useRoute } from 'vue-router';
 import { useNavigationStore } from '../../stores/navigation';
@@ -18,6 +18,8 @@ const navigation = useNavigationStore();
 const { status } = storeToRefs(session);
 const drawerOpen = ref(false);
 const menuTrigger = ref<InstanceType<typeof AppButton> | null>(null);
+let closeDrawerFrame: number | null = null;
+let restorePageTitleAfterDrawer = false;
 const route = useRoute();
 const hasContext = computed(
   () => route.meta.scope === 'organization' || route.meta.scope === 'project',
@@ -36,12 +38,31 @@ watch(
 );
 
 function openDrawer(): void {
+  if (closeDrawerFrame !== null) {
+    cancelAnimationFrame(closeDrawerFrame);
+    closeDrawerFrame = null;
+  }
   drawerOpen.value = true;
 }
-function closeDrawer(): void {
-  drawerOpen.value = false;
-  void nextTick(() => menuTrigger.value?.$el?.focus());
+function closeDrawer(restoreFocus = true): void {
+  restorePageTitleAfterDrawer = !restoreFocus && drawerOpen.value;
+  if (closeDrawerFrame !== null) cancelAnimationFrame(closeDrawerFrame);
+  closeDrawerFrame = requestAnimationFrame(() => {
+    closeDrawerFrame = null;
+    drawerOpen.value = false;
+    if (restoreFocus) void nextTick(() => menuTrigger.value?.$el?.focus());
+  });
 }
+
+function focusPageTitleAfterDrawer(): void {
+  if (!restorePageTitleAfterDrawer) return;
+  restorePageTitleAfterDrawer = false;
+  void nextTick(() => document.getElementById('page-title')?.focus({ preventScroll: true }));
+}
+
+onBeforeUnmount(() => {
+  if (closeDrawerFrame !== null) cancelAnimationFrame(closeDrawerFrame);
+});
 </script>
 
 <template>
@@ -49,9 +70,9 @@ function closeDrawer(): void {
     <ContentOutlet />
   </AuthShell>
   <div v-else class="au-shell" :class="{ 'au-shell--global-only': !hasContext }">
-    <GlobalRail class="au-desktop-rail" @navigate="closeDrawer" />
+    <GlobalRail class="au-desktop-rail" @navigate="closeDrawer(false)" />
     <aside v-if="hasContext" class="au-desktop-context">
-      <ContextSidebar @navigate="closeDrawer" />
+      <ContextSidebar @navigate="closeDrawer(false)" />
     </aside>
     <main class="au-content">
       <header class="au-mobile-bar">
@@ -67,9 +88,14 @@ function closeDrawer(): void {
       </header>
       <ContentOutlet />
     </main>
-    <AppDrawer :open="drawerOpen" title="导航" @close="closeDrawer">
-      <GlobalNavigation expanded @navigate="closeDrawer" />
-      <ContextSidebar v-if="hasContext" mobile @navigate="closeDrawer" />
+    <AppDrawer
+      :open="drawerOpen"
+      title="导航"
+      @close="closeDrawer"
+      @after-hide="focusPageTitleAfterDrawer"
+    >
+      <GlobalNavigation expanded @navigate="closeDrawer(false)" />
+      <ContextSidebar v-if="hasContext" mobile @navigate="closeDrawer(false)" />
     </AppDrawer>
     <GlobalLoading v-if="status === 'loading'" />
   </div>
