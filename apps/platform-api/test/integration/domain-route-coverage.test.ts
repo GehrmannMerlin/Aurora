@@ -289,4 +289,81 @@ describeDb('platform domain route coverage (real PostgreSQL 17)', () => {
     });
     expect(trashed.statusCode).toBe(200);
   });
+
+  it('rejects malformed command bodies across project domain routes', async () => {
+    const projectId = await createProject();
+    const projectPath = `/api/platform/v1/organizations/${owner.organizationId}/projects/${projectId}`;
+    const accountId = randomUUID();
+    const keyId = randomUUID();
+    const malformedCommands: readonly {
+      method: 'PATCH' | 'POST';
+      url: string;
+    }[] = [
+      { method: 'PATCH', url: `${projectPath}/settings` },
+      { method: 'POST', url: `${projectPath}/settings/environments` },
+      { method: 'POST', url: `${projectPath}/access/members` },
+      { method: 'POST', url: `${projectPath}/access/members/${accountId}/role` },
+      { method: 'POST', url: `${projectPath}/access/members/${accountId}/remove` },
+      { method: 'POST', url: `${projectPath}/client-keys` },
+      { method: 'POST', url: `${projectPath}/client-keys/${keyId}/disable` },
+      { method: 'POST', url: `${projectPath}/client-keys/${keyId}/enable` },
+      { method: 'POST', url: `${projectPath}/client-keys/${keyId}/revoke` },
+      { method: 'POST', url: `${projectPath}/lifecycle/archive` },
+      { method: 'POST', url: `${projectPath}/lifecycle/restore` },
+      { method: 'POST', url: `${projectPath}/lifecycle/move-to-trash` },
+      { method: 'POST', url: `${projectPath}/source-maps` },
+      { method: 'POST', url: `${projectPath}/releases/1/reparse` },
+      { method: 'POST', url: `${projectPath}/releases/1/source-maps/1/replace` },
+    ];
+
+    for (const command of malformedCommands) {
+      const response = await request(command.method, command.url, owner, {});
+      expect(response.statusCode, `${command.method} ${command.url}`).toBe(400);
+    }
+  });
+
+  it('covers stable validation and conflict responses for existing project commands', async () => {
+    const projectId = await createProject();
+    const projectPath = `/api/platform/v1/organizations/${owner.organizationId}/projects/${projectId}`;
+    const settings = await request('GET', `${projectPath}/settings`, owner);
+    const resourceVersion = String(
+      (settings.json<ResponseBody>().data?.project as { resourceVersion?: string }).resourceVersion,
+    );
+
+    const stale = await request('PATCH', `${projectPath}/settings`, owner, {
+      name: 'Stale update',
+      resourceVersion: new Date(Date.parse(resourceVersion) - 1000).toISOString(),
+      idempotencyKey: randomUUID(),
+    });
+    expect(stale.statusCode).toBe(412);
+
+    const invalidRole = await request(
+      'POST',
+      `${projectPath}/access/members/${owner.accountId}/role`,
+      owner,
+      { role: 'invalid', idempotencyKey: randomUUID() },
+    );
+    expect(invalidRole.statusCode).toBe(400);
+
+    const invalidOrigins = await request('POST', `${projectPath}/client-keys`, owner, {
+      origins: ['not-a-url'],
+      environments: ['production'],
+      allowNonBrowser: false,
+      idempotencyKey: randomUUID(),
+    });
+    expect(invalidOrigins.statusCode).toBe(422);
+
+    const archived = await request('POST', `${projectPath}/lifecycle/archive`, owner, {
+      idempotencyKey: randomUUID(),
+    });
+    expect(archived.statusCode).toBe(200);
+    const restore = await request('POST', `${projectPath}/lifecycle/restore`, owner, {
+      idempotencyKey: randomUUID(),
+    });
+    expect(restore.statusCode).toBe(200);
+    const secondRestore = await request('POST', `${projectPath}/lifecycle/restore`, owner, {
+      idempotencyKey: randomUUID(),
+    });
+    expect(secondRestore.statusCode).toBe(409);
+  });
 });
