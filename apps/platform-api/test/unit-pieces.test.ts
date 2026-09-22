@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { loadPlatformApiConfig } from '../src/config.js';
 import { sanitizePlatformRequestUrl } from '../src/app.js';
 import { problem } from '../src/error-mapper.js';
+import { operationById, requestRouteInfo, routeInfo } from '../src/operations.js';
 import { maskEmail } from '../src/routes/register.js';
 import { parseIntentCookie, serializeIntentCookie } from '../src/intent-cookie.js';
 import {
@@ -10,9 +11,54 @@ import {
   SESSION_COOKIE_NAME,
 } from '../src/session-cookie.js';
 
-const { idempotencyLookupMock } = vi.hoisted(() => ({ idempotencyLookupMock: vi.fn() }));
-vi.mock('@aurora/platform-identity', () => ({ findIdempotencyRecord: idempotencyLookupMock }));
-import { lookupIdempotency } from '../src/idempotency.js';
+const { idempotencyLookupMock, idempotencyCreateMock, idempotencyUpdateMock } = vi.hoisted(() => ({
+  idempotencyLookupMock: vi.fn(),
+  idempotencyCreateMock: vi.fn(),
+  idempotencyUpdateMock: vi.fn(),
+}));
+vi.mock('@aurora/platform-identity', () => ({
+  findIdempotencyRecord: idempotencyLookupMock,
+  createIdempotencyRecord: idempotencyCreateMock,
+  updateIdempotencyResult: idempotencyUpdateMock,
+}));
+import { lookupIdempotency, runIdempotentCommand } from '../src/idempotency.js';
+
+describe('platform operation registry', () => {
+  it('resolves registered operations and strips query strings from route lookups', () => {
+    expect(operationById('identityGetSession')).toMatchObject({
+      operationId: 'identityGetSession',
+      method: 'GET',
+    });
+    expect(routeInfo('GET', '/api/platform/v1/session?from=console')).toMatchObject({
+      authLevel: 'public',
+      csrf: false,
+    });
+    expect(routeInfo('GET', '/api/platform/v1/health')).toBeUndefined();
+
+    expect(
+      requestRouteInfo({
+        method: 'GET',
+        url: '/api/platform/v1/organizations/1/projects',
+        routeOptions: {
+          url: '/api/platform/v1/organizations/:organizationId/projects',
+        },
+      } as never),
+    ).toMatchObject({ authLevel: 'session', csrf: false });
+    expect(
+      requestRouteInfo({
+        method: 'GET',
+        url: '/not-found',
+        routeOptions: { url: undefined },
+      } as never),
+    ).toBeUndefined();
+  });
+
+  it('fails closed when an operation id is absent from the registry', () => {
+    expect(() => operationById('not-a-real-platform-operation')).toThrow(
+      'unknown platform operation: not-a-real-platform-operation',
+    );
+  });
+});
 
 describe('sanitizePlatformRequestUrl', () => {
   it.each([
@@ -256,6 +302,8 @@ describe('lookupIdempotency', () => {
 
   afterEach(() => {
     idempotencyLookupMock.mockReset();
+    idempotencyCreateMock.mockReset();
+    idempotencyUpdateMock.mockReset();
   });
 
   it('returns new when no record exists', async () => {
@@ -307,5 +355,76 @@ describe('lookupIdempotency', () => {
       outcome: 'replay',
       resultData: { ok: true },
     });
+  });
+
+  it('resolves a concurrent race as a replay when the winner committed the same digest', async () => {
+    idempotencyLookupMock.mockResolvedValueOnce(null).mockResolvedValueOnce({
+      idempotencyKey: 'key',
+      operation: 'op',
+      requestDigest: 'digest',
+      status: 'succeeded',
+      resultData: { projectId: 'project-1' },
+    });
+    idempotencyCreateMock.mockResolvedValue({ status: 'conflict' });
+    const client = {
+      query: vi.fn().mockResolvedValue(undefined),
+      release: vi.fn(),
+    };
+    const pool = { connect: vi.fn().mockResolvedValue(client) } as never;
+
+    await expect(
+      runIdempotentCommand({
+        pool,
+        key: 'key',
+        operation: 'op',
+        digest: 'digest',
+        execute: vi.fn(),
+      }),
+    ).resolves.toEqual({ outcome: 'replayed', resultData: { projectId: 'project-1' } });
+    expect(idempotencyCreateMock).toHaveBeenCalledOnce();
+  });
+
+  it('resolves a concurrent race as a conflict when the winner used another digest', async () => {
+    idempotencyLookupMock
+      .mockResolvedValueOnce(null)
+      .mockResolvedValueOnce({ requestDigest: 'other', status: 'succeeded', resultData: {} });
+    idempotencyCreateMock.mockResolvedValue({ status: 'conflict' });
+    const client = {
+      query: vi.fn().mockResolvedValue(undefined),
+      release: vi.fn(),
+    };
+    const pool = { connect: vi.fn().mockResolvedValue(client) } as never;
+
+    await expect(
+      runIdempotentCommand({
+        pool,
+        key: 'key',
+        operation: 'op',
+        digest: 'digest',
+        execute: vi.fn(),
+      }),
+    ).resolves.toEqual({ outcome: 'conflict' });
+  });
+
+  it('fails closed when a race winner has not committed a terminal result', async () => {
+    idempotencyLookupMock
+      .mockResolvedValueOnce(null)
+      .mockResolvedValueOnce({ requestDigest: 'digest', status: 'processing', resultData: null });
+    idempotencyCreateMock.mockResolvedValue({ status: 'conflict' });
+    const client = {
+      query: vi.fn().mockResolvedValue(undefined),
+      release: vi.fn(),
+    };
+    const pool = { connect: vi.fn().mockResolvedValue(client) } as never;
+
+    await expect(
+      runIdempotentCommand({
+        pool,
+        key: 'key',
+        operation: 'op',
+        digest: 'digest',
+        execute: vi.fn(),
+      }),
+    ).resolves.toEqual({ outcome: 'conflict' });
   });
 });

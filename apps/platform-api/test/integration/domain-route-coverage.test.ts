@@ -458,4 +458,34 @@ describeDb('platform domain route coverage (real PostgreSQL 17)', () => {
     });
     expect(secondRestore.statusCode).toBe(409);
   });
+
+  it('maps unmatched, malformed, and oversized HTTP requests through the global boundary', async () => {
+    const notFound = await app.inject({
+      method: 'GET',
+      url: '/api/platform/v1/does-not-exist',
+    });
+    expect(notFound.statusCode).toBe(404);
+    expect(notFound.headers['x-aurora-request-id']).toBeTruthy();
+    expect(notFound.json<{ code: string; requestId: string }>()).toMatchObject({
+      code: 'not_found',
+    });
+
+    const malformedJson = await app.inject({
+      method: 'POST',
+      url: '/api/platform/v1/auth/register',
+      headers: { 'content-type': 'application/json' },
+      payload: '{',
+    });
+    expect(malformedJson.statusCode).toBe(400);
+    expect(malformedJson.json<{ code: string }>()).toMatchObject({ code: 'structural_error' });
+
+    const oversized = await app.inject({
+      method: 'POST',
+      url: '/api/platform/v1/auth/register',
+      headers: { 'content-type': 'application/json' },
+      payload: `{"padding":"${'x'.repeat(256 * 1024)}"}`,
+    });
+    expect(oversized.statusCode).toBe(500);
+    expect(oversized.json<{ code: string }>()).toMatchObject({ code: 'internal_error' });
+  });
 });
