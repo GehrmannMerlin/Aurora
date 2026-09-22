@@ -297,6 +297,9 @@ describeDb('platform domain route coverage (real PostgreSQL 17)', () => {
     const keyId = randomUUID();
     const issueId = '1';
     const noteId = '1';
+    const invitationId = randomUUID();
+    const tokenId = randomUUID();
+    const notificationId = randomUUID();
     const malformedCommands: readonly {
       method: 'PATCH' | 'POST';
       url: string;
@@ -325,6 +328,49 @@ describeDb('platform domain route coverage (real PostgreSQL 17)', () => {
       { method: 'POST', url: `${projectPath}/issues/${issueId}/notes/${noteId}/delete` },
       { method: 'POST', url: `${projectPath}/issues/${issueId}/merge` },
       { method: 'POST', url: `${projectPath}/issues/batch` },
+      {
+        method: 'PATCH',
+        url: `/api/platform/v1/organizations/${owner.organizationId}/settings/timezone`,
+      },
+      { method: 'POST', url: `/api/platform/v1/organizations/${owner.organizationId}/ownership` },
+      { method: 'POST', url: `/api/platform/v1/organizations/${owner.organizationId}/invitations` },
+      {
+        method: 'POST',
+        url: `/api/platform/v1/organizations/${owner.organizationId}/invitations/${invitationId}/revoke`,
+      },
+      {
+        method: 'POST',
+        url: `/api/platform/v1/organizations/${owner.organizationId}/invitations/${invitationId}/resend`,
+      },
+      {
+        method: 'POST',
+        url: `/api/platform/v1/organizations/${owner.organizationId}/private-tokens`,
+      },
+      {
+        method: 'POST',
+        url: `/api/platform/v1/organizations/${owner.organizationId}/private-tokens/${tokenId}/revoke`,
+      },
+      {
+        method: 'POST',
+        url: `/api/platform/v1/organizations/${owner.organizationId}/trash/${projectId}/restore`,
+      },
+      { method: 'POST', url: `/api/platform/v1/notifications/${notificationId}/read` },
+      { method: 'POST', url: '/api/platform/v1/platform-admin/admins/' + accountId + '/grant' },
+      { method: 'POST', url: '/api/platform/v1/platform-admin/admins/' + accountId + '/revoke' },
+      { method: 'POST', url: '/api/platform/v1/platform-admin/policy/default' },
+      {
+        method: 'POST',
+        url: `/api/platform/v1/platform-admin/policy/organizations/${owner.organizationId}`,
+      },
+      {
+        method: 'POST',
+        url: `/api/platform/v1/platform-admin/policy/organizations/${owner.organizationId}/reset`,
+      },
+      { method: 'POST', url: `/api/platform/v1/platform-admin/policy/projects/${projectId}/limit` },
+      {
+        method: 'POST',
+        url: `/api/platform/v1/platform-admin/policy/projects/${projectId}/limit/clear`,
+      },
     ];
 
     for (const command of malformedCommands) {
