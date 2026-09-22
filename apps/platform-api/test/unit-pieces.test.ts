@@ -13,15 +13,27 @@ import {
   SESSION_COOKIE_NAME,
 } from '../src/session-cookie.js';
 
-const { idempotencyLookupMock, idempotencyCreateMock, idempotencyUpdateMock } = vi.hoisted(() => ({
-  idempotencyLookupMock: vi.fn(),
-  idempotencyCreateMock: vi.fn(),
-  idempotencyUpdateMock: vi.fn(),
-}));
+const {
+  idempotencyLookupMock,
+  idempotencyCreateMock,
+  idempotencyUpdateMock,
+  PlatformIdentityErrorMock,
+} = vi.hoisted(() => {
+  class PlatformIdentityErrorMock extends Error {
+    readonly kind = 'invalid_input' as const;
+  }
+  return {
+    idempotencyLookupMock: vi.fn(),
+    idempotencyCreateMock: vi.fn(),
+    idempotencyUpdateMock: vi.fn(),
+    PlatformIdentityErrorMock,
+  };
+});
 vi.mock('@aurora/platform-identity', () => ({
   findIdempotencyRecord: idempotencyLookupMock,
   createIdempotencyRecord: idempotencyCreateMock,
   updateIdempotencyResult: idempotencyUpdateMock,
+  PlatformIdentityError: PlatformIdentityErrorMock,
 }));
 import { lookupIdempotency, runIdempotentCommand } from '../src/idempotency.js';
 
@@ -92,11 +104,14 @@ describe('sendMappedError', () => {
     } as never;
   }
 
-  it('maps a ServiceError to a handled response', async () => {
+  it('maps handled errors and leaves unknown errors for the global Fastify handler', async () => {
     const serviceReply = reply();
     await expect(
       sendMappedError(serviceReply, 'req-service', new ServiceError(409, 'conflict', 'conflict')),
     ).resolves.toBe(true);
+    await expect(sendMappedError(reply(), 'req-unknown', new Error('unexpected'))).resolves.toBe(
+      false,
+    );
   });
 });
 
