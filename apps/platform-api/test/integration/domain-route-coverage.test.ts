@@ -295,10 +295,10 @@ describeDb('platform domain route coverage (real PostgreSQL 17)', () => {
     const projectPath = `/api/platform/v1/organizations/${owner.organizationId}/projects/${projectId}`;
     const accountId = randomUUID();
     const keyId = randomUUID();
-    const malformedCommands: ReadonlyArray<{
+    const malformedCommands: readonly {
       method: 'PATCH' | 'POST';
       url: string;
-    }> = [
+    }[] = [
       { method: 'PATCH', url: `${projectPath}/settings` },
       { method: 'POST', url: `${projectPath}/settings/environments` },
       { method: 'POST', url: `${projectPath}/access/members` },
