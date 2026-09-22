@@ -2,11 +2,22 @@ import { describe, expect, it } from 'vitest';
 import type { PoolClient } from 'pg';
 import { getOnboarding } from '../src/repositories/onboarding.js';
 import {
+  changeProjectMemberRole,
+  listProjectEffectiveMembers,
+  removeProjectMember,
+} from '../src/repositories/access.js';
+import { restoreFromArchive } from '../src/repositories/lifecycle.js';
+import {
   getProjectAccessRole,
   getProjectById,
   insertProjectMember,
   updateProjectStatus,
 } from '../src/repositories/projects.js';
+import {
+  createProjectEnvironment,
+  listProjectEnvironments,
+  updateProjectSettings,
+} from '../src/repositories/settings.js';
 
 /** Minimal fake PoolClient that returns a fixed row set from `query`. */
 function fakeClient(rows: unknown[]): PoolClient {
@@ -174,5 +185,266 @@ describe('insertProjectMember (fake client)', () => {
       { orgId: 'org_1', projectId: 'prj_1', accountId: 'acc_1', role: 'developer' },
     );
     expect(result).toEqual({ status: 'already_member' });
+  });
+});
+
+describe('effective project access repositories (fake client)', () => {
+  it('projects the org-manager and explicit-member sources', async () => {
+    const result = await listProjectEffectiveMembers(
+      fakeClient([
+        {
+          account_id: 'acc_admin',
+          email: 'admin@example.com',
+          org_role: 'admin',
+          project_role: null,
+        },
+        {
+          account_id: 'acc_dev',
+          email: 'dev@example.com',
+          org_role: 'member',
+          project_role: 'developer',
+        },
+      ]),
+      { orgId: 'org_1', projectId: 'prj_1' },
+    );
+    expect(result).toEqual([
+      {
+        accountId: 'acc_admin',
+        email: 'admin@example.com',
+        effectiveRole: 'project_admin',
+        sources: ['org_inherited'],
+      },
+      {
+        accountId: 'acc_dev',
+        email: 'dev@example.com',
+        effectiveRole: 'developer',
+        sources: ['project_member'],
+        projectRole: 'developer',
+      },
+    ]);
+  });
+
+  it('changes an explicit role and records the audit event', async () => {
+    const result = await changeProjectMemberRole(
+      fakeClientSequence([{ rows: [{ account_id: 'acc_1' }] }, { rows: [] }]),
+      {
+        orgId: 'org_1',
+        projectId: 'prj_1',
+        accountId: 'acc_1',
+        role: 'read_only',
+        actorId: 'actor_1',
+      },
+    );
+    expect(result).toEqual({ status: 'success', accountId: 'acc_1', role: 'read_only' });
+  });
+
+  it('returns not_found and rejects invalid roles', async () => {
+    await expect(
+      changeProjectMemberRole(fakeClient([]), {
+        orgId: 'org_1',
+        projectId: 'prj_1',
+        accountId: 'acc_1',
+        role: 'invalid' as never,
+        actorId: 'actor_1',
+      }),
+    ).rejects.toMatchObject({ kind: 'invalid_input' });
+    await expect(
+      changeProjectMemberRole(fakeClient([]), {
+        orgId: 'org_1',
+        projectId: 'prj_1',
+        accountId: 'acc_1',
+        role: 'developer',
+        actorId: 'actor_1',
+      }),
+    ).resolves.toEqual({ status: 'not_found' });
+  });
+
+  it('removes a member and reports remaining org inheritance', async () => {
+    const inherited = await removeProjectMember(
+      fakeClientSequence([
+        { rows: [{ account_id: 'acc_1' }] },
+        { rows: [{ org_inherited: true }] },
+        { rows: [] },
+      ]),
+      {
+        orgId: 'org_1',
+        projectId: 'prj_1',
+        accountId: 'acc_1',
+        actorId: 'actor_1',
+      },
+    );
+    expect(inherited).toEqual({
+      status: 'success',
+      accountId: 'acc_1',
+      remainingSources: ['org_inherited'],
+    });
+
+    const noInheritance = await removeProjectMember(
+      fakeClientSequence([
+        { rows: [{ account_id: 'acc_2' }] },
+        { rows: [{ org_inherited: false }] },
+        { rows: [] },
+      ]),
+      {
+        orgId: 'org_1',
+        projectId: 'prj_1',
+        accountId: 'acc_2',
+        actorId: 'actor_1',
+      },
+    );
+    expect(noInheritance).toEqual({ status: 'success', accountId: 'acc_2', remainingSources: [] });
+    await expect(
+      removeProjectMember(fakeClient([]), {
+        orgId: 'org_1',
+        projectId: 'prj_1',
+        accountId: 'missing',
+        actorId: 'actor_1',
+      }),
+    ).resolves.toEqual({ status: 'not_found' });
+  });
+});
+
+describe('project lifecycle and settings repositories (fake client)', () => {
+  const lifecycleInput = {
+    orgId: 'org_1',
+    projectId: 'prj_1',
+    expectedVersion: '2026-09-22T00:00:00.000Z',
+    actorId: 'actor_1',
+  };
+
+  it('restores only archived projects with a matching resource version', async () => {
+    await expect(restoreFromArchive(fakeClient([]), lifecycleInput)).resolves.toEqual({
+      status: 'not_found',
+    });
+    await expect(
+      restoreFromArchive(
+        fakeClient([{ status: 'archived', updated_at: '2026-09-22T00:00:01.000Z' }]),
+        lifecycleInput,
+      ),
+    ).resolves.toEqual({
+      status: 'version_conflict',
+      currentResourceVersion: '2026-09-22T00:00:01.000Z',
+    });
+    await expect(
+      restoreFromArchive(
+        fakeClient([{ status: 'active', updated_at: lifecycleInput.expectedVersion }]),
+        lifecycleInput,
+      ),
+    ).resolves.toEqual({ status: 'state_machine_conflict', currentStatus: 'active' });
+    await expect(
+      restoreFromArchive(
+        fakeClientSequence([
+          { rows: [{ status: 'archived', updated_at: lifecycleInput.expectedVersion }] },
+          { rows: [] },
+          { rows: [] },
+        ]),
+        lifecycleInput,
+      ),
+    ).resolves.toEqual({ status: 'success', projectId: 'prj_1', projectStatus: 'active' });
+  });
+
+  const settingsInput = {
+    orgId: 'org_1',
+    projectId: 'prj_1',
+    name: '  Updated project  ',
+    websiteUrl: '  https://example.com  ',
+    expectedVersion: '2026-09-22T00:00:00.000Z',
+    actorId: 'actor_1',
+  };
+
+  it('validates and updates project settings with optimistic concurrency', async () => {
+    await expect(
+      updateProjectSettings(fakeClient([]), { ...settingsInput, name: 'x' }),
+    ).rejects.toMatchObject({ kind: 'invalid_input' });
+    await expect(updateProjectSettings(fakeClient([]), settingsInput)).resolves.toEqual({
+      status: 'not_found',
+    });
+    await expect(
+      updateProjectSettings(
+        fakeClient([{ status: 'active', updated_at: '2026-09-22T00:00:01.000Z' }]),
+        settingsInput,
+      ),
+    ).resolves.toEqual({
+      status: 'version_conflict',
+      currentResourceVersion: '2026-09-22T00:00:01.000Z',
+    });
+    await expect(
+      updateProjectSettings(
+        fakeClient([{ status: 'archived', updated_at: settingsInput.expectedVersion }]),
+        settingsInput,
+      ),
+    ).resolves.toEqual({ status: 'state_machine_conflict', currentStatus: 'archived' });
+    await expect(
+      updateProjectSettings(
+        fakeClientSequence([
+          { rows: [{ status: 'active', updated_at: settingsInput.expectedVersion }] },
+          { rows: [{ updated_at: new Date('2026-09-22T00:00:02.000Z') }] },
+          { rows: [] },
+        ]),
+        settingsInput,
+      ),
+    ).resolves.toEqual({
+      status: 'success',
+      projectId: 'prj_1',
+      name: 'Updated project',
+      websiteUrl: 'https://example.com',
+      resourceVersion: '2026-09-22T00:00:02.000Z',
+    });
+  });
+
+  it('lists environments and handles environment creation outcomes', async () => {
+    await expect(
+      listProjectEnvironments(
+        fakeClient([
+          {
+            environment_id: 'env_1',
+            project_id: 'prj_1',
+            name: 'production',
+            is_default: true,
+            created_at: new Date('2026-09-22T00:00:00.000Z'),
+          },
+        ]),
+        { orgId: 'org_1', projectId: 'prj_1' },
+      ),
+    ).resolves.toEqual([
+      {
+        environmentId: 'env_1',
+        projectId: 'prj_1',
+        name: 'production',
+        isDefault: true,
+        createdAt: '2026-09-22T00:00:00.000Z',
+      },
+    ]);
+    await expect(
+      createProjectEnvironment(fakeClient([]), {
+        orgId: 'org_1',
+        projectId: 'prj_1',
+        name: '',
+        actorId: 'actor_1',
+      }),
+    ).rejects.toMatchObject({ kind: 'invalid_input' });
+    await expect(
+      createProjectEnvironment(fakeClient([]), {
+        orgId: 'org_1',
+        projectId: 'prj_1',
+        name: 'staging',
+        actorId: 'actor_1',
+      }),
+    ).resolves.toEqual({ status: 'not_found' });
+    await expect(
+      createProjectEnvironment(
+        fakeClientSequence([{ rows: [{}] }, { rows: [{ environment_id: 'env_2' }] }, { rows: [] }]),
+        { orgId: 'org_1', projectId: 'prj_1', name: ' staging ', actorId: 'actor_1' },
+      ),
+    ).resolves.toEqual({ status: 'success', environmentId: 'env_2', name: 'staging' });
+    const unique = Object.assign(new Error('duplicate'), { code: '23505' });
+    await expect(
+      createProjectEnvironment(fakeClientSequence([{ rows: [{}] }, unique]), {
+        orgId: 'org_1',
+        projectId: 'prj_1',
+        name: 'staging',
+        actorId: 'actor_1',
+      }),
+    ).resolves.toEqual({ status: 'duplicate' });
   });
 });
