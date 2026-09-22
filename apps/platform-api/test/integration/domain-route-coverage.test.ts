@@ -297,7 +297,7 @@ describeDb('platform domain route coverage (real PostgreSQL 17)', () => {
     const keyId = randomUUID();
     const issueId = '1';
     const noteId = '1';
-    const invitationId = randomUUID();
+    const invitationId = 'not-a-uuid';
     const tokenId = randomUUID();
     const notificationId = randomUUID();
     const malformedCommands: readonly {
@@ -338,12 +338,10 @@ describeDb('platform domain route coverage (real PostgreSQL 17)', () => {
       {
         method: 'POST',
         url: `/api/platform/v1/organizations/${owner.organizationId}/invitations/${invitationId}/revoke`,
-        body: { idempotencyKey: 42 },
       },
       {
         method: 'POST',
         url: `/api/platform/v1/organizations/${owner.organizationId}/invitations/${invitationId}/resend`,
-        body: { idempotencyKey: 42 },
       },
       {
         method: 'POST',
