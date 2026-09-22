@@ -34,7 +34,11 @@ describe('Browser documentation contract', () => {
   });
 
   it('records Browser as implemented without overstating plugins or the whole SDK', async () => {
-    for (const path of ['docs/architecture/system-overview.md', 'docs/architecture/sdk-architecture.md', 'AURORA_RULES.md']) {
+    for (const path of [
+      'docs/architecture/system-overview.md',
+      'docs/architecture/sdk-architecture.md',
+      'AURORA_RULES.md',
+    ]) {
       const text = await rootFile(path);
       expect(text, path).toContain('@aurora/browser');
     }
