@@ -3,7 +3,9 @@ import { loadPlatformApiConfig } from '../src/config.js';
 import { sanitizePlatformRequestUrl } from '../src/app.js';
 import { problem } from '../src/error-mapper.js';
 import { operationById, requestRouteInfo, routeInfo } from '../src/operations.js';
+import { InMemoryRateLimiter } from '../src/rate-limit.js';
 import { maskEmail } from '../src/routes/register.js';
+import { sendMappedError, ServiceError } from '../src/service-error.js';
 import { parseIntentCookie, serializeIntentCookie } from '../src/intent-cookie.js';
 import {
   readSessionCookie,
@@ -57,6 +59,44 @@ describe('platform operation registry', () => {
     expect(() => operationById('not-a-real-platform-operation')).toThrow(
       'unknown platform operation: not-a-real-platform-operation',
     );
+  });
+});
+
+describe('InMemoryRateLimiter', () => {
+  it('allows up to the configured maximum and returns a bounded retry delay', () => {
+    const limiter = new InMemoryRateLimiter({ windowMs: 1_000, max: 2 });
+    expect(limiter.check('register:ip:email', 0)).toEqual({ allowed: true });
+    expect(limiter.check('register:ip:email', 1)).toEqual({ allowed: true });
+    expect(limiter.check('register:ip:email', 2)).toEqual({
+      allowed: false,
+      retryAfterSeconds: 1,
+    });
+    expect(limiter.check('register:ip:email', 1_000)).toEqual({ allowed: true });
+  });
+
+  it('prunes expired buckets when the configured bucket cap is reached', () => {
+    const limiter = new InMemoryRateLimiter({ windowMs: 10, max: 1, maxBuckets: 2 });
+    expect(limiter.check('expired', 0)).toEqual({ allowed: true });
+    expect(limiter.check('live', 100)).toEqual({ allowed: true });
+    expect(limiter.check('new', 100)).toEqual({ allowed: true });
+    expect(limiter.check('live', 100)).toEqual({ allowed: false, retryAfterSeconds: 1 });
+  });
+});
+
+describe('sendMappedError', () => {
+  function reply() {
+    return {
+      header: vi.fn().mockReturnThis(),
+      code: vi.fn().mockReturnThis(),
+      send: vi.fn().mockReturnThis(),
+    } as never;
+  }
+
+  it('maps a ServiceError to a handled response', async () => {
+    const serviceReply = reply();
+    await expect(
+      sendMappedError(serviceReply, 'req-service', new ServiceError(409, 'conflict', 'conflict')),
+    ).resolves.toBe(true);
   });
 });
 
