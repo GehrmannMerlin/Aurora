@@ -224,6 +224,28 @@ describeDb('platform domain route coverage (real PostgreSQL 17)', () => {
       sourceMapFileId: string;
       version?: number;
     };
+    const duplicateUpload = await request('POST', `${projectPath}/source-maps`, owner, {
+      releaseVersion: '2026.09.22',
+      buildPath: 'assets/app.js.map',
+      content: '{}',
+      digest,
+      idempotencyKey: randomUUID(),
+    });
+    expect(duplicateUpload.statusCode).toBe(200);
+    expect((duplicateUpload.json<ResponseBody>().data as { status: string }).status).toBe(
+      'duplicate',
+    );
+    const replaceConflictUpload = await request('POST', `${projectPath}/source-maps`, owner, {
+      releaseVersion: '2026.09.22',
+      buildPath: 'assets/app.js.map',
+      content: '{"version":3}',
+      digest: 'b'.repeat(64),
+      idempotencyKey: randomUUID(),
+    });
+    expect(replaceConflictUpload.statusCode).toBe(200);
+    expect((replaceConflictUpload.json<ResponseBody>().data as { status: string }).status).toBe(
+      'replace_conflict',
+    );
     const releases = await request('GET', `${projectPath}/releases`, owner);
     expect(releases.statusCode).toBe(200);
     const files = await request(
@@ -251,6 +273,18 @@ describeDb('platform domain route coverage (real PostgreSQL 17)', () => {
       },
     );
     expect(replaced.statusCode).toBe(200);
+    const staleReplace = await request(
+      'POST',
+      `${projectPath}/releases/${uploadedData.releaseId}/source-maps/${uploadedData.sourceMapFileId}/replace`,
+      owner,
+      {
+        content: '{"version":4}',
+        digest: 'c'.repeat(64),
+        version: uploadedData.version ?? 1,
+        idempotencyKey: randomUUID(),
+      },
+    );
+    expect(staleReplace.statusCode).toBe(409);
 
     const usage = await request(
       'GET',
