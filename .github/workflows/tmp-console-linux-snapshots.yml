@@ -1,0 +1,44 @@
+name: Temporary Console Linux Snapshot Generation
+
+on:
+  push:
+    branches: [chore/repository-consolidation]
+
+permissions:
+  contents: read
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 11.17.0
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24.18.0
+          cache: pnpm
+      - name: Install
+        run: pnpm install --frozen-lockfile
+      - name: Build
+        run: pnpm build
+      - name: Install Chromium
+        run: pnpm --filter @aurora/console exec playwright install --with-deps chromium
+      - name: Generate Linux snapshots
+        run: >-
+          pnpm --filter @aurora/console run build:test &&
+          pnpm --filter @aurora/console exec playwright test
+          --config playwright.config.ts test-browser/visual-regression.spec.ts
+          --update-snapshots
+      - name: Upload generated snapshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: console-linux-snapshots
+          path: apps/console/test-browser/visual-regression.spec.ts-snapshots/*linux.png
+          if-no-files-found: error
