@@ -23,7 +23,7 @@ related:
   - ../architecture/error-event-occurrence-processing-store.md
   - ../architecture/error-event-processor.md
   - ../protocol/request-event-contract.md
-  - ../architecture/formalization-readiness.md
+  - ../architecture/system-overview.md
   - ../../Auroa-PRD-业务逻辑汇总-v2.1-核心业务定稿版.md
 supersedes: none
 review-cycle: request-sample-store-schema-or-contract-change

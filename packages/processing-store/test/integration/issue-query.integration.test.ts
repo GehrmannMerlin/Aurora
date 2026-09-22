@@ -12,6 +12,7 @@ import {
 import {
   assertIsTestDatabase,
   createTestPool,
+  resetProcessingStoreSchema,
   testDatabaseUrl,
 } from './helpers.js';
 
@@ -23,7 +24,12 @@ const PROJECT = '11111111-1111-4111-8111-111111111111';
 const OTHER_PROJECT = '22222222-2222-4222-8222-222222222222';
 const ACTOR = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
 
-async function seedIssue(pool: Pool, projectId: string, message: string, occurredAt: string): Promise<string> {
+async function seedIssue(
+  pool: Pool,
+  projectId: string,
+  message: string,
+  occurredAt: string,
+): Promise<string> {
   const result = await persistIssueContribution(pool, {
     projectId,
     fingerprint: 'v1|javascript|TypeError|' + message,
@@ -57,6 +63,7 @@ describeDb('processing-store issue query repositories (real PostgreSQL 17)', () 
     await pool.query('DROP TABLE IF EXISTS performance_metric_buckets CASCADE');
     await pool.query('DROP TABLE IF EXISTS performance_event_samples CASCADE');
     await pool.query('DROP TABLE IF EXISTS pgmigrations CASCADE');
+    await resetProcessingStoreSchema(pool);
     await runner({
       databaseUrl: testDatabaseUrl(),
       dir: migrationsDir,

@@ -21,7 +21,7 @@ related:
   - ../adr/ADR-014-ingestion-client-credential-lifecycle.md
   - ../security/ingestion-transport-and-client-credential.md
   - ../security/ingestion-client-credential-storage-and-verification.md
-  - ../architecture/formalization-readiness.md
+  - ../architecture/system-overview.md
 supersedes: none
 review-cycle: ingestion-credential-lifecycle-schema-or-security-change
 ---

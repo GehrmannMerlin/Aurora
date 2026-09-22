@@ -12,7 +12,7 @@ related:
   - '../../Aurora ADR 规范.md'
   - ../../docs/architecture/platform-backend.md
   - ../../docs/architecture/deployment.md
-  - ../../docs/architecture/formalization-readiness.md
+  - ../../docs/architecture/system-overview.md
   - ../../docs/operations/backup-and-recovery.md
   - ../../docs/releases/release-migration-and-rollback.md
   - ../../docs/adr/ADR-004-asynchronous-event-processing.md
@@ -36,7 +36,7 @@ superseded-by: none
 - Owner：ingestion/data
 - 适用范围：`event_inbox` 数据模型的数据库访问方式、Migration 工具、PostgreSQL 主版本、SQL-first 边界、数据库包位置、Migration 目录/命名规则、测试数据库启动与 CI 真实 PostgreSQL 测试方式
 - 关联 PRD：[核心业务 PRD](../../Auroa-PRD-业务逻辑汇总-v2.1-核心业务定稿版.md) 第 7 章
-- 关联 ADR：[ADR-008](../ADR-008-ingestion-durable-buffering.md)（数据接入可靠缓冲 = PostgreSQL 事务性 Inbox）、[ADR-009](../ADR-009-ingestion-transport-and-client-credential.md)（数据接入公开传输与客户端凭证）
+- 关联 ADR：[ADR-008](ADR-008-ingestion-durable-buffering.md)（数据接入可靠缓冲 = PostgreSQL 事务性 Inbox）、[ADR-009](ADR-009-ingestion-transport-and-client-credential.md)（数据接入公开传输与客户端凭证）
 - 关联 Issue：none
 - 关联实现 PR：none
 - 替代 ADR：none

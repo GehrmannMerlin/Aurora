@@ -3,7 +3,7 @@
 ## 模块定位
 
 `@aurora/platform-credentials` 是管理平台组织与项目治理第一增量（PLT-04 B6 私密管理令牌）的数据层包。它承载
-spec [platform-workspace-organization-governance](../../docs/superpowers/specs/2026-08-09-platform-workspace-organization-governance.md)
+spec [platform-workspace-organization-governance](../../docs/architecture/platform-workspace-organization-governance.md)
 §4.5 的 `private_tokens` 表与 Repository：一次性明文交付、SHA-256 摘要存储、不可逆撤销。
 
 本包是 PLT-04 Task 4 的结果：包结构、构建/类型检查/migrate 入口、`private_tokens` Migration 与
@@ -75,9 +75,8 @@ pnpm --filter @aurora/platform-credentials migrate          # 运行本包 Migra
 
 ## 关联文档
 
-- [PLT-04 正式规格](../../docs/superpowers/specs/2026-08-09-platform-workspace-organization-governance.md)
-- [PLT-04 实施计划](../../docs/superpowers/plans/2026-08-09-platform-workspace-organization-governance.md)
-- [PLT-03 正式规格](../../docs/superpowers/specs/2026-08-09-platform-identity-authentication-invitation.md)
+- [PLT-04 正式规格](../../docs/architecture/platform-workspace-organization-governance.md)
+- [PLT-03 正式规格](../../docs/security/platform-identity-authentication.md)
 - [ADR-029 平台数据库访问与 Migration](../../docs/adr/ADR-029-platform-database-access-and-migration.md)
 - [ADR-030 平台 Session/CSRF/密码物理参数](../../docs/adr/ADR-030-platform-session-csrf-password-physical-parameters.md)
 - [ADR-032 平台 Outbox/任务/缓存/对象存储](../../docs/adr/ADR-032-platform-outbox-tasks-cache-objects.md)

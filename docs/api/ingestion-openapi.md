@@ -20,7 +20,7 @@ related:
   - ../protocol/ingestion-batch-and-receipt-contract.md
   - ../architecture/deployment.md
   - ../architecture/system-overview.md
-  - ../architecture/formalization-readiness.md
+  - ../architecture/system-overview.md
 supersedes: none
 review-cycle: ingestion-openapi-field-or-compatibility-change
 ---

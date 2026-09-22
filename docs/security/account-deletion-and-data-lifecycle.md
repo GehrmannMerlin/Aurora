@@ -11,8 +11,8 @@ related:
   - ../architecture/platform-backend.md
   - ../operations/backup-and-recovery.md
   - ../adr/README.md
-  - ../superpowers/specs/2026-07-27-aurora-frontend-ux-ui-design.md
-  - ../superpowers/specs/2026-07-29-aurora-account-deletion-data-lifecycle-design.md
+  - ../prd/console-ux-ui-and-accessibility.md
+  - ../security/account-deletion-lifecycle-design.md
 supersedes: none
 review-cycle: release-or-security-change
 ---
@@ -21,7 +21,7 @@ review-cycle: release-or-security-change
 
 ## 1. 权威范围
 
-本文是 A5 账号注销与数据生命周期的长期正式权威来源。核心业务范围来自[核心 PRD](../../Auroa-PRD-业务逻辑汇总-v2.1-核心业务定稿版.md)，页面结构与交互细节来自[完整前端 UX/UI 设计](../superpowers/specs/2026-07-27-aurora-frontend-ux-ui-design.md)，批准证据保留在[A5 专项设计](../superpowers/specs/2026-07-29-aurora-account-deletion-data-lifecycle-design.md)。后续规则变更只维护本文；专题设计作为历史依据，不再平行更新。
+本文是 A5 账号注销与数据生命周期的长期正式权威来源。核心业务范围来自[核心 PRD](../../Auroa-PRD-业务逻辑汇总-v2.1-核心业务定稿版.md)，页面结构与交互细节来自[完整前端 UX/UI 设计](../prd/console-ux-ui-and-accessibility.md)，批准证据保留在[A5 专项设计](../security/account-deletion-lifecycle-design.md)。后续规则变更只维护本文；专题设计作为历史依据，不再平行更新。
 
 本文定义产品与安全行为，不是 OpenAPI、数据模型、表结构、队列、Runbook 或基础设施配置。精确字段、错误码、凭据期限和任务实现分别标记为 `implementation-detail` 或 `requires-accepted-adr`。
 

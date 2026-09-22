@@ -8,6 +8,7 @@ import {
   createTestPool,
   queryRow,
   queryRows,
+  resetProcessingStoreSchema,
   testDatabaseUrl,
 } from './helpers.js';
 
@@ -61,6 +62,7 @@ describeDb('processing-store performance event sample (real PostgreSQL 17)', () 
     await pool.query('DROP TABLE IF EXISTS issue_event_applications CASCADE');
     await pool.query('DROP TABLE IF EXISTS issues CASCADE');
     await pool.query('DROP TABLE IF EXISTS pgmigrations CASCADE');
+    await resetProcessingStoreSchema(pool);
     await runner({
       databaseUrl: testDatabaseUrl(),
       dir: migrationsDir,

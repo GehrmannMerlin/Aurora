@@ -10,7 +10,7 @@ applies-to: packages/ingestion-inbox 的死信人工重放核心能力（dead_le
 related:
   - ../../AURORA_RULES.md
   - '../../Aurora ADR 规范.md'
-  - ../../docs/architecture/formalization-readiness.md
+  - ../../docs/architecture/system-overview.md
   - ../../docs/architecture/ingestion-inbox-data-model.md
   - ../../docs/architecture/ingestion-inbox-processing-repository.md
   - ../../docs/architecture/ingestion-worker-runtime.md

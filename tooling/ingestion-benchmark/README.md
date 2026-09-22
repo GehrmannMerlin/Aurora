@@ -46,7 +46,7 @@ tsx tooling/ingestion-benchmark/src/entry.ts --profile local-baseline
 ## 输出
 
 - JSON 报告：`.artifacts/benchmarks/ingestion/ingestion-<profile>-<UTC>.json`（`.gitignore` 忽略），临时文件 + 原子 rename，不覆盖已有报告；
-- 脱敏摘要：`docs/testing/evidence/2026-08-02-ingestion-local-baseline.md`。
+- 脱敏摘要：`.artifacts/benchmarks/ingestion/`。
 
 报告**从不包含** clientKey/secret/digest、数据库 URL/用户名/密码、EventEnvelope body、SQL、HTTP Header、原始错误堆栈。
 
@@ -81,5 +81,4 @@ pnpm --filter @aurora/ingestion-benchmark build
 ## 权威链接
 
 - [正式规格](../../docs/testing/ingestion-capacity-and-resilience-benchmark.md)（approved / implemented）
-- [实施计划](../../docs/superpowers/plans/2026-08-02-ingestion-capacity-and-resilience-benchmark.md)
-- [正式化追踪](../../docs/architecture/formalization-readiness.md)
+- [正式化追踪](../../docs/architecture/system-overview.md)

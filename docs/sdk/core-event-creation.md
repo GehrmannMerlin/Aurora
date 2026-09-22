@@ -304,7 +304,7 @@ Core 覆盖率保持 lines ≥ 85%、branches ≥ 80%、functions ≥ 85%、stat
 
 - `packages/core/README.md` 的草稿、Provider、兼容与提交语义；
 - `docs/sdk/sdk-core-foundation.md` 的已实施边界引用；
-- `docs/architecture/sdk-architecture.md`、`docs/architecture/formalization-readiness.md`、`docs/testing/test-strategy.md`；
+- `docs/architecture/sdk-architecture.md`、`docs/architecture/system-overview.md`、`docs/testing/test-strategy.md`；
 - `docs/README.md`、根 `README.md`、`AGENTS.md`、`AURORA_RULES.md`；
 - ADR-003/005/006 的真实、有限实施证据。
 

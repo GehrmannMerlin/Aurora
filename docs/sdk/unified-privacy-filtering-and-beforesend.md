@@ -31,7 +31,7 @@ review-cycle: sdk-public-api-or-privacy-change
 
 本文把 G05 叶子 SDK-12「统一隐私过滤与 `beforeSend`」正式化为第一增量。它把 approved PRD §5.1.13—5.1.14、§14.3 的隐私与回调语义落实为 `@aurora/sdk` 的确定性机器行为，并保证用户 `beforeSend` 回调异常**不影响宿主页面**。
 
-批准来源：G05_APPROVAL_PACKAGE 缺口 4，用户 2026-08-10 批准全部推荐方案。
+批准来源：approved G05 SDK decision set 缺口 4，用户 2026-08-10 批准全部推荐方案。
 
 ## 2. 处理顺序（PRD §5.1.14，控制面强制）
 

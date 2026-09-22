@@ -6,6 +6,7 @@ import {
   assertIsTestDatabase,
   createTestPool,
   queryRow,
+  resetProcessingStoreSchema,
   testDatabaseUrl,
 } from './helpers.js';
 
@@ -36,6 +37,7 @@ describeDb('issue aggregate migrations (real PostgreSQL 17)', () => {
     await pool.query('DROP TABLE IF EXISTS performance_metric_buckets CASCADE');
     await pool.query('DROP TABLE IF EXISTS performance_event_samples CASCADE');
     await pool.query('DROP TABLE IF EXISTS pgmigrations CASCADE');
+    await resetProcessingStoreSchema(pool);
     await runner({
       databaseUrl: testDatabaseUrl(),
       dir: migrationsDir,
@@ -52,7 +54,17 @@ describeDb('issue aggregate migrations (real PostgreSQL 17)', () => {
 
   it('creates the three issue tables with the frozen columns', async () => {
     for (const [table, expected] of [
-      ['issues', ['project_id', 'fingerprint', 'fingerprint_version', 'occurrence_count', 'version', 'status']],
+      [
+        'issues',
+        [
+          'project_id',
+          'fingerprint',
+          'fingerprint_version',
+          'occurrence_count',
+          'version',
+          'status',
+        ],
+      ],
       ['issue_event_applications', ['project_id', 'event_id', 'issue_id']],
       ['issue_samples', ['issue_id', 'project_id', 'event_id', 'sample_body', 'sample_kind']],
     ] as const) {
@@ -113,10 +125,11 @@ describeDb('issue aggregate migrations (real PostgreSQL 17)', () => {
       dir: migrationsDir,
       direction: 'down',
       migrationsTable: 'pgmigrations',
-      count: 1,
+      count: 4,
       log: () => undefined,
     });
-    // The down dropped migration 1722500000009 (issue_activities/issue_notes).
+    // The down removes the three newer processing-store migrations plus
+    // 1722500000009 (issue_activities/issue_notes).
     const cols = await pool.query<ColumnRow>(
       `SELECT column_name FROM information_schema.columns WHERE table_name = 'issue_activities'`,
     );

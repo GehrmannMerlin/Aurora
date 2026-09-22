@@ -73,6 +73,7 @@ function onItemKeydown(event: KeyboardEvent): void {
       break;
     case 'Escape':
       event.preventDefault();
+      event.stopPropagation();
       emit('close-and-restore-focus');
       return;
     default:
@@ -182,7 +183,9 @@ watch(
 }
 .au-scope-menu {
   position: fixed;
-  z-index: 1000;
+  /* The menu is teleported to body and may be opened from the modal mobile
+     navigation drawer. Keep it above the drawer panel and its mask. */
+  z-index: 1200;
   width: max-content;
   min-width: 220px;
   max-width: min(320px, calc(100vw - 16px));

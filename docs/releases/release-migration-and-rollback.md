@@ -11,7 +11,7 @@ related:
   - ../testing/test-strategy.md
   - ../operations/backup-and-recovery.md
   - ../adr/README.md
-  - ../superpowers/specs/2026-07-28-aurora-testing-deployment-release-design.md
+  - ../testing/testing-deployment-release.md
 supersedes: none
 review-cycle: release-policy-or-migration-change
 ---

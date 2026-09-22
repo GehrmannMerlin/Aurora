@@ -54,7 +54,7 @@ cd ../.. && pnpm check:boundaries
 
 ## 关联文档
 
-- [PLT-03 正式规格](../../docs/superpowers/specs/2026-08-09-platform-identity-authentication-invitation.md)
+- [PLT-03 正式规格](../../docs/security/platform-identity-authentication.md)
 - [ADR-026 管理平台后端运行时与契约链](../../docs/adr/ADR-026-platform-backend-runtime-and-contract-chain.md)
 - [ADR-028 管理平台 Session、CSRF 与认证传输契约](../../docs/adr/ADR-028-platform-session-csrf-security.md)
 - [ADR-030 平台 Session/CSRF/密码物理参数](../../docs/adr/ADR-030-platform-session-csrf-password-physical-parameters.md)

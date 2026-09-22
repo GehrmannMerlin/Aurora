@@ -14,12 +14,12 @@ related:
   - '../../Aurora 架构规范.md'
   - ../architecture/deployment.md
   - ../architecture/aws-region-account-network-iac-foundation.md
-  - ../architecture/formalization-readiness.md
+  - ../architecture/system-overview.md
   - ../adr/ADR-010-postgresql-access-and-migration-tooling.md
   - ../adr/ADR-011-ingestion-http-service-runtime.md
   - ../adr/ADR-012-ingestion-worker-runtime.md
   - ../../Auroa-PRD-业务逻辑汇总-v2.1-核心业务定稿版.md
-  - ../superpowers/specs/2026-07-28-aurora-testing-deployment-release-design.md
+  - ../testing/testing-deployment-release.md
 supersedes: none
 superseded-by: ADR-036
 ---
@@ -50,7 +50,7 @@ superseded-by: ADR-036
 
 > **临时部署路径说明（2026-08-08，append-only 状态追加）**：用户选择先使用阿里云单主机公网预览桥接（`public-preview`，见 [public-preview-single-host-deployment.md](../operations/public-preview-single-host-deployment.md)），以获得当前已实现应用的公网运行环境。这**不表示用户接受或拒绝本 AWS 生产 ADR**；正式 G16 基础设施架构保持 `deferred`。本 ADR 继续 `proposed / not-started`，不因临时桥接改变状态；当 G16/OPS-05 重新评估正式基础设施时，再据此更新。
 
-> **2026-08-11 用户批准（append-only）**：用户正式批准 G16/OPS-04 Cloud Decision Package（[g16-ops04-cloud-decision-package.md](../operations/g16-ops04-cloud-decision-package.md)）中 D1—D11 全部推荐方案，本 ADR 决策状态由 `proposed` 更新为 `accepted`，审批状态 `approved`。批准内容：**双 AWS 账号（非生产 + 生产）、主区域 `ap-southeast-1`（新加坡，OPS-04 默认选择，正式 provisioning 前可重新评估）、CDK TypeScript**。实施状态由 OPS-04 实施进度承载（本文件标为 `in-progress`：IaC 基础工程已创建，实际 AWS 资源与 OPS-05 部署仍 not-started）。临时阿里云 Preview 桥接保持 `temporary-operational-snapshot`，不因本批准关闭；OPS-04 不因桥接标记 completed。
+> **2026-08-11 用户批准（append-only）**：用户正式批准 G16/OPS-04 的 D1—D11 推荐方案，本 ADR 决策状态由 `proposed` 更新为 `accepted`，审批状态 `approved`。批准内容：**双 AWS 账号（非生产 + 生产）、主区域 `ap-southeast-1`（新加坡，正式 provisioning 前可重新评估）、CDK TypeScript**。临时阿里云 Preview 桥接保持 `temporary-operational-snapshot`，不因本批准关闭。
 
 ## 背景
 

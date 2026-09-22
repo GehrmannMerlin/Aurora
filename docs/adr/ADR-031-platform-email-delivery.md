@@ -11,11 +11,11 @@ applies-to: 平台身份事务邮件（邮箱验证、密码重置、组织邀�
 related:
   - ../../AURORA_RULES.md
   - '../../Aurora ADR 规范.md'
-  - ../architecture/formalization-readiness.md
+  - ../architecture/system-overview.md
   - ./ADR-029-platform-database-access-and-migration.md
   - ./ADR-030-platform-session-csrf-password-physical-parameters.md
-  - ../superpowers/specs/2026-07-28-aurora-platform-backend-design.md
-  - ../superpowers/specs/2026-07-27-aurora-frontend-ux-ui-design.md
+  - ../architecture/platform-backend-design.md
+  - ../prd/console-ux-ui-and-accessibility.md
 supersedes: none
 superseded-by: none
 ---
@@ -32,7 +32,7 @@ superseded-by: none
 - Owner：product/operations/security
 - 适用范围：平台身份事务邮件（邮箱验证、密码重置、组织邀请）的发送责任边界、`EmailDeliveryPort` 契约、外部邮件供应商选择、发送记录与失败恢复；不覆盖 ingestion 或其他域邮件
 - 关联 PRD：[核心业务 PRD](../../Auroa-PRD-业务逻辑汇总-v2.1-核心业务定稿版.md)（§4.1 邮箱验证、§4.3 邀请）
-- 关联技术方案：[管理平台后端设计](../../docs/superpowers/specs/2026-07-28-aurora-platform-backend-design.md)（BE-GAP-09）
+- 关联技术方案：[管理平台后端设计](../../docs/architecture/platform-backend-design.md)（BE-GAP-09）
 - 关联 ADR：[ADR-029](../../docs/adr/ADR-029-platform-database-access-and-migration.md)（proposed）、[ADR-030](../../docs/adr/ADR-030-platform-session-csrf-password-physical-parameters.md)（proposed）
 - 关联 Issue：none
 - 关联实现 PR：none
@@ -41,7 +41,7 @@ superseded-by: none
 
 ## 状态说明
 
-本 ADR 于 2026-08-08 创建为 `proposed`。创建依据：formalization-readiness §8 缺口第 4 项"邮件发送责任、供应商、期限、冷却和失败恢复；GAP-03、BE-GAP-09"；平台后端设计 BE-GAP-09"邮件供应商、验证/重置/邀请期限、重发冷却与送达事件契约未决定"；UX/UI GAP-03（`EmailDeliveryPort` + 事务性 Outbox）。**在用户批准（accepted）前，不得选择/注册外部邮件供应商、创建 EmailDeliveryPort 实现或进入 `writing-plans`。**
+本 ADR 于 2026-08-08 创建为 `proposed`。创建依据：architecture documentation §8 缺口第 4 项"邮件发送责任、供应商、期限、冷却和失败恢复；GAP-03、BE-GAP-09"；平台后端设计 BE-GAP-09"邮件供应商、验证/重置/邀请期限、重发冷却与送达事件契约未决定"；UX/UI GAP-03（`EmailDeliveryPort` + 事务性 Outbox）。**在用户批准（accepted）前，不得选择/注册外部邮件供应商、创建 EmailDeliveryPort 实现或进入 `writing-plans`。**
 
 ## 背景
 
@@ -164,7 +164,7 @@ G10 的 PLT-03（A1 邮箱验证、A3 密码重置、A4 组织邀请）都需要
 
 - 状态 `proposed / not-started / awaiting-review`；
 - 由 G10 PLT-03（身份/认证/邀请）实施门禁创建；
-- 依据 formalization-readiness §8 缺口 4、BE-GAP-09、UX/UI GAP-03；
+- 依据 architecture documentation §8 缺口 4、BE-GAP-09、UX/UI GAP-03；
 - 未调用 writing-plans、未注册供应商、未创建 EmailDeliveryPort 实现、未进入实施；
 - 等待独立评审与用户正式批准，不自动批准、不实施。
 
@@ -195,15 +195,15 @@ G10 的 PLT-03（A1 邮箱验证、A3 密码重置、A4 组织邀请）都需要
 - 选择不改变本 ADR 已接受的 `EmailDeliveryPort + ADR-032 通用事务性 Outbox + Worker` 边界；供应商 SDK 只存在于 `packages/platform-email` 适配器与 `apps/platform-worker` composition root；
 - 用户已知并接受当前官方计费边界：新账号累计前 2,000 封免费、免费阶段每日最多 200 封；免费额度用尽后自动按量付费，当前标准 2 元/1,000 封。权威来源见[阿里云计费方式](https://help.aliyun.com/zh/direct-mail/billing-methods)与[使用限制](https://help.aliyun.com/zh/direct-mail/product-overview/limits/)；
 - 凭据优先使用 ECS RAM 角色/默认凭证链；回退长期 AccessKey 时必须最小权限并只存部署 secret，绝不进入 Git、聊天、日志、前端或构建产物；
-- 用户同时批准历史未验证账号只能在成功登录后重发，服务端从 Session 推导账号/邮箱，不开放任意邮箱输入；具体产品与实现约束见[邮箱验证真实交付与历史账号重发设计](../superpowers/specs/2026-08-14-email-verification-delivery-and-resend-design.md)；
+- 用户同时批准历史未验证账号只能在成功登录后重发，服务端从 Session 推导账号/邮箱，不开放任意邮箱输入；具体产品与实现约束见[邮箱验证真实交付与历史账号重发设计](../operations/email-verification-delivery.md)；
 - 截至本记录，`EmailDeliveryPort`、Console adapter、通用 Outbox 与 Worker 消费骨架已经存在；阿里云适配器、重发 Command、Outbox 可靠性修复和真实发信部署尚未实施，因此 ADR 实施状态更新为 `in-progress`，不得标记 `implemented`。
 
 ### 2026-08-15：功能分支实现完成，部署受保护检查点阻塞
 
 - `EmailDeliveryPort` 的阿里云 DirectMail `SingleSendMail` adapter、官方 SDK 默认凭据链、`platform-worker` composition root、新注册自动入队、Session 保护的历史账号重发、最新链接唯一有效语义及 Console Session 恢复已经实现；
 - PostgreSQL Outbox 已实现失败重试、`processing` 超时回收、claim fencing、有界最大尝试次数和终态 token/payload 清理；事务、并发、冷却、滚动配额、幂等、旧链接失效和账号激活已通过真实 PostgreSQL 17.10/Redis 7.4 集成测试，自动化发信均使用假的 DirectMail client；
-- 全仓格式、lint、类型、测试、覆盖率、边界、OpenAPI/manifest 漂移、构建及 Chromium 门禁通过；脱敏实施证据见[2026-08-15 邮箱验证交付与重发实施证据](../testing/evidence/2026-08-15-email-verification-delivery-and-resend.md)；
-- 阿里云域名、DNS、发信地址、RAM 权限和两条公网真实发信检查仍需账号控制台权限，因此当前实施状态为 `implemented-in-feature-branch / deployment-blocked`，不得声称真实邮件交付已完成。
+- 全仓格式、lint、类型、测试、覆盖率、边界、OpenAPI/manifest 漂移、构建及 Chromium 门禁通过；对应实现、测试和运行约束以本 ADR、邮件模块 README 与测试策略为准；
+- 阿里云域名、DNS、发信地址、RAM 权限和两条公网真实发信检查仍需账号控制台权限，因此当前实施状态为 `implemented / deployment-blocked`，不得声称真实邮件交付已完成。
 
 ### 2026-08-15：公网部署与真实交付由用户验收完成
 

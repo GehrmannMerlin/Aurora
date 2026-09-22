@@ -36,7 +36,7 @@ export interface ProjectEnvironmentRow {
   readonly environmentId: string;
   readonly projectId: string;
   readonly name: string;
-  readonly isDefault: string;
+  readonly isDefault: boolean;
   readonly createdAt: string;
 }
 
@@ -136,7 +136,7 @@ export async function listProjectEnvironments(
       environment_id: string;
       project_id: string;
       name: string;
-      is_default: string;
+      is_default: boolean;
       created_at: Date | string;
     }>(
       `SELECT pe.environment_id, pe.project_id, pe.name, pe.is_default, pe.created_at

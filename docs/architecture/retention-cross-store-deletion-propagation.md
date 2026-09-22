@@ -1,7 +1,7 @@
 ---
 title: Aurora 数据保留、跨存储删除传播与备份淘汰（SEC-02）
 status: approved
-implementation-status: implemented-in-feature-branch
+implementation-status: implemented
 approval-status: approved
 owner: security/privacy
 created: 2026-08-11
@@ -26,7 +26,7 @@ review-cycle: release-or-security-change
 
 本文正式承载 SEC-02 叶子模块（retention / cross-store deletion propagation）。它消费已 approved 的 [账号注销与数据生命周期](../security/account-deletion-and-data-lifecycle.md) §6—11、[backup-and-recovery](../operations/backup-and-recovery.md) §5、核心 PRD §14/§16—17，并把 SEC-01 已创建的 `account_cleanup_handoffs` 意图（注释明确 "consumed by the future SEC-02 worker"）落为**消费该意图的跨存储清理编排**。
 
-**当前状态**：`status: approved`、`implementation-status: implemented-in-feature-branch`。清理状态机、跨存储清理 adapter 端口、PostgreSQL 清理 adapter（真实）、Redis/对象/备份 adapter（契约，对应基础设施由 ADR-032 defer）、清理 orchestrator worker、审计记录、备份淘汰与恢复后删除重放契约已实现并测试（24 单测 + 1 条 focused 真实 PostgreSQL 集成测试通过）。
+**当前状态**：`status: approved`、`implementation-status: implemented`。清理状态机、跨存储清理 adapter 端口、PostgreSQL 清理 adapter（真实）、Redis/对象/备份 adapter（契约，对应基础设施由 ADR-032 defer）、清理 orchestrator worker、审计记录、备份淘汰与恢复后删除重放契约已实现并测试（24 单测 + 1 条 focused 真实 PostgreSQL 集成测试通过）。
 
 **OPS-07 bridge**：OPS-07 尚未合入 main（G16 PR 未 merge）→ 记录 `OPS07_DELETE_REPLAY_INTEGRATION_PENDING`（不 cherry-pick G16 分支；SEC-02 独立完成；OPS-07 合入后运行 focused delete-replay bridge test）。
 

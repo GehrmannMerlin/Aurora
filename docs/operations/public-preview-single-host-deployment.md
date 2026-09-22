@@ -9,7 +9,7 @@ related:
   - ../../AGENTS.md
   - ../../AURORA_RULES.md
   - ../architecture/deployment.md
-  - ../architecture/formalization-readiness.md
+  - ../architecture/system-overview.md
   - ../architecture/ingestion-http-service.md
   - ../architecture/ingestion-worker-runtime.md
   - ../architecture/ingestion-inbox-data-model.md

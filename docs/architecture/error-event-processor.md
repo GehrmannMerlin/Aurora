@@ -26,7 +26,7 @@ related:
   - ../architecture/ingestion-worker-runtime.md
   - ../architecture/error-event-occurrence-processing-store.md
   - ../protocol/error-event-contract.md
-  - ../architecture/formalization-readiness.md
+  - ../architecture/system-overview.md
 supersedes: none
 review-cycle: error-event-processor-contract-or-release
 ---
@@ -177,7 +177,7 @@ export type ProcessIngestionEventResult =
 
 - `apps/ingestion-worker/README.md` 增加错误处理器职责与接口；
 - 本规格 `implementation-status` → implemented；
-- `docs/README.md`、`docs/architecture/formalization-readiness.md`、`AGENTS.md`、`AURORA_RULES.md` 同步状态；
+- `docs/README.md`、`docs/architecture/system-overview.md`、`AGENTS.md`、`AURORA_RULES.md` 同步状态；
 - ADR-012 追加实施记录（in-progress 推进，不标记 implemented）；ADR-018 追加 processor 核心能力衔接证据。
 
 ## 14. 回滚

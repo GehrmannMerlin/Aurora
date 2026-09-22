@@ -24,7 +24,7 @@ related:
   - ./error-normalization-fingerprint.md
   - ./error-event-occurrence-processing-store.md
   - ./error-event-processor.md
-  - ./formalization-readiness.md
+  - ./system-overview.md
 supersedes: none
 review-cycle: issue-aggregate-storage-or-sample-policy-change
 ---
@@ -35,7 +35,6 @@ review-cycle: issue-aggregate-storage-or-sample-policy-change
 
 本文冻结 DAT-13（Issue 聚合、代表样本和数据模型）第一增量。该增量把 DAT-12 已 fingerprint 的错误 occurrence 聚合为项目作用域的真实 Issue 聚合，并持久化有界、安全的代表样本。
 
-**批准状态**：本文随 [G03 APPROVAL PACKAGE](../superpowers/g03-approval-package.md) 于 2026-08-10 由用户整体批准，`status: approved`、`approval-status: approved`；`implementation-status` 于计划执行后更新为 `implemented`。
 
 **ADR 判断**：本增量执行 accepted [ADR-033](../adr/ADR-033-issue-aggregate-data-model.md)（用户 2026-08-10 批准为 accepted）。ADR-033 冻结 Issue 数据模型；本文是 DAT-13 实施唯一权威来源。
 
@@ -210,7 +209,7 @@ export type IssueSampleDecision =
 
 - `packages/processing-store/README.md`：增加 Issue 聚合与有界样本能力；
 - `docs/architecture/error-event-occurrence-processing-store.md`：追加 Issue 聚合衔接证据，保持 ADR-018 结论不变；
-- `docs/architecture/formalization-readiness.md`、`docs/README.md`：更新 Issue/fingerprint 状态；
+- `docs/architecture/system-overview.md`、`docs/README.md`：更新 Issue/fingerprint 状态；
 - ADR-018：追加 Issue 聚合衔接证据；ADR-033：状态按用户批准结果更新；
 - `AGENTS.md` 与 `AURORA_RULES.md`：全部门禁实际通过后才更新阶段快照；
 - G03 计数：DAT-13 独立验收通过后 `completed 47→48 / remaining 31→30`。
@@ -235,5 +234,3 @@ export type IssueSampleDecision =
 - 无跨 Store 事务、不新增包、不修改公开事件协议；
 - 测试覆盖首次创建、重复聚合、并发、样本有界、项目隔离、再次出现重开；
 - 无占位/TBD，全部常量与类型签名冻结。
-
-自动审批依据：本文语义全部由 accepted ADR-018、approved DAT-12 规格、approved 错误事件协议契约与 **accepted ADR-033**（用户 2026-08-10 批准）派生；本规格本身不引入新的产品/架构/安全/隐私决策。已随 G03 APPROVAL PACKAGE 于 2026-08-10 由用户批准为 approved。

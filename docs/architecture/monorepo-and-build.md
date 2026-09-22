@@ -13,7 +13,7 @@ related:
   - '../../Aurora 测试规范.md'
   - ../README.md
   - system-overview.md
-  - formalization-readiness.md
+  - system-overview.md
   - ../testing/test-strategy.md
   - ../adr/ADR-001-use-monorepo.md
   - ../adr/ADR-006-one-way-dependencies.md

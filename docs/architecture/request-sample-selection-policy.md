@@ -28,7 +28,7 @@ related:
   - ../architecture/request-event-sample-processing-store.md
   - ../architecture/request-metric-aggregate-store.md
   - ../architecture/error-event-processor.md
-  - ../architecture/formalization-readiness.md
+  - ../architecture/system-overview.md
   - ../../Auroa-PRD-业务逻辑汇总-v2.1-核心业务定稿版.md
 supersedes: none
 review-cycle: request-sample-selection-policy-contract-or-release
@@ -307,7 +307,7 @@ if (decision.decision === 'store') {
 - `apps/ingestion-worker/README.md`：增加请求样本选择策略职责与接口；
 - 本规格 `implementation-status` 更新为 `implemented`；
 - `docs/README.md`：增加一行模块条目；
-- `docs/architecture/formalization-readiness.md`：更新状态记录；
+- `docs/architecture/system-overview.md`：更新状态记录；
 - ADR-019 追加实施记录：样本选择策略核心能力证据，保持 `accepted / in-progress`；
 - ADR-020 保持 `accepted / implemented`；
 - `AGENTS.md`/`AURORA_RULES.md`：仅在代码和完整门禁实际通过后更新阶段快照；

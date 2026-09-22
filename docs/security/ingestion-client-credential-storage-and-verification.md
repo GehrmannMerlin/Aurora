@@ -21,7 +21,7 @@ related:
   - ../security/ingestion-transport-and-client-credential.md
   - ../api/ingestion-openapi.md
   - ../architecture/ingestion-http-service.md
-  - ../architecture/formalization-readiness.md
+  - ../architecture/system-overview.md
 supersedes: none
 review-cycle: ingestion-credential-schema-or-security-change
 ---

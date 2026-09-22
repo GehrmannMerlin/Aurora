@@ -19,7 +19,7 @@ related:
   - ../adr/ADR-010-postgresql-access-and-migration-tooling.md
   - ../architecture/ingestion-inbox-data-model.md
   - ../architecture/ingestion-http-service.md
-  - ../architecture/formalization-readiness.md
+  - ../architecture/system-overview.md
 supersedes: none
 review-cycle: ingestion-inbox-processing-contract-or-release
 ---

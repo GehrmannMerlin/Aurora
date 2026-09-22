@@ -15,8 +15,7 @@ related:
   - ../adr/ADR-003-sdk-plugin-architecture.md
   - ../adr/ADR-005-event-schema-source-of-truth.md
   - ../adr/ADR-006-one-way-dependencies.md
-  - ../superpowers/specs/2026-07-28-aurora-foundation-topic-approval-baseline.md
-  - ../superpowers/specs/2026-07-28-aurora-testing-deployment-release-design.md
+  - ../testing/testing-deployment-release.md
 supersedes: none
 review-cycle: sdk-api-or-release
 ---

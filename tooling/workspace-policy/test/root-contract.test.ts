@@ -2,7 +2,10 @@ import { readFile } from 'node:fs/promises';
 import { describe, expect, it } from 'vitest';
 
 async function readRootFile(path: string): Promise<string> {
-  return readFile(new URL(`../../../${path}`, import.meta.url), 'utf8');
+  return (await readFile(new URL(`../../../${path}`, import.meta.url), 'utf8')).replaceAll(
+    '\r\n',
+    '\n',
+  );
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -35,6 +38,7 @@ describe('root Workspace contract', () => {
       'check:ci',
       'deploy:preview',
       'deploy:preview:rollback',
+      'docs:hygiene',
       'format:check',
       'lint',
       'openapi:check',

@@ -11,11 +11,11 @@ applies-to: 管理平台 platform-api/platform-worker 的异步边界——事�
 related:
   - ../../AURORA_RULES.md
   - '../../Aurora ADR 规范.md'
-  - ../architecture/formalization-readiness.md
+  - ../architecture/system-overview.md
   - ./ADR-029-platform-database-access-and-migration.md
   - ./ADR-031-platform-email-delivery.md
-  - ../superpowers/specs/2026-07-28-aurora-platform-backend-design.md
-  - ../superpowers/specs/2026-07-30-aurora-platform-openapi-and-implementation-design.md
+  - ../architecture/platform-backend-design.md
+  - ../api/platform-openapi-and-implementation.md
 supersedes: none
 superseded-by: none
 ---
@@ -32,7 +32,7 @@ superseded-by: none
 - Owner：backend/operations
 - 适用范围：管理平台 `platform-api`/`platform-worker` 的异步边界——事务性 Outbox、后台任务/队列、缓存、对象存储（Source Map、导出等）；不改变已 accepted 的 ingestion 域基础设施决策
 - 关联 PRD：[核心业务 PRD](../../Auroa-PRD-业务逻辑汇总-v2.1-核心业务定稿版.md)（§17.3 永久删除清理、§5.4 私密令牌）
-- 关联技术方案：[管理平台后端设计](../../docs/superpowers/specs/2026-07-28-aurora-platform-backend-design.md)（approved，BACKEND-002=B）
+- 关联技术方案：[管理平台后端设计](../../docs/architecture/platform-backend-design.md)（approved，BACKEND-002=B）
 - 关联 ADR：[ADR-029](../../docs/adr/ADR-029-platform-database-access-and-migration.md)（proposed）、[ADR-031](../../docs/adr/ADR-031-platform-email-delivery.md)（proposed，Outbox 记录邮件）
 - 关联 Issue：none
 - 关联实现 PR：none
@@ -41,7 +41,7 @@ superseded-by: none
 
 ## 状态说明
 
-本 ADR 于 2026-08-08 创建为 `proposed`。创建依据：formalization-readiness §7 候选队列第 6 项"平台 Outbox、任务、缓存与对象"；平台后端设计 BACKEND-002=B"PostgreSQL Outbox＋Redis/BullMQ＋私有 S3 兼容对象存储、第一版无独立搜索"；G10 SEC-01 需要异步删除交接、PLT-03 需要 Outbox 记录邮件发送。**在用户批准（accepted）前，不得创建 Outbox 表、BullMQ 队列、Redis 缓存基础设施、S3 对象存储或进入 `writing-plans`。**
+本 ADR 于 2026-08-08 创建为 `proposed`。创建依据：architecture documentation §7 候选队列第 6 项"平台 Outbox、任务、缓存与对象"；平台后端设计 BACKEND-002=B"PostgreSQL Outbox＋Redis/BullMQ＋私有 S3 兼容对象存储、第一版无独立搜索"；G10 SEC-01 需要异步删除交接、PLT-03 需要 Outbox 记录邮件发送。**在用户批准（accepted）前，不得创建 Outbox 表、BullMQ 队列、Redis 缓存基础设施、S3 对象存储或进入 `writing-plans`。**
 
 ## 背景
 
@@ -163,7 +163,7 @@ G10 叶子需要异步边界：PLT-03 邮箱验证/重置/邀请的发送请求�
 
 - 状态 `proposed / not-started / awaiting-review`；
 - 由 G10 PLT-03（Outbox 邮件）与 SEC-01（删除交接）实施门禁创建；
-- 依据 formalization-readiness §7 候选 6、BACKEND-002=B；
+- 依据 architecture documentation §7 候选 6、BACKEND-002=B；
 - 未调用 writing-plans、未创建 Outbox/BullMQ/S3 实现、未进入实施；
 - 等待独立评审与用户正式批准，不自动批准、不实施。
 

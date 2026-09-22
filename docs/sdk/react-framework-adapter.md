@@ -16,7 +16,7 @@ related:
   - '../../Aurora 测试规范.md'
   - '../../Aurora ADR 规范.md'
   - ../architecture/sdk-architecture.md
-  - ../architecture/aurora-v1-remaining-module-batches.md
+  - ../architecture/system-overview.md
   - ../adr/ADR-003-sdk-plugin-architecture.md
   - ../adr/ADR-005-event-schema-source-of-truth.md
   - ../adr/ADR-006-one-way-dependencies.md
@@ -25,8 +25,6 @@ related:
   - sdk-reliable-delivery-chain.md
   - vue-framework-adapter.md
   - ../protocol/error-event-contract.md
-  - ../superpowers/g07-approval-package.md
-  - ../superpowers/plans/2026-08-11-sdk-18-react-framework-adapter.md
 supersedes: none
 review-cycle: sdk-framework-adapter-public-api-or-lifecycle-change
 ---
@@ -37,7 +35,7 @@ review-cycle: sdk-framework-adapter-public-api-or-lifecycle-change
 
 本文冻结 G07 叶子 SDK-18「React 框架生命周期适配」的第一增量：新增 `@aurora/plugin-react`，为 React 18 应用提供 `AuroraErrorBoundary` 与 SDK 句柄，把子树渲染/生命周期错误捕获为标准错误事件并进入既有统一管道，同时满足 StrictMode 开发期双生命周期幂等、cleanup 恢复、多实例隔离与宿主安全。架构边界以 approved [sdk-architecture.md](../architecture/sdk-architecture.md) §2 框架适配行与架构规范 §2.4.4 为准；错误正文以 approved [error-event-contract.md](../protocol/error-event-contract.md) 为准。
 
-批准来源：G07_APPROVAL_PACKAGE 一次性批准（React 版本、公共接口、Error Boundary、StrictMode/重复初始化语义、cleanup、多实例、隐私与排除范围）。无需新 ADR：本增量实现 ADR-003 已批准的四层架构中的框架适配层。
+批准来源：approved G07 framework-adapter decision 一次性批准（React 版本、公共接口、Error Boundary、StrictMode/重复初始化语义、cleanup、多实例、隐私与排除范围）。无需新 ADR：本增量实现 ADR-003 已批准的四层架构中的框架适配层。
 
 ## 2. 实施证据（2026-08-11）
 

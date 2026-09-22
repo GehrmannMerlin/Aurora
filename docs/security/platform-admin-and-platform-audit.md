@@ -3,10 +3,10 @@
 - **status**: approved
 - **created**: 2026-08-12
 - **applies-to**: D2 平台资源策略管理的前置身份/授权/审计能力；`platform.resource-policies` Route Target
-- **decision-source**: 用户 2026-08-12 批准的 `G13_PLT10_APPROVAL_PACKAGE` 六项推荐（第 1—4 项）与 [ADR-034](adr/ADR-034-platform-admin-and-platform-audit.md)（accepted）；PRD §15.8；UX/UI §8.31；OpenAPI §14.1/§459
-- **related**: `docs/architecture/platform-resource-policy-data-model.md`（approved）；formalization-readiness §7 候选队列第 2 项
+- **decision-source**: 用户 2026-08-12 批准的平台管理员与审计六项推荐（第 1—4 项）与 [ADR-034](../adr/ADR-034-platform-admin-and-platform-audit.md)（accepted）；PRD §15.8；UX/UI §8.31；OpenAPI §14.1/§459
+- **related**: [资源策略数据模型](../architecture/platform-resource-policy-data-model.md)（approved）
 
-> 本文只定义平台管理员身份、授权/撤销、break-glass 与平台级审计的正式规则。D2 页面与策略数据模型见[资源策略数据模型规格](platform-resource-policy-data-model.md)；机器契约边界沿用已批准 UX/UI §8.31 与 OpenAPI §14.1。
+> 本文只定义平台管理员身份、授权/撤销、break-glass 与平台级审计的正式规则。D2 页面与策略数据模型见[资源策略数据模型规格](../architecture/platform-resource-policy-data-model.md)；机器契约边界沿用已批准 UX/UI §8.31 与 OpenAPI §14.1。
 
 ## 1. 目标与非目标
 

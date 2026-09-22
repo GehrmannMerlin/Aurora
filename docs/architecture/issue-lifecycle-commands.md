@@ -20,10 +20,10 @@ related:
   - ../adr/ADR-028-platform-session-csrf-security.md
   - ../adr/ADR-029-platform-database-access-and-migration.md
   - ../adr/ADR-033-issue-aggregate-data-model.md
-  - ../superpowers/specs/2026-07-30-aurora-platform-openapi-and-implementation-design.md
-  - ../superpowers/specs/2026-07-27-aurora-frontend-ux-ui-design.md
+  - ../api/platform-openapi-and-implementation.md
+  - ../prd/console-ux-ui-and-accessibility.md
   - ./issue-aggregate-representative-sample-store.md
-  - ./formalization-readiness.md
+  - ./system-overview.md
 supersedes: none
 review-cycle: issue-command-or-authorization-change
 ---
@@ -34,7 +34,6 @@ review-cycle: issue-command-or-authorization-change
 
 本文冻结 DAT-14（Issue 生命周期 Command、活动和审计）第一增量。该增量提供正式 Issue 生命周期 Command 与活动证据：状态/负责人/优先级更新、成员备注、问题合并与当前页批量操作，全部服务端强制权限、乐观并发、幂等、活动记录与安全审计。
 
-**批准状态**：本文随 [G03 APPROVAL PACKAGE](../superpowers/g03-approval-package.md) 于 2026-08-10 由用户整体批准，`status: approved`、`approval-status: approved`；`implementation-status` 于计划执行后更新为 `implemented`。
 
 **ADR 判断**：本增量**不创建新 ADR**。Issue 数据模型（含 `issue_activities`/`issue_notes` 表）由 accepted [ADR-033](../adr/ADR-033-issue-aggregate-data-model.md)（用户 2026-08-10 批准）冻结；Command 语义（状态机、负责人、优先级、备注、批量、合并、再次出现重开）逐条由 approved PRD §10 与 UX C3/C4 派生；权限复用已实施 G10（accepted ADR-029/030 与 `@aurora/platform-identity`/`platform-organization`/`platform-project-governance`）；无新增产品/架构/安全/隐私决策。
 
@@ -181,7 +180,7 @@ review-cycle: issue-command-or-authorization-change
 ## 13. 文档与 ADR 同步
 
 - `packages/processing-store/README.md`、`packages/platform-contract/README.md`、`apps/platform-api/README.md` 更新；
-- `docs/architecture/formalization-readiness.md`、`docs/README.md` 更新 Issue Command/Query 状态；
+- `docs/architecture/system-overview.md`、`docs/README.md` 更新 Issue Command/Query 状态；
 - ADR-033：状态按用户批准结果更新；本规格同步实施证据；
 - `AGENTS.md` 与 `AURORA_RULES.md`：全部门禁实际通过后才更新阶段快照；
 - G03 计数：DAT-14 独立验收通过后 `completed 48→49 / remaining 30→29`。
@@ -204,5 +203,3 @@ review-cycle: issue-command-or-authorization-change
 - 实现位置与依赖方向符合分层约束，无循环依赖；
 - 测试覆盖授权正反例、状态转移、版本冲突、合并、批量、审计投影；
 - 无占位/TBD，全部常量与类型签名冻结。
-
-自动审批依据：本文语义全部由 approved PRD §10、approved UX C3/C4、approved OpenAPI 设计、已实施 G10 授权/审计模式与 **accepted ADR-033**（用户 2026-08-10 批准）派生；无新增产品/架构/安全/隐私决策；不创建新 ADR。已随 G03 APPROVAL PACKAGE 于 2026-08-10 由用户批准为 approved。

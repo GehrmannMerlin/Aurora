@@ -30,7 +30,7 @@ related:
   - ../architecture/request-sample-selection-policy.md
   - ../architecture/request-event-processor.md
   - ../architecture/error-event-processor.md
-  - ../architecture/formalization-readiness.md
+  - ../architecture/system-overview.md
   - ../../Auroa-PRD-业务逻辑汇总-v2.1-核心业务定稿版.md
 supersedes: none
 review-cycle: request-processing-rules-contract-or-release
@@ -351,7 +351,7 @@ export interface RequestProcessingRulesAdapter {
 - 真实 PostgreSQL 集成测试覆盖 §24 全部场景并通过；
 - 既有 Request Processor/Error Processor/Sample Selection/Metric/Sample 测试全部回归通过；
 - `package-entry.test.ts`、`documentation-contract.test.ts`、`security-negative.test.ts` 同步；
-- README、正式规格、formalization-readiness、docs/README、ADR-019/020 实施证据同步；
+- README、正式规格、architecture documentation、docs/README、ADR-019/020 实施证据同步；
 - 全仓质量门禁（typecheck/lint/unit/integration/coverage/boundaries/build/package/format/文档示例）通过；关键核心模块覆盖率 lines ≥ 85%、branches ≥ 80%。
 
 ## 29. ADR 判断

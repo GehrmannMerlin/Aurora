@@ -12,6 +12,7 @@ import {
   createTestPool,
   queryRow,
   queryRows,
+  resetProcessingStoreSchema,
   testDatabaseUrl,
 } from './helpers.js';
 
@@ -88,6 +89,7 @@ describeDb('processing-store request metric aggregation (real PostgreSQL 17)', (
     await pool.query('DROP TABLE IF EXISTS performance_metric_buckets CASCADE');
     await pool.query('DROP TABLE IF EXISTS performance_event_samples CASCADE');
     await pool.query('DROP TABLE IF EXISTS pgmigrations CASCADE');
+    await resetProcessingStoreSchema(pool);
     await runner({
       databaseUrl: testDatabaseUrl(),
       dir: migrationsDir,
@@ -164,7 +166,14 @@ describeDb('processing-store request metric aggregation (real PostgreSQL 17)', (
   it('increments both failure and slow counts when both flags are set', async () => {
     await persistRequestMetricContribution(
       pool,
-      contribution({ eventId: 'evt-metric-both', outcome: 'http_error', statusCode: 503, isFailure: true, isSlow: true, durationMs: 4000 }),
+      contribution({
+        eventId: 'evt-metric-both',
+        outcome: 'http_error',
+        statusCode: 503,
+        isFailure: true,
+        isSlow: true,
+        durationMs: 4000,
+      }),
     );
     const row = await queryRow<BucketRow>(
       pool,
@@ -221,7 +230,11 @@ describeDb('processing-store request metric aggregation (real PostgreSQL 17)', (
   it('does not merge different projects into the same bucket', async () => {
     await persistRequestMetricContribution(
       pool,
-      contribution({ projectId: projectB, eventId: 'evt-metric-proj-b', occurredAt: 1_800_000_054_000 }),
+      contribution({
+        projectId: projectB,
+        eventId: 'evt-metric-proj-b',
+        occurredAt: 1_800_000_054_000,
+      }),
     );
     const rows = await queryRows<BucketRow>(
       pool,

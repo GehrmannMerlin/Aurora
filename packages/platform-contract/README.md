@@ -130,7 +130,7 @@ Schema 按 OpenAPI 3.1（JSON Schema 2020-12）语义导出：可空字段以 `t
 ## 关联文档
 
 - [Platform Contract Foundation 规格](../../docs/architecture/platform-contract-foundation.md)
-- [平台 OpenAPI 与实现约束设计](../../docs/superpowers/specs/2026-07-30-aurora-platform-openapi-and-implementation-design.md)
+- [平台 OpenAPI 与实现约束设计](../../docs/api/platform-openapi-and-implementation.md)
 - [ADR-025](../../docs/adr/ADR-025-platform-frontend-technology-stack.md)
 - [ADR-026](../../docs/adr/ADR-026-platform-backend-runtime-and-contract-chain.md)
 - [ADR-027](../../docs/adr/ADR-027-platform-contract-codegen-tooling.md)

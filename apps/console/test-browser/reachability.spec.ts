@@ -50,12 +50,30 @@ async function primeApp(page: Page): Promise<void> {
 async function openGlobalNavigation(page: Page): Promise<Locator> {
   const drawer = page.locator('#nav-drawer');
   const menuTrigger = page.getByRole('button', { name: '导航', exact: true });
-  if ((await menuTrigger.isVisible()) && !(await drawer.isVisible())) {
+  const isCompactViewport = await page.evaluate(
+    () => window.matchMedia('(max-width: 959px)').matches,
+  );
+  const navigation = isCompactViewport
+    ? drawer.getByRole('navigation', { name: '全局导航' })
+    : page.getByRole('navigation', { name: '全局导航' }).first();
+  let drawerOpen = false;
+  if (isCompactViewport) {
+    const drawerState = await page.evaluate(() => {
+      const element = document.querySelector('#nav-drawer');
+      if (element === null) return 'absent';
+      if (element.classList.contains('p-drawer-leave-active')) return 'leaving';
+      return element.getAttribute('data-p')?.includes('open') ? 'open' : 'closed';
+    });
+    if (drawerState === 'leaving') await expect(drawer).toBeHidden();
+    drawerOpen = drawerState === 'open';
+  }
+  if (isCompactViewport && !drawerOpen) {
     await menuTrigger.click();
     await expect(drawer).toBeVisible();
+    await expect(drawer).not.toHaveClass(/p-drawer-enter-active/);
   }
-  const navigation = page.getByRole('navigation', { name: '全局导航' }).filter({ visible: true });
   await expect(navigation).toBeVisible();
+  await expect(navigation).toHaveAttribute('data-navigation-status', 'ready');
   return navigation;
 }
 
@@ -143,7 +161,9 @@ test('every project sidebar entry is reachable by real click — PLT-05/06/07/08
   await page.goto(`${requiredServer().origin}/`);
   await waitForShell(page);
   await setMockScope(page, 'project', 'prj_test_1');
-  await page.goto(`${requiredServer().origin}/organizations/org_test_1/projects/prj_test_1/overview`);
+  await page.goto(
+    `${requiredServer().origin}/organizations/org_test_1/projects/prj_test_1/overview`,
+  );
   for (const entry of REAL_PROJECT_ENTRIES) {
     const sidebar = await openResponsiveSidebar(page);
     await sidebar.getByRole('link', { name: entry.name, exact: true }).click();
@@ -212,7 +232,9 @@ test('scope switch menus activate authorized organization and project targets', 
   await page.goto(`${requiredServer().origin}/`);
   await waitForShell(page);
   await setMockScope(page, 'project', 'prj_test_1');
-  await page.goto(`${requiredServer().origin}/organizations/org_test_1/projects/prj_test_1/overview`);
+  await page.goto(
+    `${requiredServer().origin}/organizations/org_test_1/projects/prj_test_1/overview`,
+  );
   await waitForShell(page);
   let contextSidebar = await openResponsiveSidebar(page);
   await contextSidebar.getByRole('button', { name: '组织：Acme' }).click();
@@ -262,7 +284,9 @@ test('scope menus support keyboard open, selection, and Escape focus restoration
   await page.goto(`${requiredServer().origin}/`);
   await waitForShell(page);
   await setMockScope(page, 'project', 'prj_test_1');
-  await page.goto(`${requiredServer().origin}/organizations/org_test_1/projects/prj_test_1/overview`);
+  await page.goto(
+    `${requiredServer().origin}/organizations/org_test_1/projects/prj_test_1/overview`,
+  );
 
   const contextSidebar = await openResponsiveSidebar(page);
   const organizationTrigger = contextSidebar.getByRole('button', { name: '组织：Acme' });
@@ -293,7 +317,9 @@ test('desktop content scroll keeps the layered navigation fixed, sized, and acti
   await page.goto(`${requiredServer().origin}/`);
   await waitForShell(page);
   await setMockScope(page, 'project', 'prj_test_1');
-  await page.goto(`${requiredServer().origin}/organizations/org_test_1/projects/prj_test_1/overview`);
+  await page.goto(
+    `${requiredServer().origin}/organizations/org_test_1/projects/prj_test_1/overview`,
+  );
 
   const sidebar = page.locator('.au-desktop-context');
   const rail = page.locator('.au-desktop-rail');
@@ -322,7 +348,8 @@ test('desktop content scroll keeps the layered navigation fixed, sized, and acti
   });
   expect(scrollTop).toBeGreaterThan(0);
   const sidebarAfter = await sidebar.boundingBox();
-  if (sidebarAfter === null) throw new Error('Desktop context navigation must retain its layout box');
+  if (sidebarAfter === null)
+    throw new Error('Desktop context navigation must retain its layout box');
   expect(sidebarAfter.y).toBe(sidebarBefore.y);
 });
 
@@ -330,7 +357,9 @@ test('a nav entry is reachable by keyboard (focus + Enter)', async ({ page }) =>
   await page.goto(`${requiredServer().origin}/`);
   await waitForShell(page);
   await setMockScope(page, 'project', 'prj_test_1');
-  await page.goto(`${requiredServer().origin}/organizations/org_test_1/projects/prj_test_1/overview`);
+  await page.goto(
+    `${requiredServer().origin}/organizations/org_test_1/projects/prj_test_1/overview`,
+  );
   const sidebar = await openResponsiveSidebar(page);
   const overview = sidebar.getByRole('link', { name: '概览', exact: true });
   await overview.focus();
@@ -347,7 +376,9 @@ test('project monitoring entry pages expose the calm authority, evidence, and ac
   await waitForShell(page);
   await setMockScope(page, 'project', 'prj_test_1');
 
-  await page.goto(`${requiredServer().origin}/organizations/org_test_1/projects/prj_test_1/overview`);
+  await page.goto(
+    `${requiredServer().origin}/organizations/org_test_1/projects/prj_test_1/overview`,
+  );
   await expect(page.getByTestId('overview-status')).toBeVisible();
   await expect(page.getByTestId('overview-evidence')).toBeVisible();
   await expect(page.getByTestId('overview-actions')).toBeVisible();
@@ -355,14 +386,18 @@ test('project monitoring entry pages expose the calm authority, evidence, and ac
   await expect(page.getByText('project.requests', { exact: true })).toHaveCount(0);
   await expect(page.locator('svg[role="img"], canvas')).toHaveCount(0);
 
-  await page.goto(`${requiredServer().origin}/organizations/org_test_1/projects/prj_test_1/onboarding`);
+  await page.goto(
+    `${requiredServer().origin}/organizations/org_test_1/projects/prj_test_1/onboarding`,
+  );
   await expect(page.getByTestId('onboarding-guide')).toBeVisible();
   await expect(page.locator('.mon-onboarding-sequence pre')).toHaveCount(3);
   await expect(page.getByTestId('onboarding-install-command')).toBeVisible();
   await expect(page.getByTestId('onboarding-init-code')).toBeVisible();
   await expect(page.getByTestId('onboarding-test-code')).toBeVisible();
 
-  await page.goto(`${requiredServer().origin}/organizations/org_test_1/projects/prj_test_1/data-status`);
+  await page.goto(
+    `${requiredServer().origin}/organizations/org_test_1/projects/prj_test_1/data-status`,
+  );
   await expect(page.getByTestId('ds-authority')).toBeVisible();
   await expect(page.getByTestId('ds-stages')).toBeVisible();
   await expect(page.getByTestId('ds-trust-evidence')).toBeVisible();

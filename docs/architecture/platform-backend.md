@@ -13,8 +13,8 @@ related:
   - ../security/account-deletion-and-data-lifecycle.md
   - ../testing/test-strategy.md
   - ../adr/README.md
-  - ../superpowers/specs/2026-07-28-aurora-platform-backend-design.md
-  - ../superpowers/specs/2026-07-30-aurora-platform-openapi-and-implementation-design.md
+  - ../architecture/platform-backend-design.md
+  - ../api/platform-openapi-and-implementation.md
 supersedes: none
 review-cycle: backend-contract-or-release
 ---
@@ -23,7 +23,7 @@ review-cycle: backend-contract-or-release
 
 ## 1. 定位与实现状态
 
-本文是 approved 管理平台后端设计的长期正式承载，定义领域所有权、公开能力语义和跨系统边界。页面需求来自[管理平台产品业务域](../prd/platform-product-domains.md)及完整 UX/UI；公共契约与实现门禁来自已批准的[总体 OpenAPI 与实现约束设计](../superpowers/specs/2026-07-30-aurora-platform-openapi-and-implementation-design.md)；A5 删除规则来自[账号注销与数据生命周期](../security/account-deletion-and-data-lifecycle.md)。
+本文是 approved 管理平台后端设计的长期正式承载，定义领域所有权、公开能力语义和跨系统边界。页面需求来自[管理平台产品业务域](../prd/platform-product-domains.md)及完整 UX/UI；公共契约与实现门禁来自已批准的[总体 OpenAPI 与实现约束设计](../api/platform-openapi-and-implementation.md)；A5 删除规则来自[账号注销与数据生命周期](../security/account-deletion-and-data-lifecycle.md)。
 
 批准设计方向为 TypeScript/Node.js 模块化单体＋独立 Worker、Fastify、PostgreSQL/Kysely、Zod/OpenAPI；平台异步任务使用 PostgreSQL Outbox＋Redis/BullMQ，私密对象使用 S3 兼容存储，第一版不引入独立搜索；Session 使用 Redis 权威不透明会话、同步 CSRF 和短期内部能力令牌。总体公开契约采用“统一公开契约、内部按领域模块化、生成单一 Platform OpenAPI”的方案 A。这些长期技术选择均受 `requires-accepted-adr` 约束；仓库仍没有机器 OpenAPI、可执行数据模型、Migration 或管理平台实现。
 

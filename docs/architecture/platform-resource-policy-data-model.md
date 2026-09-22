@@ -3,10 +3,10 @@
 - **status**: approved
 - **created**: 2026-08-12
 - **applies-to**: D2 平台资源策略管理（`platform.resource-policies`）的数据模型与分层策略；B5 用量保护状态
-- **decision-source**: 用户 2026-08-12 批准的 `G13_PLT10_APPROVAL_PACKAGE` 六项推荐（第 5—6 项）与 [ADR-035](adr/ADR-035-platform-resource-policy-data-model.md)（accepted）；UX/UI §8.31（已确认方案 A，最小分层策略）；PRD §15.8—§15.9；PRD §16 数据保留
-- **related**: `docs/security/platform-admin-and-platform-audit.md`（approved）；formalization-readiness §7 候选队列第 2 项
+- **decision-source**: 用户 2026-08-12 批准的资源策略六项推荐（第 5—6 项）与 [ADR-035](../adr/ADR-035-platform-resource-policy-data-model.md)（accepted）；UX/UI §8.31（已确认方案 A，最小分层策略）；PRD §15.8—§15.9；PRD §16 数据保留
+- **related**: `docs/security/platform-admin-and-platform-audit.md`（approved）；architecture documentation §7 候选队列第 2 项
 
-> 本文只定义策略数据模型（分层、字段、版本、来源、传播）。平台管理员身份/审计见[平台管理员与平台级审计](platform-admin-and-platform-audit.md)；页面交互见 UX/UI §8.31；机器契约边界沿用已批准 OpenAPI §14.1。
+> 本文只定义策略数据模型（分层、字段、版本、来源、传播）。平台管理员身份/审计见[平台管理员与平台级审计](../security/platform-admin-and-platform-audit.md)；页面交互见 UX/UI §8.31；机器契约边界沿用已批准 OpenAPI §14.1。
 
 ## 1. 目标与非目标
 

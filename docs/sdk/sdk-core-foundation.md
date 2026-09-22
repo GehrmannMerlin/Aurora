@@ -17,7 +17,7 @@ related:
   - ../architecture/system-overview.md
   - ../architecture/sdk-architecture.md
   - ../architecture/monorepo-and-build.md
-  - ../architecture/formalization-readiness.md
+  - ../architecture/system-overview.md
   - ../protocol/event-schema-foundation.md
   - ../protocol/event-envelope-v1.md
   - ../testing/test-strategy.md
@@ -623,7 +623,7 @@ thresholds: {
 实际实施且完整质量门禁通过后，必须在同一变更中：
 
 - 新增 `packages/core/README.md`，记录职责、公开 API、状态机、插件顺序、事件 `accepted` 的有限含义、诊断隐私和排除范围；
-- 更新 `docs/README.md`、根 `README.md`、`docs/architecture/sdk-architecture.md` 和 `docs/architecture/formalization-readiness.md`，区分已实现 Core 基础与仍不存在的 Browser、采集、队列、采样和传输；
+- 更新 `docs/README.md`、根 `README.md`、`docs/architecture/sdk-architecture.md` 和 `docs/architecture/system-overview.md`，区分已实现 Core 基础与仍不存在的 Browser、采集、队列、采样和传输；
 - 更新 ADR-003 的实施状态为 `in-progress` 并追加 Core 第一增量证据，不得标为 `implemented`；
 - 为 ADR-005 追加 Core 只消费 `@aurora/event-schema` 根公开出口的真实消费者证据，保持 `in-progress`；
 - 为 ADR-006 追加 `sdk-core → protocol`、无私有深导入、无 DOM 和无模块级可变状态证据，保持 `in-progress`；

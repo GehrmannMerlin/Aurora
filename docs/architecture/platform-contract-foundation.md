@@ -21,9 +21,9 @@ related:
   - ../adr/ADR-028-platform-session-csrf-security.md
   - ../architecture/platform-frontend.md
   - ../architecture/platform-backend.md
-  - ../architecture/formalization-readiness.md
-  - ../superpowers/specs/2026-07-30-aurora-platform-openapi-and-implementation-design.md
-  - ../superpowers/specs/2026-07-27-aurora-frontend-ux-ui-design.md
+  - ../architecture/system-overview.md
+  - ../api/platform-openapi-and-implementation.md
+  - ../prd/console-ux-ui-and-accessibility.md
   - ../prd/platform-product-domains.md
   - ../../Auroa-PRD-业务逻辑汇总-v2.1-核心业务定稿版.md
 supersedes: none

@@ -13,12 +13,12 @@ related:
   - '../../Aurora ADR 规范.md'
   - '../architecture/deployment.md'
   - '../architecture/aws-region-account-network-iac-foundation.md'
-  - '../architecture/formalization-readiness.md'
+  - '../architecture/system-overview.md'
   - '../adr/ADR-009-ingestion-transport-and-client-credential.md'
   - '../adr/ADR-013-ingestion-client-credential-storage-and-verification.md'
   - '../adr/ADR-014-ingestion-client-credential-lifecycle.md'
-  - '../superpowers/specs/2026-07-28-aurora-testing-deployment-release-design.md'
-  - '../superpowers/specs/2026-07-28-aurora-platform-backend-design.md'
+  - '../testing/testing-deployment-release.md'
+  - '../architecture/platform-backend-design.md'
 supersedes: none
 superseded-by: ADR-036
 ---
@@ -35,12 +35,12 @@ superseded-by: ADR-036
 - Owner：cloud/operations
 - 适用范围：Aurora 第一版边缘入口（CloudFront/ALB）、DNS 与 TLS（Route 53/ACM）、秘密与加密（KMS/Secrets Manager）以及跨账号部署身份（GitHub OIDC）的基础资源决策
 - 关联 PRD：[核心业务 PRD](../../Auroa-PRD-业务逻辑汇总-v2.1-核心业务定稿版.md)
-- 关联技术方案：[部署架构](../architecture/deployment.md)（approved）、[AWS 区域、账号、网络与 IaC 基础设施基础（OPS-04）](../architecture/aws-region-account-network-iac-foundation.md)（proposed）、[测试/部署/发布设计](../superpowers/specs/2026-07-28-aurora-testing-deployment-release-design.md)（approved）
+- 关联技术方案：[部署架构](../architecture/deployment.md)（approved）、[AWS 区域、账号、网络与 IaC 基础设施基础（OPS-04）](../architecture/aws-region-account-network-iac-foundation.md)（proposed）、[测试/部署/发布设计](../testing/testing-deployment-release.md)（approved）
 - 关联 Issue：none
 - 关联实现 PR：none
 - 替代 ADR：none
 - 被替代 ADR：none
-- **评审域**：infra topology（cloud/operations）+ security（KMS/Secrets/OIDC）。本 ADR 把边缘/DNS/TLS（基础设施）与秘密/加密（安全）合为一份，对应已批准 TDR 候选 5（"AWS 运行与 IaC：账号/环境、CloudFront/S3、ECS/Fargate、RDS、ElastiCache、S3、网络与 CDK"是单一候选）。**评审门禁要求 cloud/operations 与 security 两域评审者均批准；若任一方无法联合批准，本 ADR 必须按 ADR 规范 7.2/7.7 拆分为边缘/DNS/TLS 与秘密/加密两份**（架构评审 Major #3；formalization-readiness §7"Owner、评审者、迁移/回滚边界不同的安全、数据、基础设施…决定必须拆分"）。
+- **评审域**：infra topology（cloud/operations）+ security（KMS/Secrets/OIDC）。本 ADR 把边缘/DNS/TLS（基础设施）与秘密/加密（安全）合为一份，对应已批准 TDR 候选 5（"AWS 运行与 IaC：账号/环境、CloudFront/S3、ECS/Fargate、RDS、ElastiCache、S3、网络与 CDK"是单一候选）。**评审门禁要求 cloud/operations 与 security 两域评审者均批准；若任一方无法联合批准，本 ADR 必须按 ADR 规范 7.2/7.7 拆分为边缘/DNS/TLS 与秘密/加密两份**（架构评审 Major #3；architecture documentation §7"Owner、评审者、迁移/回滚边界不同的安全、数据、基础设施…决定必须拆分"）。
 
 ## 状态说明
 
@@ -48,7 +48,7 @@ superseded-by: ADR-036
 
 本 ADR 于 2026-08-07 由 G16/OPS-04 前置门禁创建为 `proposed / not-started / awaiting-user-approval`。门禁确认：边缘拓扑、DNS/TLS、秘密与加密边界均有 approved 设计方向（CloudFront/ALB、Route 53/ACM、KMS/Secrets Manager/OIDC），但无 accepted 决策、无真实域名/证书/资源。本 ADR 只记录候选与推荐，**在用户批准前不得创建 CloudFront/ACM/Route 53 记录/KMS/Secrets，不得购买域名、不得申请真实生产证书**。
 
-> **2026-08-11 用户批准（append-only）**：用户正式批准 G16/OPS-04 Cloud Decision Package 中 D4/D5/D6/D1 推荐方案，本 ADR 决策状态由 `proposed` 更新为 `accepted`，审批状态 `approved`。批准内容：**方案 A——CloudFront/ALB 边缘 + Route 53 + ACM（DNS 验证）+ KMS/Secrets Manager + GitHub OIDC 短期身份**。生产/staging 域名值仍由用户持有并提供（D4/D5/D6：生产与 Preview 域名分离、DNS ownership 明确、staging 独立子域与证书），OPS-04 用占位域名做边界契约、不购买域名、不写未知域名进正式配置、不创建真实 DNS/ACM/CloudFront 记录；每个公开入口（CloudFront/ALB 含 ingestion 公开 host）必须部署 WAF 与速率限制、HTTPS only + HSTS、TLS ≥1.2 优先 1.3；秘密进 Secrets Manager + KMS、非秘密配置进 Parameter Store/版本化部署配置；OIDC 角色按仓库 + environment 钉住 `sub`/`aud`、生产/非生产角色分离；生产账号启用 CloudTrail。实施状态由 OPS-04 实施进度承载（`in-progress`：IaC 基础工程已创建，真实域名/证书/资源与 OPS-05 部署仍 not-started）。
+> **2026-08-11 用户批准（append-only）**：用户正式批准 G16/OPS-04 G16/OPS-04 decision set 中 D4/D5/D6/D1 推荐方案，本 ADR 决策状态由 `proposed` 更新为 `accepted`，审批状态 `approved`。批准内容：**方案 A——CloudFront/ALB 边缘 + Route 53 + ACM（DNS 验证）+ KMS/Secrets Manager + GitHub OIDC 短期身份**。生产/staging 域名值仍由用户持有并提供（D4/D5/D6：生产与 Preview 域名分离、DNS ownership 明确、staging 独立子域与证书），OPS-04 用占位域名做边界契约、不购买域名、不写未知域名进正式配置、不创建真实 DNS/ACM/CloudFront 记录；每个公开入口（CloudFront/ALB 含 ingestion 公开 host）必须部署 WAF 与速率限制、HTTPS only + HSTS、TLS ≥1.2 优先 1.3；秘密进 Secrets Manager + KMS、非秘密配置进 Parameter Store/版本化部署配置；OIDC 角色按仓库 + environment 钉住 `sub`/`aud`、生产/非生产角色分离；生产账号启用 CloudTrail。实施状态由 OPS-04 实施进度承载（`in-progress`：IaC 基础工程已创建，真实域名/证书/资源与 OPS-05 部署仍 not-started）。
 
 ## 背景
 

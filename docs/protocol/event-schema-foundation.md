@@ -15,7 +15,7 @@ related:
   - ../architecture/system-overview.md
   - ../architecture/sdk-architecture.md
   - ../architecture/monorepo-and-build.md
-  - ../architecture/formalization-readiness.md
+  - ../architecture/system-overview.md
   - ../testing/test-strategy.md
   - ../adr/ADR-005-event-schema-source-of-truth.md
   - ../adr/ADR-006-one-way-dependencies.md
@@ -352,7 +352,7 @@ SDK 宿主生命周期、浏览器代理、插件释放、队列/重试和日志
 - `packages/event-schema/README.md`：定位、职责/非职责、公共入口、输入输出、依赖、错误、开发测试、当前协议版本、支持事件类别、校验方式、样本位置和变更流程；
 - `docs/protocol/event-envelope-v1.md`：版本、信封字段、限制、禁止字段、合法/非法示例、错误语义和兼容规则；
 - `docs/README.md`：在真实实现完成后链接模块 README 和协议文档；
-- `docs/architecture/formalization-readiness.md`：只把 A1 的基础第一增量标记 implemented，完整具体事件 Schema、批次和消费者实现继续 blocked；
+- `docs/architecture/system-overview.md`：只把 A1 的基础第一增量标记 implemented，完整具体事件 Schema、批次和消费者实现继续 blocked；
 - ADR-005：实施后只能更新为 `in-progress`，因为完整事件类型、批次、兼容转换和真实消费者尚未实现；
 - ADR-006：补充协议层零本地依赖的真实负例证据，状态仍为 `in-progress`；
 - `AGENTS.md` 与 `AURORA_RULES.md`：仅在实施完成和全量验证后同步阶段与决策队列；

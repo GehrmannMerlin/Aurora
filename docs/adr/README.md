@@ -9,7 +9,7 @@ related:
   - '../../Aurora 架构规范.md'
   - '../../Aurora ADR 规范.md'
   - ../README.md
-  - ../architecture/formalization-readiness.md
+  - ../architecture/system-overview.md
   - ../architecture/system-overview.md
 supersedes: none
 maintenance: append-only
@@ -66,11 +66,10 @@ ADR-001—ADR-006 从已批准架构规范中的 ARCH-001—ARCH-006 提取，AD
 | [ADR-035](ADR-035-platform-resource-policy-data-model.md)                             | 平台资源策略数据模型（最小分层策略）                   | accepted   | not-started | G13 PLT-10（D2 策略数据模型）                     |
 | [ADR-036](ADR-036-provider-neutral-single-host-deployment.md)                         | Provider-Neutral 单主机部署（Docker Compose）          | accepted   | not-started | G16 部署方向；supersedes ADR-022/023/024          |
 
-> 状态说明：ADR-034/035 于 2026-08-12 由 G13 PLT-10 正式化创建为 `proposed / not-started / awaiting-user-approval`；同日用户对 `G13_PLT10_APPROVAL_PACKAGE` 六项推荐整体批准并直接批准两份 ADR，转为 `accepted / not-started / approved`（未另派 reviewer subagent）。`implementation-status` 保持 not-started，直到 PLT-10 正式实施开始。
+> 状态说明：ADR-034/035 于 2026-08-12 由 G13 PLT-10 正式化创建为 `proposed / not-started / awaiting-user-approval`；同日用户对 `G13 resource-policy decision set` 六项推荐整体批准并直接批准两份 ADR，转为 `accepted / not-started / approved`（未另派 reviewer subagent）。`implementation-status` 保持 not-started，直到 PLT-10 正式实施开始。
 
 > 状态说明：ADR-029—032 于 2026-08-08 由 G10（PLT-03/PLT-04/SEC-01）实施门禁创建为 `proposed / not-started / awaiting-review`；2026-08-09 完成独立评审（security/backend-ops/architecture 三路，ADR-030 初审 REJECT 后修复为最终 ACCEPT 版本）并由用户明确正式批准（`accepted / not-started / approved`）。ADR-032 附带用户 YAGNI 实施约束：只有当前 approved 叶子规格确实需要、存在真实 consumer、且 ADR 明确要求该资源时才实际 provision Redis/cache/object storage/background infrastructure；不得因 ADR 定义了未来基础设施边界就提前创建没有 consumer 的付费资源。批准仅覆盖各 ADR 已记录并经过评审修订的决策内容；`implementation-status` 保持 `not-started`，对应代码实施开始前不得标记 implemented。
 >
-> 状态说明：ADR-033 于 2026-08-10 由 G03 正式化扫掠创建为 `proposed / not-started / awaiting-user-approval`。用户 G03 readiness 规则明确 DAT-13 Issue 数据模型必须有 accepted ADR；评审（architecture/backend、database domain、privacy/data-governance 三路，记录用）见 ADR-033 追加记录。2026-08-10 用户对 G03 APPROVAL PACKAGE 整体批准，ADR-033 转为 `accepted / not-started / approved`；`implementation-status` 保持 not-started，直到 DAT-13 正式实施开始。
 
 > 状态说明：ADR-008 于 2026-08-01 由用户批准（`accepted / in-progress / approved`），推荐方案 A（PostgreSQL 事务性 Inbox），批准以六项校正为准。批次/接收结果协议、数据接入 OpenAPI 与 Inbox 数据模型已实施；接入服务、Worker 与容量证据未实现。
 
@@ -88,7 +87,7 @@ ADR-001—ADR-006 从已批准架构规范中的 ARCH-001—ARCH-006 提取，AD
 
 > 状态说明：ADR-015 于 2026-08-02 由用户批准（`accepted / implemented / approved`）。最终决定：策略位于 ingestion-worker；不创建新包；processor 结果保持 processed/retry/dead-letter；`maxProcessingAttempts` 为必填运行配置；attemptCount 使用 Inbox 既有语义；budget 未耗尽时沿用 processor availableAt；budget 耗尽时自动 dead-letter；最终错误码 `retry_budget_exhausted`；processor 异常不自动 retry/dead-letter；不实现退避算法；不实现人工重放；不新增 Inbox 状态或 Schema。Worker 重试预算与自动死信策略第一增量已实施并通过真实 PostgreSQL 17.10 集成验证；人工重放、具体 processor、容量 benchmark、CI、RDS 与 IaC 未实现。
 
-> 状态说明：ADR-022、ADR-023、ADR-024 于 2026-08-07 由 G16/OPS-04 前置门禁创建为 `proposed / not-started / awaiting-user-approval`。门禁确认：AWS 主云方向已 approved，但主区域、账号/环境细化、网络模型、IaC 工具、托管计算/数据服务、边缘/DNS/TLS/秘密/加密均无 accepted 决策（deployment.md 标为 `deferred`/`requires-accepted-adr`）。三者只用于讨论和评审，**不得约束任何正式实现**；不创建 IaC、不创建 AWS 资源、不运行 `writing-plans`。独立评审（架构/安全/运维/成本/测试五域）已完成，结论为 PASS-WITH-CONCERNS（无 blocking）；评审只是决策材料，**不等同于 accepted ADR，也不等同用户批准**。**2026-08-11 用户正式批准 G16/OPS-04 Cloud Decision Package（D1—D11 全部推荐方案），三份 ADR 决策状态由 `proposed` 更新为 `accepted`、审批状态 `approved`、实施状态 `in-progress`（OPS-04 IaC 基础工程已创建，实际 AWS 资源与 OPS-05 部署仍 not-started）**。批准内容：双 AWS 账号、主区域 `ap-southeast-1`（OPS-04 默认，provisioning 前可重新评估）、CDK TypeScript；ECS/Fargate + RDS Multi-AZ + ElastiCache defer；CloudFront/ALB + Route 53 + ACM + KMS/Secrets + GitHub OIDC，生产域名值由用户提供。
+> 状态说明：ADR-022、ADR-023、ADR-024 于 2026-08-07 由 G16/OPS-04 前置门禁创建为 `proposed / not-started / awaiting-user-approval`。门禁确认：AWS 主云方向已 approved，但主区域、账号/环境细化、网络模型、IaC 工具、托管计算/数据服务、边缘/DNS/TLS/秘密/加密均无 accepted 决策（deployment.md 标为 `deferred`/`requires-accepted-adr`）。三者只用于讨论和评审，**不得约束任何正式实现**；不创建 IaC、不创建 AWS 资源、不运行 `writing-plans`。独立评审（架构/安全/运维/成本/测试五域）已完成，结论为 PASS-WITH-CONCERNS（无 blocking）；评审只是决策材料，**不等同于 accepted ADR，也不等同用户批准**。**2026-08-11 用户正式批准 G16/OPS-04 G16/OPS-04 decision set（D1—D11 全部推荐方案），三份 ADR 决策状态由 `proposed` 更新为 `accepted`、审批状态 `approved`、实施状态 `in-progress`（OPS-04 IaC 基础工程已创建，实际 AWS 资源与 OPS-05 部署仍 not-started）**。批准内容：双 AWS 账号、主区域 `ap-southeast-1`（OPS-04 默认，provisioning 前可重新评估）、CDK TypeScript；ECS/Fargate + RDS Multi-AZ + ElastiCache defer；CloudFront/ALB + Route 53 + ACM + KMS/Secrets + GitHub OIDC，生产域名值由用户提供。
 
 > **临时部署路径（2026-08-08）**：用户选择先使用阿里云单主机公网预览桥接（`public-preview`，见 [public-preview-single-host-deployment.md](../operations/public-preview-single-host-deployment.md)），以获得当前已实现应用的公网运行环境。这**不表示接受或拒绝 AWS 生产 ADR**；G16 状态只记录为 `started / temporary-preview-bridge-active`，OPS-04 不因本桥接标记 completed。**2026-08-11 追加**：用户已正式批准 ADR-022/023/024（`accepted`），正式 G16 基础设施方向确定为 AWS（双账号、`ap-southeast-1`、CDK TS）；阿里云 Preview 桥接保持 `temporary-operational-snapshot`，作为现状/迁移输入，在 OPS-05 建立 approved 部署流水线后替换/重新评估。
 
@@ -109,7 +108,7 @@ ADR 从 proposed 变为 accepted 前必须：
 
 ## 新 ADR 候选入口
 
-未编号候选的唯一详细队列维护在[正式化与实施就绪追踪](../architecture/formalization-readiness.md#7-新-adr-候选队列)。Workspace、包管理器和首期任务策略已经由 ADR-007 收口；版本发布、前后端栈、数据库、任务/缓存/对象存储、Session、安全、接入缓冲、处理存储、AWS/IaC、制品晋级与公共兼容仍按直接模块依赖建立，不批量编号。
+未编号候选的唯一详细队列维护在[正式化与实施就绪追踪](../architecture/system-overview.md#7-新-adr-候选队列)。Workspace、包管理器和首期任务策略已经由 ADR-007 收口；版本发布、前后端栈、数据库、任务/缓存/对象存储、Session、安全、接入缓冲、处理存储、AWS/IaC、制品晋级与公共兼容仍按直接模块依赖建立，不批量编号。
 
 候选项在形成独立 ADR 文件前不分配 ADR 编号；不得把该队列当成已接受决定，也不得合并成大一统技术栈 ADR。
 
@@ -121,7 +120,7 @@ ADR 从 proposed 变为 accepted 前必须：
 - [ADR 规范](<../../Aurora ADR 规范.md>)
 - [正式文档索引](../README.md)
 - [系统架构与模块边界](../architecture/system-overview.md)
-- [正式化与实施就绪追踪](../architecture/formalization-readiness.md)
+- [正式化与实施就绪追踪](../architecture/system-overview.md)
 
 ## 维护记录
 
@@ -149,7 +148,7 @@ ADR 从 proposed 变为 accepted 前必须：
 - 状态：approved
 - 生效日期：2026-07-29
 - Owner：architecture
-- 关联：[正式化与实施就绪追踪](../architecture/formalization-readiness.md)
+- 关联：[正式化与实施就绪追踪](../architecture/system-overview.md)
 - 当时解释（已由 `ADR-INDEX-ACCEPTANCE-20260729` 追加记录更新）：ADR-001—ADR-006 的决策状态保持 `proposed`，实施状态保持 `not-started`；本次只增加正式化与实施就绪追踪入口，不构成评审通过、接受或实施授权。
 
 ### ADR-INDEX-REVIEW-INPUT-20260729：六份提案复审输入完成
@@ -157,7 +156,7 @@ ADR 从 proposed 变为 accepted 前必须：
 - 状态：approved
 - 生效日期：2026-07-29
 - Owner：architecture
-- 关联：[正式化与实施就绪追踪](../architecture/formalization-readiness.md#6-adr-001adr-006-复审清单)
+- 关联：[正式化与实施就绪追踪](../architecture/system-overview.md#6-adr-001adr-006-复审清单)
 - 当时解释（已由 `ADR-INDEX-ACCEPTANCE-20260729` 追加记录更新）：ADR-001—ADR-006 已分别补充批准设计和正式文档证据、候选边界、实施约束、验证输入与所需评审角色；六份 ADR 仍全部为 `proposed / not-started`。
 - 审批边界：下一步可以进入非作者和领域正式审批；在所需评审完成并按 ADR 规范记录前，不得把任何提案标为 `accepted`。
 - 候选治理：新 ADR 候选只在正式化追踪中维护无编号队列，形成独立提案时再分配编号。

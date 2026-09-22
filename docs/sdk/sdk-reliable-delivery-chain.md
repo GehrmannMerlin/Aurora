@@ -173,7 +173,7 @@ export function createSdkDeliveryChain(
 - `packages/sdk/README.md`、`packages/browser/README.md`、`packages/core/README.md` 记录新公共入口；
 - `docs/README.md` 索引本文；
 - `docs/architecture/sdk-architecture.md` 把队列/传输从未实现更新为已实现；
-- `docs/architecture/formalization-readiness.md`、`docs/architecture/aurora-v1-remaining-module-batches.md` 更新 SDK-15/16 状态与计数；
+- `docs/architecture/system-overview.md`、`docs/architecture/system-overview.md` 更新 SDK-15/16 状态与计数；
 - `docs/adr/ADR-004-asynchronous-event-processing.md`、`docs/adr/ADR-003-sdk-plugin-architecture.md` 只追加 G06 SDK 发送链实施证据，ADR 决策状态不变；
 - `AGENTS.md`/`AURORA_RULES.md` 同步 G06 状态（SDK-15/SDK-16 关闭，`completed` 58→60 / `remaining` 20→18）。
 

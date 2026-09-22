@@ -11,7 +11,7 @@ related:
   - ../testing/test-strategy.md
   - ../security/account-deletion-and-data-lifecycle.md
   - ../adr/ADR-036-provider-neutral-single-host-deployment.md
-  - ../superpowers/specs/2026-07-28-aurora-testing-deployment-release-design.md
+  - ../testing/testing-deployment-release.md
 supersedes: none
 review-cycle: recovery-policy-or-quarterly-dr
 ---

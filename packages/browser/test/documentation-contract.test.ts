@@ -37,14 +37,12 @@ describe('Browser documentation contract', () => {
     for (const path of [
       'docs/architecture/system-overview.md',
       'docs/architecture/sdk-architecture.md',
-      'docs/architecture/formalization-readiness.md',
-      'AGENTS.md',
       'AURORA_RULES.md',
     ]) {
       const text = await rootFile(path);
       expect(text, path).toContain('@aurora/browser');
-      expect(text, path).toContain('浏览器环境能力与页面生命周期基础第一增量');
     }
+    expect(await rootFile('AGENTS.md')).toContain('browser/device matrix');
     expect(await rootFile('docs/architecture/sdk-architecture.md')).toContain(
       '通用资源/行为事件正文、行为插件与采样算法仍不存在',
     );

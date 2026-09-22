@@ -23,7 +23,7 @@ related:
   - ../architecture/ingestion-inbox-processing-repository.md
   - ../architecture/ingestion-worker-runtime.md
   - ../protocol/error-event-contract.md
-  - ../architecture/formalization-readiness.md
+  - ../architecture/system-overview.md
 supersedes: none
 review-cycle: processing-store-schema-or-contract-change
 ---

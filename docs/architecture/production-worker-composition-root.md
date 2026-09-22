@@ -30,7 +30,7 @@ related:
   - ../architecture/performance-event-processor.md
   - ../architecture/request-processing-rules-configuration-adapter.md
   - ../architecture/event-processor-router.md
-  - ../architecture/formalization-readiness.md
+  - ../architecture/system-overview.md
   - ../../Auroa-PRD-业务逻辑汇总-v2.1-核心业务定稿版.md
 supersedes: none
 review-cycle: production-worker-composition-contract-or-release
@@ -240,7 +240,7 @@ review-cycle: production-worker-composition-contract-or-release
 - 真实 PostgreSQL 集成覆盖三类事件完整链；
 - 不修改 event-schema/ingestion-api/Worker runtime 公共接口；
 - 无 fake/noop processor；
-- README、正式规格、formalization-readiness、ADR-012 一致性同步；
+- README、正式规格、architecture documentation、ADR-012 一致性同步；
 - 全仓质量门禁通过；覆盖率满足 85/80/85/85。
 
 ## 42. PRD、协议、ADR、Store 和 Worker 追踪矩阵
