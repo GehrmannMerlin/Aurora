@@ -460,6 +460,31 @@ describeDb('platform domain route coverage (real PostgreSQL 17)', () => {
   });
 
   it('maps unmatched, malformed, and oversized HTTP requests through the global boundary', async () => {
+    const disallowedOrigin = await app.inject({
+      method: 'POST',
+      url: '/api/platform/v1/auth/register',
+      headers: {
+        origin: 'https://evil.example.com',
+        'content-type': 'application/json',
+      },
+      payload: '{}',
+    });
+    expect(disallowedOrigin.statusCode).toBe(403);
+    expect(disallowedOrigin.json<{ code: string }>()).toMatchObject({ code: 'authorization' });
+
+    const crossSiteRequest = await app.inject({
+      method: 'POST',
+      url: '/api/platform/v1/auth/register',
+      headers: {
+        origin: 'null',
+        'sec-fetch-site': 'cross-site',
+        'content-type': 'application/json',
+      },
+      payload: '{}',
+    });
+    expect(crossSiteRequest.statusCode).toBe(403);
+    expect(crossSiteRequest.json<{ code: string }>()).toMatchObject({ code: 'authorization' });
+
     const notFound = await app.inject({
       method: 'GET',
       url: '/api/platform/v1/does-not-exist',
