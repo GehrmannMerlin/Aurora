@@ -298,7 +298,7 @@ describeDb('platform domain route coverage (real PostgreSQL 17)', () => {
     const issueId = '1';
     const noteId = '1';
     const invitationId = 'not-a-uuid';
-    const tokenId = randomUUID();
+    const tokenId = 'not-a-uuid';
     const notificationId = randomUUID();
     const malformedCommands: readonly {
       method: 'PATCH' | 'POST';
