@@ -29,7 +29,7 @@ related:
   - ../architecture/request-metric-aggregate-store.md
   - ../architecture/request-sample-selection-policy.md
   - ../architecture/error-event-processor.md
-  - ../architecture/formalization-readiness.md
+  - ../architecture/system-overview.md
   - ../../Auroa-PRD-业务逻辑汇总-v2.1-核心业务定稿版.md
 supersedes: none
 review-cycle: request-event-processor-contract-or-release
@@ -322,7 +322,7 @@ const selection = decideRequestSampleSelection({
 - `apps/ingestion-worker/README.md`：增加请求事件 Processor 职责与接口；
 - 本规格 `implementation-status` → implemented；
 - `docs/README.md`：模块表新增一行；
-- `docs/architecture/formalization-readiness.md`：状态记录更新；
+- `docs/architecture/system-overview.md`：状态记录更新；
 - ADR-019 追加实施证据（request event processor core implemented），保持 `accepted / in-progress`；
 - ADR-020 保持 `accepted / implemented`；
 - `AGENTS.md`/`AURORA_RULES.md`：仅在代码和完整门禁实际通过后更新阶段快照；

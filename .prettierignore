@@ -1,8 +1,6 @@
 node_modules
 dist
 coverage
-docs/superpowers/specs
-docs/superpowers/plans
 AGENTS.md
 AURORA_RULES.md
 Aurora 架构规范.md

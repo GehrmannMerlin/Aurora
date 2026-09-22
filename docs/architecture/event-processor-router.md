@@ -24,7 +24,7 @@ related:
   - ../architecture/error-event-processor.md
   - ../architecture/request-event-processor.md
   - ../architecture/performance-event-processor.md
-  - ../architecture/formalization-readiness.md
+  - ../architecture/system-overview.md
   - ../../Auroa-PRD-业务逻辑汇总-v2.1-核心业务定稿版.md
 supersedes: none
 review-cycle: event-processor-router-contract-or-release
@@ -245,7 +245,7 @@ Router 是**纯分发器**：按 `eventType` 选择一个注入的 processor 实
 - 诊断有界；
 - 单元测试覆盖 §28—§31 全部场景；
 - 既有 Error/Request/Performance Processor 测试回归通过；
-- 包根导出、README、正式规格、formalization-readiness 同步；
+- 包根导出、README、正式规格、architecture documentation 同步；
 - 全仓质量门禁通过；覆盖率满足 85/80/85/85。
 
 ## 37. PRD、协议、ADR、Worker 追踪矩阵

@@ -10,7 +10,7 @@ applies-to: D2 平台资源策略管理的数据模型（platform_resource_polic
 related:
   - ../../AURORA_RULES.md
   - '../../Aurora ADR 规范.md'
-  - ../../docs/architecture/formalization-readiness.md
+  - ../../docs/architecture/system-overview.md
   - ../../docs/architecture/platform-resource-policy-data-model.md
   - ../../docs/security/platform-admin-and-platform-audit.md
   - ../../docs/adr/ADR-034-platform-admin-and-platform-audit.md
@@ -41,7 +41,7 @@ superseded-by: none
 
 ## 状态说明
 
-本 ADR 于 2026-08-12 创建为 `proposed`，2026-08-12 由用户对 `G13_PLT10_APPROVAL_PACKAGE` 六项推荐整体批准并直接批准本 ADR，转为 `accepted / not-started / approved`。`implementation-status` 保持 not-started，直到资源策略正式实施开始；accepted 只授权决策，不表示 Migration、代码、机器契约或实现证据已存在。
+本 ADR 于 2026-08-12 创建为 `proposed`，2026-08-12 由用户对 `G13 resource-policy decision set` 六项推荐整体批准并直接批准本 ADR，转为 `accepted / not-started / approved`。`implementation-status` 保持 not-started，直到资源策略正式实施开始；accepted 只授权决策，不表示 Migration、代码、机器契约或实现证据已存在。
 
 ## 背景
 
@@ -85,9 +85,9 @@ Aurora 已接受 ADR-033（Issue 数据模型）并实现 DAT-21 用量/额度/�
 
 ## 评审记录
 
-- 2026-08-12：proposed 创建；用户对 `G13_PLT10_APPROVAL_PACKAGE` 整体批准并经用户直接批准本 ADR，转 `accepted / not-started / approved`（未另派 reviewer subagent）。
+- 2026-08-12：proposed 创建；用户对 `G13 resource-policy decision set` 整体批准并经用户直接批准本 ADR，转 `accepted / not-started / approved`（未另派 reviewer subagent）。
 
-## 附录：与 G13_PLT10_APPROVAL_PACKAGE 的对应
+## 附录：与 G13 resource-policy decision set 的对应
 
 - 决策 1—5 ← package 第 6 项（D2 机器契约边界）+ UX/UI §8.31 已确认方案 A
 - 决策 6 ← package 第 5 项（资源策略范围与默认值）

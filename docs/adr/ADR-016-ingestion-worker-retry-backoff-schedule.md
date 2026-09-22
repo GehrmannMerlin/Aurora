@@ -11,7 +11,7 @@ related:
   - ../../AURORA_RULES.md
   - '../../Aurora ADR 规范.md'
   - ../../docs/architecture/platform-backend.md
-  - ../../docs/architecture/formalization-readiness.md
+  - ../../docs/architecture/system-overview.md
   - ../../docs/architecture/ingestion-worker-runtime.md
   - ../../docs/architecture/ingestion-worker-retry-budget-policy.md
   - ../../docs/adr/ADR-004-asynchronous-event-processing.md

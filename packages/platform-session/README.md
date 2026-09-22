@@ -3,7 +3,7 @@
 ## 模块定位
 
 `@aurora/platform-session` 是管理平台身份、认证与邀请第一增量（PLT-03）的**数据层**包。它承载 spec
-[platform-identity-authentication-invitation](../../docs/superpowers/specs/2026-08-09-platform-identity-authentication-invitation.md)
+[platform-identity-authentication-invitation](../../docs/security/platform-identity-authentication.md)
 §5.2（Session，Redis 权威）、§5.3（CSRF）与 §5.4（认证级别）的物理实现，以及 accepted
 [ADR-030](../../docs/adr/ADR-030-platform-session-csrf-password-physical-parameters.md)
 的 Session/Cookie/CSRF 参数。
@@ -76,7 +76,6 @@ pnpm --filter @aurora/platform-session build            # 构建 dist
 
 ## 关联文档
 
-- [PLT-03 正式规格](../../docs/superpowers/specs/2026-08-09-platform-identity-authentication-invitation.md)
-- [PLT-03 实施计划](../../docs/superpowers/plans/2026-08-09-platform-identity-authentication-invitation.md)
+- [PLT-03 正式规格](../../docs/security/platform-identity-authentication.md)
 - [ADR-028 平台 Session/CSRF/认证传输契约](../../docs/adr/ADR-028-platform-session-csrf-security.md)
 - [ADR-030 平台 Session/CSRF/密码物理参数](../../docs/adr/ADR-030-platform-session-csrf-password-physical-parameters.md)

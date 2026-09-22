@@ -10,7 +10,7 @@ applies-to: 管理平台 D2 平台资源策略的前置身份/授权/审计能�
 related:
   - ../../AURORA_RULES.md
   - '../../Aurora ADR 规范.md'
-  - ../../docs/architecture/formalization-readiness.md
+  - ../../docs/architecture/system-overview.md
   - ../../docs/security/platform-admin-and-platform-audit.md
   - ../../docs/architecture/platform-resource-policy-data-model.md
   - ../../docs/adr/ADR-028-platform-session-csrf-security.md
@@ -42,7 +42,7 @@ superseded-by: none
 
 ## 状态说明
 
-本 ADR 于 2026-08-12 创建为 `proposed`，2026-08-12 由用户对 `G13_PLT10_APPROVAL_PACKAGE` 六项推荐整体批准并直接批准本 ADR，转为 `accepted / not-started / approved`。`implementation-status` 保持 not-started，直到平台管理员/审计正式实施开始；accepted 只授权决策，不表示 Migration、代码、机器契约或实现证据已存在。
+本 ADR 于 2026-08-12 创建为 `proposed`，2026-08-12 由用户对 `G13 resource-policy decision set` 六项推荐整体批准并直接批准本 ADR，转为 `accepted / not-started / approved`。`implementation-status` 保持 not-started，直到平台管理员/审计正式实施开始；accepted 只授权决策，不表示 Migration、代码、机器契约或实现证据已存在。
 
 ## 背景
 
@@ -86,9 +86,9 @@ Aurora 已接受 ADR-028/029/030（平台 Session、CSRF、密码、数据库工
 
 ## 评审记录
 
-- 2026-08-12：proposed 创建；用户对 `G13_PLT10_APPROVAL_PACKAGE` 整体批准并经用户直接批准本 ADR，转 `accepted / not-started / approved`（未另派 reviewer subagent）。
+- 2026-08-12：proposed 创建；用户对 `G13 resource-policy decision set` 整体批准并经用户直接批准本 ADR，转 `accepted / not-started / approved`（未另派 reviewer subagent）。
 
-## 附录：与 G13_PLT10_APPROVAL_PACKAGE 的对应
+## 附录：与 G13 resource-policy decision set 的对应
 
 - 决策 1 ← package 第 1 项（平台管理员身份模型）
 - 决策 2—3 ← package 第 2 项（授权与撤销 + 受控 bootstrap）

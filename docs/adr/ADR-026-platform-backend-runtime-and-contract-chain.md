@@ -12,9 +12,9 @@ related:
   - ../../AURORA_RULES.md
   - '../../Aurora ADR 规范.md'
   - ../../docs/architecture/platform-backend.md
-  - ../../docs/architecture/formalization-readiness.md
-  - ../../docs/superpowers/specs/2026-07-28-aurora-platform-backend-design.md
-  - ../../docs/superpowers/specs/2026-07-30-aurora-platform-openapi-and-implementation-design.md
+  - ../../docs/architecture/system-overview.md
+  - ../../docs/architecture/platform-backend-design.md
+  - ../../docs/api/platform-openapi-and-implementation.md
   - ../../docs/architecture/platform-contract-foundation.md
   - ../../docs/adr/ADR-001-use-monorepo.md
   - ../../docs/adr/ADR-002-five-system-boundaries.md
@@ -39,7 +39,7 @@ superseded-by: none
 - Owner：platform/backend
 - 适用范围：管理平台后端工程基线——Node.js 严格 TypeScript 模块化单体 `platform-api`＋独立 `platform-worker`、Fastify、PostgreSQL/Kysely＋版本化 SQL Migration、Zod/OpenAPI 契约链（与 PLT-01 `@aurora/platform-contract` 协作）
 - 关联 PRD：[核心业务 PRD](../../Auroa-PRD-业务逻辑汇总-v2.1-核心业务定稿版.md)
-- 关联技术方案：[平台后端设计](../../docs/superpowers/specs/2026-07-28-aurora-platform-backend-design.md)（approved，BACKEND-001）、[总体 OpenAPI 与实现约束设计](../../docs/superpowers/specs/2026-07-30-aurora-platform-openapi-and-implementation-design.md)（approved）、[管理平台后端架构](../../docs/architecture/platform-backend.md)（approved）、[管理平台契约基础（PLT-01）](../../docs/architecture/platform-contract-foundation.md)（draft）
+- 关联技术方案：[平台后端设计](../../docs/architecture/platform-backend-design.md)（approved，BACKEND-001）、[总体 OpenAPI 与实现约束设计](../../docs/api/platform-openapi-and-implementation.md)（approved）、[管理平台后端架构](../../docs/architecture/platform-backend.md)（approved）、[管理平台契约基础（PLT-01）](../../docs/architecture/platform-contract-foundation.md)（draft）
 - 关联 Issue：none
 - 关联实现 PR：none
 - 替代 ADR：none
@@ -47,7 +47,7 @@ superseded-by: none
 
 ## 状态说明
 
-本 ADR 于 2026-08-08 创建为 `proposed`。创建依据：G09（PLT-01/PLT-02）实施门禁；平台后端设计 §16"至少需要在实施前形成并 accepted 的长期决策：管理平台后端主运行时、模块化单体/Worker、Fastify、PostgreSQL/Kysely 和 Zod/OpenAPI 技术基线"；formalization-readiness §7 候选队列第 4 项"管理平台服务形态与后端栈"；总体 OpenAPI 设计 §20"正式实现前至少需要 accepted ADR 覆盖：Node.js/Fastify 模块化单体、PostgreSQL/Kysely 和 Zod/OpenAPI 契约链"。用户已于 2026-07-28 确认后端设计（BACKEND-001=A），本 ADR 将该已批准设计升格为正式技术决策并冻结运行时/契约链边界。**在用户批准（accepted）前，不得创建 `apps/platform-api`、`apps/platform-worker`、数据库模型、Migration 或进入 `writing-plans`。**
+本 ADR 于 2026-08-08 创建为 `proposed`。创建依据：G09（PLT-01/PLT-02）实施门禁；平台后端设计 §16"至少需要在实施前形成并 accepted 的长期决策：管理平台后端主运行时、模块化单体/Worker、Fastify、PostgreSQL/Kysely 和 Zod/OpenAPI 技术基线"；architecture documentation §7 候选队列第 4 项"管理平台服务形态与后端栈"；总体 OpenAPI 设计 §20"正式实现前至少需要 accepted ADR 覆盖：Node.js/Fastify 模块化单体、PostgreSQL/Kysely 和 Zod/OpenAPI 契约链"。用户已于 2026-07-28 确认后端设计（BACKEND-001=A），本 ADR 将该已批准设计升格为正式技术决策并冻结运行时/契约链边界。**在用户批准（accepted）前，不得创建 `apps/platform-api`、`apps/platform-worker`、数据库模型、Migration 或进入 `writing-plans`。**
 
 ## 背景
 
@@ -116,7 +116,7 @@ Aurora 管理平台后端需为 31 个页面提供公开 Query/Command 能力，
 2. **服务形态**：`platform-api` 是按领域模块化的可部署应用；第一版不按领域拆微服务、不增加浏览器 BFF；`platform-worker` 是独立进程/部署单元，不向浏览器暴露业务 API；
 3. **HTTP 适配**：Fastify 仅负责 HTTP、路由、请求上下文、限流挂点、序列化与传输层错误映射；领域和应用层不得依赖 Fastify 类型；**不使用 `@fastify/cors`**；CORS 采用显式 adapter，严格遵循 ADR-011 §4.5 先例（明确 OPTIONS 路由、禁 `*`、禁 Cookie credential、单 Origin 回显、`Vary: Origin`），平台域 OPTIONS/POST 授权分工按实施规格细化；精确版本实施时锁定；
 4. **平台业务数据**：使用独立逻辑 PostgreSQL 平台数据库和最小权限数据库角色，不与事件明细/聚合存储共享表或私有模型；
-5. **数据访问**：Kysely 表达类型化 SQL；版本化 SQL Migration 是数据库结构权威变更记录；应用启动不得隐式改表；不使用 ORM 隐藏 SQL；**数据库 ADR accepted 前不得创建权威 SQL/Migration**。本 ADR 依据用户已确认 BACKEND-001 冻结 Kysely 查询构建层；后续"平台数据库与访问/Migration"ADR 保留物理数据模型、PostgreSQL 版本、Migration 执行与 DDL 的权威，不再重开 Kysely vs Prisma vs Drizzle（formalization-readiness §7 第 5 项在同一变更中同步更新）；
+5. **数据访问**：Kysely 表达类型化 SQL；版本化 SQL Migration 是数据库结构权威变更记录；应用启动不得隐式改表；不使用 ORM 隐藏 SQL；**数据库 ADR accepted 前不得创建权威 SQL/Migration**。本 ADR 依据用户已确认 BACKEND-001 冻结 Kysely 查询构建层；后续"平台数据库与访问/Migration"ADR 保留物理数据模型、PostgreSQL 版本、Migration 执行与 DDL 的权威，不再重开 Kysely vs Prisma vs Drizzle（architecture documentation §7 第 5 项在同一变更中同步更新）；
 6. **公开契约**：REST/JSON、OpenAPI 契约优先、RFC 9457 问题详情；Zod 注册表（`@aurora/platform-contract`）生成或校验 JSON Schema/OpenAPI；具体 `zod`/`zod/mini` 入口与生成器技术选型归 ADR-027；
 7. **浏览器边界**：Vue SPA 只消费正式 `platform-api`；不共享数据库模型、Kysely 类型、领域实体或内部能力令牌；
 8. **跨系统边界**：`platform-api` 只能通过数据接入/处理存储的正式公开服务接口组合监控数据，不能直连其数据库或队列；
@@ -196,7 +196,7 @@ Aurora 管理平台后端需为 31 个页面提供公开 Query/Command 能力，
 
 - 状态 `proposed / not-started / awaiting-user-approval`；
 - 由 G09（PLT-01/PLT-02）实施门禁创建；
-- 依据 approved 平台后端设计（BACKEND-001=A）、总体 OpenAPI 设计 §20、formalization-readiness §7 候选第 4 项；
+- 依据 approved 平台后端设计（BACKEND-001=A）、总体 OpenAPI 设计 §20、architecture documentation §7 候选第 4 项；
 - 未调用 writing-plans、未创建 `apps/platform-api`/`apps/platform-worker`、未创建数据库模型/Migration、未实施代码；
 - 等待独立评审与用户正式批准，不自动批准、不实施。
 
@@ -205,7 +205,7 @@ Aurora 管理平台后端需为 31 个页面提供公开 Query/Command 能力，
 > 本节点记录 reviewer subagent 意见。意见只用于改进决策材料，不改变 ADR 状态。正式接受必须由用户完成。
 
 - **架构/后端评审**：`ACCEPT-WITH-REVISIONS`（无正确性阻断）。核心决策忠实形式化 BACKEND-001=A；与 ADR-011（接入域先例）、ADR-002（五大边界）、ADR-005/006、平台后端设计边界一致；数据库 ADR 门禁被遵守；范围控制正确（未拉入 Redis/BullMQ/S3/Session/容量）。
-  - **Load-bearing finding B1**：决定细节 5/10 冻结 Kysely，与 formalization-readiness §7 第 5 项"平台数据库与访问/Migration"开放候选清单（Kysely/Prisma/Drizzle）存在权威归属重叠。修正：决定细节 5 已改为"本 ADR 依据用户已确认 BACKEND-001 冻结 Kysely 查询构建层；后续 DB ADR 保留物理数据模型/版本/Migration 执行/DDL 权威，不再重开 Kysely vs Prisma vs Drizzle；formalization-readiness §7 第 5 项同一变更同步更新"。
+  - **Load-bearing finding B1**：决定细节 5/10 冻结 Kysely，与 architecture documentation §7 第 5 项"平台数据库与访问/Migration"开放候选清单（Kysely/Prisma/Drizzle）存在权威归属重叠。修正：决定细节 5 已改为"本 ADR 依据用户已确认 BACKEND-001 冻结 Kysely 查询构建层；后续 DB ADR 保留物理数据模型/版本/Migration 执行/DDL 权威，不再重开 Kysely vs Prisma vs Drizzle；architecture documentation §7 第 5 项同一变更同步更新"。
   - **Load-bearing finding B2**：决定细节 3 CORS 措辞为含混双否。修正：已改为直陈"不使用 `@fastify/cors`；CORS 采用显式 adapter，严格遵循 ADR-011 §4.5 先例（明确 OPTIONS 路由、禁 `*`、禁 Cookie credential、单 Origin 回显、`Vary: Origin`）"。
 - **后端评审非阻断观察**：N1 "不得通过全局容器共享任意可变状态"（后端设计 §3）已补入实施约束；N2 "数据库 ADR accepted 前不得创建权威 SQL/Migration" 已改为直陈；N3 Workspace Policy `contract`/`service` 层新增归 ADR-027/实施计划；N4 event-schema 边界由 PLT-01 §28 与 ADR-005 承接。
 - **评审落实**：B1/B2/N1/N2 已落实（见决定细节 3/5 与实施约束）。详见各节修订。

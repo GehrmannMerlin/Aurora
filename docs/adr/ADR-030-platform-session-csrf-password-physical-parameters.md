@@ -11,10 +11,10 @@ applies-to: accepted ADR-028 明确 defer 到 G10 的物理参数——Argon2id 
 related:
   - ../../AURORA_RULES.md
   - '../../Aurora ADR 规范.md'
-  - ../architecture/formalization-readiness.md
+  - ../architecture/system-overview.md
   - ./ADR-028-platform-session-csrf-security.md
   - ./ADR-026-platform-backend-runtime-and-contract-chain.md
-  - ../superpowers/specs/2026-07-28-aurora-platform-backend-design.md
+  - ../architecture/platform-backend-design.md
   - ../security/account-deletion-and-data-lifecycle.md
 supersedes: none
 superseded-by: none
@@ -32,7 +32,7 @@ superseded-by: none
 - Owner：security
 - 适用范围：accepted ADR-028 明确 defer 到 G10 的物理参数——Argon2id 数值、Cookie SameSite/期限、Session 空闲/绝对期限、Redis Session 拓扑/持久化/淘汰、内部能力令牌算法/密钥托管、工作负载身份传输、`recent-verification` 触发规则
 - 关联 PRD：[核心业务 PRD](../../Auroa-PRD-业务逻辑汇总-v2.1-核心业务定稿版.md)（§4.1 必要安全规则）
-- 关联技术方案：[管理平台后端设计](../../docs/superpowers/specs/2026-07-28-aurora-platform-backend-design.md)（approved，BACKEND-003=B §7.2/§7.3）
+- 关联技术方案：[管理平台后端设计](../../docs/architecture/platform-backend-design.md)（approved，BACKEND-003=B §7.2/§7.3）
 - 关联 ADR：[ADR-028](../../docs/adr/ADR-028-platform-session-csrf-security.md)（accepted，§10 显式 defer）、[ADR-029](../../docs/adr/ADR-029-platform-database-access-and-migration.md)（proposed，平台数据库）
 - 关联安全规格：[账号注销与数据生命周期](../../docs/security/account-deletion-and-data-lifecycle.md)（approved，A5-001—011）
 - 关联 Issue：none
@@ -42,7 +42,7 @@ superseded-by: none
 
 ## 状态说明
 
-本 ADR 于 2026-08-08 创建为 `proposed`。创建依据：accepted ADR-028 §10"本 ADR 不冻结 Argon2id 数值、Cookie SameSite/期限、Session 空闲/绝对期限、Redis 拓扑/持久化/复制/淘汰、签名算法/密钥托管/工作负载身份传输、recent-verification 触发规则——以上属于 G10 身份业务门禁与安全评审"；formalization-readiness §8 缺口第 3 项"Session/Cookie/CSRF/密码/内部令牌物理参数安全评审缺失"；A5 安全规格 §11"requires-accepted-adr = Session/CSRF/credentials/secure storage"。**在用户批准（accepted）前，不得实现 Session 后端、Redis 基础设施、Cookie/CSRF 物理参数或进入 `writing-plans`。**
+本 ADR 于 2026-08-08 创建为 `proposed`。创建依据：accepted ADR-028 §10"本 ADR 不冻结 Argon2id 数值、Cookie SameSite/期限、Session 空闲/绝对期限、Redis 拓扑/持久化/复制/淘汰、签名算法/密钥托管/工作负载身份传输、recent-verification 触发规则——以上属于 G10 身份业务门禁与安全评审"；architecture documentation §8 缺口第 3 项"Session/Cookie/CSRF/密码/内部令牌物理参数安全评审缺失"；A5 安全规格 §11"requires-accepted-adr = Session/CSRF/credentials/secure storage"。**在用户批准（accepted）前，不得实现 Session 后端、Redis 基础设施、Cookie/CSRF 物理参数或进入 `writing-plans`。**
 
 ## 背景
 
@@ -170,7 +170,7 @@ accepted ADR-028 冻结了管理平台认证传输的**契约形状**（HttpOnly
 
 - 状态 `proposed / not-started / awaiting-review`；
 - 由 G10 PLT-03（身份/认证）实施门禁创建；
-- 依据 accepted ADR-028 §10、formalization-readiness §8 缺口 3、A5 安全规格 §11；
+- 依据 accepted ADR-028 §10、architecture documentation §8 缺口 3、A5 安全规格 §11；
 - 未调用 writing-plans、未实现 Session/密码/Redis 物理层、未进入实施；
 - 等待独立评审与用户正式批准，不自动批准、不实施。
 

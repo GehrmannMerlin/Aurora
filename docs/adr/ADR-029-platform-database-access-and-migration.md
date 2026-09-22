@@ -11,12 +11,12 @@ applies-to: 管理平台 platform-api/platform-worker 的 PostgreSQL 物理数�
 related:
   - ../../AURORA_RULES.md
   - '../../Aurora ADR 规范.md'
-  - ../architecture/formalization-readiness.md
+  - ../architecture/system-overview.md
   - ./ADR-026-platform-backend-runtime-and-contract-chain.md
   - ./ADR-028-platform-session-csrf-security.md
-  - ../superpowers/specs/2026-07-28-aurora-platform-backend-design.md
-  - ../superpowers/specs/2026-07-30-aurora-platform-openapi-and-implementation-design.md
-  - ../superpowers/specs/2026-07-28-aurora-testing-deployment-release-design.md
+  - ../architecture/platform-backend-design.md
+  - ../api/platform-openapi-and-implementation.md
+  - ../testing/testing-deployment-release.md
 supersedes: none
 superseded-by: none
 ---
@@ -33,7 +33,7 @@ superseded-by: none
 - Owner：backend/data
 - 适用范围：管理平台 `platform-api`/`platform-worker` 的 PostgreSQL 物理数据模型、数据库访问层、Migration 工具与 DDL 权威；不改变已 accepted ADR-026 的 Kysely 查询构建层决策
 - 关联 PRD：[核心业务 PRD](../../Auroa-PRD-业务逻辑汇总-v2.1-核心业务定稿版.md)（§4 账号/组织、§13 权限、§17 项目生命周期、§5.4 私密令牌）
-- 关联技术方案：[管理平台后端设计](../../docs/superpowers/specs/2026-07-28-aurora-platform-backend-design.md)（approved，BACKEND-001=A）
+- 关联技术方案：[管理平台后端设计](../../docs/architecture/platform-backend-design.md)（approved，BACKEND-001=A）
 - 关联 ADR：[ADR-026](../../docs/adr/ADR-026-platform-backend-runtime-and-contract-chain.md)（accepted）、[ADR-028](../../docs/adr/ADR-028-platform-session-csrf-security.md)（accepted，物理参数 defer 到 G10）
 - 关联 Issue：none
 - 关联实现 PR：none
@@ -42,7 +42,7 @@ superseded-by: none
 
 ## 状态说明
 
-本 ADR 于 2026-08-08 创建为 `proposed`。创建依据：formalization-readiness §7 候选队列第 5 项"平台数据库与访问/Migration"；accepted ADR-026 §决定细节 5/10"本 ADR 保留物理数据模型、PostgreSQL 版本、Migration 执行与 DDL 的权威，具体数据库 DDL 由后续数据库 ADR 承载"；release-migration 规范"数据库 ADR accepted 前不得创建权威 SQL/Migration"；平台后端设计 §16"管理平台 PostgreSQL 数据库、Migration 与真实访问层需 accepted ADR"。**在用户批准（accepted）前，不得创建平台权威 Schema、Migration、Repository、Kysely 查询代码或进入 `writing-plans`。**
+本 ADR 于 2026-08-08 创建为 `proposed`。创建依据：architecture documentation §7 候选队列第 5 项"平台数据库与访问/Migration"；accepted ADR-026 §决定细节 5/10"本 ADR 保留物理数据模型、PostgreSQL 版本、Migration 执行与 DDL 的权威，具体数据库 DDL 由后续数据库 ADR 承载"；release-migration 规范"数据库 ADR accepted 前不得创建权威 SQL/Migration"；平台后端设计 §16"管理平台 PostgreSQL 数据库、Migration 与真实访问层需 accepted ADR"。**在用户批准（accepted）前，不得创建平台权威 Schema、Migration、Repository、Kysely 查询代码或进入 `writing-plans`。**
 
 ## 背景
 
@@ -168,7 +168,7 @@ G10（身份、组织治理与账号注销）三个叶子 PLT-03/PLT-04/SEC-01 �
 
 - 状态 `proposed / not-started / awaiting-review`；
 - 由 G10 三个叶子（PLT-03/PLT-04/SEC-01）实施门禁创建；
-- 依据 formalization-readiness §7 候选第 5 项、accepted ADR-026 §10、release-migration 规范与平台后端设计 §16；
+- 依据 architecture documentation §7 候选第 5 项、accepted ADR-026 §10、release-migration 规范与平台后端设计 §16；
 - 未调用 writing-plans、未创建权威 Schema/Migration/Repository、未进入实施；
 - 等待独立评审与用户正式批准，不自动批准、不实施。
 

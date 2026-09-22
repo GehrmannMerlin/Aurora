@@ -13,7 +13,7 @@ related:
   - '../../Aurora 测试规范.md'
   - '../../Aurora ADR 规范.md'
   - ../architecture/sdk-architecture.md
-  - ../architecture/aurora-v1-remaining-module-batches.md
+  - ../architecture/system-overview.md
   - ../adr/ADR-003-sdk-plugin-architecture.md
   - ../adr/ADR-005-event-schema-source-of-truth.md
   - ../adr/ADR-006-one-way-dependencies.md
@@ -35,7 +35,7 @@ review-cycle: sdk-public-api-or-lifecycle-change
 
 本文把 G05 叶子 SDK-10「SDK 公共配置、上下文和完整 composition」正式化为第一增量。该增量在 approved [sdk-core-foundation.md](sdk-core-foundation.md) 的最小 Core 之上，建立环境无关的公共配置模型、控制面工厂和浏览器 composition 入口。配置语义以 approved PRD §5.2 为准；默认值与隐私边界以 PRD §5.1.3、§15.2 与各协议契约为准。
 
-批准来源：G05_APPROVAL_PACKAGE 缺口 2，用户 2026-08-10 批准全部推荐方案。批准范围仅限 SDK-10 增量。
+批准来源：approved G05 SDK decision set 缺口 2，用户 2026-08-10 批准全部推荐方案。批准范围仅限 SDK-10 增量。
 
 ## 2. 方案与包边界
 

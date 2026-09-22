@@ -12,7 +12,7 @@ related:
   - '../../Aurora ADR 规范.md'
   - ../../docs/architecture/platform-backend.md
   - ../../docs/architecture/deployment.md
-  - ../../docs/architecture/formalization-readiness.md
+  - ../../docs/architecture/system-overview.md
   - ../../docs/architecture/system-overview.md
   - ../../docs/adr/ADR-004-asynchronous-event-processing.md
   - ../../docs/adr/ADR-005-event-schema-source-of-truth.md

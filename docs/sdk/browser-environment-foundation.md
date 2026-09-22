@@ -588,7 +588,7 @@ pnpm check:ci
 - `docs/architecture/system-overview.md` 与 `docs/architecture/sdk-architecture.md`：Browser 第一增量的真实状态和边界；
 - `docs/architecture/monorepo-and-build.md`：`sdk-browser` 层与真实浏览器命令；
 - `docs/testing/test-strategy.md`：Browser 单元/Chromium 门禁和模块覆盖率；
-- `docs/architecture/formalization-readiness.md`、`AGENTS.md`、`AURORA_RULES.md`：仅同步真实完成状态和决策队列；
+- `docs/architecture/system-overview.md`、`AGENTS.md`、`AURORA_RULES.md`：仅同步真实完成状态和决策队列；
 - ADR-003 与 ADR-006：只追加 Browser 实施证据，保持 `accepted / in-progress`；
 - ADR-005：保持当前真实状态；
 - ADR-007：保持 `accepted / implemented`。

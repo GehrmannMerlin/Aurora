@@ -23,7 +23,7 @@ related:
   - ../architecture/ingestion-inbox-data-model.md
   - ../architecture/ingestion-inbox-processing-repository.md
   - ../architecture/ingestion-worker-runtime.md
-  - ../architecture/formalization-readiness.md
+  - ../architecture/system-overview.md
 supersedes: none
 review-cycle: ingestion-replay-schema-or-contract-change
 ---

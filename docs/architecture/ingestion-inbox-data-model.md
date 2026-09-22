@@ -23,7 +23,7 @@ related:
   - ../api/ingestion-openapi.md
   - ../operations/backup-and-recovery.md
   - ../releases/release-migration-and-rollback.md
-  - ../architecture/formalization-readiness.md
+  - ../architecture/system-overview.md
 supersedes: none
 review-cycle: ingestion-inbox-schema-or-compatibility-change
 ---
@@ -330,7 +330,7 @@ API 约束：
 
 - `packages/ingestion-inbox/README.md`；
 - `docs/architecture/ingestion-inbox-data-model.md`（本文）；
-- `docs/architecture/formalization-readiness.md`：数据接入链路状态更新；
+- `docs/architecture/system-overview.md`：数据接入链路状态更新；
 - ADR-008：追加 Inbox 数据模型实施证据（若真实实现）；
 - ADR-010：追加 Inbox 实施证据（若真实实现）。
 

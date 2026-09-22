@@ -69,4 +69,3 @@ pnpm --filter @aurora/platform-admin migrate          # 运行本包 Migration�
 
 - [平台管理员与平台级审计（正式规格）](../../docs/security/platform-admin-and-platform-audit.md)
 - [ADR-034 平台管理员与平台级审计](../../docs/adr/ADR-034-platform-admin-and-platform-audit.md)
-- [PLT-10a 实施计划](../../docs/superpowers/plans/2026-08-12-plt-10a-platform-admin-and-audit.md)

@@ -23,7 +23,7 @@ related:
   - ../adr/ADR-020-idempotent-request-metric-bucket-aggregation.md
   - ../architecture/request-event-sample-processing-store.md
   - ../protocol/request-event-contract.md
-  - ../architecture/formalization-readiness.md
+  - ../architecture/system-overview.md
   - ../../Auroa-PRD-业务逻辑汇总-v2.1-核心业务定稿版.md
 supersedes: none
 review-cycle: request-metric-store-schema-or-contract-change

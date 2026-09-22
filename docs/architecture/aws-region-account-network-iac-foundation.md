@@ -16,12 +16,12 @@ related:
   - ../../docs/architecture/deployment.md
   - ../../docs/architecture/system-overview.md
   - ../../docs/architecture/platform-backend.md
-  - ../../docs/architecture/formalization-readiness.md
+  - ../../docs/architecture/system-overview.md
   - ../../docs/releases/release-migration-and-rollback.md
   - ../../docs/operations/backup-and-recovery.md
   - ../../docs/testing/test-strategy.md
-  - ../../docs/superpowers/specs/2026-07-28-aurora-testing-deployment-release-design.md
-  - ../../docs/superpowers/specs/2026-07-28-aurora-platform-backend-design.md
+  - ../../docs/testing/testing-deployment-release.md
+  - ../../docs/architecture/platform-backend-design.md
   - ../../docs/adr/README.md
 supersedes: none
 review-cycle: cloud-foundation-or-approval
@@ -35,7 +35,7 @@ review-cycle: cloud-foundation-or-approval
 
 本文是 OPS-04 叶子模块（AWS region/account/network/IaC foundation）的正式规格草案。它把已批准部署架构 [deployment.md](deployment.md) 中标记为 `deferred`/`requires-accepted-adr` 的增量——主区域、账号/环境细化、网络模型、IaC 工具、托管计算、托管 PostgreSQL、Redis/对象存储提供边界、秘密与加密、边缘/DNS/TLS——正式化为可审批的基础设施边界。
 
-**当前状态**：`status: approved`、`implementation-status: in-progress`、`approval-status: approved`（2026-08-11 用户批准 [Cloud Decision Package](../operations/g16-ops04-cloud-decision-package.md) D1—D11 全部推荐方案；required ADR-022/023/024 已同步为 `accepted`）。本文现可作为 OPS-04 实施与后续 OPS-05 的权威依据。本增量实现只建立 **IaC 基础工程与基础设施边界契约**（`tooling/aws-infra`，CDK TypeScript，经 `cdk synth` 验证），**不创建任何真实 AWS 资源、不购买域名、不运行 OPS-05 部署**；实际 provisioning 与 ECS Service 部署属 OPS-05。
+**当前状态**：`status: approved`、`implementation-status: in-progress`、`approval-status: approved`（2026-08-11 用户批准 G16/OPS-04 decision set D1—D11 全部推荐方案；required ADR-022/023/024 已同步为 `accepted`）。本文现可作为 OPS-04 实施与后续 OPS-05 的权威依据。本增量实现只建立 **IaC 基础工程与基础设施边界契约**（`tooling/aws-infra`，CDK TypeScript，经 `cdk synth` 验证），**不创建任何真实 AWS 资源、不购买域名、不运行 OPS-05 部署**；实际 provisioning 与 ECS Service 部署属 OPS-05。
 
 **临时部署路径（2026-08-08，状态追加）**：用户选择先使用阿里云单主机公网预览桥接（`public-preview`，见 [public-preview-single-host-deployment.md](../operations/public-preview-single-host-deployment.md)），以获得当前已实现应用的公网运行环境。本桥接不改变本文状态，不表示用户接受或拒绝本 OPS-04 正式基础设施方向；正式 G16 基础设施架构保持 `deferred`。OPS-04 不因本桥接标记 completed；当 G16/OPS-05 重新评估正式基础设施时，再更新本文。
 
@@ -97,7 +97,7 @@ deployment.md §2 已 approved：至少隔离非生产账号与生产账号。�
 - 灾备：区域级恢复依赖跨区域备份与重建，需第二区域接收备份副本（**D2/D3 必须承诺备份账号/第二区域以支撑区域级 RPO/RTO**；精确备份设计属 OPS-07）；
 - 后续 multi-region 主动流量：第一版 `deferred`。
 
-用户批准 Region 后，把它作为 required ADR（见 §22）的最终决策写入，并同步到 [formalization-readiness.md](formalization-readiness.md) 消除其 §8 缺口 6（主区域与账号/运营责任；TDR-GAP-01 位于已批准测试/部署/发布设计 §4.2/§17——架构评审 Minor #9）。
+用户批准 Region 后，把它作为 required ADR（见 §22）的最终决策写入，并同步到 [system-overview.md](system-overview.md) 消除其 §8 缺口 6（主区域与账号/运营责任；TDR-GAP-01 位于已批准测试/部署/发布设计 §4.2/§17——架构评审 Minor #9）。
 
 ## 6. IaC 工具（D）
 
@@ -143,7 +143,7 @@ deployment.md §2 已 approved：至少隔离非生产账号与生产账号。�
 
 ## 9. PostgreSQL（G）
 
-**复用已批准技术选型（engine family）**：PostgreSQL 17 + `pg` + `node-pg-migrate` + SQL-first（ADR-010 accepted / implemented，**适用于数据接入/处理数据库**），不重新做 engine family 选型。**管理平台数据库的 ORM/Query Builder 是独立待决决策**（formalization-readiness §7 候选 5：approved Kysely 方向；platform-backend.md `requires-accepted-adr`），OPS-04/ADR-023 只冻结 RDS 基础资源边界，**不得借本规格预决平台数据库访问层**（架构评审 Major #1）。
+**复用已批准技术选型（engine family）**：PostgreSQL 17 + `pg` + `node-pg-migrate` + SQL-first（ADR-010 accepted / implemented，**适用于数据接入/处理数据库**），不重新做 engine family 选型。**管理平台数据库的 ORM/Query Builder 是独立待决决策**（architecture documentation §7 候选 5：approved Kysely 方向；platform-backend.md `requires-accepted-adr`），OPS-04/ADR-023 只冻结 RDS 基础资源边界，**不得借本规格预决平台数据库访问层**（架构评审 Major #1）。
 
 OPS-04 只冻结生产 RDS 基础资源边界：
 
@@ -287,7 +287,7 @@ OPS-04 不实现：CI workflow（G14/OPS-01）、release pipeline、application 
 
 ## 23. 待用户批准决策包索引
 
-详见最终报告"USER APPROVAL REQUIRED — G16 / OPS-04 Cloud Decision Package"：
+详见最终报告"USER APPROVAL REQUIRED — G16 / OPS-04 G16/OPS-04 decision set"：
 
 - D1 AWS Account 现状；
 - D2 AWS Region；

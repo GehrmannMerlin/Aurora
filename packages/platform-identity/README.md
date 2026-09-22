@@ -3,7 +3,7 @@
 ## 模块定位
 
 `@aurora/platform-identity` 是管理平台身份、认证与邀请第一增量（PLT-03）的数据层包。它承载 spec
-[platform-identity-authentication-invitation](../../docs/superpowers/specs/2026-08-09-platform-identity-authentication-invitation.md)
+[platform-identity-authentication-invitation](../../docs/security/platform-identity-authentication.md)
 §4 的数据模型：`accounts`、`account_credentials`、`email_verification_intents`、
 `password_reset_intents`、`organizations`、`organization_members`、`organization_invitations`、
 `project_members`、`security_audit_events`、`idempotency_records`、`outbox`（11 张表）。
@@ -86,8 +86,7 @@ pnpm --filter @aurora/platform-identity migrate          # 运行 Migration（AU
 
 ## 关联文档
 
-- [PLT-03 正式规格](../../docs/superpowers/specs/2026-08-09-platform-identity-authentication-invitation.md)
-- [PLT-03 实施计划](../../docs/superpowers/plans/2026-08-09-platform-identity-authentication-invitation.md)
+- [PLT-03 正式规格](../../docs/security/platform-identity-authentication.md)
 - [ADR-029 平台数据库访问与 Migration](../../docs/adr/ADR-029-platform-database-access-and-migration.md)
 - [ADR-030 平台 Session/CSRF/密码物理参数](../../docs/adr/ADR-030-platform-session-csrf-password-physical-parameters.md)
 - [ADR-031 平台邮件交付](../../docs/adr/ADR-031-platform-email-delivery.md)

@@ -13,11 +13,11 @@ related:
   - '../../Aurora ADR 规范.md'
   - '../architecture/deployment.md'
   - '../architecture/aws-region-account-network-iac-foundation.md'
-  - '../architecture/formalization-readiness.md'
+  - '../architecture/system-overview.md'
   - '../adr/ADR-010-postgresql-access-and-migration-tooling.md'
   - '../adr/ADR-011-ingestion-http-service-runtime.md'
   - '../adr/ADR-012-ingestion-worker-runtime.md'
-  - '../superpowers/specs/2026-07-28-aurora-platform-backend-design.md'
+  - '../architecture/platform-backend-design.md'
 supersedes: none
 superseded-by: ADR-036
 ---
@@ -34,7 +34,7 @@ superseded-by: ADR-036
 - Owner：cloud/operations
 - 适用范围：Aurora 第一版托管计算（ECS/Fargate）与托管数据服务（RDS PostgreSQL、ElastiCache Redis 提供边界）的基础资源决策
 - 关联 PRD：[核心业务 PRD](../../Auroa-PRD-业务逻辑汇总-v2.1-核心业务定稿版.md)
-- 关联技术方案：[部署架构](../architecture/deployment.md)（approved）、[AWS 区域、账号、网络与 IaC 基础设施基础（OPS-04）](../architecture/aws-region-account-network-iac-foundation.md)（proposed）、[管理平台后端设计](../superpowers/specs/2026-07-28-aurora-platform-backend-design.md)（approved）
+- 关联技术方案：[部署架构](../architecture/deployment.md)（approved）、[AWS 区域、账号、网络与 IaC 基础设施基础（OPS-04）](../architecture/aws-region-account-network-iac-foundation.md)（proposed）、[管理平台后端设计](../architecture/platform-backend-design.md)（approved）
 - 关联 Issue：none
 - 关联实现 PR：none
 - 替代 ADR：none
@@ -47,7 +47,7 @@ superseded-by: ADR-036
 
 本 ADR 于 2026-08-07 由 G16/OPS-04 前置门禁创建为 `proposed / not-started / awaiting-user-approval`。门禁确认：托管容器与托管数据服务方向已 approved（TDR §3.1 方案 A），但精确服务形态（ECS/Fargate、RDS、ElastiCache）、提供边界与生产资源授权均无 accepted 决策。本 ADR 只记录候选与推荐，**在用户批准前不得创建任何计算或数据资源**；不创建 ECS/RDS/ECR、不运行 `writing-plans`。
 
-> **2026-08-11 用户批准（append-only）**：用户正式批准 G16/OPS-04 Cloud Decision Package 中 D8/D10 推荐方案，本 ADR 决策状态由 `proposed` 更新为 `accepted`，审批状态 `approved`。批准内容：**方案 A——ECS/Fargate 承载全部服务、RDS PostgreSQL 生产 Multi-AZ、ElastiCache（Redis Session/BullMQ/缓存）保留 integration boundary 但不立即 provision（等真实消费者 platform-api 存在 + 对应 backend ADR accepted 后落位）**。OPS-04 只创建 ECS cluster/ECR/任务角色/RDS 基础资源（IaC 定义），ECS Service 创建与部署设置属 OPS-05；本 ADR 不授权任何服务部署。实施状态由 OPS-04 实施进度承载（`in-progress`：IaC 基础工程已创建，实际资源与 OPS-05 部署仍 not-started）。
+> **2026-08-11 用户批准（append-only）**：用户正式批准 G16/OPS-04 G16/OPS-04 decision set 中 D8/D10 推荐方案，本 ADR 决策状态由 `proposed` 更新为 `accepted`，审批状态 `approved`。批准内容：**方案 A——ECS/Fargate 承载全部服务、RDS PostgreSQL 生产 Multi-AZ、ElastiCache（Redis Session/BullMQ/缓存）保留 integration boundary 但不立即 provision（等真实消费者 platform-api 存在 + 对应 backend ADR accepted 后落位）**。OPS-04 只创建 ECS cluster/ECR/任务角色/RDS 基础资源（IaC 定义），ECS Service 创建与部署设置属 OPS-05；本 ADR 不授权任何服务部署。实施状态由 OPS-04 实施进度承载（`in-progress`：IaC 基础工程已创建，实际资源与 OPS-05 部署仍 not-started）。
 
 ## 背景
 
@@ -132,7 +132,7 @@ Aurora 已批准 AWS 托管容器与托管数据服务模型、SPA=CloudFront+�
 
 ## 实施约束
 
-- 数据库 engine family 复用 PostgreSQL 17 + `pg` + `node-pg-migrate` + SQL-first（ADR-010，**适用于数据接入/处理数据库**）；**管理平台数据库的 ORM/Query Builder 是独立待决决策（formalization-readiness §7 候选 5：approved Kysely 方向），本 ADR 不预决**（架构评审 Major #1）；
+- 数据库 engine family 复用 PostgreSQL 17 + `pg` + `node-pg-migrate` + SQL-first（ADR-010，**适用于数据接入/处理数据库**）；**管理平台数据库的 ORM/Query Builder 是独立待决决策（architecture documentation §7 候选 5：approved Kysely 方向），本 ADR 不预决**（架构评审 Major #1）；
 - 数据接入/处理数据与未来管理平台数据必须物理/逻辑隔离（独立逻辑数据库 + 独立凭据，或独立实例；架构评审 Major #2）；
 - ECS 服务使用 `awsvpc` 网络模式、私有子网、健康检查与最小权限 task role；
 - 镜像按 digest 晋级，禁止浮动 `latest` 作为发布依据；

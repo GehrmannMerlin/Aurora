@@ -29,7 +29,7 @@ review-cycle: sdk-public-api-or-privacy-change
 
 本文把 G05 叶子 SDK-14「安全操作轨迹与有界缓冲」正式化为第一增量。它把 approved PRD §5.1.10、§5.1.13—5.1.14、§14 的安全事实边界落实为 `@aurora/sdk` 的轨迹条目契约与有界缓冲。
 
-批准来源：G05_APPROVAL_PACKAGE 缺口 6，用户 2026-08-10 批准全部推荐方案。**轨迹作为 SDK 侧有界诊断，不进 wire 事件**（wire 集成 deferred，待独立协议规格另行批准）。
+批准来源：approved G05 SDK decision set 缺口 6，用户 2026-08-10 批准全部推荐方案。**轨迹作为 SDK 侧有界诊断，不进 wire 事件**（wire 集成 deferred，待独立协议规格另行批准）。
 
 ## 2. 用途与边界（PRD §5.1.10）
 

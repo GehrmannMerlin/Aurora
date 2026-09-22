@@ -26,9 +26,9 @@ related:
   - ../architecture/error-event-occurrence-processing-store.md
   - ../architecture/request-event-sample-processing-store.md
   - ../architecture/request-metric-aggregate-store.md
-  - ../architecture/formalization-readiness.md
+  - ../architecture/system-overview.md
   - ../../Auroa-PRD-业务逻辑汇总-v2.1-核心业务定稿版.md
-  - ../superpowers/specs/2026-07-27-aurora-frontend-ux-ui-design.md
+  - ../prd/console-ux-ui-and-accessibility.md
 supersedes: none
 review-cycle: performance-store-schema-or-contract-change
 ---
@@ -57,7 +57,7 @@ review-cycle: performance-store-schema-or-contract-change
 
 ## 3. 模块选择依据
 
-- 分组基线 [aurora-v1-remaining-module-batches.md](aurora-v1-remaining-module-batches.md) L142：DAT-08 为"性能聚合与有限样本数据模型"，前置为 PRD §5.1.9、§12、§14—16 与 Performance Contract §4—10、§17—18；ADR-018—020 只作先例，独立 ADR 缺失；
+- 分组基线 [system-overview.md](system-overview.md) L142：DAT-08 为"性能聚合与有限样本数据模型"，前置为 PRD §5.1.9、§12、§14—16 与 Performance Contract §4—10、§17—18；ADR-018—020 只作先例，独立 ADR 缺失；
 - approved 性能事件协议契约：冻结 `PerformanceMetricName` 四项（`lcp`/`inp`/`cls`/`page_load`）、`PerformanceMetricUnit` 两单位（`millisecond`/`ratio`）、`PERFORMANCE_EVENT_LIMITS`；性能正文**不含**页面/环境/发布版本字段；
 - PRD 5.1.9：基础页面性能默认开启，默认采样率 10%，"页面性能主要进入聚合指标，不为每一次普通性能数据生成问题"；
 - PRD §16：分钟级聚合 30 天、小时级聚合 90 天、天级聚合 1 年、完整事件详情 30 天；
@@ -541,7 +541,7 @@ export type PersistPerformanceEventSampleResult =
 - `persistPerformanceMetricContribution`/`persistPerformanceEventSample` Repository 实现并导出；
 - 幂等、原子事务、稳定错误、隐私负例全部有测试；
 - 真实 PostgreSQL 17.10 集成测试覆盖 §50 场景并通过；
-- 包根导出、README、正式规格、ADR-021 证据、formalization-readiness、remaining-module-batches 同步；
+- 包根导出、README、正式规格、ADR-021 证据、architecture documentation、architecture documentation 同步；
 - 全仓质量门禁（typecheck/lint/unit/integration/coverage/boundaries/build/package/format）通过；关键核心包覆盖率 lines ≥ 85%、branches ≥ 80%。
 
 ## 57. PRD、协议、ADR 和测试追踪矩阵

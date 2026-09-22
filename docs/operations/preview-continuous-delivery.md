@@ -12,8 +12,7 @@ related:
   - ../architecture/ci-quality-workflows.md
   - ../architecture/deployment.md
   - ../releases/release-migration-and-rollback.md
-  - ../architecture/formalization-readiness.md
-  - ../superpowers/plans/2026-08-08-ci-quality-workflows.md
+  - ../architecture/system-overview.md
   - ../adr/README.md
 supersedes: none
 review-cycle: preview-lifecycle-or-replacement

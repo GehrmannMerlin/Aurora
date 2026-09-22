@@ -19,7 +19,7 @@ related:
   - ../architecture/system-overview.md
   - ../architecture/sdk-architecture.md
   - ../architecture/monorepo-and-build.md
-  - ../architecture/formalization-readiness.md
+  - ../architecture/system-overview.md
   - ../testing/test-strategy.md
   - event-schema-foundation.md
   - event-envelope-v1.md
@@ -582,7 +582,7 @@ packages/event-schema/
 - `packages/event-schema/README.md`：从"只有错误、请求与性能事件契约"更新为"加数据接入批次与接收结果协议第一增量"；
 - `docs/protocol/ingestion-batch-and-receipt-contract.md`：本文；
 - `docs/README.md`：加入本文并保持批次/接收协议实现缺失；
-- `docs/architecture/formalization-readiness.md`：把 A1 更新为信封基础加错误、请求、性能正文与批次/接收结果协议第一增量；
+- `docs/architecture/system-overview.md`：把 A1 更新为信封基础加错误、请求、性能正文与批次/接收结果协议第一增量；
 - ADR-005：只追加批次/接收结果协议单一来源、Schema、样本和消费者契约实施证据，保持 `accepted / in-progress`；
 - ADR-008：只追加批次/接收结果协议作为其后续依赖链第 1 项的实施证据，保持 `accepted / not-started`；
 - ADR-006：只追加协议层零本地依赖、无 DOM/Node 运行时依赖、公开入口和私有路径负例证据，保持 `accepted / in-progress`；

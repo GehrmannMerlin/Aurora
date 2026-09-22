@@ -13,7 +13,7 @@ related:
   - '../../Aurora 测试规范.md'
   - '../../Aurora ADR 规范.md'
   - ../architecture/sdk-architecture.md
-  - ../architecture/aurora-v1-remaining-module-batches.md
+  - ../architecture/system-overview.md
   - ../adr/ADR-005-event-schema-source-of-truth.md
   - event-schema-foundation.md
   - event-envelope-v1.md
@@ -26,9 +26,9 @@ review-cycle: protocol-or-public-api-change
 
 ## 1. 定位与批准来源
 
-本文把 G05 叶子 PRO-06「协议兼容转换和版本协商」正式化为第一增量。该增量建立在 accepted [ADR-005](ADR-005-event-schema-source-of-truth.md) 与 approved [event-schema-foundation.md](event-schema-foundation.md) 既有的版本与兼容策略之上，只补足**公共版本协商出口**、**明确为空的转换边界**和 **SDK 不改变 wire contract 的保证**，不建立任何转换框架，不虚构历史版本转换器。
+本文把协议兼容转换和版本协商正式化为第一增量。该增量建立在 accepted [ADR-005](../adr/ADR-005-event-schema-source-of-truth.md) 与 approved [event-schema-foundation.md](event-schema-foundation.md) 既有的版本与兼容策略之上，只补足**公共版本协商出口**、**明确为空的转换边界**和 **SDK 不改变 wire contract 的保证**，不建立任何转换框架，不虚构历史版本转换器。
 
-批准来源：G05_APPROVAL_PACKAGE 缺口 1，用户 2026-08-10 批准全部推荐方案。批准范围仅限 PRO-06 增量，不扩大协议范围。
+批准来源：approved G05 SDK decision set 缺口 1，用户 2026-08-10 批准全部推荐方案。批准范围仅限 PRO-06 增量，不扩大协议范围。
 
 ## 2. 已有 approved 决策（本增量不再重复批准）
 

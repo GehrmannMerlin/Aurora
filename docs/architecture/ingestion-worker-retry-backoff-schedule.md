@@ -22,7 +22,7 @@ related:
   - ../architecture/ingestion-worker-runtime.md
   - ../architecture/ingestion-worker-retry-budget-policy.md
   - ../architecture/ingestion-inbox-processing-repository.md
-  - ../architecture/formalization-readiness.md
+  - ../architecture/system-overview.md
 supersedes: none
 review-cycle: ingestion-worker-backoff-schedule-contract-or-release
 ---

@@ -13,7 +13,7 @@ related:
   - '../../Aurora ADR 规范.md'
   - '../../Aurora 架构规范.md'
   - ../architecture/deployment.md
-  - ../architecture/formalization-readiness.md
+  - ../architecture/system-overview.md
   - ../architecture/aws-region-account-network-iac-foundation.md
   - ../releases/release-migration-and-rollback.md
   - ../operations/backup-and-recovery.md
@@ -21,7 +21,7 @@ related:
   - ../adr/ADR-022-aws-account-region-network-and-iac.md
   - ../adr/ADR-023-managed-compute-and-managed-data-services.md
   - ../adr/ADR-024-edge-dns-tls-secrets-and-encryption.md
-  - ../superpowers/specs/2026-07-28-aurora-testing-deployment-release-design.md
+  - ../testing/testing-deployment-release.md
 supersedes: ADR-022, ADR-023, ADR-024
 superseded-by: none
 ---
@@ -47,7 +47,7 @@ superseded-by: none
 
 ## 状态说明
 
-本 ADR 于 2026-08-13 由用户明确批准架构方向后创建为 `proposed / not-started / awaiting-review`。它正式替代 ADR-022/023/024 关于 AWS-first 生产部署的最终结论。在本 ADR 被标记为 `accepted` 前，不修改 ADR-022/023/024 的状态；只有 accepted 后才按 [ADR 规范](../ADR%20规范.md) 7.9 把三份旧 ADR 标记为 `superseded` 并回链本 ADR。
+本 ADR 于 2026-08-13 由用户明确批准架构方向后创建为 `proposed / not-started / awaiting-review`。它正式替代 ADR-022/023/024 关于 AWS-first 生产部署的最终结论。在本 ADR 被标记为 `accepted` 前，不修改 ADR-022/023/024 的状态；只有 accepted 后才按 [ADR 规范](../../Aurora%20ADR%20规范.md) 7.9 把三份旧 ADR 标记为 `superseded` 并回链本 ADR。
 
 ## 背景
 

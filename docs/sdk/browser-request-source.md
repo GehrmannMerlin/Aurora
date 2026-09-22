@@ -18,7 +18,7 @@
   - `docs/sdk/browser-error-source.md`
   - `docs/protocol/request-event-contract.md`
   - `docs/testing/test-strategy.md`
-  - `docs/architecture/formalization-readiness.md`
+  - `docs/architecture/system-overview.md`
   - `docs/adr/ADR-003-sdk-plugin-architecture.md`
   - `docs/adr/ADR-005-event-schema-source-of-truth.md`
   - `docs/adr/ADR-006-one-way-dependencies.md`

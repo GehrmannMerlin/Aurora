@@ -44,4 +44,4 @@ pnpm --filter @aurora/sdk test:package
 
 覆盖率门槛：行 85% / 分支 80% / 函数 85% / 语句 85%（本包 `vitest.config.ts` 固定）。
 
-相关规格：[SDK 公共配置上下文与 composition](../docs/sdk/sdk-public-configuration-context-composition.md)、[请求 allowlist/路径归一化/分类](../docs/sdk/request-allowlist-path-normalization-classification.md)、[统一隐私过滤与 beforeSend](../docs/sdk/unified-privacy-filtering-and-beforesend.md)、[SDK 采样策略](../docs/sdk/sdk-sampling-policy.md)、[安全操作轨迹与有界缓冲](../docs/sdk/safe-activity-trail-and-bounded-buffer.md)、[SDK 可靠发送链（SDK-15/16）](../docs/sdk/sdk-reliable-delivery-chain.md)。
+相关规格：[SDK 公共配置上下文与 composition](../../docs/sdk/sdk-public-configuration-context-composition.md)、[请求 allowlist/路径归一化/分类](../../docs/sdk/request-allowlist-path-normalization-classification.md)、[统一隐私过滤与 beforeSend](../../docs/sdk/unified-privacy-filtering-and-beforesend.md)、[SDK 采样策略](../../docs/sdk/sdk-sampling-policy.md)、[安全操作轨迹与有界缓冲](../../docs/sdk/safe-activity-trail-and-bounded-buffer.md)、[SDK 可靠发送链（SDK-15/16）](../../docs/sdk/sdk-reliable-delivery-chain.md)。

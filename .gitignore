@@ -13,3 +13,5 @@ test-results/
 cdk.out/
 .claude/worktrees/
 .worktrees/
+.superpowers/
+.work/

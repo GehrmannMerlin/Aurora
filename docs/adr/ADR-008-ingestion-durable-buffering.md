@@ -17,8 +17,7 @@ related:
   - ../testing/test-strategy.md
   - ../releases/release-migration-and-rollback.md
   - ../operations/backup-and-recovery.md
-  - ../superpowers/specs/2026-07-28-aurora-testing-deployment-release-design.md
-  - ../superpowers/specs/2026-07-29-aurora-topic-discussion-summary.md
+  - ../testing/testing-deployment-release.md
   - ADR-002-five-system-boundaries.md
   - ADR-004-asynchronous-event-processing.md
   - ADR-005-event-schema-source-of-truth.md

@@ -15,7 +15,7 @@ related:
   - '../../Aurora 测试规范.md'
   - '../../Aurora 文档规范.md'
   - '../../Aurora ADR 规范.md'
-  - ../architecture/formalization-readiness.md
+  - ../architecture/system-overview.md
   - ../architecture/ingestion-http-service.md
   - ../architecture/ingestion-inbox-data-model.md
   - ../architecture/ingestion-inbox-processing-repository.md
@@ -330,7 +330,7 @@ interface IngestionBenchmarkReport {
 - 输出路径可通过 CLI 参数覆盖；自定义输出路径必须进行安全验证（校验 resolve 后仍在允许根目录内，除非用户显式传入绝对路径）；
 - 不允许写出项目根目录之外（除非用户显式传入绝对路径）。
 
-生成一份脱敏摘要证据：`docs/testing/evidence/2026-08-02-ingestion-local-baseline.md`。
+生成一份脱敏摘要证据：`.artifacts/benchmarks/ingestion/`。
 
 摘要只包含：环境、profile、各场景配置、测量结果、正确性结果、局限性；不得解释为生产容量的声明；不得把原始 JSON 全量复制进 Markdown。
 
@@ -393,9 +393,9 @@ CLI 必须：
 ## 24. 文档证据
 
 - `docs/testing/ingestion-capacity-and-resilience-benchmark.md`（本文）；
-- `docs/testing/evidence/2026-08-02-ingestion-local-baseline.md`（脱敏摘要证据）；
+- `.artifacts/benchmarks/ingestion/`（脱敏摘要证据）；
 - `tooling/ingestion-benchmark/README.md`（模块 README：职责/非职责、CLI、profile、依赖、清理、局限、权威链接）；
-- `docs/architecture/formalization-readiness.md`（状态更新）；
+- `docs/architecture/system-overview.md`（状态更新）；
 - 根 `README.md` 与 `docs/README.md`（如需要链接命令入口）；
 - `AGENTS.md`/`AURORA_RULES.md` 当前状态与决策队列同步。
 

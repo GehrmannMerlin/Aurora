@@ -14,7 +14,7 @@ related:
   - ../architecture/deployment.md
   - ../releases/release-migration-and-rollback.md
   - ../operations/backup-and-recovery.md
-  - ../superpowers/specs/2026-07-28-aurora-testing-deployment-release-design.md
+  - ../testing/testing-deployment-release.md
 supersedes: none
 review-cycle: release-or-quality-policy-change
 ---

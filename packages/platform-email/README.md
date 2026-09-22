@@ -4,7 +4,7 @@
 
 `@aurora/platform-email` 是管理平台身份、认证与邀请第一增量（PLT-03）的**数据层**包。它承载
 spec
-[platform-identity-authentication-invitation](../../docs/superpowers/specs/2026-08-09-platform-identity-authentication-invitation.md)
+[platform-identity-authentication-invitation](../../docs/security/platform-identity-authentication.md)
 §6（EmailDeliveryPort 与 Outbox）的物理实现，以及 accepted
 [ADR-031](../../docs/adr/ADR-031-platform-email-delivery.md)
 （`EmailDeliveryPort` + 单供应商 + Outbox 记录；送达非承诺）与
@@ -93,8 +93,7 @@ pnpm --filter @aurora/platform-email build             # 构建 dist
 
 ## 关联文档
 
-- [PLT-03 正式规格](../../docs/superpowers/specs/2026-08-09-platform-identity-authentication-invitation.md)
-- [PLT-03 实施计划](../../docs/superpowers/plans/2026-08-09-platform-identity-authentication-invitation.md)
+- [PLT-03 正式规格](../../docs/security/platform-identity-authentication.md)
 - [ADR-031 管理平台邮件发送责任、端口与供应商](../../docs/adr/ADR-031-platform-email-delivery.md)
 - [ADR-032 管理平台 Outbox、任务、缓存与对象存储基础设施](../../docs/adr/ADR-032-platform-outbox-tasks-cache-objects.md)
 - [阿里云 DirectMail 邮箱验证交付 Runbook](../../docs/operations/aliyun-direct-mail-email-verification.md)

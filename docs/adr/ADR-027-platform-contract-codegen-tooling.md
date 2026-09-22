@@ -12,9 +12,9 @@ related:
   - ../../AURORA_RULES.md
   - '../../Aurora ADR 规范.md'
   - ../../docs/architecture/platform-contract-foundation.md
-  - ../../docs/architecture/formalization-readiness.md
-  - ../../docs/superpowers/specs/2026-07-30-aurora-platform-openapi-and-implementation-design.md
-  - ../../docs/superpowers/specs/2026-07-28-aurora-platform-backend-design.md
+  - ../../docs/architecture/system-overview.md
+  - ../../docs/api/platform-openapi-and-implementation.md
+  - ../../docs/architecture/platform-backend-design.md
   - ../../docs/adr/ADR-005-event-schema-source-of-truth.md
   - ../../docs/adr/ADR-010-postgresql-access-and-migration-tooling.md
   - ../../Auroa-PRD-业务逻辑汇总-v2.1-核心业务定稿版.md
@@ -34,7 +34,7 @@ superseded-by: none
 - Owner：platform/backend
 - 适用范围：`@aurora/platform-contract` 的契约源码组织、唯一操作注册表、确定性生成器、生成 Client/Server 适配、漂移门禁、兼容差异检查与契约样本/testkit；数据接入 OpenAPI 工具链先例（`tooling/ingestion-openapi-contract`）与 event-schema 单一来源原则的推广
 - 关联 PRD：[核心业务 PRD](../../Auroa-PRD-业务逻辑汇总-v2.1-核心业务定稿版.md)
-- 关联技术方案：[总体 OpenAPI 与实现约束设计](../../docs/superpowers/specs/2026-07-30-aurora-platform-openapi-and-implementation-design.md)（approved）、[平台后端设计](../../docs/superpowers/specs/2026-07-28-aurora-platform-backend-design.md)（approved，BE-GAP-01/02）、[管理平台契约基础（PLT-01）](../../docs/architecture/platform-contract-foundation.md)（draft）
+- 关联技术方案：[总体 OpenAPI 与实现约束设计](../../docs/api/platform-openapi-and-implementation.md)（approved）、[平台后端设计](../../docs/architecture/platform-backend-design.md)（approved，BE-GAP-01/02）、[管理平台契约基础（PLT-01）](../../docs/architecture/platform-contract-foundation.md)（draft）
 - 关联 Issue：none
 - 关联实现 PR：none
 - 替代 ADR：none
@@ -42,7 +42,7 @@ superseded-by: none
 
 ## 状态说明
 
-本 ADR 于 2026-08-08 创建为 `proposed`。创建依据：G09（PLT-01）实施门禁；前端技术栈设计 §7.2"Schema/客户端生成——仓库没有 OpenAPI 等公开 API 源、生成工具或版本兼容规则"；总体 OpenAPI 设计 §17.2"生成一致性测试"与 §18 CI 门禁；平台后端设计 BE-GAP-01"机器可读 OpenAPI、请求/响应 Schema、示例和兼容测试尚不存在"。数据接入已有真实工具链先例（`docs/api/ingestion.openapi.yaml` + `tooling/ingestion-openapi-contract` 漂移门禁，40 测试）。`formalization-readiness.md` §7 候选队列当前无"契约/代码生成工具链"独立行（该队列的"管理平台前端技术栈"第 3 项、"管理平台服务形态与后端栈"第 4 项、"Session、CSRF 与内部能力令牌"第 7 项已分别由 ADR-025/026/028 承接）；本 ADR 补足队列中由总体 OpenAPI 设计 §17.2/§18 与前端技术栈设计 §7.2 确立的契约生成工具链候选，且同一变更中在 §7 追加该候选行。**在用户批准（accepted）前，不得创建 `@aurora/platform-contract`、生成器、机器 OpenAPI、漂移门禁或进入 `writing-plans`。**
+本 ADR 于 2026-08-08 创建为 `proposed`。创建依据：G09（PLT-01）实施门禁；前端技术栈设计 §7.2"Schema/客户端生成——仓库没有 OpenAPI 等公开 API 源、生成工具或版本兼容规则"；总体 OpenAPI 设计 §17.2"生成一致性测试"与 §18 CI 门禁；平台后端设计 BE-GAP-01"机器可读 OpenAPI、请求/响应 Schema、示例和兼容测试尚不存在"。数据接入已有真实工具链先例（`docs/api/ingestion.openapi.yaml` + `tooling/ingestion-openapi-contract` 漂移门禁，40 测试）。`system-overview.md` §7 候选队列当前无"契约/代码生成工具链"独立行（该队列的"管理平台前端技术栈"第 3 项、"管理平台服务形态与后端栈"第 4 项、"Session、CSRF 与内部能力令牌"第 7 项已分别由 ADR-025/026/028 承接）；本 ADR 补足队列中由总体 OpenAPI 设计 §17.2/§18 与前端技术栈设计 §7.2 确立的契约生成工具链候选，且同一变更中在 §7 追加该候选行。**在用户批准（accepted）前，不得创建 `@aurora/platform-contract`、生成器、机器 OpenAPI、漂移门禁或进入 `writing-plans`。**
 
 ## 背景
 

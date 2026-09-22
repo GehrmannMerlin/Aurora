@@ -76,4 +76,3 @@ pnpm --filter @aurora/platform-policy migrate          # 运行本包 Migration�
 
 - [平台资源策略数据模型（正式规格）](../../docs/architecture/platform-resource-policy-data-model.md)
 - [ADR-035 平台资源策略数据模型](../../docs/adr/ADR-035-platform-resource-policy-data-model.md)
-- [PLT-10b 实施计划](../../docs/superpowers/plans/2026-08-12-plt-10b-platform-resource-policy.md)

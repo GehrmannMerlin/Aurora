@@ -1,0 +1,20 @@
+{
+  "name": "@aurora/documentation-hygiene",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Aurora documentation hygiene gate",
+  "engines": {
+    "node": ">=24.18.0 <25"
+  },
+  "exports": {
+    ".": "./check.mjs"
+  },
+  "files": [
+    "check.mjs"
+  ],
+  "scripts": {},
+  "aurora": {
+    "layer": "tooling"
+  }
+}

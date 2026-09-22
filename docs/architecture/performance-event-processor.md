@@ -29,7 +29,7 @@ related:
   - ../architecture/performance-metric-aggregate-and-bounded-sample-store.md
   - ../architecture/error-event-processor.md
   - ../architecture/request-event-processor.md
-  - ../architecture/formalization-readiness.md
+  - ../architecture/system-overview.md
   - ../../Auroa-PRD-业务逻辑汇总-v2.1-核心业务定稿版.md
 supersedes: none
 review-cycle: performance-event-processor-contract-or-release
@@ -389,7 +389,7 @@ export function createPerformanceEventProcessor(
 - `apps/ingestion-worker/README.md`：增加性能事件 Processor 职责与接口；
 - 本规格 `implementation-status` → implemented；
 - `docs/README.md`：模块表新增一行；
-- `docs/architecture/formalization-readiness.md`：状态记录更新；
+- `docs/architecture/system-overview.md`：状态记录更新；
 - ADR-021 追加实施证据，保持 `accepted / implemented`；
 - `AGENTS.md`/`AURORA_RULES.md`：仅在代码和完整门禁实际通过后更新阶段快照。
 
@@ -432,7 +432,7 @@ export function createPerformanceEventProcessor(
 - 真实 PostgreSQL 集成测试覆盖 §35 全部场景并通过；
 - 既有 Error/Request Processor 与 Store 测试全部回归通过；
 - `package-entry.test.ts`、`documentation-contract.test.ts`、`security-negative.test.ts` 同步；
-- README、正式规格、formalization-readiness、docs/README、ADR-021 实施证据同步；
+- README、正式规格、architecture documentation、docs/README、ADR-021 实施证据同步；
 - 全仓质量门禁通过；覆盖率满足 85/80/85/85。
 
 ## 45. PRD、协议、ADR、Store 和 Worker 追踪矩阵

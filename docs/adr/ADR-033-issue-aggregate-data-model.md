@@ -10,7 +10,7 @@ applies-to: packages/processing-store（@aurora/processing-store）的 Issue 聚
 related:
   - ../../AURORA_RULES.md
   - '../../Aurora ADR 规范.md'
-  - ../../docs/architecture/formalization-readiness.md
+  - ../../docs/architecture/system-overview.md
   - ../../docs/architecture/error-event-occurrence-processing-store.md
   - ../../docs/architecture/error-event-processor.md
   - ../../docs/architecture/error-normalization-fingerprint.md
@@ -48,7 +48,7 @@ superseded-by: none
 
 ## 状态说明
 
-本 ADR 于 2026-08-10 创建为 `proposed`。创建依据：G03 分组基线（`aurora-v1-remaining-module-batches.md`）明确 DAT-13 "独立数据模型 ADR/规格缺失" 且 "必须先回读 DAT-12 的 accepted 决策"；用户 G03 readiness 规则明确 **DAT-13 Issue 数据模型必须有 accepted ADR**。ADR 规范 §7.2 触发：新增核心处理聚合表、Migration/回滚成本高、Issue 身份跨算法版本与生命周期有长期迁移成本，需长期保留取舍依据。本 ADR 处于 `proposed / not-started / awaiting-user-approval`。它需要独立非作者架构/后端评审、数据库领域评审与隐私/数据治理评审（可派发 reviewer subagent），但评审意见不代替用户正式批准。**在用户批准（accepted）前，不得创建正式 Migration、实现代码，不得进入 writing-plans。**
+本 ADR 于 2026-08-10 创建为 `proposed`。创建依据：G03 分组基线（`system-overview.md`）明确 DAT-13 "独立数据模型 ADR/规格缺失" 且 "必须先回读 DAT-12 的 accepted 决策"；用户 G03 readiness 规则明确 **DAT-13 Issue 数据模型必须有 accepted ADR**。ADR 规范 §7.2 触发：新增核心处理聚合表、Migration/回滚成本高、Issue 身份跨算法版本与生命周期有长期迁移成本，需长期保留取舍依据。本 ADR 处于 `proposed / not-started / awaiting-user-approval`。它需要独立非作者架构/后端评审、数据库领域评审与隐私/数据治理评审（可派发 reviewer subagent），但评审意见不代替用户正式批准。**在用户批准（accepted）前，不得创建正式 Migration、实现代码，不得进入 writing-plans。**
 
 ## 背景
 
@@ -262,7 +262,6 @@ Aurora 已接受 ADR-004/005/008/010/012/018/019/020/021，`@aurora/processing-s
 
 ### 2026-08-10：用户正式批准（accepted）
 
-- 用户已于 2026-08-10 对 G03 APPROVAL PACKAGE 作出整体正式批准（"整体批准（Recommended）"），批准范围（逐条）：
   1. 方案 B：Issue 聚合表＋有界代表样本表；
   2. `(project_id, fingerprint, fingerprint_version)` 项目作用域聚合键（fingerprint 来自 DAT-12 `computeErrorFingerprint`，`fingerprint_version` 保留历史 Issue 身份）；
   3. `issue_event_applications (project_id, event_id)` 事件应用登记（防 retry/重放下计数重复累加）；

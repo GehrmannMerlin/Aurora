@@ -12,11 +12,11 @@ related:
   - ../../AURORA_RULES.md
   - '../../Aurora ADR 规范.md'
   - ../../docs/architecture/platform-frontend.md
-  - ../../docs/architecture/formalization-readiness.md
-  - ../../docs/superpowers/specs/2026-07-28-aurora-frontend-technology-stack-design.md
-  - ../../docs/superpowers/specs/2026-08-14-aurora-console-ux-ui-redesign-design.md
-  - ../../docs/superpowers/specs/2026-07-30-aurora-platform-openapi-and-implementation-design.md
-  - ../../docs/superpowers/specs/2026-07-27-aurora-frontend-ux-ui-design.md
+  - ../../docs/architecture/system-overview.md
+  - ../../docs/architecture/platform-frontend-technology-stack.md
+  - ../../docs/prd/console-ux-ui-redesign.md
+  - ../../docs/api/platform-openapi-and-implementation.md
+  - ../../docs/prd/console-ux-ui-and-accessibility.md
   - ../../Auroa-PRD-业务逻辑汇总-v2.1-核心业务定稿版.md
 supersedes: none
 superseded-by: none
@@ -34,7 +34,7 @@ superseded-by: none
 - Owner：platform/frontend
 - 适用范围：管理平台前端工程基线——Vue 3 SPA＋Vite（严格 TypeScript、SFC＋Composition API）、Vue Router、Pinia 与自建请求/缓存层、PrimeVue＋VeeValidate/Zod＋受控 DataTable＋Apache ECharts、质量工具链（vue-tsc/ESLint/Vitest/Vue Testing Library/MSW/Playwright/axe/Lighthouse CI）
 - 关联 PRD：[核心业务 PRD](../../Auroa-PRD-业务逻辑汇总-v2.1-核心业务定稿版.md)
-- 关联技术方案：[前端技术栈设计](../../docs/superpowers/specs/2026-07-28-aurora-frontend-technology-stack-design.md)（approved，FE-STACK-001—004）、[Console UX/UI 全面重设计](../../docs/superpowers/specs/2026-08-14-aurora-console-ux-ui-redesign-design.md)（approved）、[管理平台前端架构](../../docs/architecture/platform-frontend.md)（approved）
+- 关联技术方案：[前端技术栈设计](../../docs/architecture/platform-frontend-technology-stack.md)（approved，FE-STACK-001—004）、[Console UX/UI 全面重设计](../../docs/prd/console-ux-ui-redesign.md)（approved）、[管理平台前端架构](../../docs/architecture/platform-frontend.md)（approved）
 - 关联 Issue：none
 - 关联实现 PR：none
 - 替代 ADR：none
@@ -42,7 +42,7 @@ superseded-by: none
 
 ## 状态说明
 
-本 ADR 于 2026-08-08 创建为 `proposed`。创建依据：G09（PLT-01/PLT-02）实施门禁；前端技术栈设计 §7.1"Vue 3/Vite、Vue Router/Pinia 自建请求缓存、PrimeVue/VeeValidate/Zod/ECharts 及质量工具共同构成长期、高迁移成本的前端工程基线，需要一份新的前端技术栈 ADR"；formalization-readiness §7 候选队列第 3 项"管理平台前端技术栈"；总体 OpenAPI 设计 §20"正式实现前至少需要 accepted ADR 覆盖：Vue 3/Vite、Vue Router/Pinia、自建请求缓存和 UI/测试技术基线"。用户已于 2026-07-28 批准整份前端技术栈设计（FE-STACK-005），本 ADR 将该已批准设计升格为正式技术决策并冻结精确版本策略与实施边界。**在用户批准（accepted）前，不得创建 `apps/console`、设计令牌、组件、依赖锁文件或进入 `writing-plans`。**
+本 ADR 于 2026-08-08 创建为 `proposed`。创建依据：G09（PLT-01/PLT-02）实施门禁；前端技术栈设计 §7.1"Vue 3/Vite、Vue Router/Pinia 自建请求缓存、PrimeVue/VeeValidate/Zod/ECharts 及质量工具共同构成长期、高迁移成本的前端工程基线，需要一份新的前端技术栈 ADR"；architecture documentation §7 候选队列第 3 项"管理平台前端技术栈"；总体 OpenAPI 设计 §20"正式实现前至少需要 accepted ADR 覆盖：Vue 3/Vite、Vue Router/Pinia、自建请求缓存和 UI/测试技术基线"。用户已于 2026-07-28 批准整份前端技术栈设计（FE-STACK-005），本 ADR 将该已批准设计升格为正式技术决策并冻结精确版本策略与实施边界。**在用户批准（accepted）前，不得创建 `apps/console`、设计令牌、组件、依赖锁文件或进入 `writing-plans`。**
 
 ## 背景
 
@@ -192,7 +192,7 @@ Aurora 第一版管理平台是登录后的高交互应用，31 个页面设计�
 
 - 状态 `proposed / not-started / awaiting-user-approval`；
 - 由 G09（PLT-01/PLT-02）实施门禁创建；
-- 依据 approved 前端技术栈设计（FE-STACK-001—004/005）、管理平台前端架构、总体 OpenAPI 设计 §20 与 formalization-readiness §7 候选第 3 项；
+- 依据 approved 前端技术栈设计（FE-STACK-001—004/005）、管理平台前端架构、总体 OpenAPI 设计 §20 与 architecture documentation §7 候选第 3 项；
 - 未调用 writing-plans、未创建 `apps/console`、未安装依赖、未实施代码；
 - 等待独立评审与用户正式批准，不自动批准、不实施。
 

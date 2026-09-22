@@ -18,7 +18,7 @@ related:
   - ../architecture/system-overview.md
   - ../architecture/sdk-architecture.md
   - ../architecture/monorepo-and-build.md
-  - ../architecture/formalization-readiness.md
+  - ../architecture/system-overview.md
   - event-schema-foundation.md
   - event-envelope-v1.md
   - error-event-contract.md
@@ -568,7 +568,7 @@ packages/event-schema/
 - `docs/protocol/event-envelope-v1.md`：链接本文并明确 `parseEventEnvelope` 与精确请求解析器的层次；
 - `docs/README.md`：加入本文并保持其他具体事件、批次和消费者实现缺失；
 - `docs/architecture/system-overview.md` 与 `docs/architecture/sdk-architecture.md`：只记录请求事件机器契约已存在，请求观测能力、请求插件和传输仍不存在；
-- `docs/architecture/formalization-readiness.md`：把 A1 更新为信封基础加错误与请求正文第一增量，其他正文、批次、兼容转换和真实系统消费者仍受阻；
+- `docs/architecture/system-overview.md`：把 A1 更新为信封基础加错误与请求正文第一增量，其他正文、批次、兼容转换和真实系统消费者仍受阻；
 - ADR-005：只追加单一来源、请求 Schema、样本和消费者契约实施证据，保持 `accepted / in-progress`；
 - ADR-006：只追加协议层零本地依赖、无 DOM/Node 运行时依赖、公开入口和私有路径负例证据，保持 `accepted / in-progress`；
 - ADR-003：请求协议不是请求观测或请求插件，只在实施记录中澄清插件前置契约已具备，保持 `accepted / in-progress`；

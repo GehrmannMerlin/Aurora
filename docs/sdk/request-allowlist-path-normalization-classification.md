@@ -30,7 +30,7 @@ review-cycle: sdk-public-api-or-request-behavior-change
 
 本文把 G05 叶子 SDK-11「请求 allowlist、路径归一化和分类」正式化为第一增量。它把 approved PRD §5.1.2—5.1.8、§5.1.14—5.1.15 的请求监控规则落实为 `@aurora/sdk` 的确定性机器行为；`url` 语义以 approved [request-event-contract.md](../protocol/request-event-contract.md) 为准。
 
-批准来源：G05_APPROVAL_PACKAGE 缺口 3，用户 2026-08-10 批准全部推荐方案。允许来源/同源/跨域/路径归一化判断属 SDK 配置与处理层，不进入协议层。
+批准来源：approved G05 SDK decision set 缺口 3，用户 2026-08-10 批准全部推荐方案。允许来源/同源/跨域/路径归一化判断属 SDK 配置与处理层，不进入协议层。
 
 ## 2. 与协议层的边界
 
@@ -42,8 +42,8 @@ review-cycle: sdk-public-api-or-request-behavior-change
 
 ```ts
 export interface SdkRequestClassificationContext {
-  readonly pageOrigin: string | null;          // 当前页面 origin，null 表示未知
-  readonly sdkReportUrls?: readonly string[];  // SDK 自身上报地址（G06 提供前为空），默认排除
+  readonly pageOrigin: string | null; // 当前页面 origin，null 表示未知
+  readonly sdkReportUrls?: readonly string[]; // SDK 自身上报地址（G06 提供前为空），默认排除
 }
 
 export type SdkRequestClass = 'error' | 'slow' | 'normal';
@@ -51,7 +51,7 @@ export type SdkRequestClass = 'error' | 'slow' | 'normal';
 export interface SdkRequestClassificationResult {
   readonly ok: true;
   readonly class: SdkRequestClass;
-  readonly normalizedUrl: string;              // 路径归一化后的安全绝对 URL
+  readonly normalizedUrl: string; // 路径归一化后的安全绝对 URL
   readonly isError: boolean;
   readonly isSlow: boolean;
 }

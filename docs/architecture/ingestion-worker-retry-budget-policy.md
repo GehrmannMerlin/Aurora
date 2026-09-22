@@ -22,7 +22,7 @@ related:
   - ../architecture/ingestion-worker-runtime.md
   - ../architecture/ingestion-inbox-processing-repository.md
   - ../architecture/ingestion-inbox-data-model.md
-  - ../architecture/formalization-readiness.md
+  - ../architecture/system-overview.md
 supersedes: none
 review-cycle: ingestion-worker-policy-or-retry-semantic-change
 ---

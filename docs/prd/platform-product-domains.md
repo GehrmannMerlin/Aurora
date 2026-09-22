@@ -11,9 +11,8 @@ related:
   - ../architecture/platform-frontend.md
   - ../architecture/platform-backend.md
   - ../security/account-deletion-and-data-lifecycle.md
-  - ../superpowers/specs/2026-07-27-aurora-frontend-ux-ui-design.md
-  - ../superpowers/specs/2026-07-29-aurora-topic-discussion-summary.md
-  - ../superpowers/specs/2026-07-30-aurora-platform-openapi-and-implementation-design.md
+  - ../prd/console-ux-ui-and-accessibility.md
+  - ../api/platform-openapi-and-implementation.md
 supersedes: none
 review-cycle: product-or-api-change
 ---
@@ -22,7 +21,7 @@ review-cycle: product-or-api-change
 
 ## 1. 权威边界
 
-本文维护管理平台第一版的稳定业务域、对象归属和正式化入口。A1—D2 共 31 页的进入条件、页面结构、字段口径、权限、Query/Command 需求、全部页面状态、URL/分页/选择/返回、危险操作、一次性秘密、可访问性、排除项及 GAP-01—GAP-20，仍以[完整前端 UX/UI 设计](../superpowers/specs/2026-07-27-aurora-frontend-ux-ui-design.md)为详细权威来源。
+本文维护管理平台第一版的稳定业务域、对象归属和正式化入口。A1—D2 共 31 页的进入条件、页面结构、字段口径、权限、Query/Command 需求、全部页面状态、URL/分页/选择/返回、危险操作、一次性秘密、可访问性、排除项及 GAP-01—GAP-20，仍以[完整前端 UX/UI 设计](../prd/console-ux-ui-and-accessibility.md)为详细权威来源。
 
 本文不复制 31 页设计，也不把六专题总结提升为前端规格。出现语义差异时，按核心 PRD/长期规范 → accepted ADR → approved 完整专题设计 → approved 六专题总结的顺序处理。
 
@@ -58,7 +57,7 @@ review-cycle: product-or-api-change
 
 ## 4. 公开能力边界
 
-页面中的 Query、Command、能力名和建议路径是需求标识，不是已经存在的机器 API。已批准的[总体 OpenAPI 与实现约束设计](../superpowers/specs/2026-07-30-aurora-platform-openapi-and-implementation-design.md)采用“统一公开契约、内部按领域模块化、生成单一 Platform OpenAPI”的方案 A，覆盖身份、权限、稳定错误、幂等、版本/冲突、Operation Result、部分/陈旧状态、安全目标和页面可达性。管理平台浏览器只能通过生成 Client 调用 `platform-api`，不直连数据库、Redis/BullMQ、处理存储或对象内部键。
+页面中的 Query、Command、能力名和建议路径是需求标识，不是已经存在的机器 API。已批准的[总体 OpenAPI 与实现约束设计](../api/platform-openapi-and-implementation.md)采用“统一公开契约、内部按领域模块化、生成单一 Platform OpenAPI”的方案 A，覆盖身份、权限、稳定错误、幂等、版本/冲突、Operation Result、部分/陈旧状态、安全目标和页面可达性。管理平台浏览器只能通过生成 Client 调用 `platform-api`，不直连数据库、Redis/BullMQ、处理存储或对象内部键。
 
 31 个页面设计映射 36 个稳定 Route Target；差异来自 A1、C8、C11 的稳定子路由。B2 创建成功进入 C1；从 B1 选择已有 `active` 或可查看历史的 `archived` 项目进入 C2；回收站及删除态只从 B8 处理。每个正式 Route Target 都必须有真实 UI 入口和浏览器可达性验证，不能只靠手工输入 URL。
 

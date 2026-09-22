@@ -87,7 +87,6 @@ processing 可回收；旧 claim 的 fencing 结算不能覆盖新 claim。用�
 
 ## 7. 关联依据
 
-- [邮箱验证真实交付与历史账号重发设计](../superpowers/specs/2026-08-14-email-verification-delivery-and-resend-design.md)
-- [邮箱验证真实交付与历史账号重发实施计划](../superpowers/plans/2026-08-14-email-verification-delivery-and-resend.md)
+- [邮箱验证真实交付与历史账号重发设计](../operations/email-verification-delivery.md)
 - [ADR-031 平台邮件交付](../adr/ADR-031-platform-email-delivery.md)
 - [ADR-032 平台 Outbox](../adr/ADR-032-platform-outbox-tasks-cache-objects.md)

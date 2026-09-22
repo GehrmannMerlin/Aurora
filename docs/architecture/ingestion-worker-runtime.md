@@ -22,7 +22,7 @@ related:
   - ../architecture/ingestion-inbox-data-model.md
   - ../architecture/ingestion-inbox-processing-repository.md
   - ../architecture/ingestion-http-service.md
-  - ../architecture/formalization-readiness.md
+  - ../architecture/system-overview.md
 supersedes: none
 review-cycle: ingestion-worker-runtime-contract-or-release
 ---

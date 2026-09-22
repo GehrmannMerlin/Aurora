@@ -10,10 +10,10 @@ related:
   - ../../AURORA_RULES.md
   - '../../Aurora 测试规范.md'
   - '../testing/test-strategy.md'
-  - '../superpowers/specs/2026-07-28-aurora-testing-deployment-release-design.md'
+  - '../testing/testing-deployment-release.md'
   - '../releases/release-migration-and-rollback.md'
   - '../architecture/deployment.md'
-  - '../architecture/formalization-readiness.md'
+  - '../architecture/system-overview.md'
   - '../adr/README.md'
 supersedes: none
 review-cycle: ci-policy-or-tooling-change
@@ -23,7 +23,7 @@ review-cycle: ci-policy-or-tooling-change
 
 ## 1. 定位与效力
 
-本文正式化 Aurora 第一版 CI 质量工作流（OPS-01）。它把 approved [测试/部署/发布设计](../superpowers/specs/2026-07-28-aurora-testing-deployment-release-design.md) 第 7 节（CI 阶段、阻断与例外）和 [测试策略](../testing/test-strategy.md) 第 3 节（CI 分级门禁）落实为可执行的 GitHub Actions 工作流，并形成 PostgreSQL 隔离与浏览器验证的正式规则。
+本文正式化 Aurora 第一版 CI 质量工作流（OPS-01）。它把 approved [测试/部署/发布设计](../testing/testing-deployment-release.md) 第 7 节（CI 阶段、阻断与例外）和 [测试策略](../testing/test-strategy.md) 第 3 节（CI 分级门禁）落实为可执行的 GitHub Actions 工作流，并形成 PostgreSQL 隔离与浏览器验证的正式规则。
 
 **GitHub Actions 是 approved CI 载体**（testing/deployment design §7 明确"使用 GitHub Actions"），因此本规格不创建新 ADR；该选择属于"正式文档而不是 ADR"类别（设计 §19）。
 
@@ -164,5 +164,5 @@ GitHub Actions 已在 approved testing/deployment design 存在；本规格不�
 
 - Preview CD（后续轮次，接入 `pnpm deploy:preview`）；
 - 生产部署、Docker/npm 发布、AWS OIDC；
-- OPS-02 兼容/设备/性能参考验证（下一叶子，readiness 见 formalization-readiness）；
+- OPS-02 兼容/设备/性能参考验证（下一叶子，readiness 见 architecture documentation）；
 - 真实 Safari/移动设备矩阵。

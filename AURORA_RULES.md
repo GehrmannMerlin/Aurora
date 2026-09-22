@@ -1,247 +1,127 @@
----
-title: Aurora 项目规则与当前上下文
-status: approved
-owner: architecture
-last-reviewed: 2026-07-30
-applies-to: Aurora 仓库全部 Agent、代码、测试、文档与技术决策
-related:
-  - AGENTS.md
-  - Auroa-PRD-业务逻辑汇总-v2.1-核心业务定稿版.md
-  - "Aurora 架构规范.md"
-  - "Aurora 代码规范.md"
-  - "Aurora 测试规范.md"
-  - "Aurora 文档规范.md"
-  - "Aurora ADR 规范.md"
-  - docs/adr/README.md
-  - docs/superpowers/specs/2026-07-27-aurora-frontend-ux-ui-design.md
-  - docs/superpowers/specs/2026-07-28-aurora-frontend-technology-stack-design.md
-  - docs/superpowers/specs/2026-08-14-aurora-console-ux-ui-redesign-design.md
-  - docs/superpowers/specs/2026-07-28-aurora-foundation-topic-approval-baseline.md
-  - docs/superpowers/specs/2026-07-28-aurora-platform-backend-design.md
-  - docs/superpowers/specs/2026-07-28-aurora-testing-deployment-release-design.md
-  - docs/superpowers/specs/2026-07-29-aurora-topic-discussion-summary.md
-  - docs/superpowers/specs/2026-07-29-aurora-account-deletion-data-lifecycle-design.md
-  - docs/README.md
-  - docs/architecture/system-overview.md
-  - docs/prd/platform-product-domains.md
-  - docs/security/account-deletion-and-data-lifecycle.md
-  - docs/architecture/formalization-readiness.md
-supersedes: none
-maintenance: operational-snapshot
----
-
-# Aurora 项目规则与当前上下文
-
-## 1. 文件定位
-
-本文件是 Aurora 的当前项目快照和权威文档索引，与 [AGENTS.md](AGENTS.md) 一起作为每个新会话的固定必读入口。它不取代 PRD、六份长期规范或 accepted ADR，也不重复搬运它们的正文。
-
-读取与执行规则：
-
-- 每次新会话完整阅读 `AGENTS.md` 和本文件；
-- 再按 `AGENTS.md` 的任务触发矩阵完整阅读相关权威文档；
-- approved 长期规范是正式规则，accepted ADR 是正式技术决策；
-- 会话设计确认不等于 ADR accepted，也不等于实施完成；
-- 发现冲突或来源不明时，停止受影响工作并回到权威文档核对。
-
-## 2. 权威来源
-
-| 领域 | 权威文档 | 何时读取 |
-|---|---|---|
-| 第一版范围与业务逻辑 | [核心业务 PRD](Auroa-PRD-业务逻辑汇总-v2.1-核心业务定稿版.md) | 产品、UX/UI、流程、权限、数据生命周期或公共行为 |
-| 系统边界与依赖 | [架构规范](<Aurora 架构规范.md>) | 架构、模块、依赖、公共边界、基础设施、部署 |
-| 实现与代码质量 | [代码规范](<Aurora 代码规范.md>) | 编码、重构、评审、Bug 修复、调试 |
-| 测试与质量门禁 | [测试规范](<Aurora 测试规范.md>) | 测试、CI、回归、发布验证 |
-| 文档治理 | [文档规范](<Aurora 文档规范.md>) | 正式文档、规则、README、API 文档、示例 |
-| 技术决策治理 | [ADR 规范](<Aurora ADR 规范.md>) | ADR 判断、创建、评审、状态与长期技术选型 |
-| ADR 状态 | [ADR 索引](docs/adr/README.md) | 任务涉及任何 ADR 或其影响范围 |
-
-六份长期规范保持固定路径和 append-only 历史保护。`AGENTS.md` 与本文件是可重写的运行快照；重复细节必须留在权威来源中。
-
-## 3. 当前项目阶段
-
-截至 2026-07-30，Aurora 处于“第一版核心业务规则冻结、六专题设计输入均已批准或确认、正在逐模块正式化与实施就绪审查”阶段。
-
-已具备：
-
-- approved 核心业务 PRD；
-- approved 架构、代码、测试、文档和 ADR 治理基线；
-- 五大系统边界、SDK 分层、同步可靠接收与异步处理、`event-schema` 单一来源和单向依赖的 approved 架构规则；
-- 已批准的管理平台前端 UX/UI、前端技术栈设计及逐项决策记录；
-- 已批准的 Console UX/UI 全面重设计：`Calm Observability`、深石墨窄全局栏、冷灰上下文侧栏、浅色内容区、状态→证据→行动和平衡证据密度；旧琥珀橙侧栏与横向深色顶栏规范已 superseded。业务、导航层级、权限、安全、数据和公共契约不在视觉授权内；真实令牌、共享组件、视觉截图基线和业务页面已在 feature branch 实施、尚未部署，状态为 `implemented-in-feature-branch / final-verification-partial`；最终移动端可达性矩阵及整合复验仍未完成，不得表述为全矩阵通过；
-- 邮箱验证真实交付与历史账号重发已 `deployed / complete`：阿里云 DirectMail API 为第一版供应商；`SingleSendMail` adapter、默认凭据链、注册自动入队、Session 保护重发（60 秒冷却、滚动 24 小时最多 5 次）、最新链接唯一有效、Outbox 失败恢复/claim fencing/有界重试/终态脱敏与 Console Session 恢复均已实施并部署；用户于 2026-08-15 确认真实收件并验收完成，低使用量阶段的费用/发送预警经用户明确决定取消，不再构成发布或完成门禁；
-- 已批准的管理平台总体 OpenAPI 与实现约束设计：统一公开契约、内部领域模块化、生成单一 Platform OpenAPI，31 个页面设计映射 36 个稳定 Route Target，并强制壳层与真实 UI 可达性先行；
-- 用户已批准前四个基础专题中可追溯的既有设计基线，批准边界和未决内容由独立正式文档记录。
-- 已批准的测试/部署/发布完整设计，包括 `TD-001=A`、`TD-002=A`、`TD-003=A` 和 `TDR-DERIVED-001`；
-- 已批准作为后续 ADR、正式文档、机器契约、缺口管理和实施就绪审查输入的六专题总结；它不作为实现授权。
-- 已批准 A5-001—A5-011 账号注销与数据生命周期设计，并已形成长期正式安全规则；
-- 已从 approved 设计形成根入口、正式文档索引以及系统、SDK、管理平台前后端、测试、部署、发布/回滚、恢复和 A5 安全的最小充分正式文档；ADR-001—007 已完成独立非作者与所需领域评审；ADR-001/003/005/006 为 `accepted / in-progress`，ADR-007 为 `accepted / implemented`，ADR-002、ADR-004 为 `accepted / not-started`；
-- 首个私有 Monorepo 根 Workspace 与最小本地工程工具已实施；`@aurora/workspace-policy` 是首个真实内部包，`README.md` 已包含可验证的根命令入口。
-- `event-schema` 协议基础第一增量已由 approved 正式规格实施为真实私有包 `@aurora/event-schema`（第二个真实内部包）；该增量覆盖包入口、版本、公共信封、受限运行时校验、稳定错误和共享契约样本；错误事件协议契约第一增量已在信封基础上增加 JavaScript 运行时错误、未处理 Promise 拒绝和资源加载错误正文、错误信封解析器与错误契约样本；请求事件协议契约第一增量已增加请求方法/结果常量、安全请求正文、请求信封解析器与请求契约样本；三者均通过新鲜验证。
-- SDK Core 生命周期与插件编排基础第一增量已有[approved 正式规格](docs/sdk/sdk-core-foundation.md)和[单一模块实施计划](docs/superpowers/plans/2026-07-30-sdk-core-foundation.md)；计划已执行，`@aurora/core` 基础增量（环境无关 Core、显式生命周期、最小配置、插件注册与顺序编排、异常隔离、事件入口和多实例隔离）已实施并通过新鲜验证，ADR-003 进入 `accepted / in-progress`。
-- `@aurora/browser` 浏览器环境能力与页面生命周期基础第一增量已有[approved 正式规格](docs/sdk/browser-environment-foundation.md)和[单一模块实施计划](docs/superpowers/plans/2026-07-30-browser-environment-foundation.md)；计划已执行，`@aurora/browser` 基础增量（安全环境与能力探测、脱敏页面快照、`visibilitychange`/`pagehide`/`pageshow` 生命周期订阅、幂等释放、异常隔离和多实例隔离）已实施并通过新鲜验证（含本地 Chromium 真实浏览器门禁）；浏览器错误源订阅能力第一增量、请求观测能力第一增量与性能事实观测能力第一增量已实施并通过新鲜验证（含本地 Chromium 真实浏览器门禁），ADR-003/006 保持 `accepted / in-progress`。
-- `@aurora/plugin-error` 浏览器错误采集插件第一增量已有[approved 正式规格](docs/sdk/error-capture-plugin.md)和[单一模块实施计划](docs/superpowers/plans/2026-07-31-error-capture-plugin.md)；计划已执行，`@aurora/plugin-error` 错误插件第一增量（通过公开错误源订阅 JavaScript、未处理 Promise 拒绝和资源加载错误，经 `parseErrorEventBody` 校验后以最小草稿提交 Core，同步生命周期、重入门禁、有界诊断、宿主安全与多实例隔离）已实施并通过新鲜验证（含本地 Chromium 真实浏览器门禁），ADR-003/005/006 保持 `accepted / in-progress`。
-- `@aurora/plugin-request` 浏览器请求采集插件第一增量已有[approved 正式规格](docs/sdk/request-capture-plugin.md)和[单一模块实施计划](docs/superpowers/plans/2026-07-31-request-capture-plugin.md)；计划已执行，`@aurora/plugin-request` 请求插件第一增量（通过公开请求源订阅 fetch 与 XMLHttpRequest 请求事实，经 `parseRequestEventBody` 校验后以最小草稿提交 Core，同步生命周期、重入门禁、有界诊断、宿主安全与多实例隔离）已实施并通过新鲜验证（含本地 Chromium 真实浏览器门禁），ADR-003/005/006 保持 `accepted / in-progress`。
-
-当前没有：
-
-- 生产 Navigation Context producer 及其导致的 D2 资源策略生产 discoverability；contract-testkit Navigation Context 样本仅证明条件 UI 入口，不替代生产授权投影；
-- 通用资源事件正文（product scope deferred）、行为事件正文、采样算法、具体事件 Schema 机器运行时，以及生产 Navigation Context producer；平台 API、Worker、资源策略与管理路由不在本“当前没有”项内；
-- 已通过必要 accepted ADR、可以授权实施的管理平台后端技术栈；
-- 前四个基础专题的独立完整实施规格，以及其未决工具、公共契约和基础设施选择；
-- ADR-002/004 对应实现、Issue、PR、测试或性能证据；ADR-002/004 实施状态仍是 `not-started`，ADR-003/005/006 为 `in-progress`。
-
-因此，accepted ADR 可以约束后续工作，但不得把候选框架、能力名称、`not-started` ADR 或 approved 设计当作代码已实现。当前真实内部包为 `@aurora/workspace-policy`、`@aurora/event-schema`（协议基础加错误、请求与性能事件契约第一增量）、`@aurora/core` 基础增量、`@aurora/browser`（浏览器环境、生命周期、错误源、请求观测与性能观测基础增量）、`@aurora/plugin-error` 错误插件第一增量、`@aurora/plugin-request` 请求插件第一增量、`@aurora/plugin-performance` 性能插件第一增量、`@aurora/ingestion-inbox`（写侧 + 处理侧 Repository + 人工重放）、`@aurora/ingestion-credentials`（客户端凭证存储、验证与生命周期服务）、`@aurora/processing-store`（错误事件 occurrence 处理存储第一增量）、`@aurora/ingestion-benchmark`（数据接入端到端容量与韧性基准工具，private tooling 层）、`@aurora/platform-contract`（Platform Contract 契约包：根 + `/client` + `/server` + `/contract-testkit`）与 `@aurora/platform-contract-drift`（Platform OpenAPI 漂移门禁，private tooling 层）；真实应用为 `apps/ingestion-api`（接入 HTTP 服务 + 真实 authorizer）、`apps/ingestion-worker`（Worker 运行时与处理器编排第一增量）与 `apps/console`（Vue 3 SPA 壳层，`aurora.layer: console`，PLT-02 implemented-in-feature-branch、未部署：bootstrap/router/Session+Navigation Context/Aurora UI shell/status pages/Playwright 可达性与 axe 门禁）；数据接入端到端容量与韧性基准工具第一增量已实施（正式规格 [ingestion-capacity-and-resilience-benchmark.md](docs/testing/ingestion-capacity-and-resilience-benchmark.md) implemented，`pnpm benchmark:ingestion:smoke`/`pnpm benchmark:ingestion:baseline` 通过真实 PostgreSQL 17.10，机器可读 JSON 报告在 `.artifacts/benchmarks/ingestion/`，脱敏摘要证据 [2026-08-02-ingestion-local-baseline.md](docs/testing/evidence/2026-08-02-ingestion-local-baseline.md)）；local benchmark harness implemented、local baseline evidence recorded，**生产容量验证 blocked、RDS benchmark not-started、云成本证据 not-started**，所有测量值不得解释为生产容量/SLO/成本/最终推荐配置；错误事件 occurrence 处理存储第一增量已实施（正式规格 [error-event-occurrence-processing-store.md](docs/architecture/error-event-occurrence-processing-store.md) implemented，`@aurora/processing-store` 的 `error_event_occurrences` Migration + `persistErrorEventOccurrence` Repository + `(project_id, event_id)` 幂等 + `error_category` 来自 event-schema 公共常量 + `normalized_body` 受协议约束 jsonb 已通过真实 PostgreSQL 17.10 集成测试与协议漂移测试）；通用资源事件正文已产品决策 deferred，行为事件正文、采样算法、行为插件、其他具体采集插件、性能事件处理器、事件路由、真实配置存储/Repository、凭证管理 HTTP API、管理平台业务页面（`apps/console` 壳层已 implemented-in-feature-branch、未部署，G10—G13 业务与主题仍不授权自动实施）、管理员授权、完整审计、人工重放 HTTP API、平台 `platform-api`/Worker、平台数据模型和下游模块仍不授权自动实施。
-
-**Public Preview 单主机桥接（2026-08-08，temporary operational snapshot）**：用户已明确授权建立临时公网预览桥接，见 [public-preview-single-host-deployment.md](docs/operations/public-preview-single-host-deployment.md)。已部署到阿里云单主机（47.238.145.24）：postgres 17.10 + migrate（8 个正式 Migration）+ `apps/ingestion-api` + `apps/ingestion-worker`，Docker Compose，真实 PostgreSQL 验证通过；`pnpm deploy:preview` / `pnpm deploy:preview:rollback` 为受控更新入口（不监听文件保存）。**不是 OPS-04 completed、不是 G16 completed、不是正式 production 架构**；G16 状态 `started / temporary-preview-bridge-active`，完成/剩余叶子计数不变；ADR-022/023/024 保持 `proposed / not-started`。公网固定 HTTPS 域名（`aurora.ah.cn` / `ingest.aurora.ah.cn`）依赖 DNS A 记录就绪后由宿主机 certbot + 共享 Lumina nginx 边缘承载。**PLT-02 已把 `aurora.ah.cn` vhost 切换到 Vue SPA 的配置落盘**（`Dockerfile.console`/compose `console` 服务/`console-default.conf`/`aurora-tls.conf` vhost swap/`deploy-preview.sh` console build）；实际切换执行（`pnpm deploy:preview`）待 PLT-02 独立验收后进行，`preview-status.html` 保留作回滚。
-
-**G14 工程质量门禁（2026-08-08）**：**OPS-01 CI quality workflows 已 completed**（GitHub Actions PR/main/nightly/release 四 workflow、PostgreSQL 17.10 每 suite 隔离、Chromium browser、真实 GitHub Actions 全 8 job 通过；规格 [ci-quality-workflows.md](docs/architecture/ci-quality-workflows.md)、计划 [2026-08-08-ci-quality-workflows.md](docs/superpowers/plans/2026-08-08-ci-quality-workflows.md)）；**OPS-02 blocked**（reference app/Console/device matrix/performance env 缺失，不伪造关闭），**G14 = partially completed**；`completed` 37→38、`remaining` 41→40。后续 Preview CD 建议接入 `pnpm deploy:preview`，不关闭正式 OPS-05。
-
-**Preview Continuous Delivery Bridge（2026-08-08，active）**：main CI PASS 后经 GitHub Actions 自动部署到公网 Preview，见 [preview-continuous-delivery.md](docs/operations/preview-continuous-delivery.md)。触发 `workflow_run`（Main Quality Gates success）+ `workflow_dispatch`；部署 exact CI-passed SHA、拒绝 dirty checkout、serial concurrency；专用 `aurora-preview-deploy` SSH identity + host pinning（`deploy/preview/ssh/known_hosts`）；`preview` Environment + `PREVIEW_SSH_PRIVATE_KEY` secret；Lumina 共享 nginx ownership 已修复（`/opt/lumina/app/deploy/scripts/deploy.sh` 的 nginx `up` 改用 `AURORA_COMPOSE` 保留 Aurora vhost，备份 `deploy.sh.bak-20260808`）。**temporary-preview-bridge enhancement，不是 OPS-04/05**：completed 38 / remaining 40 不变；OPS-04 ≠ completed、OPS-05 ≠ completed、OPS-02 = blocked、G16 = started / temporary-preview-bridge-active。
-
-**PLT-01 Platform Contract 基础（2026-08-08，implemented-in-feature-branch）**：`@aurora/platform-contract`（根 + `/client` + `/server` + `/contract-testkit` 真实导出）、机器 Platform OpenAPI v1（`docs/api/platform-openapi-v1.yaml` + `docs/api/platform-openapi-v1.manifest.json`）、生成 Client/Server 适配器与 `tooling/platform-contract-drift` 漂移门禁（含 schema 兼容差异门禁）已实现并通过全仓质量门禁；规格 [platform-contract-foundation.md](docs/architecture/platform-contract-foundation.md)、计划 [2026-08-08-platform-contract-foundation.md](docs/superpowers/plans/2026-08-08-platform-contract-foundation.md)。**未部署；已通过独立验收并关闭叶子**：completed 38→39 / remaining 40→39；ADR-025—028 accepted / not-started；`platform-api`/Worker、平台数据模型与 Session backend 仍不存在（`apps/console` 壳层已 implemented-in-feature-branch，见 PLT-02 条目）。
-
-**PLT-02 Platform Frontend Shell（2026-08-08，implemented-in-feature-branch）**：`apps/console`（`@aurora/console`，`aurora.layer: console`）Vue 3 SPA 壳层（bootstrap/Vue Router 36 RouteTarget 真实可达/Session+Navigation Context/Aurora UI shell/status pages/Playwright 可达性与 axe 门禁/`test:package` 生产构建门禁/Preview 切换文件）已实现并通过全仓质量门禁；规格 [platform-frontend-shell.md](docs/architecture/platform-frontend-shell.md)、计划 [2026-08-08-platform-frontend-shell.md](docs/superpowers/plans/2026-08-08-platform-frontend-shell.md)。**未部署；已通过独立验收并关闭叶子**：completed 39→40 / remaining 39→38；`platform-api`/Worker、平台数据模型与 Session backend 仍不存在；G10—G13 业务与主题实现不自动开始。
-
-**G02 DAT-16 Request Metric Query Projection（2026-08-10，implemented-in-feature-branch）**：`requestsListEndpoints`（`GET /api/platform/v1/organizations/:organizationId/projects/:projectId/requests`，`project.requests` Route Target）已从 `BLOCKED_OPERATIONS` 移入稳定操作并实现：`@aurora/processing-store` 请求指标汇总/有界接口列表只读查询（无新 Migration）、`@aurora/platform-contract` 操作+schema（OpenAPI 重新生成、`paginationMeta` 游标上限 64/512→4096 非破坏放宽、漂移门禁通过）、`apps/platform-api` 首个项目级查询 handler 与项目访问授权（org manager 或 `project_members`；跨 org 404 无存在性泄露；`ProcessingStoreError`→400/503 稳定映射）；通过真实 PostgreSQL 17.10 集成测试与独立验收（契约/真实查询/项目授权/隐私投影四项 PASS）；规格 [request-metric-query-projection.md](docs/architecture/request-metric-query-projection.md)、计划 [2026-08-10-dat-16-request-metric-query-projection.md](docs/superpowers/plans/2026-08-10-dat-16-request-metric-query-projection.md)。**已关闭叶子**：completed 43→44 / remaining 35→34；percentile/接口路由维度/environment-release-page 过滤仍 deferred/absent；Console C5 页面不自动开始（属 G11）。
-
-**G02 DAT-20 Ingestion Diagnosis / Status Query（2026-08-10，implemented-in-feature-branch）**：`diagnosticsGetDataStatus`（`GET /api/platform/v1/organizations/:organizationId/projects/:projectId/data-status`，`project.data-status` Route Target）已从 `BLOCKED_OPERATIONS` 移入稳定操作并实现：`@aurora/ingestion-inbox` `queryProjectInboxDiagnostics`（byState 五值计数 + latest + `lastErrorCode`）、`@aurora/ingestion-credentials` `queryProjectCredentialSafeStatus`（active/disabled/revoked 计数，只读 status/created_at，新增 `IngestionCredentialsError`）、`@aurora/processing-store` `queryProjectQueryableEvidence`、`apps/platform-api` 诊断 handler（复用 DAT-16 `requireProjectAccess`；`IngestionInboxError`/`IngestionCredentialsError`→400/503 稳定错误映射）；严格区分 accepted≠processed≠queryable，被拒绝批次恒 `unavailable`（未持久化），环境维度恒 `unavailable`；通过真实 PostgreSQL 17.10 集成测试与独立验收；规格 [ingestion-diagnostics-status-query.md](docs/architecture/ingestion-diagnostics-status-query.md)、计划 [2026-08-10-dat-20-ingestion-diagnostics-status-query.md](docs/superpowers/plans/2026-08-10-dat-20-ingestion-diagnostics-status-query.md)。**已关闭叶子**：completed 44→45 / remaining 34→33；被拒绝批次日志/environment 维度仍 deferred/absent；Console C7 页面不自动开始（属 G11）。
-
-**G02 DAT-17 Performance Query Projection（2026-08-10，implemented-in-feature-branch）**：`performanceListPages`（`GET /api/platform/v1/organizations/:organizationId/projects/:projectId/performance`，`project.performance` Route Target）已从 `BLOCKED_OPERATIONS` 移入稳定操作并实现：`@aurora/processing-store` `queryPerformanceMetricSummary`（按 `(metric_name, unit)` 分组、count/sum/max/mean、`dataThrough` RFC 3339）、`@aurora/platform-contract` 操作+schema（`pages`/`percentiles` 区恒 `unavailable`：页面维度数据不存在、percentile 原材料 ADR-021 deferred）、`apps/platform-api` 性能查询 handler（复用 DAT-16 `requireProjectAccess`）；`mean = value_sum/observed_count` 为真实聚合非采样外推，`pages` 恒 `unavailable` 不伪造页面列表；通过真实 PostgreSQL 17.10 集成测试与独立验收；规格 [performance-query-projection.md](docs/architecture/performance-query-projection.md)、计划 [2026-08-10-dat-17-performance-query-projection.md](docs/superpowers/plans/2026-08-10-dat-17-performance-query-projection.md)。**已关闭叶子**：completed 45→46 / remaining 33→32；页面/路由维度、percentile、性能诊断样本仍 deferred/absent；Console C6 页面不自动开始（属 G11）。
-
-**G03 DAT-12 Error Normalization / Fingerprint（2026-08-10，implemented-in-feature-branch）**：`@aurora/processing-store` `computeErrorFingerprint`（版本 `v1`、确定性、高置信度动态值归一化、堆栈关键帧投影、安全 `normalizedTitle`）+ `error_event_occurrences` additive 增列 `fingerprint`/`fingerprint_version`（Migration `1722500000007`）+ `@aurora/ingestion-worker` `createErrorEventProcessor` 计算并传入指纹（单一计算点，DAT-13 Issue 聚合键复用同一输出）；通过 14 个 fingerprint 单元测试、真实 PostgreSQL 17.10 集成测试与全仓质量门禁及独立验收；规格 [error-normalization-fingerprint.md](docs/architecture/error-normalization-fingerprint.md)、计划 [2026-08-10-dat-12-error-normalization-fingerprint.md](docs/superpowers/plans/2026-08-10-dat-12-error-normalization-fingerprint.md)。**已关闭叶子**：completed 46→47 / remaining 32→31；Issue 聚合（DAT-13）、自定义 fingerprint 输入（v1 契约不含，契约扩展）、Source Map 仍 deferred/absent；不创建新 ADR（PRD §9.6 固定版本/兼容语义）。
-
-**G03 DAT-13 Issue Aggregate / Representative Sample Store（2026-08-10，implemented-in-feature-branch）**：`@aurora/processing-store` `issues`/`issue_event_applications`/`issue_samples` Migration（accepted [ADR-033](docs/adr/ADR-033-issue-aggregate-data-model.md)）+ `persistIssueContribution` Repository（事件应用登记、`GREATEST` last_seen、首次 INSERT 竞态恢复、`by_time` 重开、`decideIssueSample` kind-matched 有界替换）+ `createErrorEventProcessor` 注入 `contributeIssue`；通过单元测试、真实 PostgreSQL 17.10 集成测试（94 个全绿）与独立验收；规格 [issue-aggregate-representative-sample-store.md](docs/architecture/issue-aggregate-representative-sample-store.md)、计划 [2026-08-10-dat-13-issue-aggregate-representative-sample-store.md](docs/superpowers/plans/2026-08-10-dat-13-issue-aggregate-representative-sample-store.md)。**已关闭叶子**：completed 47→48 / remaining 31→30；Issue 生命周期 Command（DAT-14）、Issue Query（DAT-15）、`issue_activities`/`issue_notes` 仍 absent；`by_version` 重开与页面/环境/发布维度 deferred（契约缺口）。
-
-**G03 DAT-14 Issue Lifecycle Commands / Activity / Audit（2026-08-10，implemented-in-feature-branch）**：`issue_activities`/`issue_notes` Migration + 生命周期 Repository（状态/负责人/优先级/备注/合并/批量，closed 转移表、自动分配、乐观 `version`、逐项结果）+ `getProjectAccessRole` + `@aurora/platform-contract` 7 个 Command 操作 + `apps/platform-api` 7 个 handler（处理授权、CSRF、幂等、审计）；通过单元测试、真实 PostgreSQL 17.10+Redis 集成测试与独立验收（reviewer REJECT 后 F1—F6 全部修复）；规格 [issue-lifecycle-commands.md](docs/architecture/issue-lifecycle-commands.md)、计划 [2026-08-10-dat-14-issue-lifecycle-activity-commands.md](docs/superpowers/plans/2026-08-10-dat-14-issue-lifecycle-activity-commands.md)。**已关闭叶子**：completed 48→49 / remaining 30→29；Issue Query（DAT-15）、Console C3/C4（G11）仍 absent；`by_version` 重开 deferred（契约缺口）。
-
-**G03 DAT-15 Issue List/Detail Query Projection（2026-08-10，implemented-in-feature-branch）**：`@aurora/processing-store` 只读 Query Repository（列表 keyset 分页 + 时间范围/状态/负责人/优先级过滤 + 过滤感知 totalCount、详情、有界安全样本、活动/备注时间线且已删除备注不返回 content）+ `@aurora/platform-contract` `issuesListIssues`/`issuesGetIssueDetail` 从 `BLOCKED_OPERATIONS` 移入稳定操作 + `apps/platform-api` 2 个 Query handler（复用 G02 项目查看授权、诚实 empty/unavailable、environments/releases 恒 unavailable、畸形 cursor 400）；通过单元测试、真实 PostgreSQL 17.10+Redis 集成测试与独立验收；规格 [issue-query-projection.md](docs/architecture/issue-query-projection.md)、计划 [2026-08-10-dat-15-issue-query-projection.md](docs/superpowers/plans/2026-08-10-dat-15-issue-query-projection.md)。**已关闭叶子**：completed 49→50 / remaining 29→28；Console C3/C4（G11）仍 absent；`by_version` 重开、页面/环境/发布维度 deferred（契约缺口）；**G03 全部 4 叶子已完成**。
-
-**G11 PLT-05 Monitoring Entry Pages（2026-08-10，implemented-in-feature-branch）**：`apps/console` `project.onboarding`/`project.overview`/`project.data-status`（C1/C2/C7）从 `UnavailableView` 换为真实监控页面，只消费已存在公开 Query：`diagnosticsGetDataStatus`（DAT-20 接入链状态，核心）、`issuesListIssues`/`requestsListEndpoints`/`performanceListPages`（DAT-15/16/17，C2 证据）；新增共享监控 adapter（`apps/console/src/monitoring/`）、C1/C2/C7 视图与 view-model、`SectionNotice` 组件；`client.ts` 嵌套 query 括号序列化、`mocks/handlers.ts` monitoring handlers；**`accepted ≠ processing ≠ processed ≠ queryable` 严格分开**，缺失一律 `empty`/`unavailable`，不伪造数据/不直连 DB/不以 MSW 作完成证据；修复 `apps/platform-api` DAT-15 issues list 空窗口 500（空响应补 `items:[]`+`pagination`）+ 回归集成测试；通过 169 console 单测、23 test-mode Chromium、真实本地栈 Chromium 关键链（received=5/processing=2/processed=3/queryable=3）独立验收；规格 [monitoring-onboarding-overview-diagnosis.md](docs/architecture/monitoring-onboarding-overview-diagnosis.md)、计划 [2026-08-10-plt-05-monitoring-onboarding-overview-diagnosis.md](docs/superpowers/plans/2026-08-10-plt-05-monitoring-onboarding-overview-diagnosis.md)。**已关闭叶子**：completed 50→51 / remaining 28→27（release-pending，未部署）；Console C3—C6（PLT-06）、C8—C16（G12）仍 absent。
-
-**G11 PLT-06 Issue/Request/Performance Workspaces（2026-08-10，implemented-in-feature-branch）**：`apps/console` `project.issues`/`project.issue-detail`/`project.requests`/`project.performance`（C3—C6）从 `UnavailableView` 换为真实工作区，只消费已存在公开 Query/Command：`issuesListIssues`/`issuesGetIssueDetail`（DAT-15）、`requestsListEndpoints`（DAT-16）、`performanceListPages`（DAT-17）与 DAT-14 生命周期 Command；新增 `monitoring/commands.ts`（状态/优先级/负责人/备注/合并 Command client，CSRF+幂等键，服务端重鉴权前端不隐藏按钮）、`issue-workspace.ts` 与 C3—C6 视图/view-model；C4 Command 成功后 `invalidateScope` 刷新权威详情（`version_conflict`/`idempotency_conflict` → 提示刷新，403 → 无权限）；C3 筛选/分页 URL 权威、`timeRange` 必填默认 24h、`nextCursor` 加载更多；`environments`/`releases`/`percentiles`/`pages` 恒 `unavailable`（契约缺口），`dataThrough`/`isPartial`/`totalCountStatus` 如实展示；修复 C4 samples 载荷键（`items` 非 `data`）；合并 UI deferred；通过 197 console 单测、23 test-mode Chromium、真实本地栈 Chromium Flow A（Issue 列表→详情→生命周期动作 open→in_progress）独立验收；规格 [issue-request-performance-workspaces.md](docs/architecture/issue-request-performance-workspaces.md)、计划 [2026-08-10-plt-06-issue-request-performance-workspaces.md](docs/superpowers/plans/2026-08-10-plt-06-issue-request-performance-workspaces.md)。**已关闭叶子**：completed 51→52 / remaining 27→26（release-pending，未部署；Flow B 真实后端验收受本地 Docker infra 中断 pending，代码/单测/test-mode Chromium 已全绿）；Console C8—C16（G12）仍 absent。
-
-**G05 SDK 公共控制面（2026-08-10，specs approved + implemented-in-feature-branch）**：用户批准 G05_APPROVAL_PACKAGE 全部 6 项推荐方案，六份 approved 规格落档——[协议兼容边界（PRO-06）](docs/protocol/protocol-compatibility-boundary.md)、[SDK 公共配置上下文与 composition（SDK-10）](docs/sdk/sdk-public-configuration-context-composition.md)、[请求 allowlist/路径归一化/分类（SDK-11）](docs/sdk/request-allowlist-path-normalization-classification.md)、[统一隐私过滤与 beforeSend（SDK-12）](docs/sdk/unified-privacy-filtering-and-beforesend.md)、[SDK 采样策略（SDK-13）](docs/sdk/sdk-sampling-policy.md)、[安全操作轨迹与有界缓冲（SDK-14）](docs/sdk/safe-activity-trail-and-bounded-buffer.md)；已实施为真实代码：`@aurora/event-schema` 公共版本协商出口（`negotiateProtocolVersion`、空转换边界）、新增 `@aurora/sdk`（`aurora.layer: sdk-core`，仅依赖 `@aurora/event-schema`）公共控制面（配置模型/`createSdkControlPlane`/请求分类/统一隐私过滤/`beforeSend`/确定性采样/安全轨迹有界缓冲）、`@aurora/browser` composition `createAuroraSdk`；**G05 不依赖 G11、不触碰 `G11_PLATFORM_API_COVERAGE_SHORTFALL`（KNOWN_BASELINE_DEBT）**；**已关闭全部 6 叶子（独立验收通过）**：completed 52→58 / remaining 26→20；targeted gates 全绿；队列/传输（G06）与框架适配（G07）不提前实现。
-
-**G06 SDK 可靠发送链（2026-08-11，specs approved + implemented-in-feature-branch）**：用户批准 G06 联合分组指令，[SDK 可靠发送链规格](docs/sdk/sdk-reliable-delivery-chain.md) approved + implemented，计划 [2026-08-11-g06-sdk-reliable-delivery-chain.md](docs/superpowers/plans/2026-08-11-g06-sdk-reliable-delivery-chain.md)；已实施为真实代码：`@aurora/sdk` 可靠发送链（`createSdkDeliveryQueue` 有界 256/error-first/去重/溢出丢低优先级、`buildDeliveryBatch`、`SdkBatchTransport` 端口、重试分类 PRD §6.3、`calculateSdkRetryDelay` 有界退避、`createSdkDeliveryChain` enqueue→batch→transport→receipt 逐事件处理/flush/best-effort/宿主安全/有界诊断）、`@aurora/core` `CoreEventAccepted.event` 信封捕获（复用首次创建信封与稳定 ID）、`@aurora/browser` `createBrowserBatchTransport` 与 composition 接线（pagehide → best-effort flush）；**SDK-15 与 SDK-16 各自独立验收通过（两个叶子，不合并为 +1）**：completed 58→60 / remaining 20→18；**不做浏览器持久化离线队列（PRD §6.2 deferred）、不实现 G07、不创建插件独立传输**；targeted gates 全绿（sdk 119 单测、browser 108 单测、core 17 相关单测、boundaries、no-DOM、package-entry）；框架适配（G07）不提前实现。
-
-**G07 SDK 框架适配器（2026-08-11，specs approved + implemented-in-feature-branch）**：G07_APPROVAL_PACKAGE 一次性批准（Vue 3 ^3.4、React 18 ^18.3、公共接口、install/uninstall/StrictMode 语义、workspace-policy 新 `sdk-framework` 层）；[Vue 适配规格](docs/sdk/vue-framework-adapter.md)（SDK-17）与 [React 适配规格](docs/sdk/react-framework-adapter.md)（SDK-18）approved + implemented，计划 [2026-08-11-sdk-17-vue-framework-adapter.md](docs/superpowers/plans/2026-08-11-sdk-17-vue-framework-adapter.md) 与 [2026-08-11-sdk-18-react-framework-adapter.md](docs/superpowers/plans/2026-08-11-sdk-18-react-framework-adapter.md)；已实施为真实代码：`@aurora/plugin-vue`（`createVueAuroraPlugin`、Vue errorHandler 包装/先调原 handler/卸载恢复、可选 router→`route_change`、install/uninstall 幂等、有界 pre-start 闩锁、多实例隔离）、`@aurora/plugin-react`（`createReactAuroraPlugin`、`AuroraErrorBoundary`、StrictMode 幂等、cleanup、有界 pre-start 闩锁、多实例隔离）、workspace-policy `sdk-framework` 层（允许 `sdk-core|sdk-browser|protocol`，复用 sdk-plugin 环境规则）；**SDK-17 与 SDK-18 各自独立验收通过（两个叶子，不合并为 +1）**：completed 60→62 / remaining 18→16；**不做浏览器持久化离线队列（PRD §6.2 deferred）、不实现 G15**；targeted gates 全绿（plugin-vue 21 单测 + 1 Chromium smoke、plugin-react 18 单测 + 1 Chromium smoke、两包覆盖率 ≥85/80/85/85、boundaries、eslint、typecheck、package-entry）；框架适配（G07）已完成，SDK 发布工程（G15）不提前实现。
-
-**G16 OPS-04 Cloud Region/Account/Network/IaC Foundation（2026-08-11，decision approved + implemented-in-feature-branch）**：用户正式批准 [G16/OPS-04 Cloud Decision Package](docs/operations/g16-ops04-cloud-decision-package.md)（D1—D11 全部推荐方案），ADR-022/023/024 转为 `accepted / in-progress / approved`（双 AWS 账号、主区域 `ap-southeast-1`、CDK TypeScript；ECS/Fargate + RDS Multi-AZ、ElastiCache/S3 defer；CloudFront/ALB + Route53 + ACM + KMS/Secrets + GitHub OIDC、生产域名由用户提供），[OPS-04 规格](docs/architecture/aws-region-account-network-iac-foundation.md) 转 `approved`；实施为真实包 `@aurora/aws-infra`（`tooling/aws-infra`，CDK TS，`aurora.layer: tooling`）：Network/Compute/Data/Identity 四栈 × staging/production、`pnpm synth` 无凭据生成 8 个 CloudFormation 模板、29 个定向测试全绿、secret-negative audit 通过、workspace-policy 0 违规、无 ElastiCache/S3/ECS-Service（deferred）；**OPS-04 implementation = completed（本增量）、acceptance = pending（独立 IaC 评审 + OPS-05 provisioning 证据）**；计划 [2026-08-11-ops-04-cloud-region-account-network-iac-foundation.md](docs/superpowers/plans/2026-08-11-ops-04-cloud-region-account-network-iac-foundation.md)。**计数保持 62/16**（OPS-04 独立验收通过后才 65/13）；阿里云 Preview 保持 temporary-operational-snapshot（OPS-05 替换）；不自动开始 OPS-05/06/07。
-
-**G04 Gap-Close（2026-08-11→12，审计 + 缺口收口，分支 `feature/g04-gap-close`，G04 = COMPLETED）**：审计 DAT-18/19/21/SEC-02 四个真正缺失叶子，逐叶关闭：
-
-- **SEC-02 数据保留/跨存储删除传播**（completed）：`apps/platform-worker/src/retention/` 删除状态机（固定存储顺序 + 幂等跳过 + 不伪造部分完成）、CleanupAdapter 端口 + 契约 adapter（Redis/对象/备份，ADR-032 defer）、真实 PostgreSQL 清理 + 审计、orchestrator（`runCleanupRound` + `account_cleanup_steps` + 部分失败重试 + dead_lettered + 审计）、worker 接线、backup-expiry/delete-replay 契约（对齐 OPS-07）。28 单测 + 1 focused 真实 PostgreSQL 集成通过。规格 [retention-cross-store-deletion-propagation.md](docs/architecture/retention-cross-store-deletion-propagation.md)。**OPS07_DELETE_REPLAY_INTEGRATION_PENDING**。
-- **DAT-21 用量/额度/降级投影**（completed）：`@aurora/platform-contract` `usage-and-policy/usage.ts`（`degradeForUsageRatio`、`usageGetSummary` schema、`DEFAULT_ORGANIZATION_QUOTA`），`usageGetSummary` 从 BLOCKED 移入稳定操作（36 稳定操作、OpenAPI 重新生成、漂移通过），platform-api org GET handler（org manager 授权、真实数据、无采样外推/收费）。Contract 248 + platform-api 56 测试通过。规格 [usage-quota-degradation-projection.md](docs/architecture/usage-quota-degradation-projection.md)。
-- **DAT-19 告警规则求值、实例与证据**（completed，2026-08-12）：`@aurora/platform-contract` alerts 5 个稳定操作（`alertsGetCapability`/`alertsListRulesAndInstances`/`alertsCreateRule`/`alertsUpdateRule`/`alertsGetInstanceDetail`，解锁 3 个 BLOCKED alerts 操作）、`@aurora/processing-store` 告警数据（alert_rules/instances/evidence/transitions Migration + 确定性 `evaluateAlertRule` 纯引擎（可注入时钟、缺失数据→`evaluation_paused` 绝不恢复、冷却只限通知资格）+ `computeAlertObservation` 真实处理数据 + `runAlertEvaluationRound`）、`apps/platform-api` 5 handler（项目管理员管理/成员查看、CSRF、幂等、审计）、`apps/platform-worker` 评估轮询接线；产品告警与 OPS-06 分离、不实现通知（G13）与 Console UI（G12）；23 evaluator 单测 + alerts-flow 真实 PostgreSQL+Redis 集成通过。规格 [alert-evaluation-and-instance-evidence.md](docs/architecture/alert-evaluation-and-instance-evidence.md)、计划 [2026-08-12-dat-19-alert-evaluation-and-instance-evidence.md](docs/superpowers/plans/2026-08-12-dat-19-alert-evaluation-and-instance-evidence.md)。
-- **DAT-18 发布关联、Source Map 匹配、符号化与重解析**（completed，2026-08-12）：`@aurora/platform-contract` releases 5 个稳定操作（`releasesListReleases`/`sourceMapsListFiles`/`sourceMapsUpload`/`sourceMapsReplace`/`sourceMapsReparse`，解锁 2 个 BLOCKED releases 操作）、新数据包 `@aurora/platform-releases`（releases/source_map_files/source_map_reparse_tasks Migration + 摘要幂等/replace_conflict/versioned replace/SKIP LOCKED + `SourceMapObjectStoragePort`（disposable in-memory，真实 S3 pending）+ `normalizeBuildPath` + source-map v3 VLQ 解析/符号化）、`@aurora/processing-store` `error_occurrence_symbolizations`（`map_version` 替换重处理）+ `persistSymbolization`/`queryReparseCandidates`/`extractStackFrames`、`apps/platform-worker` `runSourceMapReparseRound`（严格匹配、显式 release 归因、幂等）+ 轮询接线、`apps/platform-api` 5 handler（org manager/project_admin/developer 上传权限 PRD §8.3.10、CSRF、幂等、审计）；不修改 wire protocol/fingerprint、不产生第二套 Release 模型、不实现 G12 UI；13 platform-releases 单测 + source-maps-reparse 真实 PostgreSQL 集成通过。规格 [release-source-map-matching-and-reparse.md](docs/architecture/release-source-map-matching-and-reparse.md)、计划 [2026-08-12-dat-18-release-source-map-matching-and-reparse.md](docs/superpowers/plans/2026-08-12-dat-18-release-source-map-matching-and-reparse.md)。**PRODUCTION_OBJECT_STORAGE_EVIDENCE_PENDING**。
-- **计数：completed 64→66 / remaining 14→12**（DAT-19 +1、DAT-18 +1）；**G04 = COMPLETED**（DAT-18/DAT-19/DAT-21/SEC-02 四叶全部完成）；OPS-04 保持 held（独立验收后另行计数）；`KNOWN_BASELINE_DEBT`：入口文件超字节预算（既有）、本地 `examples/sdk-reference` 缺 package.json 致本地 `pnpm check:boundaries` 失败（CI 无此目录，非本轮 diff）。
-
-**G12 发布定位与项目管理工作区（2026-08-12，分支 `feature/g12-release-project-workspaces`，基于 G04 head `d5ea6da`，PR #22 OPEN）**：契约阻塞快速审计判定 C13—C16 全为 A/B 类（业务能力已存在、缺契约/adapter），无 C 类 TRUE_PRODUCT_DECISION_MISSING；PLT-07/PLT-08 均 completed。
-
-- **PLT-07 C8—C12 Releases / Source Map / Alerts 工作区**（implemented-in-feature-branch）：`apps/console` `project.releases`/`project.release-detail`/`project.source-maps`/`project.alerts`/`project.alert-rule-create`/`project.alert-rule-edit`/`project.alert-instance-detail` 从 `UnavailableView` 换为真实工作区，只消费 DAT-18（`releasesListReleases`/`sourceMapsListFiles`/`sourceMapsUpload`/`sourceMapsReplace`/`sourceMapsReparse`）与 DAT-19（`alertsGetCapability`/`alertsListRulesAndInstances`/`alertsCreateRule`/`alertsUpdateRule`/`alertsGetInstanceDetail`）公开契约；部署记录（无 v1 Deployment Query）与 Source Map 下载（无 Download contract）恒 `unavailable`；替换冲突显式确认、不静默覆盖；告警规则能力驱动表单（C11）、实例详情只读（C12）；Product Alert ≠ OPS-06 Operational Alert；无 DB 直连、无前端符号化/求值、无 fake 数据；通过预算命令 A（5 文件 32 测试 view-model）、B（4 文件 24 测试 queries/commands/route-registry）、C（真实 Chromium smoke PASS）与 `@aurora/console` typecheck/build/`git diff --check`；计划 [2026-08-12-plt-07-releases-source-map-alerts-workspace.md](docs/superpowers/plans/2026-08-12-plt-07-releases-source-map-alerts-workspace.md)。**已关闭叶子**：completed 66→67 / remaining 12→11（release-pending，未部署、未合入 main）。
-- **PLT-08 C13—C16 Access / Credentials / Settings / Project Lifecycle**（implemented-in-feature-branch）：契约阻塞快速审计判定全部 A/B 类（复用 G10 项目治理/成员/审计与 ADR-013/014 客户端上报密钥生命周期）；解冻 `accessListEffectiveMembers`/`credentialsListClientKeys`/`settingsGetProject`/`lifecycleArchiveProject` 并新增配套操作共 16 个稳定操作（OpenAPI 重新生成、drift 通过）；补全 Repository（有效成员/改角色/移除、项目设置/环境、归档恢复、密钥 list）；`apps/platform-api` 16 个 handler（查看 `requireProjectAccess`、管理 `requireProjectAdminAccess`、移入回收站 `requireOrgManager`，CSRF+幂等+审计；C14 create 一次性 clientKey no-store 且不提供再次查看、C16 archive/restore/trash 独立确认、move-to-trash 需名称+`resourceVersion` 确认）；`apps/console` C13—C16 真实页面（access 成员清单+授予/改角色/移除、org 继承行只读；client-keys 列表+一次性 secret 显示+启停/撤销、revoked 终态；settings 双标签、框架只读、版本化保存；lifecycle archive/restore/trash 独立高风险区）；通过预算命令 A（19 contract + 19 drift）、B（9 文件 35 测试）、C（真实 Chromium smoke PASS）与 typecheck/build/`git diff --check`；计划 [2026-08-12-plt-08-access-credentials-settings-lifecycle.md](docs/superpowers/plans/2026-08-12-plt-08-access-credentials-settings-lifecycle.md)。**已关闭叶子**：completed 67→68 / remaining 11→10（release-pending，未部署、未合入 main）。
-- **G12 = implementation-completed / integration-pending**（PLT-07 + PLT-08 均 completed）；**G12_G04_MAIN_INTEGRATION_PENDING**（PR #22 OPEN 未 merge → 分支只 push、未创建 G12 PR）；`G04_INFRA_CI_DEBT`（PR #22 checkout 证书基础设施失败，已 rerun 一次）；C14 使用 `ingestion_client_credentials`（真实上报认证密钥），与 `client_keys`（B2/C1 展示密钥）的整合不一致为既有架构债务登记。
-
-**G13 通知与资源策略（2026-08-12，分支 `feature/g13-notifications-resource-policy`，基于 G12 head `d33372c` 之上）**：
-
-- **PLT-09 D1 站内通知中心（completed）**：`@aurora/processing-store` 通知数据模型 + Repository（`(account_id, business_key, type)` 唯一去重、persist/query/unread/markRead、keyset 分页、账号隔离、幂等已读）；三个真实触发源接入（告警触发/恢复经 round 通知决策 + `persistAlertRoundNotifications`；新问题/重开经 `persistIssueContribution` `reopened` 状态 + `createIssueNotificationSender` + error processor `notifyIssue` 端口；分配经 assignee handler 幂等事务内写通知；org/接收者解析在 processing-store，不引入新包）；机器契约 `notificationsListAndUnread`/`notificationsMarkRead` + navigation `unreadCount` + platform-api 2 handler（账号隔离、cross-account 404）；Console D1 `account.notifications` 真实页面（URL `?read=all|unread` 权威、keyset 加载更多、单条已读、授权 Route Target、loading/empty/error/forbidden、TopBar 未读角标未知不伪造 0、MSW 仅测试 fixture）；targeted 集成/单测 + 真实 Chromium smoke + reachability 门禁全绿。**已关闭叶子**：completed 68→69 / remaining 10→9（release-pending，未部署、未合入 main；PR #22 未 merge）。
-- **PLT-10 D2 平台资源策略管理（decisions-approved / specs-approved；Plan A 平台管理员/审计、Plan B 资源策略数据层/契约/handler 与 Plan C 资源策略 D2 UI 均已 implemented-in-feature-branch，见 PLT-10a/PLT-10b/PLT-10c）**：用户 2026-08-12 整体批准 `G13_PLT10_APPROVAL_PACKAGE` 六项推荐并正式批准 [ADR-034](docs/adr/ADR-034-platform-admin-and-platform-audit.md)/[ADR-035](docs/adr/ADR-035-platform-resource-policy-data-model.md)（accepted / not-started / approved）与两份规格（[平台管理员与平台级审计](docs/security/platform-admin-and-platform-audit.md)、[平台资源策略数据模型](docs/architecture/platform-resource-policy-data-model.md)，均 approved）。平台管理员=显式账号级能力 + 独立平台审计（与 B7 分离，1 年）；资源策略最小分层三表 + PRD §15.8 六字段 + 建议默认值（产品确认点）。**accepted/approved ≠ 实施授权**：Plan A/B 的 Migration、机器契约、`platform-api`/Worker 已按 writing-plans 实施，Plan C 的 D2 UI 已按 [PLT-10c 计划](docs/superpowers/plans/2026-08-12-plt-10c-platform-resource-policy-console.md) implemented-in-feature-branch；计数待 Plan A/B/C 独立验收后一并关闭（本计划为最后一个子计划，最终整支验收后计数 +1）。
-- **PLT-10a 平台管理员与平台级审计（implemented-in-feature-branch，Plan A 子集）**：`@aurora/platform-admin`（`platform_admins`/`platform_audit_events` Migration + admins 仓库（grant/revoke/last_admin 行锁/受控 bootstrap）+ 独立平台审计仓库 + 真实 PostgreSQL 集成测试 14 个）；机器契约 5 稳定操作（`platformAdminGetCapability`/`platformAdminList`/`platformAdminGrant`/`platformAdminRevoke`/`platformAuditListEvents`，OpenAPI 重新生成 + drift 19 PASS）；`apps/platform-api` 5 handler + `requirePlatformAdmin` 门禁（CSRF+幂等+审计、403 不泄露、503 fail-closed、last_admin 409 回滚不写审计）；受控 bootstrap 接线（start.ts 空表 + `PLATFORM_ADMIN_BOOTSTRAP_ACCOUNT_IDS` seed）；**`platform.resource-policies` coverage 由 PLT-10c 转 `stable`（Console D2 UI 落地）**；**已关闭叶子（Plan A/B/C 一并）**。
-- **PLT-10b 平台资源策略数据层/契约/handler（implemented-in-feature-branch，Plan B）**：`@aurora/platform-policy` 数据包（`platform_resource_policies`/`organization_policy_overrides`/`project_policy_limits` 三迁移 + default/org/project 仓库 + `computeEffectivePolicy` + `searchPolicyTargets` 目标搜索，无覆盖继承、版本化乐观并发、单行默认由 DB 级部分唯一索引 `((true))` 强约束、生效值服务端计算不缓存、传播恒 unknown；真实 PostgreSQL 集成测试 25 个）；机器契约 9 稳定操作（`policyTargetSearch`/`policyGetDefault`/`policyGetOrganizationEffective`/`policyGetProjectEffective`/`policySetDefault`/`policySetOrganization`/`policyResetOrganization`/`policySetProjectLimit`/`policyClearProjectLimit`，OpenAPI 重新生成 + drift 19 PASS；stale 占位 `policySetPlatformDefault` 已从 BLOCKED_OPERATIONS 移除）；`apps/platform-api` 9 handler + `requirePlatformAdmin` 门禁（复用 Plan A：CSRF+幂等+审计、403 不泄露、`version_conflict` 409/422、reset/clear 需 confirm、503 fail-closed；GET 读审计 `audit_read`、**目标搜索不审计（flood-avoidance）**；org/project 生效 GET 先受控 bootstrap 保证空环境深链可用；真实 PostgreSQL+Redis 集成测试 8 个）；**`platform.resource-policies` coverage 由 PLT-10c 转 `stable`（Console D2 UI 落地）**；**已关闭叶子（Plan A/B/C 一并）**。
-- **PLT-10c Console D2 平台资源策略页面（implemented-in-feature-branch，Plan C）**：`apps/console` `platform.resource-policies` 从 stub 换为真实页面：能力门禁（`fetchPlatformAdminCapability`，非管理员 forbidden 不泄露策略信息）、目标选择（default/org/project + `policyTargetSearch` 服务端授权搜索）、生效策略投影（配置值/来源/生效值/版本/更新时间、项目显示组织来源+自身覆盖）、传播恒 `unknown` 不宣称生效、5 个版本化命令表单（`setPolicyDefault`/`setPolicyOrganization`/`resetPolicyOrganization`/`setPolicyProjectLimit`/`clearPolicyProjectLimit`，CSRF+幂等、`version_conflict` 重确认不合并草稿、reset/clear 独立确认、`field_validation` 就地显示）；新增 `ResourcePolicyView.vue`/resource-policy-view-model/format，`monitoring/queries.ts`+`commands.ts` 9 操作消费，`mocks/handlers.ts` MSW 仅测试 fixture；**`platform.resource-policies` coverage 转 `stable`**（manifest D2-gate 豁免移除、manifest.test coverage 冻结）；预算命令全 PASS（vue-tsc/build/vitest 43/drift 19/Chromium smoke `g13-resource-policy-smoke`/`git diff --check`）；计划 [2026-08-12-plt-10c-platform-resource-policy-console.md](docs/superpowers/plans/2026-08-12-plt-10c-platform-resource-policy-console.md)。**已关闭叶子：completed 69→70 / remaining 9→8**。
-- **G13 = PLT-09 implementation-completed；PLT-10a/PLT-10b/PLT-10c implementation-completed / accepted（Plan A/B/C 全部独立验收通过）**；`G13_G12_MAIN_INTEGRATION_PENDING`（G12 PR #22 未 merge）；`G13_REMOTE_CI` 依本轮 push 后查询一次记录。
-
-## 4. 正式化与详细设计入口
-
-[正式文档索引](docs/README.md)维护 approved 设计到长期权威文档的唯一映射；[正式化与实施就绪追踪](docs/architecture/formalization-readiness.md)维护 ADR、机器契约和真实阻塞，不成为第二份 PRD。
-
-管理平台 A1—D2、`NAV-A`、`AUDIT-A`、权限、Query/Command 需求、页面状态、数据口径、排除项和 GAP-01—GAP-20 的详细来源始终是[完整前端 UX/UI 设计](docs/superpowers/specs/2026-07-27-aurora-frontend-ux-ui-design.md)；稳定分域见[管理平台产品业务域](docs/prd/platform-product-domains.md)；当前视觉令牌、双层壳层、页面族与适配边界见[Console UX/UI 全面重设计](docs/superpowers/specs/2026-08-14-aurora-console-ux-ui-redesign-design.md)；机器导航、统一公开契约和实现门禁见已批准的[总体 OpenAPI 与实现约束设计](docs/superpowers/specs/2026-07-30-aurora-platform-openapi-and-implementation-design.md)。六专题总结只作跨专题索引，不得弱化完整设计。
-
-前端技术、后端领域/技术栈、总体机器契约结构和测试/部署/发布设计均已批准并分别进入正式架构、测试、发布与运维文档；精确版本、命令和配置是 `implementation-detail`，机器契约制品第一增量已实现（Platform OpenAPI v1、`@aurora/platform-contract`、漂移门禁），其余精确领域 Schema 与平台数据模型仍 `deferred`/absent，容量/兼容/性能证据是 `requires-benchmark`，长期技术选择是 `requires-accepted-adr`。
-
-A5-001—A5-011 已批准，长期规则见[账号注销与数据生命周期](docs/security/account-deletion-and-data-lifecycle.md)。D2 平台管理员身份/平台级审计与平台资源策略管理已 implemented-in-feature-branch（见 §3 G13 PLT-10a/PLT-10b/PLT-10c）；邮件/运营责任和 A5 之外的保留规则仍留在统一阻塞清单；按用户指令本轮不展开新的专题讨论。
-
-有限决策清单的全部单项一旦获得用户明确批准，即按整体批准同步，不再重复请求完整方案批准；只有权威冲突或不可逆安全、隐私、数据丢失风险可以重新阻断。
-
-仓库已有根文档入口与真实内部包（`@aurora/workspace-policy`、`@aurora/event-schema` 协议基础加错误、请求与性能事件契约第一增量、`@aurora/core` 基础增量、`@aurora/browser` 浏览器环境/生命周期/错误源/请求观测/性能观测基础增量、`@aurora/plugin-error` 错误采集插件第一增量、`@aurora/plugin-request` 请求采集插件第一增量、`@aurora/plugin-performance` 性能采集插件第一增量、`@aurora/ingestion-inbox`、`@aurora/ingestion-credentials`、`@aurora/processing-store`、`@aurora/ingestion-benchmark`、`@aurora/platform-contract` 契约基础第一增量、`@aurora/platform-releases`（DAT-18）、`@aurora/platform-contract-drift` 漂移门禁），真实应用 `apps/ingestion-api`、`apps/ingestion-worker`（Worker 运行时、错误/请求事件处理器、请求处理规则/配置 adapter、retry/backoff、样本选择策略）与 `apps/console`（Vue 3 SPA 壳层，`aurora.layer: console`，PLT-02 implemented-in-feature-branch、未部署）；但仍没有通用资源事件正文（product scope deferred）、行为事件正文、采样算法、可执行平台数据模型、管理平台业务实现、CI、IaC、云资源或部署结果。
-
-## 5. 第一版边界摘要
-
-第一版只聚焦：账号/组织/项目、SDK 安全接入、可靠接收与异步处理、问题定位与处理、发布/部署/Source Map、基础告警与站内通知、权限/隐私/额度/保留/删除。
-
-第一版不包含：完整工单审批、即时通讯、Session Replay、完整行为分析、复杂责任小组与自动分配、大规模后台批处理、高级查询/动态基线/异常检测、外部通知和值班升级/SLA、收费账单、企业治理、AI 根因分析。
-
-任何新增能力必须先在 PRD 中确认属于第一版；否则从设计和实现中移除。
-
-## 6. 跨领域强制边界
-
-- 系统边界为 SDK、数据接入、数据处理与存储、管理平台、公共协议；详细职责和依赖以架构规范为准。
-- 管理平台只能通过公开 API 使用服务端能力，禁止直连数据库、内部消息队列或私有实现。
-- `event-schema` 是公共事件类型、枚举与运行时 Schema 的唯一来源；所有外部输入视为不可信并运行时校验。
-- Core 环境无关且不得依赖 Browser；Browser 可依赖 Core；插件和框架适配只能依赖公开接口。
-- SDK 必须优先保护宿主页面：隔离异常、防重复初始化、限制资源、完整释放和恢复代理、保持多实例隔离。
-- 默认不得采集请求/响应体、Cookie、Authorization、表单内容、密码/验证码、完整 DOM/页面文本、完整行为轨迹、控制台正文、完整 IP 或设备/浏览器指纹。
-- 管理平台 UI 中每个元素必须映射明确业务规则、权限和公开 API/Command；缺少后端支撑的第一版能力登记为阻塞，非第一版能力删除。
-- 统计与图表必须提供数据来源、计算口径、更新时间/水位、采样与降级影响、空值和部分结果含义。
-
-## 7. 实施与完成门禁
-
-开始修改前必须检查分支、`git status`、用户已有改动和更深层 `AGENTS.md`，不得覆盖或清理无关修改。
-
-需要 ADR 的重大变化只能先形成 `proposed`；至少经过规定评审并成为 `accepted` 后才能实施。ADR 决策状态与实施状态分别记录：`accepted` 不等于 implemented，`not-started` 不等于状态冲突。
-
-实现、测试、文档、Git 和完成声明的详细要求分别以任务触发的长期规范及 `AGENTS.md` 为准。任何完成声明必须基于新鲜验证输出和完整差异检查。
-
-## 8. 当前 ADR 双状态
-
-| ADR | 决策状态 | 实施状态 | 当前效力 |
-|---|---|---|---|
-| [ADR-001 使用统一 Monorepo](docs/adr/ADR-001-use-monorepo.md) | accepted | in-progress | 正式仓库形态决策 |
-| [ADR-002 五大系统边界](docs/adr/ADR-002-five-system-boundaries.md) | accepted | not-started | 正式逻辑边界决策 |
-| [ADR-003 SDK 分层插件架构](docs/adr/ADR-003-sdk-plugin-architecture.md) | accepted | in-progress | 正式 SDK 分层决策；Core 基础、Browser 环境基础、错误源订阅、请求观测能力与错误采集插件第一增量已实施，其他具体插件与传输仍未实现 |
-| [ADR-004 可靠接收与异步处理](docs/adr/ADR-004-asynchronous-event-processing.md) | accepted | not-started | 正式接收/处理语义；物理缓冲未决定 |
-| [ADR-005 event-schema 单一来源](docs/adr/ADR-005-event-schema-source-of-truth.md) | accepted | in-progress | 正式协议权威决策；信封基础、错误事件契约、请求事件契约与性能事件契约第一增量已实施，通用资源事件正文 deferred，机器 Schema 与行为事件正文不存在 |
-| [ADR-006 单向依赖与自动约束](docs/adr/ADR-006-one-way-dependencies.md) | accepted | in-progress | 正式依赖原则；通用检查已存在，领域层级规则待真实模块 |
-| [ADR-007 pnpm Workspace 与原生任务入口](docs/adr/ADR-007-workspace-package-and-task-tooling.md) | accepted | implemented | 首个工程模块工具决策；全部门禁通过 |
-| [ADR-008 数据接入可靠缓冲与异步处理的物理技术](docs/adr/ADR-008-ingestion-durable-buffering.md) | accepted | in-progress | PostgreSQL 事务性 Inbox；批次/接收结果协议、数据接入 OpenAPI、Inbox 数据模型、接入 HTTP 服务、Worker 运行时、客户端凭证存储/验证/生命周期、人工重放核心与错误/请求事件处理器核心已实施，具体性能处理器/事件路由/凭证管理 HTTP API/容量基准未实现 |
-| [ADR-009 数据接入公开传输与客户端上报密钥安全语义](docs/adr/ADR-009-ingestion-transport-and-client-credential.md) | accepted | in-progress | 数据接入 OpenAPI 前置已批准并实施：`POST /v1/batches`、`X-Aurora-Client-Key`/`X-Aurora-Environment`、Origin 匹配、CORS、HTTP 状态映射、`Retry-After`、`X-Aurora-Request-Id`、OpenAPI 3.1；机器文件与漂移门禁已实施，凭证/服务/CORS 中间件未实现 |
-| [ADR-010 数据接入数据库访问与 Migration 工具链](docs/adr/ADR-010-postgresql-access-and-migration-tooling.md) | accepted | implemented | Inbox 数据模型前置已批准并实施：PostgreSQL 17 + `pg` + `node-pg-migrate` + SQL-first；`@aurora/ingestion-inbox`（`event_inbox` Migration + `persistBatch`）已实施并通过真实 PostgreSQL 17.10 验证，接入服务/Worker/CI/RDS 未实现 |
-| [ADR-011 数据接入同步 HTTP 服务的运行时与应用边界](docs/adr/ADR-011-ingestion-http-service-runtime.md) | accepted | in-progress | 接入 HTTP 服务已批准并实施：Fastify 5.10.0、`apps/ingestion-api`、显式 CORS adapter、`service` 层、两阶段配置、build/start Pool 所有权；`POST /v1/batches` 已通过真实 PostgreSQL 17.10 集成测试；凭证模块/Worker/CI/RDS/IaC 未实现 |
-| [ADR-012 数据接入 Worker 应用的运行时与应用边界](docs/adr/ADR-012-ingestion-worker-runtime.md) | accepted | in-progress | Worker 运行时已批准并实施：Node.js 24 原生异步、`apps/ingestion-worker`、两阶段配置、build/start Pool 所有权；`buildIngestionWorker`/`startIngestionWorker` 已通过真实 PostgreSQL 17.10 并发/续租/关闭/双 Worker 集成测试；具体错误/请求事件处理器、请求处理规则/配置 adapter、retry policy/backoff 已实施，人工重放核心已实施，事件路由/生产 composition/CI/RDS/IaC 未实现 |
-| [ADR-013 客户端上报凭证存储与验证](docs/adr/ADR-013-ingestion-client-credential-storage-and-verification.md) | accepted | implemented | 凭证存储与验证已批准并实施：PostgreSQL 17、SQL-first、`@aurora/ingestion-credentials`（16-byte keyId、32-byte secret、SHA-256 digest、timing-safe comparison、active/disabled/revoked、expires_at 动态失效、Origin/environment 策略快照）、`apps/ingestion-api` 真实 authorizer adapter；已通过真实 PostgreSQL 17.10 凭证与 HTTP 401/403/503 集成验证；凭证管理 HTTP API 未实现 |
-| [ADR-014 客户端上报凭证生命周期服务](docs/adr/ADR-014-ingestion-client-credential-lifecycle.md) | accepted | implemented | 凭证生命周期已批准并实施：扩展 `@aurora/ingestion-credentials`（`generateClientKeyPair`/`createIngestionClientCredential`/`rotateIngestionClientCredential`/`disableIngestionClientCredential`/`enableIngestionClientCredential`/`revokeIngestionClientCredential`、`SELECT ... FOR UPDATE` 行锁、keyId 碰撞有界重试、一次性 clientKey 返回、稳定结果）；已通过真实 PostgreSQL 17.10 创建/轮换/状态/并发 rotate 集成验证；管理 HTTP API、平台 UI、管理员授权与完整审计未实现 |
-| [ADR-015 Worker 重试预算与自动死信策略](docs/adr/ADR-015-ingestion-worker-retry-budget-policy.md) | accepted | implemented | Worker retry budget 已批准并实施：`apps/ingestion-worker` policy（`decideRetryDisposition` 纯函数、`maxProcessingAttempts` typed config、预算未耗尽 `scheduleRetry`/耗尽自动 `markDeadLettered{retry_budget_exhausted}`/非法 retry 不写回/processor 异常保持 leased/lease lost 不二次写回）；已通过真实 PostgreSQL 17.10 budget exhausted/dead-letter 集成验证；人工重放未实现 |
-| [ADR-016 Worker 重试退避调度策略](docs/adr/ADR-016-ingestion-worker-retry-backoff-schedule.md) | accepted | implemented | Worker 退避已批准并实施：`apps/ingestion-worker` 退避能力（`calculateRetryBackoffSchedule`：capped exponential backoff + equal jitter、`createNodeCryptoEntropyProvider`、可选 `notBefore` 下限、稳定失败结果 `invalid_config`/`invalid_attempt_count`/`invalid_now`/`invalid_not_before`/`invalid_entropy`/`date_out_of_range`）；**不修改 ADR-015**（processor 继续拥有 availableAt、Worker 主循环不二次计算）；已通过真实 PostgreSQL 17.10 退避 retry 集成验证；`initialDelayMs`/`maxDelayMs` 生产值 requires-benchmark / not-selected；具体 processor、人工重放、处理存储未实现 |
-| [ADR-017 Worker 死信人工重放核心](docs/adr/ADR-017-ingestion-dead-letter-manual-replay.md) | accepted | implemented | 死信人工重放已批准并实施：`@aurora/ingestion-inbox` 人工重放能力（`replayDeadLettered`：`dead_lettered → pending`、`replay_generation` 新处理代次、`attemptCount` 重置、`operationId` 幂等、事务 + `SELECT ... FOR UPDATE` 行锁、项目隔离、`event_inbox_replay_operations` 操作记录表）；**不修改 ADR-008/012/015/016**（ACK/Worker 生命周期/retry budget/backoff 不变）；已通过真实 PostgreSQL 17.10 并发/Worker 回归集成验证（14 个）；HTTP API、管理 UI、管理员授权、完整审计、批量重放未实现 |
-| [ADR-018 错误事件 occurrence 处理存储](docs/adr/ADR-018-error-event-occurrence-processing-storage.md) | accepted | implemented | 错误事件 occurrence 处理存储已批准并实施：`@aurora/processing-store`（`error_event_occurrences` Migration + `persistErrorEventOccurrence` Repository + `(project_id, event_id)` 唯一幂等 + `error_category` 来自 event-schema 公共常量 + `normalized_body` 受协议约束 jsonb + category/body 一致 CHECK）；**不修改 ADR-008/012/015/016/017**（ACK/Worker 生命周期/retry budget/backoff/replay 不变）；已通过真实 PostgreSQL 17.10 集成验证（17 个）与协议漂移测试；具体错误 event processor 核心能力已由 `@aurora/ingestion-worker` `createErrorEventProcessor` 承接（正式规格 [error-event-processor.md](docs/architecture/error-event-processor.md) implemented），生产 composition root 接线 blocked（Request/Performance 事件路由未形成 approved 规格/accepted ADR）；查询 API、Issue/fingerprint/Source Map、请求/性能 occurrence 存储、数据保留规则未实现 |
-| [ADR-019 请求事件聚合与有界诊断样本存储](docs/adr/ADR-019-request-event-aggregation-and-bounded-diagnostic-sample-storage.md) | accepted | in-progress | 请求事件持久化策略已批准并实施：**聚合主路径＋有限安全诊断样本**（用户批准，PRD [RULE-REQUEST-PERSISTENCE-20260803-002](Auroa-PRD-业务逻辑汇总-v2.1-核心业务定稿版.md)；三域独立评审通过）；`@aurora/processing-store` `request_event_samples` Migration + `persistRequestEventSample` Repository（`(project_id, event_id)` 幂等、受协议约束 jsonb 六字段白名单、`jsonb_typeof(sample_body) = 'object'` CHECK、`occurred_at` 用信封 occurredAt）；**不建完整逐请求历史**、不保存请求体/响应体/Header/Cookie/Authorization/敏感查询/完整 URL；已通过真实 PostgreSQL 17.10 集成验证（12 个）与隐私负例；请求样本存储已实施、请求样本选择策略已实施（`decideRequestSampleSelection`）、请求事件 Processor 核心已实施（`createRequestEventProcessor`）、请求处理规则/配置 adapter 已实施（DAT-07 `createRequestProcessingRulesAdapter`）；指标聚合由 ADR-020 承接；request metric query、performance、event processor routing、production worker composition 均 not-started / blocked |
-| [ADR-020 幂等请求指标桶聚合](docs/adr/ADR-020-idempotent-request-metric-bucket-aggregation.md) | accepted | implemented | 请求指标聚合已批准并实施：**UTC 一分钟桶＋最小事件应用登记＋同事务 UPSERT＋无采样外推**（用户批准，三域独立评审通过）；`@aurora/processing-store` `request_metric_buckets` + `request_metric_event_applications` Migration + `persistRequestMetricContribution` Repository（`(project_id, event_id)` 幂等、UTC 一分钟桶、同事务原子性、五指标字段 observed_count/failure_count/slow_count/duration_sum_ms/duration_max_ms、0 哨兵 statusCode、isFailure/isSlow 由未来 Request Processor 提供）；**不建逐请求日志**、不保存请求明细/Header/Cookie/Authorization；已通过真实 PostgreSQL 17.10 集成验证（13 个）与隐私负例；isFailure/isSlow 已由请求处理规则/配置 adapter（DAT-07）依据 PRD 5.1.2/5.1.3 与项目配置产生；request metric query、percentile、performance、event processor routing、production worker composition 均 not-started / blocked |
-| [ADR-021 性能指标聚合与有界诊断样本存储](docs/adr/ADR-021-performance-aggregate-and-bounded-sample-storage.md) | accepted | implemented | 性能聚合与有界样本存储已由用户 2026-08-05 正式批准并实施（DAT-08）：**聚合主路径＋有界安全诊断样本**（方案 B）；`@aurora/processing-store` `performance_metric_buckets` + `performance_metric_event_applications` + `performance_event_samples` Migration + `persistPerformanceMetricContribution`/`persistPerformanceEventSample` Repository（UTC 一分钟桶、`(project_id, bucket_start, metric_name, unit)` 聚合键、`observed_count`/`value_sum`/`value_max`（numeric）、样本白名单投影、`(project_id, event_id)` 幂等）；**不建逐条性能历史**；percentile/直方图原材料 deferred（C6 百分位超出第一版）；采样/水位/额度信任元数据前向依赖用量/额度模块经 DAT-17 呈现；Performance Processor（DAT-09）/Router（DAT-10）/production composition（DAT-11）/Query（DAT-17）not-started |
-
-## 9. 待决策队列
-
-决策按当前阻塞和恢复顺序推进：
-
-1. “私有 Monorepo 根 Workspace 与最小本地工程工具”的[模块实施计划](docs/superpowers/plans/2026-07-29-monorepo-foundation.md)已执行并经新鲜验证核验；`@aurora/workspace-policy` 是首个真实内部包；
-2. `event-schema` 协议基础第一增量的[正式规格](docs/protocol/event-schema-foundation.md)与[实施计划](docs/superpowers/plans/2026-07-30-event-schema-foundation.md)已执行完毕并通过新鲜验证；`@aurora/event-schema` 是第二个真实内部包；错误事件协议契约第一增量的[正式规格](docs/protocol/error-event-contract.md)与[实施计划](docs/superpowers/plans/2026-07-30-error-event-contract.md)已执行完毕，JavaScript/Promise/资源加载错误正文与错误信封/样本存在；请求事件协议契约第一增量的[正式规格](docs/protocol/request-event-contract.md)与[实施计划](docs/superpowers/plans/2026-07-31-request-event-contract.md)已执行完毕，请求方法/结果常量、安全请求正文、请求信封解析器与请求契约样本存在；性能事件协议契约第一增量的[正式规格](docs/protocol/performance-event-contract.md)与[实施计划](docs/superpowers/plans/2026-07-31-performance-event-contract.md)已执行完毕，PRD 5.1.9 批准的 LCP/INP/CLS/页面加载耗时指标、性能正文解析器与性能契约样本存在；ADR-005 为 `in-progress`；
-3. SDK Core 生命周期与插件编排基础第一增量已实施为 `@aurora/core` 并通过新鲜验证，ADR-003 进入 `accepted / in-progress`；`@aurora/browser` 浏览器环境能力与页面生命周期基础第一增量已实施为 `@aurora/browser` 并通过新鲜验证（含本地 Chromium 真实浏览器门禁），ADR-003/006 保持 `accepted / in-progress`；`@aurora/plugin-error` 浏览器错误采集插件第一增量已实施为 `@aurora/plugin-error` 并通过新鲜验证（含本地 Chromium 真实浏览器门禁），ADR-003/005/006 保持 `accepted / in-progress`；`@aurora/browser` 请求观测能力第一增量已实施并通过新鲜验证（含本地 Chromium 真实浏览器门禁），ADR-003/005/006 保持 `accepted / in-progress`；`@aurora/plugin-request` 浏览器请求采集插件第一增量已实施为 `@aurora/plugin-request` 并通过新鲜验证（含本地 Chromium 真实浏览器门禁），ADR-003/005/006 保持 `accepted / in-progress`；`@aurora/browser` 性能事实观测能力第一增量已实施并通过新鲜验证（含本地 Chromium 真实浏览器门禁），ADR-003/005/006 保持 `accepted / in-progress`；`@aurora/plugin-performance` 性能采集插件第一增量已实施为 `@aurora/plugin-performance` 并通过新鲜验证（含本地 Chromium 真实浏览器门禁），ADR-003/005/006 保持 `accepted / in-progress`；采样算法、行为等其他具体事件正文 Schema 与采集插件、框架适配、其余 SDK、服务端、平台、CI、发布与 AWS/IaC 按各自直接前置逐模块审查，不自动开始；
-4. 管理平台总体 OpenAPI 与实现约束设计已批准；PLT-01 契约基础第一增量与 PLT-02 前端壳层第一增量均 implemented-in-feature-branch（未部署）：机器 Platform OpenAPI、`@aurora/platform-contract`、生成 Client/适配、漂移门禁与 `apps/console` Vue 3 SPA 壳层已存在；平台模型、`platform-api`/Worker 与业务页面仍 blocked，不自动进入 planning 或实现；
-5. 数据接入批次与接收结果协议第一增量已实施；数据接入 OpenAPI 机器契约第一增量（ADR-008 后续依赖链第 2 项）已实施：其公开传输与客户端凭证语义已由 [ADR-009](docs/adr/ADR-009-ingestion-transport-and-client-credential.md)（accepted / in-progress）批准，机器文件 `docs/api/ingestion.openapi.yaml`（OpenAPI 3.1，`POST /v1/batches`、`apiKey` + `X-Aurora-Client-Key`、`X-Aurora-Environment`、Origin/CORS/状态码映射/`Retry-After`/`X-Aurora-Request-Id`）与 `tooling/ingestion-openapi-contract` 漂移门禁（40 测试）已实施；Inbox 数据模型（依赖链第 3 项）的数据库工具链已由 [ADR-010](docs/adr/ADR-010-postgresql-access-and-migration-tooling.md)（accepted / implemented）批准并实施：正式规格 [ingestion-inbox-data-model.md](docs/architecture/ingestion-inbox-data-model.md)（implemented）、`@aurora/ingestion-inbox`（`event_inbox` Migration + `persistBatch` Repository + 状态/租约 helper）已通过真实 PostgreSQL 17.10 集成测试（21 个）；接入服务（第 4 项）已由 [ADR-011](docs/adr/ADR-011-ingestion-http-service-runtime.md)（accepted / in-progress）批准并实施为 `apps/ingestion-api`（Fastify 5.10.0、`POST /v1/batches`、显式 CORS adapter），已通过真实 PostgreSQL 17.10 集成测试；Worker 运行时（第 5 项）已由 [ADR-012](docs/adr/ADR-012-ingestion-worker-runtime.md)（accepted / in-progress）批准并实施为 `apps/ingestion-worker`（Node.js 24 原生异步、`buildIngestionWorker`/`startIngestionWorker`、claim 循环/并发上限/lease 续期/graceful shutdown），已通过真实 PostgreSQL 17.10 并发/续租/关闭/双 Worker 集成测试；Worker 重试预算与自动死信策略已由 [ADR-015](docs/adr/ADR-015-ingestion-worker-retry-budget-policy.md)（accepted / implemented）实施为 `apps/ingestion-worker` policy；客户端上报凭证存储/验证/生命周期服务已由 [ADR-013](docs/adr/ADR-013-ingestion-client-credential-storage-and-verification.md)（accepted / implemented）与 [ADR-014](docs/adr/ADR-014-ingestion-client-credential-lifecycle.md)（accepted / implemented）实施为 `@aurora/ingestion-credentials`；**数据接入端到端容量与韧性基准工具第一增量（第 6 项本机部分）已实施**为 `tooling/ingestion-benchmark`（`@aurora/ingestion-benchmark`，private tooling 层，正式规格 [ingestion-capacity-and-resilience-benchmark.md](docs/testing/ingestion-capacity-and-resilience-benchmark.md) implemented，Workspace Policy 新增 `tooling` 层），`pnpm benchmark:ingestion:smoke` 与 `pnpm benchmark:ingestion:baseline` 已通过真实 PostgreSQL 17.10，机器可读 JSON 报告在 `.artifacts/benchmarks/ingestion/`（gitignored），脱敏摘要证据 [2026-08-02-ingestion-local-baseline.md](docs/testing/evidence/2026-08-02-ingestion-local-baseline.md)；local benchmark harness implemented、local baseline evidence recorded，**生产容量验证 blocked、RDS benchmark not-started、云成本证据 not-started**，所有测量值不得解释为生产容量/SLO/成本/最终推荐配置；**数据接入 Worker 重试退避调度策略第一增量已实施**为 `apps/ingestion-worker` 退避能力（`calculateRetryBackoffSchedule`：capped exponential backoff + equal jitter、`createNodeCryptoEntropyProvider`、稳定失败结果，由 accepted [ADR-016](docs/adr/ADR-016-ingestion-worker-retry-backoff-schedule.md) 批准，正式规格 [ingestion-worker-retry-backoff-schedule.md](docs/architecture/ingestion-worker-retry-backoff-schedule.md) implemented），通过真实 PostgreSQL 17.10 退避 retry 集成测试、benchmark smoke 与全仓质量门禁；**不修改 ADR-015**（processor 继续拥有 availableAt、Worker 主循环不二次计算）、retry budget 保持 implemented、concrete processors/processing storage not-started、**production retry parameters requires-benchmark / not-selected**；**数据接入 Worker 死信人工重放核心第一增量已实施**为 `@aurora/ingestion-inbox` 人工重放能力（`replayDeadLettered`：`dead_lettered → pending`、`replay_generation` 新处理代次、`attemptCount` 重置、`operationId` 幂等、事务 + 行锁、项目隔离、操作记录表，由 accepted [ADR-017](docs/adr/ADR-017-ingestion-dead-letter-manual-replay.md) 批准，正式规格 [ingestion-dead-letter-manual-replay.md](docs/architecture/ingestion-dead-letter-manual-replay.md) implemented），通过真实 PostgreSQL 17.10 并发/Worker 回归集成测试（14 个）与全仓质量门禁；**不修改 ADR-008/012/015/016**（ACK/Worker 生命周期/retry budget/backoff 不变）、dead-letter manual replay core implemented、管理重放 HTTP API/UI/管理员授权/完整审计/批量重放 not-started；**错误事件 occurrence 处理存储第一增量已实施**为 `@aurora/processing-store`（private `data` 层包：`error_event_occurrences` Migration + `persistErrorEventOccurrence` Repository + `(project_id, event_id)` 唯一幂等 + `error_category` 来自 event-schema 公共常量 + `normalized_body` 受协议约束 jsonb + category/body 一致 CHECK，由 accepted [ADR-018](docs/adr/ADR-018-error-event-occurrence-processing-storage.md) 批准，正式规格 [error-event-occurrence-processing-store.md](docs/architecture/error-event-occurrence-processing-store.md) implemented），通过真实 PostgreSQL 17.10 集成测试（17 个）、协议漂移测试与全仓质量门禁；**不修改 ADR-008/012/015/016/017**（ACK/Worker 生命周期/retry budget/backoff/replay 不变）、error occurrence repository implemented、processing storage overall in-progress；**具体错误事件 Processor 核心能力第一增量已实施**为 `@aurora/ingestion-worker` `createErrorEventProcessor`（只处理 `EventType.Error`、经 `@aurora/processing-store` 包根持久化、结果映射到既有 Worker 结果、复用 ADR-016 backoff，由正式规格 [error-event-processor.md](docs/architecture/error-event-processor.md) approved + implemented 承载），通过真实 PostgreSQL 17.10 集成测试（5 个）与全仓质量门禁；**不接入生产 composition root**、error event processor core implemented、production worker composition not-started / blocked（Request/Performance 事件路由未形成 approved 规格/accepted ADR）、request event processor not-started、performance event processor not-started、event processor routing not-started / blocked、请求/性能 occurrence 存储/Issue/fingerprint/查询与搜索/数据保留规则 not-started；**请求事件持久化策略与安全样本存储第一增量已实施**（用户批准"聚合主路径＋有限安全诊断样本"，PRD [RULE-REQUEST-PERSISTENCE-20260803-002](Auroa-PRD-业务逻辑汇总-v2.1-核心业务定稿版.md)，accepted [ADR-019](docs/adr/ADR-019-request-event-aggregation-and-bounded-diagnostic-sample-storage.md) 三域独立评审通过，正式规格 [request-event-sample-processing-store.md](docs/architecture/request-event-sample-processing-store.md) implemented）：`@aurora/processing-store` `request_event_samples` Migration + `persistRequestEventSample` Repository（`(project_id, event_id)` 幂等、受协议约束 jsonb 六字段白名单、`occurred_at` 用信封 occurredAt）通过真实 PostgreSQL 17.10 集成测试（12 个）与隐私负例；**不建完整逐请求历史**；**请求指标聚合存储第一增量已实施**（用户批准"UTC 一分钟桶＋最小事件应用登记＋同事务 UPSERT＋无采样外推"，accepted [ADR-020](docs/adr/ADR-020-idempotent-request-metric-bucket-aggregation.md) 三域独立评审通过，正式规格 [request-metric-aggregate-store.md](docs/architecture/request-metric-aggregate-store.md) implemented）：`@aurora/processing-store` `request_metric_buckets` + `request_metric_event_applications` Migration + `persistRequestMetricContribution` Repository（`(project_id, event_id)` 幂等、UTC 一分钟桶、同事务 UPSERT、五指标字段、0 哨兵 statusCode、isFailure/isSlow 由未来 Request Processor 提供）通过真实 PostgreSQL 17.10 集成测试（13 个）与隐私负例；**请求样本选择策略第一增量已实施**（accepted ADR-019 决定细节 3/4/14，`@aurora/ingestion-worker` `decideRequestSampleSelection` 确定性纯函数）；**请求事件 Processor 核心第一增量已实施**（`@aurora/ingestion-worker` `createRequestEventProcessor`：只处理 `EventType.Request`、分类端口、指标主路径、样本选择、有界安全样本、跨 Store retry 收敛）；**请求处理规则/配置 adapter 第一增量已实施**（DAT-07，`@aurora/ingestion-worker` `createRequestProcessingRulesAdapter`：`RequestProcessingRules` 配置模型、`DEFAULT_REQUEST_PROCESSING_RULES` 默认慢阈值 3000ms/失败 429+500—599/额外状态码默认空、确定性分类、不可变冻结快照、非法配置抛稳定错误，作为 `ClassifyRequestEvent` 端口真实规则实现，正式规格 [request-processing-rules-configuration-adapter.md](docs/architecture/request-processing-rules-configuration-adapter.md) approved + implemented）；**不建逐请求日志**、request metric query/percentile/采样外推/performance/event processor routing/production worker composition not-started / blocked；具体事件处理器路由继续 blocked；
-6. 按[无编号候选队列](docs/architecture/formalization-readiness.md#7-新-adr-候选队列)只为直接阻塞模块的长期决定建立独立提案，不进入 D2 或其他新 brainstorming。
-
-29. **G16 Provider-Neutral Single-Host + G16 FINAL CLOSE + G08 Gate Rebase（2026-08-13）**：用户批准 Provider-Neutral Single-Host MVP 架构方向，[ADR-036](docs/adr/ADR-036-provider-neutral-single-host-deployment.md)（accepted / not-started / approved）正式 `supersedes` ADR-022/023/024 的 AWS-first v1 部署决策；ADR-022/023/024 标记 `superseded`（历史实现 `tooling/aws-infra`/`tooling/aurora-release` 保留、非 v1 部署路径）。Aurora v1 不再要求 AWS account/CLI/VPC/ECS/Fargate/RDS/ElastiCache/CloudFront/CDK/Multi-AZ 作为硬前置，改为 provider-neutral 单主机 Docker Compose（当前实例阿里云 47.238.145.24，架构不依赖阿里云专有 API）；第一版定位 MVP/early-production single-host，不承诺 99.9% SLA/Multi-AZ/自动故障转移/跨区域 DR。文档迁移：deployment.md、backup-and-recovery.md、release-migration-and-rollback.md、public-preview-single-host-deployment.md（`temporary-operational-snapshot` 转正）、remaining-module-batches.md G08 门禁、formalization-readiness 候选队列。最小真实验收：`docker compose config` PASS（8 服务）、SEC-02 delete-replay focused 单测 4/4 PASS、`git diff --check` PASS、服务器只读 health smoke PASS（postgres/redis/ingestion-api/platform-api/console/worker 全部 healthy）。**G16 = COMPLETED**（OPS-04/05/06/07 均满足新退出条件）；**completed 70→72 / remaining 8→6**（OPS-04 +1、OPS-07 +1）。**G08_READY = YES**；下一分组 G08 ING-13 → ING-12，不自动开始。`OFF_HOST_BACKUP_RECOMMENDED` 非本轮 blocker；恢复证据 `MVP_RECOVERY_EVIDENCE_AVAILABLE`。
-
-30. **G14/G16 最终收尾（2026-08-13，分支 feature/g14-compatibility-reference-matrix-rebased）**：**OPS-05 与 OPS-06 正式关闭**（ADR-036 已在 main、provider-neutral v1 退出条件满足：`deploy/preview/` + `pnpm deploy:preview`/`rollback` + 服务器只读 health smoke 6 服务 healthy），`completed` 74→76、`remaining` 4→2，**G16 = COMPLETED（OPS-04/05/06/07 全部完成）**；**OPS-02 关闭**（`examples/sdk-reference` reference fixture + matrix 契约 + Chromium smoke + axe + performance 一致性 + CI matrix 最小验收通过），`completed` 76→77、`remaining` 2→1，**G14 = COMPLETED**。剩余唯一叶子 OPS-03（G15 SDK release engineering）。
-
-31. **G08 数据接入生产容量与准入（2026-08-13，分支 feature/g08-ingestion-capacity-admission，G08 = COMPLETED）**：ING-13 在 TARGET_POSTGRESQL_ENVIRONMENT（47.238.145.24 真实 PG 17.10）有界基准（42/42 正确性 PASS、隔离 schema 残留 0、preview 未受影响）产出 APPROVED_INGESTION_PARAMETERS（maxEventsPerBatch=50 / sustainable=400 ev/s / maxHttpConcurrency=8），证据 [2026-08-13-ing-13-target-postgresql-baseline.md](docs/testing/evidence/2026-08-13-ing-13-target-postgresql-baseline.md)；ING-12 实施 `@aurora/ingestion-api` `createIngestionAdmissionPolicy`（内存 token-bucket 按事件速率限流，ING-13 追踪 `DEFAULT_INGESTION_ADMISSION_POLICY_CONFIG`）＋ `eventCount` 准入输入 ＋ preview composition root 接线，不修改公共事件协议/credential/Origin/CORS，targeted tests 全绿。**completed 77 / remaining 1（ING-13 + ING-12 已计入 77，不重复计数）**。
-
-32. **G15 SDK 发布工程 + OPS-03 FINAL CLOSE（2026-08-13，分支 feature/g15-sdk-release-engineering，G15 = COMPLETED）**：复用既有 `@aurora/release-tool` 实现（validate/version(--apply)/pack/compat/size/deprecate/latest/rollback CLI，37 单测）与 9 个 public 包元数据（event-schema/core/sdk/browser/plugin-error/plugin-request/plugin-performance/plugin-vue/plugin-react，`publishConfig.access:public`）、根 `release:*` 脚本、`release.yml` sdk-release-gate + sdk-publish（受保护 `sdk-npm-publish` Environment + `--provenance` + `next`/`latest` dist-tag）；本地验收全绿（validate 9 public/25 private、version dry-run、pack 9 包、compat、size 门禁 core 2.79/10 + browser 18.79/30 + 插件 ≤1.8/8 + adapter ≤1.0/5、deprecate/rollback/latest dry-run、release.yml 静态 + provenance/security 检查）；**OPS-03 = completed（首次正式关闭）**；`completed` 77→78、`remaining` 1→0，**AURORA_V1_IMPLEMENTATION_LEAVES_COMPLETED**。非阻塞 debt：`LIVE_PUBLISH_CREDENTIAL_PENDING`（npm Environment/secret 未配置，sdk-publish 由 `secrets.NPM_TOKEN != ''` 守卫）、`LICENSE_PENDING`、`OFF_HOST_BACKUP_RECOMMENDED`、`KNOWN_BASELINE_DEBT`、`REMOTE_INFRA_DEBT`、MVP recovery/production hardening。**NEXT = AURORA V1 FINAL ACCEPTANCE / RELEASE READINESS（不自动开始）**。
-
-每项未决内容都必须保持明确状态和恢复入口。优先决定当前专题下一项和即将形成实施阻塞的事项；不能把“尽快决策”解释为跳过业务推导、评审或 ADR 门禁。
-
-## 10. 状态同步与长度约束
-
-当 approved 规则、accepted ADR、已批准产品决定或已确认设计决定改变项目阶段、实施门禁或决策顺序时，必须在同一变更中同步本文件和 `AGENTS.md` 的当前状态与待决策队列。
-
-本文件最多 260 行且不超过 36 KiB。超限或出现 PRD/规范正文重复时，必须把细节留在权威文档，只保留链接、状态和可执行门禁。入口重写历史由 Git 保存；六份长期规范仍按 append-only 方式维护。
+# Aurora current repository rules
+
+This is the compact snapshot of the repository as it exists today. It is not a
+progress ledger. Detailed behavior and long-lived decisions live in the
+documents linked from [`docs/README.md`](docs/README.md) and in accepted ADRs.
+
+## Product and system shape
+
+Aurora is a TypeScript private monorepo for browser observability collection,
+durable ingestion, event processing, and a Vue 3 management console. The
+workspace policy enforces layer-aware dependencies and package boundaries.
+
+The stable system boundaries are:
+
+1. Browser SDK and framework adapters collect privacy-filtered facts.
+2. Ingestion HTTP and client credentials authenticate and durably accept event
+   batches into the Inbox.
+3. Worker processing claims Inbox rows with leases, applies bounded retry and
+   dead-letter rules, and persists queryable processing data.
+4. The platform API and worker expose authenticated management behavior through
+   the versioned Platform OpenAPI contract.
+5. The console is a Vue SPA that consumes the platform contract and provides
+   workspace/project monitoring, onboarding, settings, access, releases, and
+   policy surfaces.
+
+Cross-boundary decisions are recorded in [`docs/adr`](docs/adr). Do not move a
+database, credential, session, event, or deployment responsibility between
+boundaries without an accepted ADR and updated stable documentation.
+
+## Real modules
+
+The main implemented packages and applications include:
+
+- `@aurora/workspace-policy`, `@aurora/event-schema`, `@aurora/core`, and
+  `@aurora/browser`;
+- `@aurora/plugin-error`, `@aurora/plugin-request`, `@aurora/plugin-performance`,
+  `@aurora/plugin-vue`, and `@aurora/plugin-react`;
+- `@aurora/ingestion-inbox`, `@aurora/ingestion-credentials`,
+  `@aurora/processing-store`, and `@aurora/ingestion-benchmark`;
+- `@aurora/platform-contract`, `@aurora/platform-identity`,
+  `@aurora/platform-organization`, `@aurora/platform-project-governance`,
+  `@aurora/platform-credentials`, `@aurora/platform-audit`,
+  `@aurora/platform-admin`, `@aurora/platform-policy`,
+  `@aurora/platform-releases`, `@aurora/platform-session`, and
+  `@aurora/platform-email`;
+- `apps/ingestion-api`, `apps/ingestion-worker`, `apps/platform-api`,
+  `apps/platform-worker`, and `apps/console`;
+- `tooling/platform-contract-drift`, `tooling/ingestion-openapi-contract`,
+  `tooling/ingestion-benchmark`, `tooling/workspace-policy`, and the checked-in
+  release/IaC tooling under `tooling/`.
+
+Package README files describe the public entry points and local test commands.
+Do not infer that every exported design surface is production-complete; check
+the package and the applicable stable specification.
+
+## Supported and deferred capability
+
+The repository currently has versioned event envelopes and error, request,
+performance, and ingestion-batch contracts; browser lifecycle, error, request,
+and performance observation; SDK plugin composition; authenticated ingestion;
+Inbox leases, retry budget, backoff, dead-letter replay; processing stores for
+the implemented event families; the Platform OpenAPI/client/server adapters;
+and the authenticated console/platform foundations.
+
+The following remain intentionally bounded or deferred unless a newer accepted
+ADR and stable specification says otherwise: arbitrary resource-event bodies,
+behavior-event bodies and behavior plugins, unrestricted event payloads,
+unbounded diagnostic samples, percentile/histogram aggregation, source-map
+symbolication beyond the implemented bounded flow, a general search service,
+and production cloud/IaC changes not covered by the deployment documents.
+
+The worker composition root must not claim complete routing for an event family
+whose processor and storage contract are not approved and implemented. Current
+deployment and operations facts are in [`docs/operations`](docs/operations),
+not in this file.
+
+## Data, security, and public contracts
+
+- PostgreSQL migrations are the physical schema history. Run them in declared
+  order; application startup must not silently mutate schema.
+- Ingestion credentials use one-time client-key return, hashed verification,
+  constant-time comparison, origin/environment checks, and explicit lifecycle
+  transitions. Do not expose secret material in logs or APIs.
+- Session, CSRF, account deletion, retention, audit, and object-storage rules
+  are security decisions. Read the relevant ADR and security document before
+  changing them.
+- `docs/api/ingestion-openapi.yaml` and
+  `docs/api/platform-openapi-v1.yaml` are machine contracts. Generated or
+  manifest artifacts must remain in sync with their source and drift tests.
+- `@aurora/event-schema` is the protocol source of truth. Consumers validate at
+  runtime and preserve stable error/status semantics.
+
+## Documentation map
+
+- Product behavior and console UX: [`docs/prd`](docs/prd)
+- Architecture and component boundaries: [`docs/architecture`](docs/architecture)
+- Long-term decisions: [`docs/adr`](docs/adr)
+- SDK and browser implementation: [`docs/sdk`](docs/sdk)
+- Public API and generated contracts: [`docs/api`](docs/api)
+- Event and ingestion protocols: [`docs/protocol`](docs/protocol)
+- Security and lifecycle rules: [`docs/security`](docs/security)
+- Testing and quality strategy: [`docs/testing`](docs/testing)
+- Operations and deployment: [`docs/operations`](docs/operations)
+- Release and rollback: [`docs/releases`](docs/releases)
+- Package/application entry points: module `README.md` files
+
+## Branch and release model
+
+`main` is the development and integration branch. CI runs the Main Quality
+Gates on `main`; pull-request checks target `main`. Preview Continuous Delivery
+deploys the exact SHA from a successful Main Quality Gates `workflow_run` and
+does not resolve “latest main” or use a mutable release checkout. Manual SDK
+release validation is defined by `.github/workflows/release.yml` and the
+release documents.
+
+The repository may maintain a `release` branch as a stable mirror of a fully
+validated `main` commit. Creating or advancing it requires green release
+evidence; it does not by itself change preview/server deployment behavior.
+
+## Current implementation limits
+
+Some production concerns remain outside the repository’s implemented surface:
+real cloud capacity evidence and cost validation, production secrets and
+infrastructure provisioning, complete CI protection configuration, and any
+event processor or platform feature not represented by a tested package and
+contract. Report these as concrete limitations when relevant; do not create a
+new status ledger or silently widen scope.

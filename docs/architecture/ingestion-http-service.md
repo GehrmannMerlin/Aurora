@@ -23,7 +23,7 @@ related:
   - ../api/ingestion-openapi.md
   - ../protocol/ingestion-batch-and-receipt-contract.md
   - ../architecture/ingestion-inbox-data-model.md
-  - ../architecture/formalization-readiness.md
+  - ../architecture/system-overview.md
 supersedes: none
 review-cycle: ingestion-http-service-contract-or-release
 ---
@@ -309,7 +309,7 @@ Migration 已应用；HTTP accepted 后 Inbox 存在对应记录；duplicate 请
 
 - `apps/ingestion-api/README.md`；
 - `docs/architecture/ingestion-http-service.md`（本文）；
-- `docs/architecture/formalization-readiness.md`：数据接入链路状态更新；
+- `docs/architecture/system-overview.md`：数据接入链路状态更新；
 - ADR-011：追加 HTTP 服务实施证据（真实实现后）。
 
 ## 24. 排除范围

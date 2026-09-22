@@ -1,7 +1,7 @@
 ---
 title: Aurora 用量、额度与降级投影（DAT-21）
 status: approved
-implementation-status: implemented-in-feature-branch
+implementation-status: implemented
 approval-status: approved
 owner: data/platform
 created: 2026-08-11
@@ -12,7 +12,7 @@ related:
   - ../../AURORA_RULES.md
   - ../../Auroa-PRD-业务逻辑汇总-v2.1-核心业务定稿版.md
   - ../prd/platform-product-domains.md
-  - ../superpowers/specs/2026-07-30-aurora-platform-openapi-and-implementation-design.md
+  - ../api/platform-openapi-and-implementation.md
   - './request-metric-query-projection.md'
   - '../adr/README.md'
 supersedes: none
@@ -25,7 +25,7 @@ review-cycle: release-or-quota-policy-change
 
 本文正式承载 DAT-21 叶子模块（usage / quota / degradation aggregate and projection）。它把核心 PRD §15（采样、限流与资源额度）的**周期资源额度**语义落为真实用量聚合与 `usageGetSummary` 查询。
 
-**当前状态**：`status: approved`、`implementation-status: implemented-in-feature-branch`。用量/额度/降级模型（纯）、`usageGetSummary` 操作从 `BLOCKED_OPERATIONS` 移入稳定操作、Platform OpenAPI 重新生成、platform-api handler 与授权已实现并测试。
+**当前状态**：`status: approved`、`implementation-status: implemented`。用量/额度/降级模型（纯）、`usageGetSummary` 操作从 `BLOCKED_OPERATIONS` 移入稳定操作、Platform OpenAPI 重新生成、platform-api handler 与授权已实现并测试。
 
 ## 2. 权威语义（不重开）
 

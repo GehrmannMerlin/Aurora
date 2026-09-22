@@ -15,10 +15,10 @@ related:
   - ../../docs/architecture/platform-backend.md
   - ../../docs/architecture/platform-frontend.md
   - ../../docs/architecture/platform-contract-foundation.md
-  - ../../docs/architecture/formalization-readiness.md
-  - ../../docs/superpowers/specs/2026-07-28-aurora-platform-backend-design.md
-  - ../../docs/superpowers/specs/2026-07-30-aurora-platform-openapi-and-implementation-design.md
-  - ../../docs/superpowers/specs/2026-07-28-aurora-frontend-technology-stack-design.md
+  - ../../docs/architecture/system-overview.md
+  - ../../docs/architecture/platform-backend-design.md
+  - ../../docs/api/platform-openapi-and-implementation.md
+  - ../../docs/architecture/platform-frontend-technology-stack.md
   - ../../Auroa-PRD-业务逻辑汇总-v2.1-核心业务定稿版.md
 supersedes: none
 superseded-by: none
@@ -37,7 +37,7 @@ superseded-by: none
 - 适用范围：管理平台浏览器认证传输契约——不透明 HttpOnly Cookie Session、同步 CSRF 令牌、Origin/Fetch Metadata 校验、`identityGetSession` 公开契约形状、Session 失败语义、认证级别枚举（public/intent/session/recent-verification）；**物理参数**（Argon2id 数值、Cookie SameSite/期限、Redis Session 拓扑/持久化/淘汰、KMS/签名算法、内部能力令牌）由后续安全评审与 G10 门禁承载，不在本 ADR 冻结
 - 关联 PRD：[核心业务 PRD](../../Auroa-PRD-业务逻辑汇总-v2.1-核心业务定稿版.md) §4.1—4.3、§13
 - 关联安全规则：[账号注销与数据生命周期](../../docs/security/account-deletion-and-data-lifecycle.md)（approved，A5-001—011）
-- 关联技术方案：[平台后端设计](../../docs/superpowers/specs/2026-07-28-aurora-platform-backend-design.md)（approved，BACKEND-003=B）、[总体 OpenAPI 与实现约束设计](../../docs/superpowers/specs/2026-07-30-aurora-platform-openapi-and-implementation-design.md)（approved，§11）、[前端技术栈设计](../../docs/superpowers/specs/2026-07-28-aurora-frontend-technology-stack-design.md)（approved，§5）
+- 关联技术方案：[平台后端设计](../../docs/architecture/platform-backend-design.md)（approved，BACKEND-003=B）、[总体 OpenAPI 与实现约束设计](../../docs/api/platform-openapi-and-implementation.md)（approved，§11）、[前端技术栈设计](../../docs/architecture/platform-frontend-technology-stack.md)（approved，§5）
 - 关联 Issue：none
 - 关联实现 PR：none
 - 替代 ADR：none
@@ -45,7 +45,7 @@ superseded-by: none
 
 ## 状态说明
 
-本 ADR 于 2026-08-08 创建为 `proposed`。创建依据：G09（PLT-01/PLT-02）实施门禁；formalization-readiness §7 候选队列第 7 项"Session、CSRF 与内部能力令牌"；formalization-readiness §8 缺口第 3 项"Session/Cookie/CSRF/密码/内部令牌参数"；总体 OpenAPI 设计 §11"精确 Cookie、SameSite、期限、密码参数和密钥托管仍需安全 ADR"；平台后端设计 §16"Redis 权威 Session、Cookie/CSRF 和内部短期能力令牌的安全架构"；§7.3 "Redis Session 不可用时受保护 API 失败关闭，产生去敏安全指标"。用户已于 2026-07-28 确认后端设计 BACKEND-003=B（Redis 权威不透明 Session＋同步 CSRF；PostgreSQL 账号安全事实；短期内部能力令牌）。**本 ADR 只冻结公开传输契约形状（供 PLT-01 契约与 PLT-02 壳层安全消费）；物理安全参数与基础设施组合保持 deferred/requires-accepted-adr，属于 G10 身份业务门禁。** 在用户批准（accepted）前，不得创建 Session 后端、Cookie/CSRF 实现、Redis 基础设施或进入 `writing-plans`。
+本 ADR 于 2026-08-08 创建为 `proposed`。创建依据：G09（PLT-01/PLT-02）实施门禁；architecture documentation §7 候选队列第 7 项"Session、CSRF 与内部能力令牌"；architecture documentation §8 缺口第 3 项"Session/Cookie/CSRF/密码/内部令牌参数"；总体 OpenAPI 设计 §11"精确 Cookie、SameSite、期限、密码参数和密钥托管仍需安全 ADR"；平台后端设计 §16"Redis 权威 Session、Cookie/CSRF 和内部短期能力令牌的安全架构"；§7.3 "Redis Session 不可用时受保护 API 失败关闭，产生去敏安全指标"。用户已于 2026-07-28 确认后端设计 BACKEND-003=B（Redis 权威不透明 Session＋同步 CSRF；PostgreSQL 账号安全事实；短期内部能力令牌）。**本 ADR 只冻结公开传输契约形状（供 PLT-01 契约与 PLT-02 壳层安全消费）；物理安全参数与基础设施组合保持 deferred/requires-accepted-adr，属于 G10 身份业务门禁。** 在用户批准（accepted）前，不得创建 Session 后端、Cookie/CSRF 实现、Redis 基础设施或进入 `writing-plans`。
 
 ## 背景
 
@@ -189,7 +189,7 @@ Aurora 管理平台浏览器通过公开 `platform-api` 使用服务端能力。
 
 - 状态 `proposed / not-started / awaiting-user-approval`；
 - 由 G09（PLT-01/PLT-02）实施门禁创建；
-- 依据 approved 平台后端设计 BACKEND-003=B、总体 OpenAPI 设计 §11、前端技术栈设计 §5、formalization-readiness §7 候选第 7 项与 §8 缺口第 3 项；
+- 依据 approved 平台后端设计 BACKEND-003=B、总体 OpenAPI 设计 §11、前端技术栈设计 §5、architecture documentation §7 候选第 7 项与 §8 缺口第 3 项；
 - 只冻结公开传输契约形状；物理参数与 Redis 基础设施保持 deferred/G10 门禁；
 - 未调用 writing-plans、未创建 Session 后端、未创建 Cookie/CSRF/Redis 实现、未实施代码；
 - 等待独立评审与用户正式批准，不自动批准、不实施。

@@ -16,7 +16,7 @@ related:
   - ../../docs/protocol/ingestion-batch-and-receipt-contract.md
   - ../../docs/architecture/deployment.md
   - ../../docs/architecture/system-overview.md
-  - ../../docs/architecture/formalization-readiness.md
+  - ../../docs/architecture/system-overview.md
   - ADR-002-five-system-boundaries.md
   - ADR-004-asynchronous-event-processing.md
   - ADR-005-event-schema-source-of-truth.md

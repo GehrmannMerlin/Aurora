@@ -496,7 +496,7 @@ Chromium 测试禁止任意 sleep，使用条件、事件和明确超时。
 
 - `packages/plugin-performance/README.md`：职责、安装组合、公开 API、生命周期、诊断、采样边界、隐私和排除范围；
 - 根 `README.md` 与 `docs/README.md`：记录性能采集插件第一增量真实存在；
-- `docs/architecture/sdk-architecture.md`、`docs/architecture/formalization-readiness.md` 和 `docs/testing/test-strategy.md`：记录插件层、边界和 Chromium 证据；
+- `docs/architecture/sdk-architecture.md`、`docs/architecture/system-overview.md` 和 `docs/testing/test-strategy.md`：记录插件层、边界和 Chromium 证据；
 - `AGENTS.md` 与 `AURORA_RULES.md`：更新当前真实包和决策顺序；
 - ADR-003：追加具体性能插件、生命周期、释放、宿主安全和多实例证据，保持 `accepted / in-progress`；
 - ADR-005：追加真实插件只消费 event-schema 根入口并调用公共性能解析器的证据，保持 `accepted / in-progress`；

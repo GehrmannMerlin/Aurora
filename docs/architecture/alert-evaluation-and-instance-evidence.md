@@ -9,8 +9,7 @@ related:
   - ../../Auroa-PRD-业务逻辑汇总-v2.1-核心业务定稿版.md
   - ../prd/platform-product-domains.md
   - ../architecture/platform-backend.md
-  - ../superpowers/specs/2026-07-27-aurora-frontend-ux-ui-design.md
-  - ../superpowers/plans/2026-08-12-dat-19-alert-evaluation-and-instance-evidence.md
+  - ../prd/console-ux-ui-and-accessibility.md
 supersedes: none
 review-cycle: product-or-api-change
 ---

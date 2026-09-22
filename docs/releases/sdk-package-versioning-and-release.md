@@ -9,13 +9,12 @@ related:
   - ../../AURORA_RULES.md
   - ../../AGENTS.md
   - release-migration-and-rollback.md
-  - ../architecture/aurora-v1-remaining-module-batches.md
+  - ../architecture/system-overview.md
   - ../adr/ADR-001-use-monorepo.md
   - ../adr/ADR-005-event-schema-source-of-truth.md
   - ../adr/ADR-007-workspace-package-and-task-tooling.md
   - ../protocol/protocol-compatibility-boundary.md
   - ../testing/test-strategy.md
-  - ../superpowers/plans/2026-08-11-ops-03-sdk-package-versioning-and-release-engineering.md
   - ../../package.json
 supersedes: none
 review-cycle: release-policy-or-public-api-change
@@ -25,7 +24,7 @@ review-cycle: release-policy-or-public-api-change
 
 ## 1. 定位与批准来源
 
-本文把 G15 叶子 OPS-03「Package versioning and SDK release engineering」正式化并实施为可执行的 SDK 发布工程链。批准来源：用户 G15 指令（2026-08-11）明确授权上一轮 `G15_APPROVAL_PACKAGE` 的 4 项推荐方案（决策 B/E/F/G），并批准采用 `tooling/release-tool`（`@aurora/release-tool`）作为仓库自有等价版本/发布机制。
+本文把 G15 叶子 OPS-03「Package versioning and SDK release engineering」正式化并实施为可执行的 SDK 发布工程链。批准来源：用户 G15 指令（2026-08-11）明确授权上一轮 `approved G15 release decision set` 的 4 项推荐方案（决策 B/E/F/G），并批准采用 `tooling/release-tool`（`@aurora/release-tool`）作为仓库自有等价版本/发布机制。
 
 本文只描述 SDK 发布工程；不改变 SDK runtime 行为、wire protocol、queue/transport/retry/flush、Vue/React adapter 行为、ingestion/platform backend、Console 产品功能或 G16 基础设施。
 
