@@ -2,7 +2,6 @@
 
 ## 模块定位
 
-`@aurora/ingestion-credentials` 是数据接入客户端上报凭证存储与验证第一增量。它承载 [ADR-013](../../docs/adr/ADR-013-ingestion-client-credential-storage-and-verification.md) 的机器语义：客户端上报密钥格式解析（`aurora_ingest_<keyId>_<secret>`）、SHA-256 secret 摘要与 constant-time 校验、`ingestion_client_credentials`/`origins`/`environments` 数据库模型、active/disabled/revoked 状态与动态过期、有效 Origin/environment 策略快照，以及 `verifyIngestionCredential` PostgreSQL 验证。`apps/ingestion-api` 通过私有 adapter 使用本包实现真实请求授权。
 
 ## 职责
 
@@ -92,12 +91,3 @@ pnpm --filter @aurora/ingestion-credentials build            # 构建 dist
 集成测试需要真实 PostgreSQL 17，通过 `AURORA_TEST_DATABASE_URL` 连接（目标必须是 `aurora_inbox_test` 测试库）；禁止以 SQLite/mock/PGlite 替代真实数据库证据。
 
 ## 关联文档
-
-- [客户端凭证存储与验证正式规格](../../docs/security/ingestion-client-credential-storage-and-verification.md)
-- [客户端凭证生命周期服务正式规格](../../docs/security/ingestion-client-credential-lifecycle.md)
-- [ADR-013 客户端凭证存储与验证](../../docs/adr/ADR-013-ingestion-client-credential-storage-and-verification.md)
-- [ADR-014 客户端凭证生命周期服务](../../docs/adr/ADR-014-ingestion-client-credential-lifecycle.md)
-- [数据接入传输与客户端上报密钥安全决策包](../../docs/security/ingestion-transport-and-client-credential.md)
-- [ADR-009 数据接入公开传输与客户端上报密钥安全语义](../../docs/adr/ADR-009-ingestion-transport-and-client-credential.md)
-- [ADR-010 数据库访问与 Migration 工具链](../../docs/adr/ADR-010-postgresql-access-and-migration-tooling.md)
-- [接入诊断状态查询正式规格](../../docs/architecture/ingestion-diagnostics-status-query.md)

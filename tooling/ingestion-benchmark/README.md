@@ -41,8 +41,6 @@ tsx tooling/ingestion-benchmark/src/entry.ts --profile local-baseline
 - `smoke`：warmup 100、measured 500、batch 10、http 并发 2、worker 并发 2、claimBatch 10，最长 120000ms。
 - `local-baseline`：三个场景（A 低并发单事件 / B 常规批次 / C 最大批准批次），每场景最长 300000ms。
 
-具体值见 `src/profiles.ts` 与[正式规格](../../docs/testing/ingestion-capacity-and-resilience-benchmark.md)。
-
 ## 输出
 
 - JSON 报告：`.artifacts/benchmarks/ingestion/ingestion-<profile>-<UTC>.json`（`.gitignore` 忽略），临时文件 + 原子 rename，不覆盖已有报告；
@@ -80,5 +78,4 @@ pnpm --filter @aurora/ingestion-benchmark build
 
 ## 权威链接
 
-- [正式规格](../../docs/testing/ingestion-capacity-and-resilience-benchmark.md)（approved / implemented）
 - [正式化追踪](../../docs/architecture/system-overview.md)

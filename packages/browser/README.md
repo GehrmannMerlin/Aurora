@@ -93,14 +93,4 @@ pnpm check:ci
 
 ## 权威来源
 
-- [SDK 可靠发送链（SDK-15/16）](../../docs/sdk/sdk-reliable-delivery-chain.md)
-- [Browser 正式规格](../../docs/sdk/browser-environment-foundation.md)
-- [错误源订阅规格](../../docs/sdk/browser-error-source.md)
-- [请求观测能力规格](../../docs/sdk/browser-request-source.md)
-- [性能事实观测能力规格](../../docs/sdk/browser-performance-source.md)
-- [SDK 架构](../../docs/architecture/sdk-architecture.md)
-- [错误事件协议契约](../../docs/protocol/error-event-contract.md)
-- [请求事件协议契约](../../docs/protocol/request-event-contract.md)
-- [ADR-003](../../docs/adr/ADR-003-sdk-plugin-architecture.md)
-- [ADR-006](../../docs/adr/ADR-006-one-way-dependencies.md)
 - [测试策略](../../docs/testing/test-strategy.md)

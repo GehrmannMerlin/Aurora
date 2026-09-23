@@ -6,12 +6,10 @@ last-reviewed: 2026-07-29
 applies-to: Aurora SPA、API、Worker、SDK、数据库 Migration、制品晋级和回滚
 related:
   - ../../AURORA_RULES.md
-  - ../../Aurora 测试规范.md
   - ../architecture/deployment.md
   - ../testing/test-strategy.md
   - ../operations/backup-and-recovery.md
   - ../adr/README.md
-  - ../testing/testing-deployment-release.md
 supersedes: none
 review-cycle: release-policy-or-migration-change
 ---
@@ -20,7 +18,6 @@ review-cycle: release-policy-or-migration-change
 
 ## 1. 发布原则
 
-本文正式承载 approved 不可变制品、分阶段晋级、expand/contract Migration 和受保护生产批准规则。第一版部署为 provider-neutral 单主机 Docker Compose（accepted [ADR-036](../adr/ADR-036-provider-neutral-single-host-deployment.md)，`supersedes` ADR-022/023/024 的 AWS-first 方向）；部署/回滚经 `pnpm deploy:preview` / `deploy:preview:rollback` 受控执行，不再依赖 ECS/CloudWatch/ECS task definition。GitHub Actions 是 approved 设计方向，但流水线、Environment、OIDC 角色、制品仓库和真实命令均不存在；发布基础设施为 `requires-accepted-adr`。
 
 ## 2. 晋级序列
 

@@ -29,16 +29,4 @@ describe('Monorepo foundation documentation contract', () => {
       expect(moduleReadme).toContain(heading);
     }
   });
-
-  it('records only accurate ADR implementation states', async () => {
-    await expect(rootFile('docs/adr/ADR-001-use-monorepo.md')).resolves.toContain(
-      'implementation-status: in-progress',
-    );
-    await expect(rootFile('docs/adr/ADR-006-one-way-dependencies.md')).resolves.toContain(
-      'implementation-status: in-progress',
-    );
-    await expect(
-      rootFile('docs/adr/ADR-007-workspace-package-and-task-tooling.md'),
-    ).resolves.toContain('implementation-status: implemented');
-  });
 });

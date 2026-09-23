@@ -10,8 +10,6 @@ Migration 与后续 Repository 的稳定错误表面：
 - `project_policy_limits`：项目可选资源上限（每项目至多一行，仅 `resource_limit`，版本化）。
 
 无覆盖 = 继承；生效值由服务端只读计算（平台默认 → 组织覆盖 → 项目上限），"配置值/来源/生效值"三者分离。
-spec 见 [platform-resource-policy-data-model](../../docs/architecture/platform-resource-policy-data-model.md) 与
-[ADR-035](../../docs/adr/ADR-035-platform-resource-policy-data-model.md)。
 
 本包是 PLT-10b Task 1—3 的结果：包结构、构建/类型检查/migrate 入口、三张表的 Migration、稳定错误表面、三张表的
 Repository（平台默认/组织覆盖/项目上限 CRUD + 乐观版本）、生效纯函数 `computeEffectivePolicy` 与目标搜索
@@ -73,6 +71,3 @@ pnpm --filter @aurora/platform-policy migrate          # 运行本包 Migration�
 `aurora_inbox_test` 测试库，`assertIsTestDatabase` 强制）；禁止以 SQLite/mock/PGlite 替代真实数据库证据。
 
 ## 关联文档
-
-- [平台资源策略数据模型（正式规格）](../../docs/architecture/platform-resource-policy-data-model.md)
-- [ADR-035 平台资源策略数据模型](../../docs/adr/ADR-035-platform-resource-policy-data-model.md)

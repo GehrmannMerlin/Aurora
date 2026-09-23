@@ -34,8 +34,3 @@ pnpm --filter @aurora/ingestion-api build
 集成测试需要真实 PostgreSQL 17，通过 `AURORA_TEST_DATABASE_URL` 连接；禁止以 SQLite/mock/PGlite 替代真实数据库证据。配置通过 `start.ts` 从环境变量读取（`HOST`/`PORT`/`REQUEST_BODY_LIMIT_BYTES`/`GRACEFUL_SHUTDOWN_TIMEOUT_MS`/`DATABASE_URL`/`LOG_ENABLED`/`LOG_LEVEL`），由 `configuration.ts` 校验并冻结；请求体字节上限是启动必填配置，非产品承诺。
 
 ## 关联文档
-
-- [数据接入同步 HTTP 服务正式规格](../../docs/architecture/ingestion-http-service.md)
-- [数据接入 OpenAPI 机器契约](../../docs/api/ingestion-openapi.md)
-- [Inbox 数据模型正式规格](../../docs/architecture/ingestion-inbox-data-model.md)
-- [ADR-011 数据接入同步 HTTP 服务的运行时与应用边界](../../docs/adr/ADR-011-ingestion-http-service-runtime.md)

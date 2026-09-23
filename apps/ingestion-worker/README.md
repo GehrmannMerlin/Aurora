@@ -2,7 +2,6 @@
 
 ## 模块定位
 
-`@aurora/ingestion-worker` 是数据接入可靠缓冲 `event_inbox` 的 Worker 运行时与处理器编排第一增量（`apps/ingestion-worker`，`"private": true`）。它承载 ADR-008 Worker 波次第 2 个独立增量，由 accepted [ADR-012](../../docs/adr/ADR-012-ingestion-worker-runtime.md) 授权 Node.js 24 原生异步运行时；完全复用 `@aurora/ingestion-inbox` 公开处理侧 Repository（`claimAvailable`/`renewLease`/`markProcessed`/`scheduleRetry`/`markDeadLettered`）。
 
 ## 职责
 
@@ -106,24 +105,3 @@ pnpm --filter @aurora/ingestion-worker build          # 构建 dist
 集成测试需要真实 PostgreSQL 17，通过 `AURORA_TEST_DATABASE_URL` 连接（目标必须是 `aurora_inbox_test` 测试库）；禁止以 SQLite/mock/PGlite 替代真实数据库证据。
 
 ## 关联文档
-
-- [生产 Worker composition root 正式规格](../../docs/architecture/production-worker-composition-root.md)
-- [事件处理器 Router 正式规格](../../docs/architecture/event-processor-router.md)
-- [性能事件 Processor 核心能力正式规格](../../docs/architecture/performance-event-processor.md)
-- [性能指标聚合与有界诊断样本存储正式规格](../../docs/architecture/performance-metric-aggregate-and-bounded-sample-store.md)
-- [请求处理规则/配置 adapter 正式规格](../../docs/architecture/request-processing-rules-configuration-adapter.md)
-- [请求事件 Processor 核心能力正式规格](../../docs/architecture/request-event-processor.md)
-- [请求样本选择策略正式规格](../../docs/architecture/request-sample-selection-policy.md)
-- [错误事件 Processor 核心能力正式规格](../../docs/architecture/error-event-processor.md)
-- [错误事件 occurrence 处理存储正式规格](../../docs/architecture/error-event-occurrence-processing-store.md)
-- [Worker 运行时正式规格](../../docs/architecture/ingestion-worker-runtime.md)
-- [Worker 重试预算与自动死信策略正式规格](../../docs/architecture/ingestion-worker-retry-budget-policy.md)
-- [Worker 重试退避调度策略正式规格](../../docs/architecture/ingestion-worker-retry-backoff-schedule.md)
-- [ADR-012 Worker 运行时](../../docs/adr/ADR-012-ingestion-worker-runtime.md)
-- [ADR-015 Worker 重试预算与自动死信策略](../../docs/adr/ADR-015-ingestion-worker-retry-budget-policy.md)
-- [ADR-016 Worker 重试退避调度策略](../../docs/adr/ADR-016-ingestion-worker-retry-backoff-schedule.md)
-- [ADR-018 错误事件 occurrence 处理存储](../../docs/adr/ADR-018-error-event-occurrence-processing-storage.md)
-- [Inbox 处理侧 Repository 正式规格](../../docs/architecture/ingestion-inbox-processing-repository.md)
-- [Inbox 数据模型正式规格](../../docs/architecture/ingestion-inbox-data-model.md)
-- [ADR-008 数据接入可靠缓冲](../../docs/adr/ADR-008-ingestion-durable-buffering.md)
-- [ADR-010 数据库访问与 Migration 工具链](../../docs/adr/ADR-010-postgresql-access-and-migration-tooling.md)

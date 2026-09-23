@@ -33,38 +33,4 @@ describe('Browser documentation contract', () => {
     expect(readme).toContain('恢复原始宿主引用');
   });
 
-  it('records Browser as implemented without overstating plugins or the whole SDK', async () => {
-    for (const path of [
-      'docs/architecture/system-overview.md',
-      'docs/architecture/sdk-architecture.md',
-      'AURORA_RULES.md',
-    ]) {
-      const text = await rootFile(path);
-      expect(text, path).toContain('@aurora/browser');
-    }
-    expect(await rootFile('AGENTS.md')).toContain('browser/device matrix');
-    expect(await rootFile('docs/architecture/sdk-architecture.md')).toContain(
-      '通用资源/行为事件正文、行为插件与采样算法仍不存在',
-    );
-    expect(await rootFile('docs/architecture/sdk-architecture.md')).toContain('请求采集插件只从');
-    expect(await rootFile('docs/sdk/browser-error-source.md')).toContain(
-      'implementation-status: implemented',
-    );
-  });
-
-  it('keeps ADR states unchanged and appends precise evidence', async () => {
-    expect(await rootFile('docs/sdk/browser-environment-foundation.md')).toContain(
-      'implementation-status: implemented',
-    );
-    const adr003 = await rootFile('docs/adr/ADR-003-sdk-plugin-architecture.md');
-    const adr005 = await rootFile('docs/adr/ADR-005-event-schema-source-of-truth.md');
-    const adr006 = await rootFile('docs/adr/ADR-006-one-way-dependencies.md');
-    const adr007 = await rootFile('docs/adr/ADR-007-workspace-package-and-task-tooling.md');
-    expect(adr003).toContain('implementation-status: in-progress');
-    expect(adr003).toContain('@aurora/browser');
-    expect(adr006).toContain('implementation-status: in-progress');
-    expect(adr006).toContain('sdk-browser');
-    expect(adr005).toContain('implementation-status: in-progress');
-    expect(adr007).toContain('implementation-status: implemented');
-  });
 });

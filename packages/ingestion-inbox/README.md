@@ -67,12 +67,3 @@ AURORA_TEST_DATABASE_URL=... pnpm --filter @aurora/ingestion-inbox migrate  # �
 集成测试需要真实 PostgreSQL 17，通过 `AURORA_TEST_DATABASE_URL` 连接；禁止以 SQLite/mock/PGlite 替代真实数据库证据。
 
 ## 关联文档
-
-- [Inbox 数据模型正式规格](../../docs/architecture/ingestion-inbox-data-model.md)
-- [Inbox 处理侧 Repository 正式规格](../../docs/architecture/ingestion-inbox-processing-repository.md)
-- [死信人工重放核心正式规格](../../docs/architecture/ingestion-dead-letter-manual-replay.md)
-- [接入诊断状态查询正式规格](../../docs/architecture/ingestion-diagnostics-status-query.md)
-- [ADR-017 死信人工重放核心](../../docs/adr/ADR-017-ingestion-dead-letter-manual-replay.md)
-- [数据接入批次与接收结果协议](../../docs/protocol/ingestion-batch-and-receipt-contract.md)
-- [ADR-008 数据接入可靠缓冲](../../docs/adr/ADR-008-ingestion-durable-buffering.md)
-- [ADR-010 数据库访问与 Migration 工具链](../../docs/adr/ADR-010-postgresql-access-and-migration-tooling.md)

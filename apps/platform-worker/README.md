@@ -83,7 +83,4 @@ mock/内存替代真实 PostgreSQL 证据。
 
 ## 关联文档
 
-- [PLT-03 正式规格](../../docs/security/platform-identity-authentication.md)
-- [ADR-031 管理平台邮件发送责任、端口与供应商](../../docs/adr/ADR-031-platform-email-delivery.md)
-- [ADR-032 管理平台 Outbox、任务、缓存与对象存储基础设施](../../docs/adr/ADR-032-platform-outbox-tasks-cache-objects.md)
 - [阿里云 DirectMail 邮箱验证交付 Runbook](../../docs/operations/aliyun-direct-mail-email-verification.md)

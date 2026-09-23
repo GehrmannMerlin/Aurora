@@ -5,7 +5,6 @@
 `@aurora/platform-audit` 是管理平台 B7 安全审计（只读时间线）的数据层包。它在 PLT-03 的
 `security_audit_events` 表之上提供**只读** Repository：以脱敏摘要（action/result/occurredAt/
 actorMasked/targetProjectRef）返回某一组织的高风险操作时间线，带游标分页与 B7 1 年保留窗口。
-spec 见 [platform-workspace-organization-governance](../../docs/architecture/platform-workspace-organization-governance.md)
 §4.6/§5.2/§6。
 
 本包是 PLT-04 Task 5 的结果：包结构、构建/类型检查/migrate 入口、`security_audit_events` 扩展
@@ -75,8 +74,3 @@ pnpm --filter @aurora/platform-audit migrate          # 运行本包 Migration�
 `aurora_inbox_test` 测试库，`assertIsTestDatabase` 强制）；禁止以 SQLite/mock/PGlite 替代真实数据库证据。
 
 ## 关联文档
-
-- [PLT-04 正式规格](../../docs/architecture/platform-workspace-organization-governance.md)
-- [PLT-03 正式规格](../../docs/security/platform-identity-authentication.md)
-- [ADR-029 平台数据库访问与 Migration](../../docs/adr/ADR-029-platform-database-access-and-migration.md)
-- [ADR-032 平台 Outbox/任务/缓存/对象存储](../../docs/adr/ADR-032-platform-outbox-tasks-cache-objects.md)

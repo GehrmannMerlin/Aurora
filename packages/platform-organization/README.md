@@ -3,7 +3,6 @@
 ## 模块定位
 
 `@aurora/platform-organization` 是管理平台工作空间与组织治理第一增量（PLT-04 B1-B8 的数据层部分）的数据层包。它承载
-spec [platform-workspace-organization-governance](../../docs/architecture/platform-workspace-organization-governance.md)
 §4 的数据模型扩展与 Repository：在 PLT-03 的 `organizations`/`organization_members`/
 `organization_invitations`/`security_audit_events` 表之上提供成员/邀请/时区的生命周期 Repository。
 
@@ -76,9 +75,3 @@ pnpm --filter @aurora/platform-organization migrate          # 运行本包 Migr
 `aurora_inbox_test` 测试库，`assertIsTestDatabase` 强制）；禁止以 SQLite/mock/PGlite 替代真实数据库证据。
 
 ## 关联文档
-
-- [PLT-04 正式规格](../../docs/architecture/platform-workspace-organization-governance.md)
-- [PLT-03 正式规格](../../docs/security/platform-identity-authentication.md)
-- [ADR-029 平台数据库访问与 Migration](../../docs/adr/ADR-029-platform-database-access-and-migration.md)
-- [ADR-030 平台 Session/CSRF/密码物理参数](../../docs/adr/ADR-030-platform-session-csrf-password-physical-parameters.md)
-- [ADR-032 平台 Outbox/任务/缓存/对象存储](../../docs/adr/ADR-032-platform-outbox-tasks-cache-objects.md)

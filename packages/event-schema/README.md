@@ -326,13 +326,4 @@ pnpm check:ci
 
 ## 关联文档
 
-- [协议基础规格](../../docs/protocol/event-schema-foundation.md)
-- [事件信封版本 1](../../docs/protocol/event-envelope-v1.md)
-- [错误事件协议契约](../../docs/protocol/error-event-contract.md)
-- [请求事件协议契约](../../docs/protocol/request-event-contract.md)
-- [性能事件协议契约](../../docs/protocol/performance-event-contract.md)
-- [数据接入批次与接收结果协议](../../docs/protocol/ingestion-batch-and-receipt-contract.md)
-- [ADR-005](../../docs/adr/ADR-005-event-schema-source-of-truth.md)
-- [ADR-006](../../docs/adr/ADR-006-one-way-dependencies.md)
-- [ADR-008](../../docs/adr/ADR-008-ingestion-durable-buffering.md)
 - [测试策略](../../docs/testing/test-strategy.md)

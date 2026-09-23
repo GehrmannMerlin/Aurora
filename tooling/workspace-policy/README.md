@@ -58,8 +58,4 @@ Tests use temporary directories. No fixture is a real Aurora business package.
 
 ## 权威来源
 
-- [Monorepo 与基础工程工具](../../docs/architecture/monorepo-and-build.md)
-- [ADR-001](../../docs/adr/ADR-001-use-monorepo.md)
-- [ADR-006](../../docs/adr/ADR-006-one-way-dependencies.md)
-- [ADR-007](../../docs/adr/ADR-007-workspace-package-and-task-tooling.md)
 - [测试策略](../../docs/testing/test-strategy.md)

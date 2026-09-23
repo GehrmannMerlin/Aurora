@@ -3,7 +3,6 @@ import { describe, expect, it } from 'vitest';
 import {
   parseErrorEventEnvelope,
   parseEventEnvelope,
-  parseIngestionBatchRequest,
   parsePerformanceEventEnvelope,
   parseRequestEventEnvelope,
 } from '../src/index.js';
@@ -56,16 +55,6 @@ describe('event-schema documentation contract', () => {
     }
   });
 
-  it('parses the valid protocol example and rejects the forbidden-field example', async () => {
-    const protocol = await repositoryFile('docs/protocol/event-envelope-v1.md');
-    expect(parseEventEnvelope(contractExample(protocol, 'valid-protocol')).success).toBe(true);
-    const invalid = parseEventEnvelope(contractExample(protocol, 'invalid-protocol'));
-    expect(invalid.success).toBe(false);
-    if (!invalid.success) {
-      expect(invalid.issues.map(({ code }) => code)).toContain('forbidden_field');
-    }
-  });
-
   it('keeps the README explicit about the implemented error contract and absent plugin', async () => {
     const readme = await repositoryFile('packages/event-schema/README.md');
     expect(readme).toContain('## 错误事件契约');
@@ -89,17 +78,6 @@ describe('event-schema documentation contract', () => {
     }
   });
 
-  it('executes valid and invalid formal error-contract examples', async () => {
-    const protocol = await repositoryFile('docs/protocol/error-event-contract.md');
-    const valid = parseErrorEventEnvelope(contractExample(protocol, 'valid-error-spec'));
-    expect(valid.success).toBe(true);
-    const invalid = parseErrorEventEnvelope(contractExample(protocol, 'invalid-error-spec'));
-    expect(invalid.success).toBe(false);
-    if (!invalid.success) {
-      expect(invalid.issues.map(({ code }) => code)).toContain('invalid_url');
-    }
-  });
-
   it('documents the request contract and keeps the plugin absent', async () => {
     const readme = await repositoryFile('packages/event-schema/README.md');
     expect(readme).toContain('## 请求事件契约');
@@ -115,17 +93,6 @@ describe('event-schema documentation contract', () => {
     const valid = parseRequestEventEnvelope(contractExample(readme, 'valid-request-readme'));
     expect(valid.success).toBe(true);
     const invalid = parseRequestEventEnvelope(contractExample(readme, 'invalid-request-readme'));
-    expect(invalid.success).toBe(false);
-    if (!invalid.success) {
-      expect(invalid.issues.map(({ code }) => code)).toContain('invalid_url');
-    }
-  });
-
-  it('executes valid and invalid formal request-contract examples', async () => {
-    const protocol = await repositoryFile('docs/protocol/request-event-contract.md');
-    const valid = parseRequestEventEnvelope(contractExample(protocol, 'valid-request-spec'));
-    expect(valid.success).toBe(true);
-    const invalid = parseRequestEventEnvelope(contractExample(protocol, 'invalid-request-spec'));
     expect(invalid.success).toBe(false);
     if (!invalid.success) {
       expect(invalid.issues.map(({ code }) => code)).toContain('invalid_url');
@@ -155,34 +122,6 @@ describe('event-schema documentation contract', () => {
     expect(invalid.success).toBe(false);
     if (!invalid.success) {
       expect(invalid.issues.map(({ code }) => code)).toContain('invalid_enum');
-    }
-  });
-
-  it('executes valid and invalid formal performance-contract examples', async () => {
-    const protocol = await repositoryFile('docs/protocol/performance-event-contract.md');
-    const valid = parsePerformanceEventEnvelope(
-      contractExample(protocol, 'valid-performance-spec'),
-    );
-    expect(valid.success).toBe(true);
-    const invalid = parsePerformanceEventEnvelope(
-      contractExample(protocol, 'invalid-performance-spec'),
-    );
-    expect(invalid.success).toBe(false);
-    if (!invalid.success) {
-      expect(invalid.issues.map(({ code }) => code)).toContain('invalid_enum');
-    }
-  });
-
-  it('executes valid and invalid formal ingestion-batch examples', async () => {
-    const protocol = await repositoryFile('docs/protocol/ingestion-batch-and-receipt-contract.md');
-    const valid = parseIngestionBatchRequest(contractExample(protocol, 'valid-ingestion-batch'));
-    expect(valid.success).toBe(true);
-    const invalid = parseIngestionBatchRequest(
-      contractExample(protocol, 'invalid-ingestion-batch'),
-    );
-    expect(invalid.success).toBe(false);
-    if (!invalid.success) {
-      expect(invalid.issues.map(({ code }) => code)).toContain('unsupported_protocol_version');
     }
   });
 });

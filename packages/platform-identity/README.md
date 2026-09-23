@@ -3,7 +3,6 @@
 ## 模块定位
 
 `@aurora/platform-identity` 是管理平台身份、认证与邀请第一增量（PLT-03）的数据层包。它承载 spec
-[platform-identity-authentication-invitation](../../docs/security/platform-identity-authentication.md)
 §4 的数据模型：`accounts`、`account_credentials`、`email_verification_intents`、
 `password_reset_intents`、`organizations`、`organization_members`、`organization_invitations`、
 `project_members`、`security_audit_events`、`idempotency_records`、`outbox`（11 张表）。
@@ -86,9 +85,4 @@ pnpm --filter @aurora/platform-identity migrate          # 运行 Migration（AU
 
 ## 关联文档
 
-- [PLT-03 正式规格](../../docs/security/platform-identity-authentication.md)
-- [ADR-029 平台数据库访问与 Migration](../../docs/adr/ADR-029-platform-database-access-and-migration.md)
-- [ADR-030 平台 Session/CSRF/密码物理参数](../../docs/adr/ADR-030-platform-session-csrf-password-physical-parameters.md)
-- [ADR-031 平台邮件交付](../../docs/adr/ADR-031-platform-email-delivery.md)
-- [ADR-032 平台 Outbox/任务/缓存/对象存储](../../docs/adr/ADR-032-platform-outbox-tasks-cache-objects.md)
 - [阿里云 DirectMail 邮箱验证交付 Runbook](../../docs/operations/aliyun-direct-mail-email-verification.md)

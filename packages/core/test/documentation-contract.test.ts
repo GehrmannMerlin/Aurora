@@ -30,14 +30,6 @@ describe('Core documentation contract', () => {
     expect(readme).not.toContain('Browser 层已经实现');
   });
 
-  it('keeps the formal specification linked from the document index', async () => {
-    const index = await repositoryFile('docs/README.md');
-    expect(index).toContain('sdk/sdk-core-foundation.md');
-    const specification = await repositoryFile('docs/sdk/sdk-core-foundation.md');
-    expect(specification).toContain('status: approved');
-    expect(specification).toContain('实施状态为 `not-started`');
-  });
-
   it('documents the standard draft boundary and exact exclusions', async () => {
     const readme = await repositoryFile('packages/core/README.md');
     for (const phrase of [
@@ -53,21 +45,6 @@ describe('Core documentation contract', () => {
       expect(readme).toContain(phrase);
     expect(readme).toContain('不表示采样、排队、发送或持久化');
     expect(readme).not.toContain('plugin-error 已实现');
-  });
-
-  it('keeps the specification approved and ADR decisions unchanged', async () => {
-    const specification = await repositoryFile('docs/sdk/core-event-creation.md');
-    expect(specification).toContain('status: approved');
-    expect(specification).toContain('implementation-status: implemented');
-    expect(await repositoryFile('docs/adr/ADR-003-sdk-plugin-architecture.md')).toContain(
-      'implementation-status: in-progress',
-    );
-    expect(await repositoryFile('docs/adr/ADR-005-event-schema-source-of-truth.md')).toContain(
-      'implementation-status: in-progress',
-    );
-    expect(await repositoryFile('docs/adr/ADR-006-one-way-dependencies.md')).toContain(
-      'implementation-status: in-progress',
-    );
   });
 
   it('matches the documented default and repeat semantics', async () => {
