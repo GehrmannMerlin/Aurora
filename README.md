@@ -78,11 +78,9 @@ Aurora 默认不采集请求体、响应体、Cookie、Authorization、表单内
 
 - [正式文档索引](docs/README.md)
 - [系统架构与模块边界](docs/architecture/system-overview.md)
-- [SDK 可靠发送链](docs/sdk/sdk-reliable-delivery-chain.md)
 - [数据接入 OpenAPI](docs/api/ingestion.openapi.yaml)
 - [管理平台 OpenAPI](docs/api/platform-openapi-v1.yaml)
 - [部署、Migration 与回滚](docs/releases/release-migration-and-rollback.md)
-- [架构决策记录](docs/adr/README.md)
 
 ## 开发
 

@@ -13,18 +13,6 @@ describe('ingestion-credentials documentation contract', () => {
     expect(readme).not.toContain('完整审计已实现');
   });
 
-  it('keeps the formal lifecycle spec aligned with the implemented module', async () => {
-    const spec = await readFile(
-      new URL('../../../docs/security/ingestion-client-credential-lifecycle.md', import.meta.url),
-      'utf8',
-    );
-    expect(spec).toContain('implementation-status');
-    expect(spec).toContain('createIngestionClientCredential');
-    expect(spec).toContain('rotateIngestionClientCredential');
-    expect(spec).toContain('SELECT ... FOR UPDATE');
-    expect(spec).toContain('不实现管理 HTTP API');
-  });
-
   it('keeps the module README honest about lifecycle without claiming a management HTTP API', async () => {
     const readme = await readFile(new URL('../README.md', import.meta.url), 'utf8');
     expect(readme).toContain('rotateIngestionClientCredential');

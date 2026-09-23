@@ -45,5 +45,3 @@ BrowserEnvironment 由调用方拥有；插件只取消自己的请求订阅，�
 - 不保留 Browser 请求事实或原生引用；
 - 不实现采样、队列、传输、重试或持久化；
 - 不实现允许来源/同源判断、慢请求阈值、去重、聚合或问题识别。
-
-正式契约见 `docs/sdk/request-capture-plugin.md`。

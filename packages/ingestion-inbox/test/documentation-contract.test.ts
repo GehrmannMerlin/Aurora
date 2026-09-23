@@ -18,27 +18,4 @@ describe('ingestion-inbox documentation contract', () => {
     expect(readme).toContain('claimAvailable');
     expect(readme).toContain('markDeadLettered');
   });
-
-  it('keeps the formal processing spec aligned with the implemented module', async () => {
-    const spec = await repositoryFile('docs/architecture/ingestion-inbox-processing-repository.md');
-    expect(spec).toContain('status: approved');
-    expect(spec).toContain('FOR UPDATE SKIP LOCKED');
-    expect(spec).toContain('lease_id');
-    expect(spec).toContain('claimAvailable');
-    expect(spec).toContain('renewLease');
-    expect(spec).toContain('markProcessed');
-    expect(spec).toContain('scheduleRetry');
-    expect(spec).toContain('markDeadLettered');
-    expect(spec).toContain('`pending`、`leased`、`retry_waiting`、`processed`、`dead_lettered`');
-  });
-
-  it('keeps the formal spec aligned with the implemented module', async () => {
-    const spec = await repositoryFile('docs/architecture/ingestion-inbox-data-model.md');
-    expect(spec).toContain('status: approved');
-    expect(spec).toContain('persistBatch');
-    expect(spec).toContain('event_inbox');
-    expect(spec).toContain('(project_id, event_id)');
-    expect(spec).toContain('AURORA_TEST_DATABASE_URL');
-    expect(spec).toContain("'pending','leased','retry_waiting','processed','dead_lettered'");
-  });
 });

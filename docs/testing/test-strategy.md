@@ -6,7 +6,6 @@ last-reviewed: 2026-07-29
 applies-to: Aurora Monorepo、协议、SDK、接入、处理、管理平台、部署和发布验证
 related:
   - ../../AURORA_RULES.md
-  - ../../Aurora 测试规范.md
   - ../architecture/system-overview.md
   - ../architecture/sdk-architecture.md
   - ../architecture/platform-frontend.md
@@ -14,7 +13,6 @@ related:
   - ../architecture/deployment.md
   - ../releases/release-migration-and-rollback.md
   - ../operations/backup-and-recovery.md
-  - ../testing/testing-deployment-release.md
 supersedes: none
 review-cycle: release-or-quality-policy-change
 ---
@@ -22,8 +20,6 @@ review-cycle: release-or-quality-policy-change
 # Aurora 第一版测试策略与质量门禁
 
 ## 1. 定位
-
-本文是 approved 测试/部署/发布设计中测试分层、CI 阶段、兼容性、性能和可靠性门禁的长期正式承载。[测试规范](<../../Aurora 测试规范.md>)继续定义通用测试原则。本文不提供不存在的命令、工作流、测试文件或通过结果。
 
 当前测试工程、参考应用、浏览器设备、CI 和预发布环境均不存在。门禁是批准目标；实际结果必须在真实制品上重新执行。
 

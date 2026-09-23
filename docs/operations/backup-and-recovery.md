@@ -11,7 +11,6 @@ related:
   - ../testing/test-strategy.md
   - ../security/account-deletion-and-data-lifecycle.md
   - ../adr/ADR-036-provider-neutral-single-host-deployment.md
-  - ../testing/testing-deployment-release.md
 supersedes: none
 review-cycle: recovery-policy-or-quarterly-dr
 ---
@@ -20,7 +19,6 @@ review-cycle: recovery-policy-or-quarterly-dr
 
 ## 1. 当前效力
 
-本文正式承载 approved 备份、恢复和灾难恢复设计，并整合 A5 账号注销的备份淘汰语义。第一版为 provider-neutral 单主机部署（accepted [ADR-036](../adr/ADR-036-provider-neutral-single-host-deployment.md)），**不做 Multi-AZ / cross-region DR**，不宣称生产级 RPO/RTO SLA。
 
 > **历史（append-only）**：原 approved 设计以 AWS RDS Multi-AZ + 跨区域副本为物理载体；ADR-036 生效后，第一版备份/恢复落到单主机 PostgreSQL。`OFF_HOST_BACKUP_RECOMMENDED`（单机本地备份不能抵御整机丢失）记录为非本轮 blocker；未来可接 OSS/S3-compatible/另一主机，本轮不实现新云对象存储。
 

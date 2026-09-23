@@ -15,14 +15,4 @@ describe('ingestion-api documentation contract', () => {
     expect(readme).toContain('不实现真实凭证数据库');
     expect(readme).toContain('不实现 Worker');
   });
-
-  it('keeps the formal spec aligned with the implemented module', async () => {
-    const spec = await repositoryFile('docs/architecture/ingestion-http-service.md');
-    expect(spec).toContain('status: approved');
-    expect(spec).toContain('POST /v1/batches');
-    expect(spec).toContain('buildIngestionApi');
-    expect(spec).toContain('startIngestionApi');
-    expect(spec).toContain('IngestionRequestAuthorizer');
-    expect(spec).toContain('Fastify 5.10.0');
-  });
 });

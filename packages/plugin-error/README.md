@@ -44,5 +44,3 @@ BrowserEnvironment 由调用方拥有；插件只取消自己的错误源订阅�
 - 不保留原生 Event、DOM、Error 或 Promise reason；
 - 不实现采样、队列、传输、重试或持久化；
 - 不实现去重、分组、指纹、Source Map 或框架错误。
-
-正式契约见 `docs/sdk/error-capture-plugin.md`。

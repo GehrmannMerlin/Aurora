@@ -45,5 +45,3 @@ BrowserEnvironment 由调用方拥有；插件只取消自己的性能订阅，�
 - 不实现采样、队列、传输、重试或持久化；
 - 不调用 `BrowserEnvironment.destroy()`，不影响 plugin-error/plugin-request 订阅；
 - 不包含 FCP/TTFB/FID/TBT 等未批准指标。
-
-正式契约见 `docs/sdk/performance-capture-plugin.md`。

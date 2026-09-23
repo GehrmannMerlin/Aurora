@@ -154,13 +154,4 @@ pnpm check:ci
 
 ## 关联文档
 
-- [Core 基础规格](../../docs/sdk/sdk-core-foundation.md)
-- [Core 标准事件创建与提交边界](../../docs/sdk/core-event-creation.md)
-- [SDK 架构](../../docs/architecture/sdk-architecture.md)
-- [event-schema 基础规格](../../docs/protocol/event-schema-foundation.md)
-- [错误事件协议契约](../../docs/protocol/error-event-contract.md)
-- [Browser 环境基础](../../docs/sdk/browser-environment-foundation.md)
-- [ADR-003](../../docs/adr/ADR-003-sdk-plugin-architecture.md)
-- [ADR-005](../../docs/adr/ADR-005-event-schema-source-of-truth.md)
-- [ADR-006](../../docs/adr/ADR-006-one-way-dependencies.md)
 - [测试策略](../../docs/testing/test-strategy.md)

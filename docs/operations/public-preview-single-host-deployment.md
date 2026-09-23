@@ -29,7 +29,6 @@ review-cycle: preview-lifecycle-or-replacement
 
 本文记录 **Aurora provider-neutral 单主机部署**（原 `public-preview` 单主机桥接）。它让当前已真实实现的 Aurora 应用（`apps/ingestion-api`、`apps/ingestion-worker`、`apps/console`）拥有一个真实公网运行环境，使用用户已有的阿里云 ECS 服务器与已绑定域名。
 
-> **2026-08-13 转正（append-only）**：accepted [ADR-036](../adr/ADR-036-provider-neutral-single-host-deployment.md) 把本单主机部署从 `temporary-operational-snapshot` 转正为 **v1 正式部署路径**（`supersedes` ADR-022/023/024 的 AWS-first 方向）。"当前部署实例在阿里云" ≠ "架构绑定阿里云"；正式架构保持 provider-neutral，未来可迁移 AWS/其他云/托管数据库。第一版为 MVP/early-production single-host，不承诺 99.9% SLA / Multi-AZ / 自动故障转移 / 跨区域 DR。
 
 **单主机早期生产定位（诚实记录）**：
 

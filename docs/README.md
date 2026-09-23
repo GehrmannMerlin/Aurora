@@ -1,78 +1,38 @@
 # Aurora documentation
 
-This directory contains the stable documentation needed to understand, use,
-develop, test, deploy, operate, secure, and release Aurora. Historical planning
-and agent execution artifacts are intentionally not part of the documentation
-tree.
-
-## Product and user behavior
-
-- [Platform product domains](prd/platform-product-domains.md)
-- [Console UX, UI, and accessibility](prd/console-ux-ui-and-accessibility.md)
-- [Console UX/UI redesign](prd/console-ux-ui-redesign.md)
-- [Console navigation shell](prd/console-navigation-shell.md)
+This directory contains only stable documentation needed alongside the
+current source tree. Plans, design proposals, implementation histories,
+approval packages, evidence snapshots, and agent execution notes are not
+repository documentation.
 
 ## Architecture
 
 - [System overview](architecture/system-overview.md)
-- [Monorepo and build](architecture/monorepo-and-build.md)
-- [SDK architecture](architecture/sdk-architecture.md)
-- [Platform frontend](architecture/platform-frontend.md)
-- [Platform frontend shell](architecture/platform-frontend-shell.md)
-- [Platform backend](architecture/platform-backend.md)
-- [Platform backend design](architecture/platform-backend-design.md)
-- [Platform frontend technology stack](architecture/platform-frontend-technology-stack.md)
-- [Platform workspace and organization governance](architecture/platform-workspace-organization-governance.md)
-- [Console visual language](architecture/console-visual-language.md)
-- [CI quality workflows](architecture/ci-quality-workflows.md)
-- [Deployment architecture](architecture/deployment.md)
-- [Processing, query, alert, issue, and retention architecture](architecture)
 
-## ADRs
-
-- [ADR index](adr/README.md)
-- [ADR-001—ADR-036](adr)
-
-## SDK and browser
-
-- [SDK documents](sdk)
-- [Core foundation](sdk/sdk-core-foundation.md)
-- [Browser environment and lifecycle](sdk/browser-environment-foundation.md)
-- [Error, request, and performance capture](sdk/error-capture-plugin.md)
-- [Framework adapters](sdk/vue-framework-adapter.md)
-
-## API and protocol
+## API contracts
 
 - [Ingestion OpenAPI](api/ingestion.openapi.yaml)
 - [Platform OpenAPI v1](api/platform-openapi-v1.yaml)
-- [Platform OpenAPI implementation](api/platform-openapi-and-implementation.md)
-- [Event and ingestion protocols](protocol)
+- [Platform OpenAPI manifest](api/platform-openapi-v1.manifest.json)
 
-## Security
-
-- [Security documents](security)
-- [Account deletion and data lifecycle](security/account-deletion-and-data-lifecycle.md)
-- [Ingestion credential storage and verification](security/ingestion-client-credential-storage-and-verification.md)
-- [Platform identity and authentication](security/platform-identity-authentication.md)
-
-## Testing and quality
+## Testing
 
 - [Test strategy](testing/test-strategy.md)
-- [Testing, deployment, and release](testing/testing-deployment-release.md)
-- [Ingestion capacity and resilience benchmark](testing/ingestion-capacity-and-resilience-benchmark.md)
 
-## Operations and release
+## Operations
 
-- [Operations documents](operations)
-- [Preview Continuous Delivery](operations/preview-continuous-delivery.md)
-- [Public preview deployment](operations/public-preview-single-host-deployment.md)
+- [Public preview single-host deployment](operations/public-preview-single-host-deployment.md)
+- [Preview continuous delivery](operations/preview-continuous-delivery.md)
 - [Backup and recovery](operations/backup-and-recovery.md)
-- [SDK release and package versioning](releases/sdk-package-versioning-and-release.md)
-- [Migration and rollback](releases/release-migration-and-rollback.md)
+- [Aliyun DirectMail email verification](operations/aliyun-direct-mail-email-verification.md)
+
+## Releases
+
+- [Release migration and rollback](releases/release-migration-and-rollback.md)
+- [SDK package versioning and release](releases/sdk-package-versioning-and-release.md)
 
 ## Module documentation
 
-Every application, package, and maintained tooling area may have a local
-`README.md` describing its boundary, exports, configuration, and tests. The
-workspace packages are listed in the root [`README.md`](../README.md); use the
-module README beside the code as the authoritative entry point for that module.
+Applications, packages, tooling, examples, and deployment areas keep their
+local `README.md` beside the code. Those files are the authoritative entry
+points for module exports, configuration, and local commands.

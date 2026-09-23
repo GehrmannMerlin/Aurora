@@ -50,7 +50,3 @@ pnpm openapi:check       # lint + 本包漂移测试
 漂移断言失败以 `OpenAPI drift detected:` 前缀抛错，列出缺失/额外枚举值、缺失/多余 required 字段、限制数值不一致等。新增枚举值、字段或限制必须先在 `@aurora/event-schema` 冻结，再同步 OpenAPI 与样本。
 
 ## 关联文档
-
-- [数据接入 OpenAPI 正式规格](../../docs/api/ingestion-openapi.md)
-- [数据接入批次与接收结果协议](../../docs/protocol/ingestion-batch-and-receipt-contract.md)
-- [ADR-009 数据接入公开传输与客户端上报密钥安全语义](../../docs/adr/ADR-009-ingestion-transport-and-client-credential.md)

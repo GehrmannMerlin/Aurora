@@ -9,8 +9,6 @@
 - `platform_audit_events` 表：独立于 B7 `security_audit_events` 的平台级审计时间线，平台命令同事务写入，
   仅平台管理员可读，保留 1 年。
 
-spec 见 [platform-admin-and-platform-audit](../../docs/security/platform-admin-and-platform-audit.md) 与
-[ADR-034](../../docs/adr/ADR-034-platform-admin-and-platform-audit.md)。
 
 本包是 PLT-10a Task 1 的结果：包结构、构建/类型检查/migrate 入口与两张表（`platform_admins`、
 `platform_audit_events`）的 Migration 已真实存在；Repository（Task 2/3）在后续任务落档。
@@ -66,6 +64,3 @@ pnpm --filter @aurora/platform-admin migrate          # 运行本包 Migration�
 `aurora_inbox_test` 测试库，`assertIsTestDatabase` 强制）；禁止以 SQLite/mock/PGlite 替代真实数据库证据。
 
 ## 关联文档
-
-- [平台管理员与平台级审计（正式规格）](../../docs/security/platform-admin-and-platform-audit.md)
-- [ADR-034 平台管理员与平台级审计](../../docs/adr/ADR-034-platform-admin-and-platform-audit.md)

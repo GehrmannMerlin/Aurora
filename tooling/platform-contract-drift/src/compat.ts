@@ -3,7 +3,7 @@ import type { JsonSchemaObject, OperationDef } from '@aurora/platform-contract';
 // Schema-level compatibility gate for the same-major-version platform contract.
 //
 // Spec: docs/architecture/platform-contract-foundation.md §30 (compatibility), §35, §37.12.
-// ADR:  docs/adr/ADR-027-platform-contract-codegen-tooling.md 决定细节 6.
+// Keep the compatibility adapter aligned with the platform contract codegen boundary.
 //
 // The gate is fail-closed: any change that does not clearly fit a compatible class is reported so
 // a human must review it. Pure additions (new operation, new optional field, new optional value on

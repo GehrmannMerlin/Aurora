@@ -2,20 +2,14 @@
 
 ## 模块定位
 
-`@aurora/processing-store` 承载错误事件 occurrence 明细处理存储第一增量、错误归一化与 fingerprint 分组算法第一增量、Issue 聚合与有界代表样本存储第一增量、请求事件安全样本处理存储第一增量、请求指标聚合存储第一增量与性能指标聚合/有界样本存储第一增量（`packages/processing-store`）。错误部分为未来错误事件 processor 提供稳定存储边界（`error_event_occurrences` + fingerprint 增列，accepted [ADR-018](../../docs/adr/ADR-018-error-event-occurrence-processing-storage.md)）；指纹部分为确定性、版本化的错误归一化分组键（`computeErrorFingerprint`，正式规格 [error-normalization-fingerprint.md](../../docs/architecture/error-normalization-fingerprint.md)，G03 DAT-12）；Issue 部分为同 fingerprint 错误的项目作用域聚合与有界代表样本（`issues`/`issue_event_applications`/`issue_samples`，accepted [ADR-033](../../docs/adr/ADR-033-issue-aggregate-data-model.md)，G03 DAT-13）；请求样本部分为"聚合主路径＋有限安全诊断样本"边界中的样本存储能力（`request_event_samples`，accepted [ADR-019](../../docs/adr/ADR-019-request-event-aggregation-and-bounded-diagnostic-sample-storage.md)）；请求指标部分为幂等请求指标桶聚合（`request_metric_buckets` + `request_metric_event_applications`，accepted [ADR-020](../../docs/adr/ADR-020-idempotent-request-metric-bucket-aggregation.md)）；性能部分为聚合主路径＋有界安全诊断样本（`performance_metric_buckets` + `performance_metric_event_applications` + `performance_event_samples`，accepted [ADR-021](../../docs/adr/ADR-021-performance-aggregate-and-bounded-sample-storage.md)）。
 
 ## 职责
 
 - `error_event_occurrences` 表与 Migration（追加式，可 up/down，应用启动不自动执行）；`(project_id, event_id)` 唯一幂等；`persistErrorEventOccurrence` Repository；DAT-12 additive 增列 `fingerprint`/`fingerprint_version`（Migration `1722500000007`）；
-- 错误归一化与 fingerprint 纯函数（DAT-12）：`computeErrorFingerprint`（版本 `v1`、确定性、高置信度动态值占位符替换、堆栈关键帧投影、安全 `normalizedTitle`）+ `ERROR_FINGERPRINT_VERSION`；由 [错误归一化与 fingerprint 分组算法正式规格](../../docs/architecture/error-normalization-fingerprint.md) 承载；
-- Issue 聚合与有界代表样本存储（DAT-13，accepted ADR-033）：`issues`（`(project_id, fingerprint, fingerprint_version)` 聚合键、occurrence_count/first/last seen、生命周期列、乐观 version、closed 枚举/计数 CHECK）+ `issue_event_applications`（`(project_id, event_id)` 事件应用登记，防 retry/重放下计数重复）+ `issue_samples`（有界安全代表样本，`(project_id, event_id)` 幂等）；`persistIssueContribution` Repository（`GREATEST` last_seen、首次 INSERT 竞态恢复、`by_time` 再次出现重开、`decideIssueSample` 固定替换策略）；由 [Issue 聚合与有界代表样本处理存储正式规格](../../docs/architecture/issue-aggregate-representative-sample-store.md) 承载；
 - `request_event_samples` 表与 Migration；`(project_id, event_id)` 唯一幂等；`persistRequestEventSample` Repository（只持久化已由上游选中的合法 Request 事件的安全投影）；
 - `request_metric_buckets` + `request_metric_event_applications` 表与 Migration；`persistRequestMetricContribution` Repository（UTC 一分钟桶 + 最小事件应用登记 + 同事务 UPSERT + `(project_id, event_id)` 幂等）；
 - `performance_metric_buckets` + `performance_metric_event_applications` 表与 Migration；`persistPerformanceMetricContribution` Repository（UTC 一分钟桶 + 最小事件应用登记 + 同事务 UPSERT + `(project_id, event_id)` 幂等 + `(project_id, bucket_start, metric_name, unit)` 聚合键 + `observed_count`/`value_sum`/`value_max`）；
 - `performance_event_samples` 表与 Migration；`persistPerformanceEventSample` Repository（`(project_id, event_id)` 幂等 + 受协议约束 `sample_body` 白名单投影）；
-- 请求指标查询投影只读 Repository（DAT-16）：`queryRequestMetricSummary`（窗口内按 method 汇总）与 `queryRequestEndpointPage`（有界样本接口列表，keyset 分页、`totalCount`、`(method, url)` 游标）——由 [请求指标查询投影正式规格](../../docs/architecture/request-metric-query-projection.md) 承载；
-- 接入诊断可查询证据只读查询（DAT-20）：`queryProjectQueryableEvidence`（`error_event_occurrences`/`request_metric_buckets`/`performance_metric_buckets` 三表行数证据，按项目隔离、无新 Migration）——由 [接入诊断状态查询正式规格](../../docs/architecture/ingestion-diagnostics-status-query.md) 承载；
-- 性能指标查询投影只读 Repository（DAT-17）：`queryPerformanceMetricSummary`（半开窗口 `[startIso, endIso)` 内按 `(metric_name, unit)` 分组聚合：`observedCount`/`valueSum`/`valueMax`/`mean` + `dataThrough`；`observedCount === 0` 行不返回、空窗口 → `metrics: []`/`dataThrough: null`，无新 Migration）——由 [性能指标查询投影正式规格](../../docs/architecture/performance-query-projection.md) 承载；
 - 顶层 `unknown` 输入校验 + 通过 `@aurora/event-schema` 根入口验证事件；
 - 稳定可判别结果（`inserted`/`duplicate`/`applied`/`invalid_input`/`temporarily_unavailable`）；
 - 协议漂移测试与真实 PostgreSQL 17 集成测试。
@@ -131,20 +125,3 @@ pnpm --filter @aurora/processing-store build           # 构建 dist
 集成测试需要真实 PostgreSQL 17，通过 `AURORA_TEST_DATABASE_URL` 连接（目标必须是 `aurora_inbox_test` 测试库）；禁止以 SQLite/mock/PGlite 替代真实数据库证据。
 
 ## 关联文档
-
-- [错误事件 occurrence 处理存储正式规格](../../docs/architecture/error-event-occurrence-processing-store.md)
-- [请求事件安全样本处理存储正式规格](../../docs/architecture/request-event-sample-processing-store.md)
-- [请求指标聚合存储正式规格](../../docs/architecture/request-metric-aggregate-store.md)
-- [性能指标聚合与有界诊断样本存储正式规格](../../docs/architecture/performance-metric-aggregate-and-bounded-sample-store.md)
-- [请求指标查询投影正式规格](../../docs/architecture/request-metric-query-projection.md)
-- [接入诊断状态查询正式规格](../../docs/architecture/ingestion-diagnostics-status-query.md)
-- [性能指标查询投影正式规格](../../docs/architecture/performance-query-projection.md)
-- [ADR-018 错误事件 occurrence 处理存储](../../docs/adr/ADR-018-error-event-occurrence-processing-storage.md)
-- [ADR-019 请求事件聚合与有界诊断样本存储](../../docs/adr/ADR-019-request-event-aggregation-and-bounded-diagnostic-sample-storage.md)
-- [ADR-020 幂等请求指标桶聚合](../../docs/adr/ADR-020-idempotent-request-metric-bucket-aggregation.md)
-- [ADR-021 性能指标聚合与有界诊断样本存储](../../docs/adr/ADR-021-performance-aggregate-and-bounded-sample-storage.md)
-- [错误事件协议契约](../../docs/protocol/error-event-contract.md)
-- [请求事件协议契约](../../docs/protocol/request-event-contract.md)
-- [性能事件协议契约](../../docs/protocol/performance-event-contract.md)
-- [ADR-005 event-schema 单一来源](../../docs/adr/ADR-005-event-schema-source-of-truth.md)
-- [ADR-010 数据库访问与 Migration 工具链](../../docs/adr/ADR-010-postgresql-access-and-migration-tooling.md)
